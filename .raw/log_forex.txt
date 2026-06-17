@@ -1,0 +1,774 @@
+[youtube:tab] Extracting URL: https://www.youtube.com/playlist?list=PLVgHx4Z63paah1dHyad1OMJQJdm6iP2Yn
+[youtube:tab] PLVgHx4Z63paah1dHyad1OMJQJdm6iP2Yn: Downloading webpage
+[youtube:tab] Sleeping 1.0 seconds ...
+[youtube:tab] PLVgHx4Z63paah1dHyad1OMJQJdm6iP2Yn: Redownloading playlist API JSON with unavailable videos
+[download] Downloading playlist: ICT Forex - Market Maker Primer Course
+[youtube:tab] Playlist ICT Forex - Market Maker Primer Course: Downloading 24 items of 24
+[download] Downloading item 1 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=7WM8qdkanIY
+[youtube] Sleeping 1.0 seconds ...
+[youtube] 7WM8qdkanIY: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] 7WM8qdkanIY: Downloading android vr player API JSON
+[youtube] Sleeping 1.0 seconds ...
+[youtube] 7WM8qdkanIY: Downloading player 959dabb2-main
+[youtube] [jsc:node] Solving JS challenges using node
+[info] 7WM8qdkanIY: Downloading subtitles: en-orig, en
+[info] 7WM8qdkanIY: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\01 - ICT Forex - What New Traders Should Focus On.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\01 - ICT Forex - What New Traders Should Focus On.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.59MiB/s (00:00:00)
+[download]    7.00KiB at    1.46MiB/s (00:00:00)
+[download]   15.00KiB at    2.63MiB/s (00:00:00)
+[download]   31.00KiB at    4.84MiB/s (00:00:00)
+[download]   63.00KiB at    8.02MiB/s (00:00:00)
+[download]  127.00KiB at  734.06KiB/s (00:00:00)
+[download]  207.74KiB at    1.16MiB/s (00:00:00)
+[download] 100% of  207.74KiB in 00:00:00 at 507.25KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\01 - ICT Forex - What New Traders Should Focus On.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\01 - ICT Forex - What New Traders Should Focus On.en.vtt
+
+[download]    1.00KiB at  756.55KiB/s (00:00:00)
+[download]    3.00KiB at    1.38MiB/s (00:00:00)
+[download]    7.00KiB at    2.41MiB/s (00:00:00)
+[download]   15.00KiB at    1.60MiB/s (00:00:00)
+[download]   31.00KiB at    3.07MiB/s (00:00:00)
+[download]   63.00KiB at    4.28MiB/s (00:00:00)
+[download]  127.00KiB at    7.10MiB/s (00:00:00)
+[download]  207.74KiB at    8.80MiB/s (00:00:00)
+[download] 100% of  207.74KiB in 00:00:00 at 908.69KiB/s
+[download] Downloading item 2 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=tlKC9nvLRK0
+[youtube] Sleeping 1.0 seconds ...
+[youtube] tlKC9nvLRK0: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] tlKC9nvLRK0: Downloading android vr player API JSON
+[info] tlKC9nvLRK0: Downloading subtitles: en-orig, en
+[info] tlKC9nvLRK0: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\02 - ICT Forex - Considerations In Risk Management.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\02 - ICT Forex - Considerations In Risk Management.en-orig.vtt
+
+[download]    1.00KiB at  344.78KiB/s (00:00:00)
+[download]    3.00KiB at  876.25KiB/s (00:00:00)
+[download]    7.00KiB at    1.81MiB/s (00:00:00)
+[download]   15.00KiB at    3.37MiB/s (00:00:00)
+[download]   31.00KiB at    6.24MiB/s (00:00:00)
+[download]   63.00KiB at   11.44MiB/s (00:00:00)
+[download]  127.00KiB at  731.45KiB/s (00:00:00)
+[download]  175.68KiB at 1004.74KiB/s (00:00:00)
+[download] 100% of  175.68KiB in 00:00:00 at 440.48KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\02 - ICT Forex - Considerations In Risk Management.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\02 - ICT Forex - Considerations In Risk Management.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.16MiB/s (00:00:00)
+[download]    7.00KiB at    1.65MiB/s (00:00:00)
+[download]   15.00KiB at    3.05MiB/s (00:00:00)
+[download]   31.00KiB at    5.75MiB/s (00:00:00)
+[download]   63.00KiB at    3.95MiB/s (00:00:00)
+[download]  127.00KiB at  773.03KiB/s (00:00:00)
+[download]  175.68KiB at    1.03MiB/s (00:00:00)
+[download] 100% of  175.68KiB in 00:00:00 at 492.37KiB/s
+[download] Downloading item 3 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=xGFCIUFxsbw
+[youtube] Sleeping 1.0 seconds ...
+[youtube] xGFCIUFxsbw: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] xGFCIUFxsbw: Downloading android vr player API JSON
+[info] xGFCIUFxsbw: Downloading subtitles: en-orig, en
+[info] xGFCIUFxsbw: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\03 - Essentials To ICT Market Structure.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\03 - Essentials To ICT Market Structure.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.12MiB/s (00:00:00)
+[download]    7.00KiB at  811.77KiB/s (00:00:00)
+[download]   15.00KiB at  800.64KiB/s (00:00:00)
+[download]   31.00KiB at  716.98KiB/s (00:00:00)
+[download]   63.00KiB at  478.25KiB/s (00:00:00)
+[download]  127.00KiB at  585.62KiB/s (00:00:00)
+[download]  255.00KiB at  611.61KiB/s (00:00:00)
+[download]  329.27KiB at  600.55KiB/s (00:00:00)
+[download] 100% of  329.27KiB in 00:00:00 at 426.04KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\03 - Essentials To ICT Market Structure.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\03 - Essentials To ICT Market Structure.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.03MiB/s (00:00:00)
+[download]    7.00KiB at  689.06KiB/s (00:00:00)
+[download]   15.00KiB at  511.03KiB/s (00:00:00)
+[download]   31.00KiB at  614.52KiB/s (00:00:00)
+[download]   63.00KiB at  644.22KiB/s (00:00:00)
+[download]  127.00KiB at  638.25KiB/s (00:00:00)
+[download]  255.00KiB at  672.72KiB/s (00:00:00)
+[download]  329.27KiB at  699.87KiB/s (00:00:00)
+[download] 100% of  329.27KiB in 00:00:00 at 388.05KiB/s
+[download] Downloading item 4 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=ley5HZs4bUM
+[youtube] Sleeping 1.0 seconds ...
+[youtube] ley5HZs4bUM: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] ley5HZs4bUM: Downloading android vr player API JSON
+[info] ley5HZs4bUM: Downloading subtitles: en-orig, en
+[info] ley5HZs4bUM: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\04 - ICT Forex - The ICT Asian Killzone.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\04 - ICT Forex - The ICT Asian Killzone.en-orig.vtt
+
+[download]    1.00KiB at  955.42KiB/s (00:00:00)
+[download]    3.00KiB at    1.61MiB/s (00:00:00)
+[download]    7.00KiB at    1.49MiB/s (00:00:00)
+[download]   15.00KiB at    1.25MiB/s (00:00:00)
+[download]   31.00KiB at    1.31MiB/s (00:00:00)
+[download]   63.00KiB at    1.04MiB/s (00:00:00)
+[download]   94.63KiB at  996.38KiB/s (00:00:00)
+[download] 100% of   94.63KiB in 00:00:00 at 226.22KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\04 - ICT Forex - The ICT Asian Killzone.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\04 - ICT Forex - The ICT Asian Killzone.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.81MiB/s (00:00:00)
+[download]    7.00KiB at  279.02KiB/s (00:00:00)
+[download]   15.00KiB at  389.06KiB/s (00:00:00)
+[download]   31.00KiB at  569.55KiB/s (00:00:00)
+[download]   63.00KiB at  614.96KiB/s (00:00:00)
+[download]   94.63KiB at  672.34KiB/s (00:00:00)
+[download] 100% of   94.63KiB in 00:00:00 at 245.85KiB/s
+[download] Downloading item 5 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=G8OEsUAoIWE
+[youtube] Sleeping 1.0 seconds ...
+[youtube] G8OEsUAoIWE: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] G8OEsUAoIWE: Downloading android vr player API JSON
+[info] G8OEsUAoIWE: Downloading subtitles: en-orig, en
+[info] G8OEsUAoIWE: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\05 - ICT Forex - The ICT London Killzone.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\05 - ICT Forex - The ICT London Killzone.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.77MiB/s (00:00:00)
+[download]    7.00KiB at  594.89KiB/s (00:00:00)
+[download]   15.00KiB at  616.15KiB/s (00:00:00)
+[download]   31.00KiB at  631.48KiB/s (00:00:00)
+[download]   63.00KiB at  711.15KiB/s (00:00:00)
+[download]  127.00KiB at  732.34KiB/s (00:00:00)
+[download]  152.46KiB at  708.36KiB/s (00:00:00)
+[download] 100% of  152.46KiB in 00:00:00 at 327.03KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\05 - ICT Forex - The ICT London Killzone.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\05 - ICT Forex - The ICT London Killzone.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.97MiB/s (00:00:00)
+[download]    7.00KiB at    2.91MiB/s (00:00:00)
+[download]   15.00KiB at    1.01MiB/s (00:00:00)
+[download]   31.00KiB at  839.21KiB/s (00:00:00)
+[download]   63.00KiB at  804.33KiB/s (00:00:00)
+[download]  127.00KiB at  782.52KiB/s (00:00:00)
+[download]  152.46KiB at  789.42KiB/s (00:00:00)
+[download] 100% of  152.46KiB in 00:00:00 at 346.29KiB/s
+[download] Downloading item 6 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=plNN9n7nrxc
+[youtube] Sleeping 1.0 seconds ...
+[youtube] plNN9n7nrxc: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] plNN9n7nrxc: Downloading android vr player API JSON
+[info] plNN9n7nrxc: Downloading subtitles: en-orig, en
+[info] plNN9n7nrxc: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\06 - ICT Forex - The ICT New York Killzone.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\06 - ICT Forex - The ICT New York Killzone.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.25MiB/s (00:00:00)
+[download]    7.00KiB at  422.08KiB/s (00:00:00)
+[download]   15.00KiB at  738.51KiB/s (00:00:00)
+[download]   31.00KiB at    1.22MiB/s (00:00:00)
+[download]   63.00KiB at  366.99KiB/s (00:00:00)
+[download]  116.58KiB at  672.89KiB/s (00:00:00)
+[download] 100% of  116.58KiB in 00:00:00 at 277.01KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\06 - ICT Forex - The ICT New York Killzone.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\06 - ICT Forex - The ICT New York Killzone.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.89MiB/s (00:00:00)
+[download]    7.00KiB at  459.07KiB/s (00:00:00)
+[download]   15.00KiB at  636.83KiB/s (00:00:00)
+[download]   31.00KiB at  491.76KiB/s (00:00:00)
+[download]   63.00KiB at  499.45KiB/s (00:00:00)
+[download]  116.58KiB at  567.67KiB/s (00:00:00)
+[download] 100% of  116.58KiB in 00:00:00 at 280.37KiB/s
+[download] Downloading item 7 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=3OEUIkkcmLE
+[youtube] Sleeping 1.0 seconds ...
+[youtube] 3OEUIkkcmLE: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] 3OEUIkkcmLE: Downloading android vr player API JSON
+[info] 3OEUIkkcmLE: Downloading subtitles: en-orig, en
+[info] 3OEUIkkcmLE: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\07 - ICT Forex - The ICT London Close  Killzone.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\07 - ICT Forex - The ICT London Close  Killzone.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.98MiB/s (00:00:00)
+[download]    7.00KiB at  537.47KiB/s (00:00:00)
+[download]   15.00KiB at  649.34KiB/s (00:00:00)
+[download]   31.00KiB at  636.33KiB/s (00:00:00)
+[download]   63.00KiB at  727.47KiB/s (00:00:00)
+[download]   70.44KiB at  804.42KiB/s (00:00:00)
+[download] 100% of   70.44KiB in 00:00:00 at 270.62KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\07 - ICT Forex - The ICT London Close  Killzone.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\07 - ICT Forex - The ICT London Close  Killzone.en.vtt
+
+[download]    1.00KiB at  664.08KiB/s (00:00:00)
+[download]    3.00KiB at    1.32MiB/s (00:00:00)
+[download]    7.00KiB at  535.32KiB/s (00:00:00)
+[download]   15.00KiB at  824.86KiB/s (00:00:00)
+[download]   31.00KiB at  751.99KiB/s (00:00:00)
+[download]   63.00KiB at  752.53KiB/s (00:00:00)
+[download]   70.44KiB at  832.57KiB/s (00:00:00)
+[download] 100% of   70.44KiB in 00:00:00 at 271.33KiB/s
+[download] Downloading item 8 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=Yqio1Ja0lIQ
+[youtube] Sleeping 1.0 seconds ...
+[youtube] Yqio1Ja0lIQ: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] Yqio1Ja0lIQ: Downloading android vr player API JSON
+[info] Yqio1Ja0lIQ: Downloading subtitles: en-orig, en
+[info] Yqio1Ja0lIQ: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\08 - ICT Forex - The Weekly Bias - Excellence In Short Term Trading.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\08 - ICT Forex - The Weekly Bias - Excellence In Short Term Trading.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.58MiB/s (00:00:00)
+[download]    7.00KiB at  287.97KiB/s (00:00:00)
+[download]   15.00KiB at  545.65KiB/s (00:00:00)
+[download]   31.00KiB at  594.98KiB/s (00:00:00)
+[download]   63.00KiB at  790.32KiB/s (00:00:00)
+[download]  127.00KiB at  742.41KiB/s (00:00:00)
+[download]  255.00KiB at  729.62KiB/s (00:00:00)
+[download]  313.47KiB at  743.71KiB/s (00:00:00)
+[download] 100% of  313.47KiB in 00:00:00 at 495.14KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\08 - ICT Forex - The Weekly Bias - Excellence In Short Term Trading.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\08 - ICT Forex - The Weekly Bias - Excellence In Short Term Trading.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.06MiB/s (00:00:00)
+[download]    7.00KiB at    1.28MiB/s (00:00:00)
+[download]   15.00KiB at  884.75KiB/s (00:00:00)
+[download]   31.00KiB at  727.17KiB/s (00:00:00)
+[download]   63.00KiB at  760.62KiB/s (00:00:00)
+[download]  127.00KiB at  759.70KiB/s (00:00:00)
+[download]  255.00KiB at  717.99KiB/s (00:00:00)
+[download]  313.47KiB at  779.31KiB/s (00:00:00)
+[download] 100% of  313.47KiB in 00:00:00 at 509.60KiB/s
+[download] Downloading item 9 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=Sb9m_dxr4bI
+[youtube] Sleeping 1.0 seconds ...
+[youtube] Sb9m_dxr4bI: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] Sb9m_dxr4bI: Downloading android vr player API JSON
+[info] Sb9m_dxr4bI: Downloading subtitles: en-orig, en
+[info] Sb9m_dxr4bI: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\09 - ICT Forex - Time & Price Theory.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\09 - ICT Forex - Time & Price Theory.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.74MiB/s (00:00:00)
+[download]    7.00KiB at  920.61KiB/s (00:00:00)
+[download]   15.00KiB at    1.05MiB/s (00:00:00)
+[download]   31.00KiB at  696.94KiB/s (00:00:00)
+[download]   63.00KiB at  669.02KiB/s (00:00:00)
+[download]  127.00KiB at  784.48KiB/s (00:00:00)
+[download]  168.80KiB at  904.57KiB/s (00:00:00)
+[download] 100% of  168.80KiB in 00:00:00 at 379.63KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\09 - ICT Forex - Time & Price Theory.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\09 - ICT Forex - Time & Price Theory.en.vtt
+
+[download]    1.00KiB at  817.60KiB/s (00:00:00)
+[download]    3.00KiB at    1.54MiB/s (00:00:00)
+[download]    7.00KiB at  335.54KiB/s (00:00:00)
+[download]   15.00KiB at  682.27KiB/s (00:00:00)
+[download]   31.00KiB at  853.71KiB/s (00:00:00)
+[download]   63.00KiB at  839.85KiB/s (00:00:00)
+[download]  127.00KiB at  893.39KiB/s (00:00:00)
+[download]  168.80KiB at  955.44KiB/s (00:00:00)
+[download] 100% of  168.80KiB in 00:00:00 at 460.04KiB/s
+[download] Downloading item 10 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=dIT4HTFYGGo
+[youtube] Sleeping 1.0 seconds ...
+[youtube] dIT4HTFYGGo: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] dIT4HTFYGGo: Downloading android vr player API JSON
+[info] dIT4HTFYGGo: Downloading subtitles: en-orig, en
+[info] dIT4HTFYGGo: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\10 - ICT Forex - Accumulation - Manipulation - Distribution.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\10 - ICT Forex - Accumulation - Manipulation - Distribution.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.09MiB/s (00:00:00)
+[download]    7.00KiB at  544.75KiB/s (00:00:00)
+[download]   15.00KiB at  809.74KiB/s (00:00:00)
+[download]   31.00KiB at  879.17KiB/s (00:00:00)
+[download]   63.00KiB at  903.58KiB/s (00:00:00)
+[download]  127.00KiB at  928.48KiB/s (00:00:00)
+[download]  144.86KiB at  944.88KiB/s (00:00:00)
+[download] 100% of  144.86KiB in 00:00:00 at 436.32KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\10 - ICT Forex - Accumulation - Manipulation - Distribution.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\10 - ICT Forex - Accumulation - Manipulation - Distribution.en.vtt
+
+[download]    1.00KiB at  453.54KiB/s (00:00:00)
+[download]    3.00KiB at    1.00MiB/s (00:00:00)
+[download]    7.00KiB at    1.04MiB/s (00:00:00)
+[download]   15.00KiB at  826.04KiB/s (00:00:00)
+[download]   31.00KiB at  808.45KiB/s (00:00:00)
+[download]   63.00KiB at  919.02KiB/s (00:00:00)
+[download]  127.00KiB at  959.44KiB/s (00:00:00)
+[download]  144.86KiB at  979.97KiB/s (00:00:00)
+[download] 100% of  144.86KiB in 00:00:00 at 436.04KiB/s
+[download] Downloading item 11 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=JA0mLNJeytY
+[youtube] Sleeping 1.0 seconds ...
+[youtube] JA0mLNJeytY: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] JA0mLNJeytY: Downloading android vr player API JSON
+[info] JA0mLNJeytY: Downloading subtitles: en-orig, en
+[info] JA0mLNJeytY: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\11 - ICT Forex - Implementing The Asian Range.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\11 - ICT Forex - Implementing The Asian Range.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.05MiB/s (00:00:00)
+[download]    7.00KiB at    1.46MiB/s (00:00:00)
+[download]   15.00KiB at  706.37KiB/s (00:00:00)
+[download]   31.00KiB at  853.31KiB/s (00:00:00)
+[download]   63.00KiB at  942.78KiB/s (00:00:00)
+[download]  127.00KiB at  967.93KiB/s (00:00:00)
+[download]  255.00KiB at  973.15KiB/s (00:00:00)
+[download]  324.83KiB at  988.19KiB/s (00:00:00)
+[download] 100% of  324.83KiB in 00:00:00 at 590.70KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\11 - ICT Forex - Implementing The Asian Range.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\11 - ICT Forex - Implementing The Asian Range.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.94MiB/s (00:00:00)
+[download]    7.00KiB at    1.02MiB/s (00:00:00)
+[download]   15.00KiB at  646.91KiB/s (00:00:00)
+[download]   31.00KiB at  764.37KiB/s (00:00:00)
+[download]   63.00KiB at 1019.37KiB/s (00:00:00)
+[download]  127.00KiB at  897.54KiB/s (00:00:00)
+[download]  255.00KiB at    1.04MiB/s (00:00:00)
+[download]  324.83KiB at  910.30KiB/s (00:00:00)
+[download] 100% of  324.83KiB in 00:00:00 at 575.46KiB/s
+[download] Downloading item 12 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=xJMbva8SjzE
+[youtube] Sleeping 1.0 seconds ...
+[youtube] xJMbva8SjzE: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] xJMbva8SjzE: Downloading android vr player API JSON
+[info] xJMbva8SjzE: Downloading subtitles: en-orig, en
+[info] xJMbva8SjzE: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\12 - ICT Forex - Understanding The ICT Judas Swing.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\12 - ICT Forex - Understanding The ICT Judas Swing.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.69MiB/s (00:00:00)
+[download]    7.00KiB at    1.38MiB/s (00:00:00)
+[download]   15.00KiB at    1.29MiB/s (00:00:00)
+[download]   31.00KiB at  624.47KiB/s (00:00:00)
+[download]   63.00KiB at    1.05MiB/s (00:00:00)
+[download]  113.96KiB at    1.11MiB/s (00:00:00)
+[download] 100% of  113.96KiB in 00:00:00 at 398.37KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\12 - ICT Forex - Understanding The ICT Judas Swing.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\12 - ICT Forex - Understanding The ICT Judas Swing.en.vtt
+
+[download]    1.00KiB at  860.72KiB/s (00:00:00)
+[download]    3.00KiB at    1.36MiB/s (00:00:00)
+[download]    7.00KiB at    2.22MiB/s (00:00:00)
+[download]   15.00KiB at    3.49MiB/s (00:00:00)
+[download]   31.00KiB at    4.56MiB/s (00:00:00)
+[download]   63.00KiB at    1.61MiB/s (00:00:00)
+[download]  113.96KiB at  999.61KiB/s (00:00:00)
+[download] 100% of  113.96KiB in 00:00:00 at 341.21KiB/s
+[download] Downloading item 13 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=vJvcZGGeTZU
+[youtube] Sleeping 1.0 seconds ...
+[youtube] vJvcZGGeTZU: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] vJvcZGGeTZU: Downloading android vr player API JSON
+[info] vJvcZGGeTZU: Downloading subtitles: en-orig, en
+[info] vJvcZGGeTZU: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\13 - ICT Forex - Essentials To Trading The Daily Bias.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\13 - ICT Forex - Essentials To Trading The Daily Bias.en-orig.vtt
+
+[download]    1.00KiB at  642.31KiB/s (00:00:00)
+[download]    3.00KiB at    1.26MiB/s (00:00:00)
+[download]    7.00KiB at  168.68KiB/s (00:00:00)
+[download]   15.00KiB at  351.45KiB/s (00:00:00)
+[download]   31.00KiB at  713.19KiB/s (00:00:00)
+[download]   63.00KiB at  286.96KiB/s (00:00:00)
+[download]  127.00KiB at  574.74KiB/s (00:00:00)
+[download]  153.91KiB at  693.31KiB/s (00:00:00)
+[download] 100% of  153.91KiB in 00:00:00 at 354.21KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\13 - ICT Forex - Essentials To Trading The Daily Bias.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\13 - ICT Forex - Essentials To Trading The Daily Bias.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.08MiB/s (00:00:00)
+[download]    7.00KiB at  570.32KiB/s (00:00:00)
+[download]   15.00KiB at  952.54KiB/s (00:00:00)
+[download]   31.00KiB at    1.03MiB/s (00:00:00)
+[download]   63.00KiB at  741.82KiB/s (00:00:00)
+[download]  127.00KiB at 1021.01KiB/s (00:00:00)
+[download]  153.91KiB at  837.71KiB/s (00:00:00)
+[download] 100% of  153.91KiB in 00:00:00 at 418.68KiB/s
+[download] Downloading item 14 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=T0JyGdJ28fM
+[youtube] Sleeping 1.0 seconds ...
+[youtube] T0JyGdJ28fM: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] T0JyGdJ28fM: Downloading android vr player API JSON
+[info] T0JyGdJ28fM: Downloading subtitles: en-orig, en
+[info] T0JyGdJ28fM: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\14 - ICT Forex - Trading The Key Swing Points.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\14 - ICT Forex - Trading The Key Swing Points.en-orig.vtt
+
+[download]    1.00KiB at  695.57KiB/s (00:00:00)
+[download]    3.00KiB at    1.46MiB/s (00:00:00)
+[download]    7.00KiB at    1.37MiB/s (00:00:00)
+[download]   15.00KiB at  871.95KiB/s (00:00:00)
+[download]   31.00KiB at  892.33KiB/s (00:00:00)
+[download]   63.00KiB at  978.58KiB/s (00:00:00)
+[download]   66.91KiB at    1.00MiB/s (00:00:00)
+[download] 100% of   66.91KiB in 00:00:00 at 284.85KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\14 - ICT Forex - Trading The Key Swing Points.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\14 - ICT Forex - Trading The Key Swing Points.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.98MiB/s (00:00:00)
+[download]    7.00KiB at    2.03MiB/s (00:00:00)
+[download]   15.00KiB at    1.55MiB/s (00:00:00)
+[download]   31.00KiB at    1.42MiB/s (00:00:00)
+[download]   63.00KiB at  997.35KiB/s (00:00:00)
+[download]   66.91KiB at    1.02MiB/s (00:00:00)
+[download] 100% of   66.91KiB in 00:00:00 at 236.03KiB/s
+[download] Downloading item 15 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=RtMRykCZtC4
+[youtube] Sleeping 1.0 seconds ...
+[youtube] RtMRykCZtC4: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] RtMRykCZtC4: Downloading android vr player API JSON
+[info] RtMRykCZtC4: Downloading subtitles: en-orig, en
+[info] RtMRykCZtC4: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\15 - ICT Forex - Money Management That Works.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\15 - ICT Forex - Money Management That Works.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.86MiB/s (00:00:00)
+[download]    7.00KiB at    3.16MiB/s (00:00:00)
+[download]   15.00KiB at    4.93MiB/s (00:00:00)
+[download]   31.00KiB at    2.67MiB/s (00:00:00)
+[download]   63.00KiB at    1.64MiB/s (00:00:00)
+[download]  127.00KiB at    1.14MiB/s (00:00:00)
+[download]  255.00KiB at    1.02MiB/s (00:00:00)
+[download]  337.83KiB at    1.03MiB/s (00:00:00)
+[download] 100% of  337.83KiB in 00:00:00 at 607.45KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\15 - ICT Forex - Money Management That Works.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\15 - ICT Forex - Money Management That Works.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.92MiB/s (00:00:00)
+[download]    7.00KiB at  642.33KiB/s (00:00:00)
+[download]   15.00KiB at  814.38KiB/s (00:00:00)
+[download]   31.00KiB at  883.05KiB/s (00:00:00)
+[download]   63.00KiB at  806.16KiB/s (00:00:00)
+[download]  127.00KiB at  820.46KiB/s (00:00:00)
+[download]  255.00KiB at  978.16KiB/s (00:00:00)
+[download]  337.83KiB at 1006.87KiB/s (00:00:00)
+[download] 100% of  337.83KiB in 00:00:00 at 440.24KiB/s
+[download] Downloading item 16 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=isXicdayBwA
+[youtube] Sleeping 1.0 seconds ...
+[youtube] isXicdayBwA: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] isXicdayBwA: Downloading android vr player API JSON
+[info] isXicdayBwA: Downloading subtitles: en-orig, en
+[info] isXicdayBwA: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\16 - ICT Forex - The ICT Smart Money Technique or SMT.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\16 - ICT Forex - The ICT Smart Money Technique or SMT.en-orig.vtt
+
+[download]    1.00KiB at  722.66KiB/s (00:00:00)
+[download]    3.00KiB at    1.18MiB/s (00:00:00)
+[download]    7.00KiB at  539.13KiB/s (00:00:00)
+[download]   15.00KiB at   99.05KiB/s (00:00:00)
+[download]   31.00KiB at  200.69KiB/s (00:00:00)
+[download]   63.00KiB at  399.91KiB/s (00:00:00)
+[download]  127.00KiB at  778.76KiB/s (00:00:00)
+[download]  134.79KiB at  815.50KiB/s (00:00:00)
+[download] 100% of  134.79KiB in 00:00:00 at 347.46KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\16 - ICT Forex - The ICT Smart Money Technique or SMT.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\16 - ICT Forex - The ICT Smart Money Technique or SMT.en.vtt
+
+[download]    1.00KiB at  750.05KiB/s (00:00:00)
+[download]    3.00KiB at    1.30MiB/s (00:00:00)
+[download]    7.00KiB at    2.27MiB/s (00:00:00)
+[download]   15.00KiB at    3.02MiB/s (00:00:00)
+[download]   31.00KiB at    1.28MiB/s (00:00:00)
+[download]   63.00KiB at  965.95KiB/s (00:00:00)
+[download]  127.00KiB at    1.08MiB/s (00:00:00)
+[download]  134.79KiB at    1.08MiB/s (00:00:00)
+[download] 100% of  134.79KiB in 00:00:00 at 441.44KiB/s
+[download] Downloading item 17 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=30petm6SZz0
+[youtube] Sleeping 1.0 seconds ...
+[youtube] 30petm6SZz0: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] 30petm6SZz0: Downloading android vr player API JSON
+[info] 30petm6SZz0: Downloading subtitles: en-orig, en
+[info] 30petm6SZz0: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\17 - ICT Forex - The ICT ATM Method.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\17 - ICT Forex - The ICT ATM Method.en-orig.vtt
+
+[download]    1.00KiB at  229.99KiB/s (00:00:00)
+[download]    3.00KiB at  466.50KiB/s (00:00:00)
+[download]    7.00KiB at  852.20KiB/s (00:00:00)
+[download]   15.00KiB at    1.45MiB/s (00:00:00)
+[download]   31.00KiB at    2.52MiB/s (00:00:00)
+[download]   63.00KiB at    4.33MiB/s (00:00:00)
+[download]  108.62KiB at    6.60MiB/s (00:00:00)
+[download] 100% of  108.62KiB in 00:00:00 at 295.72KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\17 - ICT Forex - The ICT ATM Method.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\17 - ICT Forex - The ICT ATM Method.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.92MiB/s (00:00:00)
+[download]    7.00KiB at    2.22MiB/s (00:00:00)
+[download]   15.00KiB at    1.61MiB/s (00:00:00)
+[download]   31.00KiB at  797.20KiB/s (00:00:00)
+[download]   63.00KiB at  300.55KiB/s (00:00:00)
+[download]  108.62KiB at  510.23KiB/s (00:00:00)
+[download] 100% of  108.62KiB in 00:00:00 at 223.68KiB/s
+[download] Downloading item 18 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=Cg0-CFJOJvg
+[youtube] Sleeping 1.0 seconds ...
+[youtube] Cg0-CFJOJvg: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] Cg0-CFJOJvg: Downloading android vr player API JSON
+[info] Cg0-CFJOJvg: Downloading subtitles: en-orig, en
+[info] Cg0-CFJOJvg: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\18 - OTE Primer - Intro To ICT Optimal Trade Entry.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\18 - OTE Primer - Intro To ICT Optimal Trade Entry.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.25MiB/s (00:00:00)
+[download]    7.00KiB at    4.23MiB/s (00:00:00)
+[download]   15.00KiB at    6.87MiB/s (00:00:00)
+[download]   31.00KiB at    1.73MiB/s (00:00:00)
+[download]   63.00KiB at    1.41MiB/s (00:00:00)
+[download]  127.00KiB at    1.35MiB/s (00:00:00)
+[download]  255.00KiB at    1.21MiB/s (00:00:00)
+[download]  356.92KiB at    1.09MiB/s (00:00:00)
+[download] 100% of  356.92KiB in 00:00:00 at 587.68KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\18 - OTE Primer - Intro To ICT Optimal Trade Entry.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\18 - OTE Primer - Intro To ICT Optimal Trade Entry.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.78MiB/s (00:00:00)
+[download]    7.00KiB at    2.29MiB/s (00:00:00)
+[download]   15.00KiB at    1.13MiB/s (00:00:00)
+[download]   31.00KiB at  970.82KiB/s (00:00:00)
+[download]   63.00KiB at    1.06MiB/s (00:00:00)
+[download]  127.00KiB at    1.03MiB/s (00:00:00)
+[download]  255.00KiB at    1.17MiB/s (00:00:00)
+[download]  356.92KiB at    1.15MiB/s (00:00:00)
+[download] 100% of  356.92KiB in 00:00:00 at 682.14KiB/s
+[download] Downloading item 19 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=nNEt9QTCTtk
+[youtube] Sleeping 1.0 seconds ...
+[youtube] nNEt9QTCTtk: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] nNEt9QTCTtk: Downloading android vr player API JSON
+[info] nNEt9QTCTtk: Downloading subtitles: en-orig, en
+[info] nNEt9QTCTtk: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\19 - ICT Forex - Target Selection & Profit Objectives.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\19 - ICT Forex - Target Selection & Profit Objectives.en-orig.vtt
+
+[download]    1.00KiB at  913.19KiB/s (00:00:00)
+[download]    3.00KiB at    1.75MiB/s (00:00:00)
+[download]    7.00KiB at    1.27MiB/s (00:00:00)
+[download]   15.00KiB at  739.07KiB/s (00:00:00)
+[download]   31.00KiB at  966.36KiB/s (00:00:00)
+[download]   63.00KiB at  968.51KiB/s (00:00:00)
+[download]  127.00KiB at  959.85KiB/s (00:00:00)
+[download]  132.94KiB at  997.44KiB/s (00:00:00)
+[download] 100% of  132.94KiB in 00:00:00 at 316.51KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\19 - ICT Forex - Target Selection & Profit Objectives.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\19 - ICT Forex - Target Selection & Profit Objectives.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.93MiB/s (00:00:00)
+[download]    7.00KiB at  552.60KiB/s (00:00:00)
+[download]   15.00KiB at  787.00KiB/s (00:00:00)
+[download]   31.00KiB at  988.33KiB/s (00:00:00)
+[download]   63.00KiB at    1.26MiB/s (00:00:00)
+[download]  127.00KiB at    2.47MiB/s (00:00:00)
+[download]  132.94KiB at    2.56MiB/s (00:00:00)
+[download] 100% of  132.94KiB in 00:00:00 at 272.12KiB/s
+[download] Downloading item 20 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=QSqIeu9tjek
+[youtube] Sleeping 1.0 seconds ...
+[youtube] QSqIeu9tjek: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] QSqIeu9tjek: Downloading android vr player API JSON
+[info] QSqIeu9tjek: Downloading subtitles: en-orig, en
+[info] QSqIeu9tjek: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\20 - ICT Forex - Trade Psychology & Effective Journaling.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\20 - ICT Forex - Trade Psychology & Effective Journaling.en-orig.vtt
+
+[download]    1.00KiB at  750.05KiB/s (00:00:00)
+[download]    3.00KiB at    1.28MiB/s (00:00:00)
+[download]    7.00KiB at  685.55KiB/s (00:00:00)
+[download]   15.00KiB at    1.29MiB/s (00:00:00)
+[download]   31.00KiB at    2.46MiB/s (00:00:00)
+[download]   63.00KiB at    2.00MiB/s (00:00:00)
+[download]  127.00KiB at    1.82MiB/s (00:00:00)
+[download]  255.00KiB at    1.21MiB/s (00:00:00)
+[download]  467.01KiB at  627.29KiB/s (00:00:01)
+[download] 100% of  467.01KiB in 00:00:01 at 441.44KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\20 - ICT Forex - Trade Psychology & Effective Journaling.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\20 - ICT Forex - Trade Psychology & Effective Journaling.en.vtt
+
+[download]    1.00KiB at  665.97KiB/s (00:00:00)
+[download]    3.00KiB at    1.26MiB/s (00:00:00)
+[download]    7.00KiB at    2.38MiB/s (00:00:00)
+[download]   15.00KiB at    1.24MiB/s (00:00:00)
+[download]   31.00KiB at    1.72MiB/s (00:00:00)
+[download]   63.00KiB at    1.09MiB/s (00:00:00)
+[download]  127.00KiB at    1.14MiB/s (00:00:00)
+[download]  255.00KiB at    1.13MiB/s (00:00:00)
+[download]  467.01KiB at  910.29KiB/s (00:00:00)
+[download] 100% of  467.01KiB in 00:00:00 at 645.70KiB/s
+[download] Downloading item 21 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=aWgYCfvnlqM
+[youtube] Sleeping 1.0 seconds ...
+[youtube] aWgYCfvnlqM: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] aWgYCfvnlqM: Downloading android vr player API JSON
+[info] aWgYCfvnlqM: Downloading subtitles: en-orig, en
+[info] aWgYCfvnlqM: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\21 - ICT Forex - COT Insights For Effective Price Action Analysis.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\21 - ICT Forex - COT Insights For Effective Price Action Analysis.en-orig.vtt
+
+[download]    1.00KiB at  681.11KiB/s (00:00:00)
+[download]    3.00KiB at    1.10MiB/s (00:00:00)
+[download]    7.00KiB at  624.15KiB/s (00:00:00)
+[download]   15.00KiB at  965.04KiB/s (00:00:00)
+[download]   31.00KiB at  906.67KiB/s (00:00:00)
+[download]   63.00KiB at  528.84KiB/s (00:00:00)
+[download]   68.50KiB at  564.19KiB/s (00:00:00)
+[download] 100% of   68.50KiB in 00:00:00 at 206.37KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\21 - ICT Forex - COT Insights For Effective Price Action Analysis.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\21 - ICT Forex - COT Insights For Effective Price Action Analysis.en.vtt
+
+[download]    1.00KiB at  536.01KiB/s (00:00:00)
+[download]    3.00KiB at  719.56KiB/s (00:00:00)
+[download]    7.00KiB at    1.14MiB/s (00:00:00)
+[download]   15.00KiB at    1.83MiB/s (00:00:00)
+[download]   31.00KiB at    3.12MiB/s (00:00:00)
+[download]   63.00KiB at    3.55MiB/s (00:00:00)
+[download]   68.50KiB at    3.49MiB/s (00:00:00)
+[download] 100% of   68.50KiB in 00:00:00 at 207.78KiB/s
+[download] Downloading item 22 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=uxsmSMsuleY
+[youtube] Sleeping 1.0 seconds ...
+[youtube] uxsmSMsuleY: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] uxsmSMsuleY: Downloading android vr player API JSON
+[info] uxsmSMsuleY: Downloading subtitles: en-orig, en
+[info] uxsmSMsuleY: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\22 - ICT Forex - How To Find Explosive Price Moves Before They Happen.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\22 - ICT Forex - How To Find Explosive Price Moves Before They Happen.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.68MiB/s (00:00:00)
+[download]    7.00KiB at  712.61KiB/s (00:00:00)
+[download]   15.00KiB at  665.94KiB/s (00:00:00)
+[download]   31.00KiB at    1.12MiB/s (00:00:00)
+[download]   63.00KiB at 1013.30KiB/s (00:00:00)
+[download]  120.05KiB at    1.04MiB/s (00:00:00)
+[download] 100% of  120.05KiB in 00:00:00 at 384.59KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\22 - ICT Forex - How To Find Explosive Price Moves Before They Happen.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\22 - ICT Forex - How To Find Explosive Price Moves Before They Happen.en.vtt
+
+[download]    1.00KiB at  593.51KiB/s (00:00:00)
+[download]    3.00KiB at    1.01MiB/s (00:00:00)
+[download]    7.00KiB at  477.73KiB/s (00:00:00)
+[download]   15.00KiB at  689.50KiB/s (00:00:00)
+[download]   31.00KiB at    1.25MiB/s (00:00:00)
+[download]   63.00KiB at    1.44MiB/s (00:00:00)
+[download]  120.05KiB at    1.22MiB/s (00:00:00)
+[download] 100% of  120.05KiB in 00:00:00 at 422.45KiB/s
+[download] Downloading item 23 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=YcAfcpUCbDw
+[youtube] Sleeping 1.0 seconds ...
+[youtube] YcAfcpUCbDw: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] YcAfcpUCbDw: Downloading android vr player API JSON
+[info] YcAfcpUCbDw: Downloading subtitles: en-orig, en
+[info] YcAfcpUCbDw: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\23 - ICT Forex - Higher Time Frame Concepts.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\23 - ICT Forex - Higher Time Frame Concepts.en-orig.vtt
+
+[download]    1.00KiB at  620.37KiB/s (00:00:00)
+[download]    3.00KiB at    1.07MiB/s (00:00:00)
+[download]    7.00KiB at    1.23MiB/s (00:00:00)
+[download]   15.00KiB at  815.40KiB/s (00:00:00)
+[download]   31.00KiB at    1.02MiB/s (00:00:00)
+[download]   63.00KiB at  760.47KiB/s (00:00:00)
+[download]  127.00KiB at  734.97KiB/s (00:00:00)
+[download]  217.40KiB at  994.85KiB/s (00:00:00)
+[download] 100% of  217.40KiB in 00:00:00 at 520.67KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\23 - ICT Forex - Higher Time Frame Concepts.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\23 - ICT Forex - Higher Time Frame Concepts.en.vtt
+
+[download]    1.00KiB at  427.51KiB/s (00:00:00)
+[download]    3.00KiB at  863.03KiB/s (00:00:00)
+[download]    7.00KiB at    1.17MiB/s (00:00:00)
+[download]   15.00KiB at  876.26KiB/s (00:00:00)
+[download]   31.00KiB at    1.25MiB/s (00:00:00)
+[download]   63.00KiB at    1.16MiB/s (00:00:00)
+[download]  127.00KiB at    1.02MiB/s (00:00:00)
+[download]  217.40KiB at  761.83KiB/s (00:00:00)
+[download] 100% of  217.40KiB in 00:00:00 at 418.90KiB/s
+[download] Downloading item 24 of 24
+[youtube] Extracting URL: https://www.youtube.com/watch?v=9CCrlTIrkxw
+[youtube] Sleeping 1.0 seconds ...
+[youtube] 9CCrlTIrkxw: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] 9CCrlTIrkxw: Downloading android vr player API JSON
+[info] 9CCrlTIrkxw: Downloading subtitles: en-orig, en
+[info] 9CCrlTIrkxw: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\24 - ICT Forex - Secrets To Swing Trading.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\24 - ICT Forex - Secrets To Swing Trading.en-orig.vtt
+
+[download]    1.00KiB at  907.47KiB/s (00:00:00)
+[download]    3.00KiB at    1.39MiB/s (00:00:00)
+[download]    7.00KiB at    1.14MiB/s (00:00:00)
+[download]   15.00KiB at    1.06MiB/s (00:00:00)
+[download]   31.00KiB at 1008.36KiB/s (00:00:00)
+[download]   63.00KiB at  982.88KiB/s (00:00:00)
+[download]  127.00KiB at  937.47KiB/s (00:00:00)
+[download]  208.17KiB at  994.82KiB/s (00:00:00)
+[download] 100% of  208.17KiB in 00:00:00 at 474.51KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\forex\24 - ICT Forex - Secrets To Swing Trading.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\forex\24 - ICT Forex - Secrets To Swing Trading.en.vtt
+
+[download]    1.00KiB at  702.56KiB/s (00:00:00)
+[download]    3.00KiB at    1.11MiB/s (00:00:00)
+[download]    7.00KiB at    1.13MiB/s (00:00:00)
+[download]   15.00KiB at  978.96KiB/s (00:00:00)
+[download]   31.00KiB at    1.02MiB/s (00:00:00)
+[download]   63.00KiB at  810.41KiB/s (00:00:00)
+[download]  127.00KiB at  972.85KiB/s (00:00:00)
+[download]  208.17KiB at    1.04MiB/s (00:00:00)
+[download] 100% of  208.17KiB in 00:00:00 at 497.55KiB/s
+[download] Finished downloading playlist: ICT Forex - Market Maker Primer Course

@@ -1,0 +1,1331 @@
+[youtube:tab] Extracting URL: https://www.youtube.com/playlist?list=PLVgHx4Z63paYiFGQ56PjTF1PGePL3r69s
+[youtube:tab] PLVgHx4Z63paYiFGQ56PjTF1PGePL3r69s: Downloading webpage
+[youtube:tab] Sleeping 1.0 seconds ...
+[youtube:tab] PLVgHx4Z63paYiFGQ56PjTF1PGePL3r69s: Redownloading playlist API JSON with unavailable videos
+[download] Downloading playlist: 2022 ICT Mentorship
+[youtube:tab] Playlist 2022 ICT Mentorship: Downloading 41 items of 41
+[download] Downloading item 1 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=kt6V4ai60fI
+[youtube] Sleeping 1.0 seconds ...
+[youtube] kt6V4ai60fI: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] kt6V4ai60fI: Downloading android vr player API JSON
+[youtube] Sleeping 1.0 seconds ...
+[youtube] kt6V4ai60fI: Downloading player 959dabb2-main
+[youtube] [jsc:node] Solving JS challenges using node
+[info] kt6V4ai60fI: Downloading subtitles: en-orig, en
+[info] kt6V4ai60fI: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\01 - ICT Mentorship 2022 Introduction.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\01 - ICT Mentorship 2022 Introduction.en-orig.vtt
+
+[download]    1.00KiB at  880.23KiB/s (00:00:00)
+[download]    3.00KiB at    1.47MiB/s (00:00:00)
+[download]    7.00KiB at    1.35MiB/s (00:00:00)
+[download]   15.00KiB at    2.36MiB/s (00:00:00)
+[download]   31.00KiB at    4.24MiB/s (00:00:00)
+[download]   63.00KiB at    3.99MiB/s (00:00:00)
+[download]  127.00KiB at    3.39MiB/s (00:00:00)
+[download]  255.00KiB at    3.92MiB/s (00:00:00)
+[download]  257.43KiB at    3.90MiB/s (00:00:00)
+[download] 100% of  257.43KiB in 00:00:00 at 639.27KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\01 - ICT Mentorship 2022 Introduction.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\01 - ICT Mentorship 2022 Introduction.en.vtt
+
+[download]    1.00KiB at  321.06KiB/s (00:00:00)
+[download]    3.00KiB at  674.11KiB/s (00:00:00)
+[download]    7.00KiB at    1.28MiB/s (00:00:00)
+[download]   15.00KiB at    2.25MiB/s (00:00:00)
+[download]   31.00KiB at    3.98MiB/s (00:00:00)
+[download]   63.00KiB at    5.35MiB/s (00:00:00)
+[download]  127.00KiB at    6.06MiB/s (00:00:00)
+[download]  255.00KiB at    5.66MiB/s (00:00:00)
+[download]  257.43KiB at    5.59MiB/s (00:00:00)
+[download] 100% of  257.43KiB in 00:00:00 at 855.57KiB/s
+[download] Downloading item 2 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=tmeCWULSTHc
+[youtube] Sleeping 1.0 seconds ...
+[youtube] tmeCWULSTHc: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] tmeCWULSTHc: Downloading android vr player API JSON
+[info] tmeCWULSTHc: Downloading subtitles: en-orig, en
+[info] tmeCWULSTHc: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\02 - 2022 ICT Mentorship Episode 2.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\02 - 2022 ICT Mentorship Episode 2.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.78MiB/s (00:00:00)
+[download]    7.00KiB at    1.42MiB/s (00:00:00)
+[download]   15.00KiB at    2.53MiB/s (00:00:00)
+[download]   31.00KiB at    3.04MiB/s (00:00:00)
+[download]   63.00KiB at    5.58MiB/s (00:00:00)
+[download]  127.00KiB at    5.84MiB/s (00:00:00)
+[download]  255.00KiB at    4.63MiB/s (00:00:00)
+[download]  424.92KiB at    5.16MiB/s (00:00:00)
+[download] 100% of  424.92KiB in 00:00:00 at 1.30MiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\02 - 2022 ICT Mentorship Episode 2.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\02 - 2022 ICT Mentorship Episode 2.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.30MiB/s (00:00:00)
+[download]    7.00KiB at    3.58MiB/s (00:00:00)
+[download]   15.00KiB at    5.20MiB/s (00:00:00)
+[download]   31.00KiB at    8.57MiB/s (00:00:00)
+[download]   63.00KiB at   14.86MiB/s (00:00:00)
+[download]  127.00KiB at   13.41MiB/s (00:00:00)
+[download]  255.00KiB at    4.12MiB/s (00:00:00)
+[download]  424.92KiB at    5.34MiB/s (00:00:00)
+[download] 100% of  424.92KiB in 00:00:00 at 1.25MiB/s
+[download] Downloading item 3 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=nQfHZ2DEJ8c
+[youtube] Sleeping 1.0 seconds ...
+[youtube] nQfHZ2DEJ8c: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] nQfHZ2DEJ8c: Downloading android vr player API JSON
+[info] nQfHZ2DEJ8c: Downloading subtitles: en-orig, en
+[info] nQfHZ2DEJ8c: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\03 - 2022 ICT Mentorship Episode 3.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\03 - 2022 ICT Mentorship Episode 3.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.90MiB/s (00:00:00)
+[download]    7.00KiB at    3.37MiB/s (00:00:00)
+[download]   15.00KiB at    1.78MiB/s (00:00:00)
+[download]   31.00KiB at    3.12MiB/s (00:00:00)
+[download]   63.00KiB at  447.83KiB/s (00:00:00)
+[download]  127.00KiB at  891.24KiB/s (00:00:00)
+[download]  255.00KiB at    1.73MiB/s (00:00:00)
+[download]  437.55KiB at    2.91MiB/s (00:00:00)
+[download] 100% of  437.55KiB in 00:00:00 at 1.05MiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\03 - 2022 ICT Mentorship Episode 3.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\03 - 2022 ICT Mentorship Episode 3.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.97MiB/s (00:00:00)
+[download]    7.00KiB at  850.03KiB/s (00:00:00)
+[download]   15.00KiB at    1.63MiB/s (00:00:00)
+[download]   31.00KiB at    3.19MiB/s (00:00:00)
+[download]   63.00KiB at    5.02MiB/s (00:00:00)
+[download]  127.00KiB at  688.57KiB/s (00:00:00)
+[download]  255.00KiB at    1.34MiB/s (00:00:00)
+[download]  437.55KiB at    2.27MiB/s (00:00:00)
+[download] 100% of  437.55KiB in 00:00:00 at 975.66KiB/s
+[download] Downloading item 4 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=L-ReMHiavPM
+[youtube] Sleeping 1.0 seconds ...
+[youtube] L-ReMHiavPM: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] L-ReMHiavPM: Downloading android vr player API JSON
+[info] L-ReMHiavPM: Downloading subtitles: en-orig, en
+[info] L-ReMHiavPM: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\04 - 2022 ICT Mentorship Episode 4.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\04 - 2022 ICT Mentorship Episode 4.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.89MiB/s (00:00:00)
+[download]    7.00KiB at    3.33MiB/s (00:00:00)
+[download]   15.00KiB at    5.37MiB/s (00:00:00)
+[download]   31.00KiB at    8.58MiB/s (00:00:00)
+[download]   63.00KiB at   13.81MiB/s (00:00:00)
+[download]   67.07KiB at   12.81MiB/s (00:00:00)
+[download] 100% of   67.07KiB in 00:00:00 at 280.96KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\04 - 2022 ICT Mentorship Episode 4.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\04 - 2022 ICT Mentorship Episode 4.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.01MiB/s (00:00:00)
+[download]    7.00KiB at    2.50MiB/s (00:00:00)
+[download]   15.00KiB at    4.06MiB/s (00:00:00)
+[download]   31.00KiB at    7.05MiB/s (00:00:00)
+[download]   63.00KiB at    8.27MiB/s (00:00:00)
+[download]   67.07KiB at    8.27MiB/s (00:00:00)
+[download] 100% of   67.07KiB in 00:00:00 at 323.12KiB/s
+[download] Downloading item 5 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=N29ZJ-o31xs
+[youtube] Sleeping 1.0 seconds ...
+[youtube] N29ZJ-o31xs: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] N29ZJ-o31xs: Downloading android vr player API JSON
+[info] N29ZJ-o31xs: Downloading subtitles: en-orig, en
+[info] N29ZJ-o31xs: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\05 - 2022 ICT Mentorship Episode 5.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\05 - 2022 ICT Mentorship Episode 5.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.77MiB/s (00:00:00)
+[download]    7.00KiB at    3.10MiB/s (00:00:00)
+[download]   15.00KiB at    4.97MiB/s (00:00:00)
+[download]   31.00KiB at    6.39MiB/s (00:00:00)
+[download]   63.00KiB at    8.31MiB/s (00:00:00)
+[download]  127.00KiB at    7.59MiB/s (00:00:00)
+[download]  255.00KiB at    6.90MiB/s (00:00:00)
+[download]  366.18KiB at    6.91MiB/s (00:00:00)
+[download] 100% of  366.18KiB in 00:00:00 at 1.09MiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\05 - 2022 ICT Mentorship Episode 5.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\05 - 2022 ICT Mentorship Episode 5.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.87MiB/s (00:00:00)
+[download]    7.00KiB at    3.19MiB/s (00:00:00)
+[download]   15.00KiB at    4.88MiB/s (00:00:00)
+[download]   31.00KiB at    7.92MiB/s (00:00:00)
+[download]   63.00KiB at    8.70MiB/s (00:00:00)
+[download]  127.00KiB at    7.87MiB/s (00:00:00)
+[download]  255.00KiB at    8.98MiB/s (00:00:00)
+[download]  366.18KiB at    8.14MiB/s (00:00:00)
+[download] 100% of  366.18KiB in 00:00:00 at 1.21MiB/s
+[download] Downloading item 6 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=Bkt8B3kLATQ
+[youtube] Sleeping 1.0 seconds ...
+[youtube] Bkt8B3kLATQ: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] Bkt8B3kLATQ: Downloading android vr player API JSON
+[info] Bkt8B3kLATQ: Downloading subtitles: en-orig, en
+[info] Bkt8B3kLATQ: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\06 - 2022 ICT Mentorship Episode 6.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\06 - 2022 ICT Mentorship Episode 6.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at  Unknown B/s (00:00:00)
+[download]    7.00KiB at    5.56MiB/s (00:00:00)
+[download]   15.00KiB at    8.97MiB/s (00:00:00)
+[download]   31.00KiB at    6.68MiB/s (00:00:00)
+[download]   63.00KiB at    2.80MiB/s (00:00:00)
+[download]  127.00KiB at    3.44MiB/s (00:00:00)
+[download]  255.00KiB at    3.25MiB/s (00:00:00)
+[download]  380.28KiB at    4.15MiB/s (00:00:00)
+[download] 100% of  380.28KiB in 00:00:00 at 1.07MiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\06 - 2022 ICT Mentorship Episode 6.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\06 - 2022 ICT Mentorship Episode 6.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.88MiB/s (00:00:00)
+[download]    7.00KiB at    3.31MiB/s (00:00:00)
+[download]   15.00KiB at    2.00MiB/s (00:00:00)
+[download]   31.00KiB at    3.73MiB/s (00:00:00)
+[download]   63.00KiB at    6.74MiB/s (00:00:00)
+[download]  127.00KiB at    8.38MiB/s (00:00:00)
+[download]  255.00KiB at   10.03MiB/s (00:00:00)
+[download]  380.28KiB at    7.61MiB/s (00:00:00)
+[download] 100% of  380.28KiB in 00:00:00 at 1.27MiB/s
+[download] Downloading item 7 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=G8-z91acgG4
+[youtube] Sleeping 1.0 seconds ...
+[youtube] G8-z91acgG4: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] G8-z91acgG4: Downloading android vr player API JSON
+[info] G8-z91acgG4: Downloading subtitles: en-orig, en
+[info] G8-z91acgG4: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\07 - 2022 ICT Mentorship Episode 7.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\07 - 2022 ICT Mentorship Episode 7.en-orig.vtt
+
+[download]    1.00KiB at  862.14KiB/s (00:00:00)
+[download]    3.00KiB at    1.51MiB/s (00:00:00)
+[download]    7.00KiB at    2.72MiB/s (00:00:00)
+[download]   15.00KiB at    4.40MiB/s (00:00:00)
+[download]   31.00KiB at    8.11MiB/s (00:00:00)
+[download]   63.00KiB at   14.98MiB/s (00:00:00)
+[download]  127.00KiB at    5.63MiB/s (00:00:00)
+[download]  255.00KiB at    5.34MiB/s (00:00:00)
+[download]  499.56KiB at    6.47MiB/s (00:00:00)
+[download] 100% of  499.56KiB in 00:00:00 at 1.36MiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\07 - 2022 ICT Mentorship Episode 7.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\07 - 2022 ICT Mentorship Episode 7.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.74MiB/s (00:00:00)
+[download]    7.00KiB at    2.98MiB/s (00:00:00)
+[download]   15.00KiB at    2.17MiB/s (00:00:00)
+[download]   31.00KiB at    3.97MiB/s (00:00:00)
+[download]   63.00KiB at    5.35MiB/s (00:00:00)
+[download]  127.00KiB at    6.85MiB/s (00:00:00)
+[download]  255.00KiB at    6.82MiB/s (00:00:00)
+[download]  499.56KiB at    7.08MiB/s (00:00:00)
+[download] 100% of  499.56KiB in 00:00:00 at 1.41MiB/s
+[download] Downloading item 8 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=7rbV8aWkcqY
+[youtube] Sleeping 1.0 seconds ...
+[youtube] 7rbV8aWkcqY: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] 7rbV8aWkcqY: Downloading android vr player API JSON
+[info] 7rbV8aWkcqY: Downloading subtitles: en-orig, en
+[info] 7rbV8aWkcqY: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\08 - 2022 ICT Mentorship Episode 8.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\08 - 2022 ICT Mentorship Episode 8.en-orig.vtt
+
+[download]    1.00KiB at  309.34KiB/s (00:00:00)
+[download]    3.00KiB at  743.63KiB/s (00:00:00)
+[download]    7.00KiB at  582.89KiB/s (00:00:00)
+[download]   15.00KiB at    1.12MiB/s (00:00:00)
+[download]   31.00KiB at    2.16MiB/s (00:00:00)
+[download]   63.00KiB at    4.12MiB/s (00:00:00)
+[download]   99.77KiB at    5.17MiB/s (00:00:00)
+[download] 100% of   99.77KiB in 00:00:00 at 395.59KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\08 - 2022 ICT Mentorship Episode 8.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\08 - 2022 ICT Mentorship Episode 8.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at  Unknown B/s (00:00:00)
+[download]    7.00KiB at    5.77MiB/s (00:00:00)
+[download]   15.00KiB at    9.17MiB/s (00:00:00)
+[download]   31.00KiB at   10.38MiB/s (00:00:00)
+[download]   63.00KiB at   18.48MiB/s (00:00:00)
+[download]   99.77KiB at   20.23MiB/s (00:00:00)
+[download] 100% of   99.77KiB in 00:00:00 at 388.53KiB/s
+[download] Downloading item 9 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=iZLXnNiZm_s
+[youtube] Sleeping 1.0 seconds ...
+[youtube] iZLXnNiZm_s: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] iZLXnNiZm_s: Downloading android vr player API JSON
+[info] iZLXnNiZm_s: Downloading subtitles: en-orig, en
+[info] iZLXnNiZm_s: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\09 - 2022 ICT Mentorship Episode 9.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\09 - 2022 ICT Mentorship Episode 9.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.58MiB/s (00:00:00)
+[download]    7.00KiB at    4.88MiB/s (00:00:00)
+[download]   15.00KiB at    2.29MiB/s (00:00:00)
+[download]   31.00KiB at    4.16MiB/s (00:00:00)
+[download]   63.00KiB at    6.76MiB/s (00:00:00)
+[download]  127.00KiB at    5.58MiB/s (00:00:00)
+[download]  221.24KiB at  797.24KiB/s (00:00:00)
+[download] 100% of  221.24KiB in 00:00:00 at 418.67KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\09 - 2022 ICT Mentorship Episode 9.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\09 - 2022 ICT Mentorship Episode 9.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.01MiB/s (00:00:00)
+[download]    7.00KiB at   31.88KiB/s (00:00:00)
+[download]   15.00KiB at   39.73KiB/s (00:00:00)
+[download]   31.00KiB at   45.41KiB/s (00:00:01)
+[download]   63.00KiB at   55.03KiB/s (00:00:01)
+[download]  127.00KiB at   69.37KiB/s (00:00:02)
+[download]  220.31KiB at   82.04KiB/s (00:00:03)
+[download]  221.24KiB at   82.36KiB/s (00:00:03)
+[download] 100% of  221.24KiB in 00:00:03 at 72.37KiB/s
+[download] Downloading item 10 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=S9ORTYmXwdE
+[youtube] Sleeping 1.0 seconds ...
+[youtube] S9ORTYmXwdE: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] S9ORTYmXwdE: Downloading android vr player API JSON
+[info] S9ORTYmXwdE: Downloading subtitles: en-orig, en
+[info] S9ORTYmXwdE: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\10 - 2022 ICT Mentorship Episode 10.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\10 - 2022 ICT Mentorship Episode 10.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.85MiB/s (00:00:00)
+[download]    7.00KiB at  132.05KiB/s (00:00:00)
+[download]   15.00KiB at  144.42KiB/s (00:00:00)
+[download]   31.00KiB at  161.95KiB/s (00:00:00)
+[download]   63.00KiB at  174.83KiB/s (00:00:00)
+[download]  127.00KiB at  203.99KiB/s (00:00:00)
+[download]  255.00KiB at  213.48KiB/s (00:00:01)
+[download]  478.80KiB at  232.33KiB/s (00:00:02)
+[download]  563.90KiB at  239.36KiB/s (00:00:02)
+[download] 100% of  563.90KiB in 00:00:02 at 211.69KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\10 - 2022 ICT Mentorship Episode 10.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\10 - 2022 ICT Mentorship Episode 10.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.87MiB/s (00:00:00)
+[download]    7.00KiB at  215.70KiB/s (00:00:00)
+[download]   15.00KiB at  320.15KiB/s (00:00:00)
+[download]   31.00KiB at  303.62KiB/s (00:00:00)
+[download]   63.00KiB at  337.04KiB/s (00:00:00)
+[download]  127.00KiB at  320.99KiB/s (00:00:00)
+[download]  255.00KiB at  328.00KiB/s (00:00:01)
+[download]  511.00KiB at  287.71KiB/s (00:00:02)
+[download]  563.90KiB at  297.05KiB/s (00:00:02)
+[download] 100% of  563.90KiB in 00:00:02 at 260.05KiB/s
+[download] Downloading item 11 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=Sqw2bww93Zo
+[youtube] Sleeping 1.0 seconds ...
+[youtube] Sqw2bww93Zo: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] Sqw2bww93Zo: Downloading android vr player API JSON
+[info] Sqw2bww93Zo: Downloading subtitles: en-orig, en
+[info] Sqw2bww93Zo: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\11 - 2022 ICT Mentorship Episode 11.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\11 - 2022 ICT Mentorship Episode 11.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.47MiB/s (00:00:00)
+[download]    7.00KiB at  532.75KiB/s (00:00:00)
+[download]   15.00KiB at  455.01KiB/s (00:00:00)
+[download]   31.00KiB at  443.33KiB/s (00:00:00)
+[download]   63.00KiB at  491.96KiB/s (00:00:00)
+[download]  127.00KiB at  340.25KiB/s (00:00:00)
+[download]  255.00KiB at  475.83KiB/s (00:00:00)
+[download]  258.21KiB at  480.05KiB/s (00:00:00)
+[download] 100% of  258.21KiB in 00:00:00 at 315.89KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\11 - 2022 ICT Mentorship Episode 11.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\11 - 2022 ICT Mentorship Episode 11.en.vtt
+
+[download]    1.00KiB at  419.89KiB/s (00:00:00)
+[download]    3.00KiB at  961.41KiB/s (00:00:00)
+[download]    7.00KiB at  624.96KiB/s (00:00:00)
+[download]   15.00KiB at  607.26KiB/s (00:00:00)
+[download]   31.00KiB at  553.81KiB/s (00:00:00)
+[download]   63.00KiB at  582.31KiB/s (00:00:00)
+[download]  127.00KiB at  606.91KiB/s (00:00:00)
+[download]  255.00KiB at  587.64KiB/s (00:00:00)
+[download]  258.21KiB at  593.90KiB/s (00:00:00)
+[download] 100% of  258.21KiB in 00:00:00 at 383.39KiB/s
+[download] Downloading item 12 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=8GkQfdAXZP0
+[youtube] Sleeping 1.0 seconds ...
+[youtube] 8GkQfdAXZP0: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] 8GkQfdAXZP0: Downloading android vr player API JSON
+[info] 8GkQfdAXZP0: Downloading subtitles: en-orig, en
+[info] 8GkQfdAXZP0: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\12 - 2022 ICT Mentorship Episode 12.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\12 - 2022 ICT Mentorship Episode 12.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.82MiB/s (00:00:00)
+[download]    7.00KiB at  529.99KiB/s (00:00:00)
+[download]   15.00KiB at  351.81KiB/s (00:00:00)
+[download]   31.00KiB at  576.42KiB/s (00:00:00)
+[download]   63.00KiB at  698.24KiB/s (00:00:00)
+[download]  127.00KiB at  685.08KiB/s (00:00:00)
+[download]  255.00KiB at  665.82KiB/s (00:00:00)
+[download]  511.00KiB at  673.43KiB/s (00:00:01)
+[download]  563.38KiB at  681.89KiB/s (00:00:01)
+[download] 100% of  563.38KiB in 00:00:01 at 494.15KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\12 - 2022 ICT Mentorship Episode 12.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\12 - 2022 ICT Mentorship Episode 12.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.40MiB/s (00:00:00)
+[download]    7.00KiB at  499.07KiB/s (00:00:00)
+[download]   15.00KiB at  766.14KiB/s (00:00:00)
+[download]   31.00KiB at  626.23KiB/s (00:00:00)
+[download]   63.00KiB at  610.47KiB/s (00:00:00)
+[download]  127.00KiB at  689.22KiB/s (00:00:00)
+[download]  255.00KiB at  687.70KiB/s (00:00:00)
+[download]  511.00KiB at  745.93KiB/s (00:00:00)
+[download]  563.38KiB at  760.87KiB/s (00:00:01)
+[download] 100% of  563.38KiB in 00:00:01 at 552.61KiB/s
+[download] Downloading item 13 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=tpPtItWqmlg
+[youtube] Sleeping 1.0 seconds ...
+[youtube] tpPtItWqmlg: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] tpPtItWqmlg: Downloading android vr player API JSON
+[info] tpPtItWqmlg: Downloading subtitles: en-orig, en
+[info] tpPtItWqmlg: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\13 - 2022 ICT Mentorship Episode 13.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\13 - 2022 ICT Mentorship Episode 13.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.95MiB/s (00:00:00)
+[download]    7.00KiB at    3.40MiB/s (00:00:00)
+[download]   15.00KiB at    4.70MiB/s (00:00:00)
+[download]   31.00KiB at    1.44MiB/s (00:00:00)
+[download]   63.00KiB at  702.46KiB/s (00:00:00)
+[download]  127.00KiB at  925.62KiB/s (00:00:00)
+[download]  255.00KiB at  860.24KiB/s (00:00:00)
+[download]  374.52KiB at  833.78KiB/s (00:00:00)
+[download] 100% of  374.52KiB in 00:00:00 at 495.02KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\13 - 2022 ICT Mentorship Episode 13.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\13 - 2022 ICT Mentorship Episode 13.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.37MiB/s (00:00:00)
+[download]    7.00KiB at    4.26MiB/s (00:00:00)
+[download]   15.00KiB at    1.75MiB/s (00:00:00)
+[download]   31.00KiB at    1.43MiB/s (00:00:00)
+[download]   63.00KiB at  744.10KiB/s (00:00:00)
+[download]  127.00KiB at  736.75KiB/s (00:00:00)
+[download]  255.00KiB at  889.16KiB/s (00:00:00)
+[download]  374.52KiB at  846.21KiB/s (00:00:00)
+[download] 100% of  374.52KiB in 00:00:00 at 519.80KiB/s
+[download] Downloading item 14 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=NUdu1n-ML98
+[youtube] Sleeping 1.0 seconds ...
+[youtube] NUdu1n-ML98: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] NUdu1n-ML98: Downloading android vr player API JSON
+[info] NUdu1n-ML98: Downloading subtitles: en-orig, en
+[info] NUdu1n-ML98: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\14 - 2022 ICT Mentorship Episode 14.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\14 - 2022 ICT Mentorship Episode 14.en-orig.vtt
+
+[download]    1.00KiB at  663.97KiB/s (00:00:00)
+[download]    3.00KiB at    1.18MiB/s (00:00:00)
+[download]    7.00KiB at  581.67KiB/s (00:00:00)
+[download]   15.00KiB at  582.61KiB/s (00:00:00)
+[download]   31.00KiB at    1.05MiB/s (00:00:00)
+[download]   31.54KiB at    1.03MiB/s (00:00:00)
+[download] 100% of   31.54KiB in 00:00:00 at 125.31KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\14 - 2022 ICT Mentorship Episode 14.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\14 - 2022 ICT Mentorship Episode 14.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.90MiB/s (00:00:00)
+[download]    7.00KiB at    3.03MiB/s (00:00:00)
+[download]   15.00KiB at    4.73MiB/s (00:00:00)
+[download]   31.00KiB at    7.88MiB/s (00:00:00)
+[download]   31.54KiB at    7.05MiB/s (00:00:00)
+[download] 100% of   31.54KiB in 00:00:00 at 130.00KiB/s
+[download] Downloading item 15 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=tGxuitjtO88
+[youtube] Sleeping 1.0 seconds ...
+[youtube] tGxuitjtO88: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] tGxuitjtO88: Downloading android vr player API JSON
+[info] tGxuitjtO88: Downloading subtitles: en-orig, en
+[info] tGxuitjtO88: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\15 - 2022 ICT Mentorship Episode 15.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\15 - 2022 ICT Mentorship Episode 15.en-orig.vtt
+
+[download]    1.00KiB at  310.32KiB/s (00:00:00)
+[download]    3.00KiB at  705.04KiB/s (00:00:00)
+[download]    7.00KiB at  369.61KiB/s (00:00:00)
+[download]   15.00KiB at  736.64KiB/s (00:00:00)
+[download]   31.00KiB at  758.80KiB/s (00:00:00)
+[download]   62.22KiB at  867.30KiB/s (00:00:00)
+[download] 100% of   62.22KiB in 00:00:00 at 205.70KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\15 - 2022 ICT Mentorship Episode 15.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\15 - 2022 ICT Mentorship Episode 15.en.vtt
+
+[download]    1.00KiB at  763.71KiB/s (00:00:00)
+[download]    3.00KiB at    1.30MiB/s (00:00:00)
+[download]    7.00KiB at    2.39MiB/s (00:00:00)
+[download]   15.00KiB at    1.19MiB/s (00:00:00)
+[download]   31.00KiB at    1.21MiB/s (00:00:00)
+[download]   62.22KiB at    1.11MiB/s (00:00:00)
+[download] 100% of   62.22KiB in 00:00:00 at 226.24KiB/s
+[download] Downloading item 16 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=EpGQnhjXBq8
+[youtube] Sleeping 1.0 seconds ...
+[youtube] EpGQnhjXBq8: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] EpGQnhjXBq8: Downloading android vr player API JSON
+[info] EpGQnhjXBq8: Downloading subtitles: en-orig, en
+[info] EpGQnhjXBq8: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\16 - 2022 ICT Mentorship Episode 16.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\16 - 2022 ICT Mentorship Episode 16.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.44MiB/s (00:00:00)
+[download]    7.00KiB at    4.34MiB/s (00:00:00)
+[download]   15.00KiB at    7.12MiB/s (00:00:00)
+[download]   31.00KiB at    1.56MiB/s (00:00:00)
+[download]   63.00KiB at    1.21MiB/s (00:00:00)
+[download]  127.00KiB at    1.12MiB/s (00:00:00)
+[download]  255.00KiB at  925.55KiB/s (00:00:00)
+[download]  446.95KiB at  852.39KiB/s (00:00:00)
+[download] 100% of  446.95KiB in 00:00:00 at 552.40KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\16 - 2022 ICT Mentorship Episode 16.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\16 - 2022 ICT Mentorship Episode 16.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.97MiB/s (00:00:00)
+[download]    7.00KiB at    1.77MiB/s (00:00:00)
+[download]   15.00KiB at    2.16MiB/s (00:00:00)
+[download]   31.00KiB at    1.20MiB/s (00:00:00)
+[download]   63.00KiB at  865.20KiB/s (00:00:00)
+[download]  127.00KiB at  975.98KiB/s (00:00:00)
+[download]  255.00KiB at  815.48KiB/s (00:00:00)
+[download]  446.95KiB at  777.74KiB/s (00:00:00)
+[download] 100% of  446.95KiB in 00:00:00 at 528.70KiB/s
+[download] Downloading item 17 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=5WIqHJDQ_p4
+[youtube] Sleeping 1.0 seconds ...
+[youtube] 5WIqHJDQ_p4: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] 5WIqHJDQ_p4: Downloading android vr player API JSON
+[info] 5WIqHJDQ_p4: Downloading subtitles: en-orig, en
+[info] 5WIqHJDQ_p4: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\17 - 2022 ICT Mentorship Episode 17.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\17 - 2022 ICT Mentorship Episode 17.en-orig.vtt
+
+[download]    1.00KiB at  714.29KiB/s (00:00:00)
+[download]    3.00KiB at    1.21MiB/s (00:00:00)
+[download]    7.00KiB at    2.05MiB/s (00:00:00)
+[download]   15.00KiB at    2.98MiB/s (00:00:00)
+[download]   31.00KiB at    1.46MiB/s (00:00:00)
+[download]   63.00KiB at  537.36KiB/s (00:00:00)
+[download]  127.00KiB at  995.79KiB/s (00:00:00)
+[download]  215.86KiB at 1001.60KiB/s (00:00:00)
+[download] 100% of  215.86KiB in 00:00:00 at 441.74KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\17 - 2022 ICT Mentorship Episode 17.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\17 - 2022 ICT Mentorship Episode 17.en.vtt
+
+[download]    1.00KiB at  913.99KiB/s (00:00:00)
+[download]    3.00KiB at    1.36MiB/s (00:00:00)
+[download]    7.00KiB at  546.70KiB/s (00:00:00)
+[download]   15.00KiB at  743.15KiB/s (00:00:00)
+[download]   31.00KiB at  905.42KiB/s (00:00:00)
+[download]   63.00KiB at  876.60KiB/s (00:00:00)
+[download]  127.00KiB at  810.48KiB/s (00:00:00)
+[download]  215.86KiB at  937.68KiB/s (00:00:00)
+[download] 100% of  215.86KiB in 00:00:00 at 458.01KiB/s
+[download] Downloading item 18 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=eai0nHhAC8w
+[youtube] Sleeping 1.0 seconds ...
+[youtube] eai0nHhAC8w: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] eai0nHhAC8w: Downloading android vr player API JSON
+[info] eai0nHhAC8w: Downloading subtitles: en-orig, en
+[info] eai0nHhAC8w: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\18 - 2022 ICT Mentorship Episode 18.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\18 - 2022 ICT Mentorship Episode 18.en-orig.vtt
+
+[download]    1.00KiB at  873.27KiB/s (00:00:00)
+[download]    3.00KiB at    1.47MiB/s (00:00:00)
+[download]    7.00KiB at    2.62MiB/s (00:00:00)
+[download]   15.00KiB at  653.07KiB/s (00:00:00)
+[download]   31.00KiB at  871.14KiB/s (00:00:00)
+[download]   63.00KiB at 1003.52KiB/s (00:00:00)
+[download]  127.00KiB at 1016.85KiB/s (00:00:00)
+[download]  255.00KiB at    1.00MiB/s (00:00:00)
+[download]  511.00KiB at 1013.28KiB/s (00:00:00)
+[download]  528.16KiB at    1.01MiB/s (00:00:00)
+[download] 100% of  528.16KiB in 00:00:00 at 641.96KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\18 - 2022 ICT Mentorship Episode 18.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\18 - 2022 ICT Mentorship Episode 18.en.vtt
+
+[download]    1.00KiB at  678.91KiB/s (00:00:00)
+[download]    3.00KiB at  966.43KiB/s (00:00:00)
+[download]    7.00KiB at    1.22MiB/s (00:00:00)
+[download]   15.00KiB at    1.35MiB/s (00:00:00)
+[download]   31.00KiB at    1.65MiB/s (00:00:00)
+[download]   63.00KiB at    1.10MiB/s (00:00:00)
+[download]  127.00KiB at    1.06MiB/s (00:00:00)
+[download]  255.00KiB at    1.08MiB/s (00:00:00)
+[download]  511.00KiB at    1.01MiB/s (00:00:00)
+[download]  528.16KiB at    1.04MiB/s (00:00:00)
+[download] 100% of  528.16KiB in 00:00:00 at 681.83KiB/s
+[download] Downloading item 19 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=IEa1N0rTtbc
+[youtube] Sleeping 1.0 seconds ...
+[youtube] IEa1N0rTtbc: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] IEa1N0rTtbc: Downloading android vr player API JSON
+[info] IEa1N0rTtbc: Downloading subtitles: en-orig, en
+[info] IEa1N0rTtbc: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\19 - 2022 ICT Mentorship Episode 19.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\19 - 2022 ICT Mentorship Episode 19.en-orig.vtt
+
+[download]    1.00KiB at  347.10KiB/s (00:00:00)
+[download]    3.00KiB at  803.40KiB/s (00:00:00)
+[download]    7.00KiB at    1.13MiB/s (00:00:00)
+[download]   15.00KiB at  612.37KiB/s (00:00:00)
+[download]   31.00KiB at  914.97KiB/s (00:00:00)
+[download]   63.00KiB at    1.28MiB/s (00:00:00)
+[download]  127.00KiB at    1.03MiB/s (00:00:00)
+[download]  255.00KiB at    1.03MiB/s (00:00:00)
+[download]  511.00KiB at    1.06MiB/s (00:00:00)
+[download] 1023.00KiB at    1.03MiB/s (00:00:01)
+[download]    1.07MiB at    1.08MiB/s (00:00:01)
+[download] 100% of    1.07MiB in 00:00:01 at 800.91KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\19 - 2022 ICT Mentorship Episode 19.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\19 - 2022 ICT Mentorship Episode 19.en.vtt
+
+[download]    1.00KiB at  782.08KiB/s (00:00:00)
+[download]    3.00KiB at  989.22KiB/s (00:00:00)
+[download]    7.00KiB at    1.85MiB/s (00:00:00)
+[download]   15.00KiB at    1.18MiB/s (00:00:00)
+[download]   31.00KiB at    1.27MiB/s (00:00:00)
+[download]   63.00KiB at    1.17MiB/s (00:00:00)
+[download]  127.00KiB at    1.14MiB/s (00:00:00)
+[download]  255.00KiB at    1.19MiB/s (00:00:00)
+[download]  511.00KiB at    1.03MiB/s (00:00:00)
+[download] 1023.00KiB at    1.19MiB/s (00:00:01)
+[download]    1.07MiB at    1.21MiB/s (00:00:01)
+[download] 100% of    1.07MiB in 00:00:01 at 903.99KiB/s
+[download] Downloading item 20 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=Q6GFu8-Z4rY
+[youtube] Sleeping 1.0 seconds ...
+[youtube] Q6GFu8-Z4rY: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] Q6GFu8-Z4rY: Downloading android vr player API JSON
+[info] Q6GFu8-Z4rY: Downloading subtitles: en-orig, en
+[info] Q6GFu8-Z4rY: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\20 - 2022 ICT Mentorship Episode 20.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\20 - 2022 ICT Mentorship Episode 20.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.52MiB/s (00:00:00)
+[download]    7.00KiB at  527.59KiB/s (00:00:00)
+[download]   15.00KiB at    1.05MiB/s (00:00:00)
+[download]   31.00KiB at    1.69MiB/s (00:00:00)
+[download]   63.00KiB at    1.18MiB/s (00:00:00)
+[download]  127.00KiB at    1.38MiB/s (00:00:00)
+[download]  159.30KiB at    1.33MiB/s (00:00:00)
+[download] 100% of  159.30KiB in 00:00:00 at 465.66KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\20 - 2022 ICT Mentorship Episode 20.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\20 - 2022 ICT Mentorship Episode 20.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.16MiB/s (00:00:00)
+[download]    7.00KiB at  363.95KiB/s (00:00:00)
+[download]   15.00KiB at  326.82KiB/s (00:00:00)
+[download]   31.00KiB at  656.09KiB/s (00:00:00)
+[download]   63.00KiB at    1.07MiB/s (00:00:00)
+[download]  127.00KiB at    1.35MiB/s (00:00:00)
+[download]  159.30KiB at    1.33MiB/s (00:00:00)
+[download] 100% of  159.30KiB in 00:00:00 at 475.85KiB/s
+[download] Downloading item 21 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=kmVXVJE08eQ
+[youtube] Sleeping 1.0 seconds ...
+[youtube] kmVXVJE08eQ: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] kmVXVJE08eQ: Downloading android vr player API JSON
+[info] kmVXVJE08eQ: Downloading subtitles: en-orig, en
+[info] kmVXVJE08eQ: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\21 - 2022 ICT Mentorship Episode 21.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\21 - 2022 ICT Mentorship Episode 21.en-orig.vtt
+
+[download]    1.00KiB at  772.86KiB/s (00:00:00)
+[download]    3.00KiB at    1.38MiB/s (00:00:00)
+[download]    7.00KiB at  746.75KiB/s (00:00:00)
+[download]   15.00KiB at    1.04MiB/s (00:00:00)
+[download]   31.00KiB at    1.72MiB/s (00:00:00)
+[download]   63.00KiB at    1.37MiB/s (00:00:00)
+[download]  127.00KiB at    1.08MiB/s (00:00:00)
+[download]  255.00KiB at    1.39MiB/s (00:00:00)
+[download]  336.97KiB at    1.24MiB/s (00:00:00)
+[download] 100% of  336.97KiB in 00:00:00 at 635.71KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\21 - 2022 ICT Mentorship Episode 21.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\21 - 2022 ICT Mentorship Episode 21.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.18MiB/s (00:00:00)
+[download]    7.00KiB at    3.86MiB/s (00:00:00)
+[download]   15.00KiB at    1.32MiB/s (00:00:00)
+[download]   31.00KiB at    1.13MiB/s (00:00:00)
+[download]   63.00KiB at    1.53MiB/s (00:00:00)
+[download]  127.00KiB at    1.51MiB/s (00:00:00)
+[download]  255.00KiB at    1.45MiB/s (00:00:00)
+[download]  336.97KiB at    1.46MiB/s (00:00:00)
+[download] 100% of  336.97KiB in 00:00:00 at 716.53KiB/s
+[download] Downloading item 22 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=QKc_i90chVg
+[youtube] Sleeping 1.0 seconds ...
+[youtube] QKc_i90chVg: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] QKc_i90chVg: Downloading android vr player API JSON
+[info] QKc_i90chVg: Downloading subtitles: en-orig, en
+[info] QKc_i90chVg: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\22 - 2022 ICT Mentorship Episode 22.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\22 - 2022 ICT Mentorship Episode 22.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.62MiB/s (00:00:00)
+[download]    7.00KiB at  989.72KiB/s (00:00:00)
+[download]   15.00KiB at  753.30KiB/s (00:00:00)
+[download]   31.00KiB at    1.12MiB/s (00:00:00)
+[download]   63.00KiB at    1.40MiB/s (00:00:00)
+[download]  127.00KiB at    1.20MiB/s (00:00:00)
+[download]  255.00KiB at    1.49MiB/s (00:00:00)
+[download]  401.13KiB at    1.31MiB/s (00:00:00)
+[download] 100% of  401.13KiB in 00:00:00 at 691.11KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\22 - 2022 ICT Mentorship Episode 22.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\22 - 2022 ICT Mentorship Episode 22.en.vtt
+
+[download]    1.00KiB at  430.14KiB/s (00:00:00)
+[download]    3.00KiB at  818.13KiB/s (00:00:00)
+[download]    7.00KiB at    1.19MiB/s (00:00:00)
+[download]   15.00KiB at    1.40MiB/s (00:00:00)
+[download]   31.00KiB at    1.86MiB/s (00:00:00)
+[download]   63.00KiB at    1.77MiB/s (00:00:00)
+[download]  127.00KiB at    1.70MiB/s (00:00:00)
+[download]  255.00KiB at    1.53MiB/s (00:00:00)
+[download]  401.13KiB at    1.51MiB/s (00:00:00)
+[download] 100% of  401.13KiB in 00:00:00 at 779.61KiB/s
+[download] Downloading item 23 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=TV9TfwHXuqs
+[youtube] Sleeping 1.0 seconds ...
+[youtube] TV9TfwHXuqs: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] TV9TfwHXuqs: Downloading android vr player API JSON
+[info] TV9TfwHXuqs: Downloading subtitles: en-orig, en
+[info] TV9TfwHXuqs: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\23 - 2022 ICT Mentorship Episode 23.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\23 - 2022 ICT Mentorship Episode 23.en-orig.vtt
+
+[download]    1.00KiB at  545.85KiB/s (00:00:00)
+[download]    3.00KiB at    1.13MiB/s (00:00:00)
+[download]    7.00KiB at    1.54MiB/s (00:00:00)
+[download]   15.00KiB at    1.25MiB/s (00:00:00)
+[download]   31.00KiB at    1.82MiB/s (00:00:00)
+[download]   63.00KiB at    1.49MiB/s (00:00:00)
+[download]  127.00KiB at    1.49MiB/s (00:00:00)
+[download]  140.06KiB at    1.54MiB/s (00:00:00)
+[download] 100% of  140.06KiB in 00:00:00 at 403.90KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\23 - 2022 ICT Mentorship Episode 23.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\23 - 2022 ICT Mentorship Episode 23.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.58MiB/s (00:00:00)
+[download]    7.00KiB at    2.76MiB/s (00:00:00)
+[download]   15.00KiB at    3.68MiB/s (00:00:00)
+[download]   31.00KiB at    2.40MiB/s (00:00:00)
+[download]   63.00KiB at    2.80MiB/s (00:00:00)
+[download]  127.00KiB at    1.41MiB/s (00:00:00)
+[download]  140.06KiB at    1.52MiB/s (00:00:00)
+[download] 100% of  140.06KiB in 00:00:00 at 429.21KiB/s
+[download] Downloading item 24 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=nv0ey5UyOmY
+[youtube] Sleeping 1.0 seconds ...
+[youtube] nv0ey5UyOmY: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] nv0ey5UyOmY: Downloading android vr player API JSON
+[info] nv0ey5UyOmY: Downloading subtitles: en-orig, en
+[info] nv0ey5UyOmY: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\24 - 2022 ICT Mentorship Episode 24.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\24 - 2022 ICT Mentorship Episode 24.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.29MiB/s (00:00:00)
+[download]    7.00KiB at    1.96MiB/s (00:00:00)
+[download]   15.00KiB at    1.57MiB/s (00:00:00)
+[download]   31.00KiB at    1.39MiB/s (00:00:00)
+[download]   63.00KiB at    1.57MiB/s (00:00:00)
+[download]  127.00KiB at    1.59MiB/s (00:00:00)
+[download]  255.00KiB at    1.51MiB/s (00:00:00)
+[download]  357.78KiB at    1.61MiB/s (00:00:00)
+[download] 100% of  357.78KiB in 00:00:00 at 782.22KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\24 - 2022 ICT Mentorship Episode 24.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\24 - 2022 ICT Mentorship Episode 24.en.vtt
+
+[download]    1.00KiB at  750.05KiB/s (00:00:00)
+[download]    3.00KiB at    1.19MiB/s (00:00:00)
+[download]    7.00KiB at    1.38MiB/s (00:00:00)
+[download]   15.00KiB at    1.31MiB/s (00:00:00)
+[download]   31.00KiB at    2.45MiB/s (00:00:00)
+[download]   63.00KiB at    3.19MiB/s (00:00:00)
+[download]  127.00KiB at    1.95MiB/s (00:00:00)
+[download]  255.00KiB at    1.62MiB/s (00:00:00)
+[download]  357.78KiB at 1015.89KiB/s (00:00:00)
+[download] 100% of  357.78KiB in 00:00:00 at 553.18KiB/s
+[download] Downloading item 25 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=CnTXwAuDi9Y
+[youtube] Sleeping 1.0 seconds ...
+[youtube] CnTXwAuDi9Y: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] CnTXwAuDi9Y: Downloading android vr player API JSON
+[info] CnTXwAuDi9Y: Downloading subtitles: en-orig, en
+[info] CnTXwAuDi9Y: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\25 - 2022 ICT Mentorship Episode 25.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\25 - 2022 ICT Mentorship Episode 25.en-orig.vtt
+
+[download]    1.00KiB at  875.09KiB/s (00:00:00)
+[download]    3.00KiB at    1.46MiB/s (00:00:00)
+[download]    7.00KiB at    1.65MiB/s (00:00:00)
+[download]   15.00KiB at  722.87KiB/s (00:00:00)
+[download]   31.00KiB at    1.34MiB/s (00:00:00)
+[download]   63.00KiB at    1.23MiB/s (00:00:00)
+[download]  127.00KiB at    1.62MiB/s (00:00:00)
+[download]  255.00KiB at    1.44MiB/s (00:00:00)
+[download]  499.89KiB at    1.48MiB/s (00:00:00)
+[download] 100% of  499.89KiB in 00:00:00 at 820.47KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\25 - 2022 ICT Mentorship Episode 25.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\25 - 2022 ICT Mentorship Episode 25.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.13MiB/s (00:00:00)
+[download]    7.00KiB at    1.33MiB/s (00:00:00)
+[download]   15.00KiB at    1.36MiB/s (00:00:00)
+[download]   31.00KiB at    1.72MiB/s (00:00:00)
+[download]   63.00KiB at    1.41MiB/s (00:00:00)
+[download]  127.00KiB at    1.55MiB/s (00:00:00)
+[download]  255.00KiB at    1.64MiB/s (00:00:00)
+[download]  499.89KiB at    1.63MiB/s (00:00:00)
+[download] 100% of  499.89KiB in 00:00:00 at 888.66KiB/s
+[download] Downloading item 26 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=k26euOG6zAk
+[youtube] Sleeping 1.0 seconds ...
+[youtube] k26euOG6zAk: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] k26euOG6zAk: Downloading android vr player API JSON
+[info] k26euOG6zAk: Downloading subtitles: en-orig, en
+[info] k26euOG6zAk: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\26 - 2022 ICT Mentorship Episode 26 - Example Of Tape Reading Practice.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\26 - 2022 ICT Mentorship Episode 26 - Example Of Tape Reading Practice.en-orig.vtt
+
+[download]    1.00KiB at  396.89KiB/s (00:00:00)
+[download]    3.00KiB at  666.82KiB/s (00:00:00)
+[download]    7.00KiB at  635.78KiB/s (00:00:00)
+[download]   15.00KiB at    1.18MiB/s (00:00:00)
+[download]   31.00KiB at    2.18MiB/s (00:00:00)
+[download]   63.00KiB at    1.75MiB/s (00:00:00)
+[download]   90.57KiB at    1.56MiB/s (00:00:00)
+[download] 100% of   90.57KiB in 00:00:00 at 304.09KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\26 - 2022 ICT Mentorship Episode 26 - Example Of Tape Reading Practice.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\26 - 2022 ICT Mentorship Episode 26 - Example Of Tape Reading Practice.en.vtt
+
+[download]    1.00KiB at  818.24KiB/s (00:00:00)
+[download]    3.00KiB at    1.33MiB/s (00:00:00)
+[download]    7.00KiB at    2.32MiB/s (00:00:00)
+[download]   15.00KiB at    1.77MiB/s (00:00:00)
+[download]   31.00KiB at    2.15MiB/s (00:00:00)
+[download]   63.00KiB at    2.27MiB/s (00:00:00)
+[download]   90.57KiB at    1.83MiB/s (00:00:00)
+[download] 100% of   90.57KiB in 00:00:00 at 328.23KiB/s
+[download] Downloading item 27 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=gLK4Qm6jte8
+[youtube] Sleeping 1.0 seconds ...
+[youtube] gLK4Qm6jte8: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] gLK4Qm6jte8: Downloading android vr player API JSON
+[info] gLK4Qm6jte8: Downloading subtitles: en-orig, en
+[info] gLK4Qm6jte8: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\27 - 2022 ICT Mentorship Episode 27 - Counter Trend Ideas.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\27 - 2022 ICT Mentorship Episode 27 - Counter Trend Ideas.en-orig.vtt
+
+[download]    1.00KiB at  855.46KiB/s (00:00:00)
+[download]    3.00KiB at    1.35MiB/s (00:00:00)
+[download]    7.00KiB at    2.38MiB/s (00:00:00)
+[download]   15.00KiB at    2.04MiB/s (00:00:00)
+[download]   31.00KiB at    2.13MiB/s (00:00:00)
+[download]   63.00KiB at    1.92MiB/s (00:00:00)
+[download]  127.00KiB at    1.83MiB/s (00:00:00)
+[download]  198.30KiB at    1.73MiB/s (00:00:00)
+[download] 100% of  198.30KiB in 00:00:00 at 576.94KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\27 - 2022 ICT Mentorship Episode 27 - Counter Trend Ideas.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\27 - 2022 ICT Mentorship Episode 27 - Counter Trend Ideas.en.vtt
+
+[download]    1.00KiB at  972.48KiB/s (00:00:00)
+[download]    3.00KiB at    1.45MiB/s (00:00:00)
+[download]    7.00KiB at    2.33MiB/s (00:00:00)
+[download]   15.00KiB at    2.72MiB/s (00:00:00)
+[download]   31.00KiB at    1.62MiB/s (00:00:00)
+[download]   63.00KiB at    1.36MiB/s (00:00:00)
+[download]  127.00KiB at  562.69KiB/s (00:00:00)
+[download]  198.30KiB at  869.02KiB/s (00:00:00)
+[download] 100% of  198.30KiB in 00:00:00 at 405.21KiB/s
+[download] Downloading item 28 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=j0Z2EbuJXGU
+[youtube] Sleeping 1.0 seconds ...
+[youtube] j0Z2EbuJXGU: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] j0Z2EbuJXGU: Downloading android vr player API JSON
+[info] j0Z2EbuJXGU: Downloading 1 format(s): 399+251
+[info] There are no subtitles for the requested languages
+[download] Downloading item 29 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=QkokVv0owSE
+[youtube] Sleeping 1.0 seconds ...
+[youtube] QkokVv0owSE: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] QkokVv0owSE: Downloading android vr player API JSON
+[info] QkokVv0owSE: Downloading subtitles: en-orig, en
+[info] QkokVv0owSE: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\29 - 2022 ICT Mentorship Episode 29.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\29 - 2022 ICT Mentorship Episode 29.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.65MiB/s (00:00:00)
+[download]    7.00KiB at  555.44KiB/s (00:00:00)
+[download]   15.00KiB at  445.76KiB/s (00:00:00)
+[download]   31.00KiB at  508.12KiB/s (00:00:00)
+[download]   63.00KiB at  227.26KiB/s (00:00:00)
+[download]  127.00KiB at  456.21KiB/s (00:00:00)
+[download]  136.78KiB at  490.09KiB/s (00:00:00)
+[download] 100% of  136.78KiB in 00:00:00 at 226.79KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\29 - 2022 ICT Mentorship Episode 29.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\29 - 2022 ICT Mentorship Episode 29.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.04MiB/s (00:00:00)
+[download]    7.00KiB at  514.78KiB/s (00:00:00)
+[download]   15.00KiB at  486.59KiB/s (00:00:00)
+[download]   31.00KiB at  459.31KiB/s (00:00:00)
+[download]   63.00KiB at  450.19KiB/s (00:00:00)
+[download]  127.00KiB at  503.95KiB/s (00:00:00)
+[download]  136.78KiB at  494.70KiB/s (00:00:00)
+[download] 100% of  136.78KiB in 00:00:00 at 265.57KiB/s
+[download] Downloading item 30 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=CL94EnGqB4Q
+[youtube] Sleeping 1.0 seconds ...
+[youtube] CL94EnGqB4Q: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] CL94EnGqB4Q: Downloading android vr player API JSON
+[info] CL94EnGqB4Q: Downloading subtitles: en-orig, en
+[info] CL94EnGqB4Q: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\30 - 2022 ICT Mentorship Episode 30.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\30 - 2022 ICT Mentorship Episode 30.en-orig.vtt
+
+[download]    1.00KiB at  872.90KiB/s (00:00:00)
+[download]    3.00KiB at    1.34MiB/s (00:00:00)
+[download]    7.00KiB at    2.20MiB/s (00:00:00)
+[download]   15.00KiB at    3.35MiB/s (00:00:00)
+[download]   31.00KiB at    5.57MiB/s (00:00:00)
+[download]   63.00KiB at  280.02KiB/s (00:00:00)
+[download]   96.82KiB at  424.18KiB/s (00:00:00)
+[download] 100% of   96.82KiB in 00:00:00 at 160.27KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\30 - 2022 ICT Mentorship Episode 30.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\30 - 2022 ICT Mentorship Episode 30.en.vtt
+
+[download]    1.00KiB at  616.63KiB/s (00:00:00)
+[download]    3.00KiB at    1.19MiB/s (00:00:00)
+[download]    7.00KiB at  405.01KiB/s (00:00:00)
+[download]   15.00KiB at   91.66KiB/s (00:00:00)
+[download]   31.00KiB at  187.93KiB/s (00:00:00)
+[download]   63.00KiB at  379.00KiB/s (00:00:00)
+[download]   96.82KiB at  567.49KiB/s (00:00:00)
+[download] 100% of   96.82KiB in 00:00:00 at 180.28KiB/s
+[download] Downloading item 31 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=OYNpIeu9czw
+[youtube] Sleeping 1.0 seconds ...
+[youtube] OYNpIeu9czw: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] OYNpIeu9czw: Downloading android vr player API JSON
+[info] OYNpIeu9czw: Downloading subtitles: en-orig, en
+[info] OYNpIeu9czw: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\31 - 2022 ICT Mentorship Episode 31.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\31 - 2022 ICT Mentorship Episode 31.en-orig.vtt
+
+[download]    1.00KiB at  718.20KiB/s (00:00:00)
+[download]    3.00KiB at    1.17MiB/s (00:00:00)
+[download]    7.00KiB at   54.34KiB/s (00:00:00)
+[download]   15.00KiB at  112.63KiB/s (00:00:00)
+[download]   31.00KiB at  228.55KiB/s (00:00:00)
+[download]   63.00KiB at  453.30KiB/s (00:00:00)
+[download]   84.27KiB at  584.14KiB/s (00:00:00)
+[download] 100% of   84.27KiB in 00:00:00 at 229.74KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\31 - 2022 ICT Mentorship Episode 31.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\31 - 2022 ICT Mentorship Episode 31.en.vtt
+
+[download]    1.00KiB at  807.37KiB/s (00:00:00)
+[download]    3.00KiB at    1.23MiB/s (00:00:00)
+[download]    7.00KiB at  520.83KiB/s (00:00:00)
+[download]   15.00KiB at  433.47KiB/s (00:00:00)
+[download]   31.00KiB at  588.91KiB/s (00:00:00)
+[download]   63.00KiB at  627.61KiB/s (00:00:00)
+[download]   84.27KiB at  614.24KiB/s (00:00:00)
+[download] 100% of   84.27KiB in 00:00:00 at 211.22KiB/s
+[download] Downloading item 32 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=hzoMJQlEv5M
+[youtube] Sleeping 1.0 seconds ...
+[youtube] hzoMJQlEv5M: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] hzoMJQlEv5M: Downloading android vr player API JSON
+[info] hzoMJQlEv5M: Downloading subtitles: en-orig, en
+[info] hzoMJQlEv5M: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\32 - 2022 ICT Mentorship Episode 32.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\32 - 2022 ICT Mentorship Episode 32.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.50MiB/s (00:00:00)
+[download]    7.00KiB at  724.35KiB/s (00:00:00)
+[download]   15.00KiB at  615.94KiB/s (00:00:00)
+[download]   31.00KiB at  379.69KiB/s (00:00:00)
+[download]   63.00KiB at  524.38KiB/s (00:00:00)
+[download]  127.00KiB at  598.28KiB/s (00:00:00)
+[download]  167.27KiB at  581.68KiB/s (00:00:00)
+[download] 100% of  167.27KiB in 00:00:00 at 314.55KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\32 - 2022 ICT Mentorship Episode 32.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\32 - 2022 ICT Mentorship Episode 32.en.vtt
+
+[download]    1.00KiB at  961.33KiB/s (00:00:00)
+[download]    3.00KiB at    1.63MiB/s (00:00:00)
+[download]    7.00KiB at  429.42KiB/s (00:00:00)
+[download]   15.00KiB at  584.00KiB/s (00:00:00)
+[download]   31.00KiB at  427.09KiB/s (00:00:00)
+[download]   63.00KiB at  607.74KiB/s (00:00:00)
+[download]  127.00KiB at  635.17KiB/s (00:00:00)
+[download]  167.27KiB at  592.53KiB/s (00:00:00)
+[download] 100% of  167.27KiB in 00:00:00 at 330.30KiB/s
+[download] Downloading item 33 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=8z6My18WZqA
+[youtube] Sleeping 1.0 seconds ...
+[youtube] 8z6My18WZqA: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] 8z6My18WZqA: Downloading android vr player API JSON
+[info] 8z6My18WZqA: Downloading subtitles: en-orig, en
+[info] 8z6My18WZqA: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\33 - 2022 ICT Mentorship Episode 33.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\33 - 2022 ICT Mentorship Episode 33.en-orig.vtt
+
+[download]    1.00KiB at  945.94KiB/s (00:00:00)
+[download]    3.00KiB at    1.53MiB/s (00:00:00)
+[download]    7.00KiB at  688.75KiB/s (00:00:00)
+[download]   15.00KiB at  679.61KiB/s (00:00:00)
+[download]   31.00KiB at  705.67KiB/s (00:00:00)
+[download]   63.00KiB at  659.46KiB/s (00:00:00)
+[download]  119.16KiB at  632.54KiB/s (00:00:00)
+[download] 100% of  119.16KiB in 00:00:00 at 288.98KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\33 - 2022 ICT Mentorship Episode 33.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\33 - 2022 ICT Mentorship Episode 33.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.56MiB/s (00:00:00)
+[download]    7.00KiB at  500.11KiB/s (00:00:00)
+[download]   15.00KiB at  576.38KiB/s (00:00:00)
+[download]   31.00KiB at  652.29KiB/s (00:00:00)
+[download]   63.00KiB at  631.61KiB/s (00:00:00)
+[download]  119.16KiB at  700.80KiB/s (00:00:00)
+[download] 100% of  119.16KiB in 00:00:00 at 268.14KiB/s
+[download] Downloading item 34 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=t8flQP5jy-Q
+[youtube] Sleeping 1.0 seconds ...
+[youtube] t8flQP5jy-Q: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] t8flQP5jy-Q: Downloading android vr player API JSON
+[info] t8flQP5jy-Q: Downloading subtitles: en-orig, en
+[info] t8flQP5jy-Q: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\34 - 2022 ICT Mentorship Episode 34.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\34 - 2022 ICT Mentorship Episode 34.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    2.30MiB/s (00:00:00)
+[download]    7.00KiB at  475.08KiB/s (00:00:00)
+[download]   15.00KiB at  571.47KiB/s (00:00:00)
+[download]   31.00KiB at  805.53KiB/s (00:00:00)
+[download]   63.00KiB at  812.74KiB/s (00:00:00)
+[download]  127.00KiB at  729.77KiB/s (00:00:00)
+[download]  146.32KiB at  787.83KiB/s (00:00:00)
+[download] 100% of  146.32KiB in 00:00:00 at 359.92KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\34 - 2022 ICT Mentorship Episode 34.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\34 - 2022 ICT Mentorship Episode 34.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.67MiB/s (00:00:00)
+[download]    7.00KiB at  744.46KiB/s (00:00:00)
+[download]   15.00KiB at  546.63KiB/s (00:00:00)
+[download]   31.00KiB at  762.26KiB/s (00:00:00)
+[download]   63.00KiB at  777.30KiB/s (00:00:00)
+[download]  127.00KiB at  744.40KiB/s (00:00:00)
+[download]  146.32KiB at  826.44KiB/s (00:00:00)
+[download] 100% of  146.32KiB in 00:00:00 at 365.93KiB/s
+[download] Downloading item 35 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=MdYrslpUezU
+[youtube] Sleeping 1.0 seconds ...
+[youtube] MdYrslpUezU: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] MdYrslpUezU: Downloading android vr player API JSON
+[info] MdYrslpUezU: Downloading subtitles: en-orig, en
+[info] MdYrslpUezU: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\35 - 2022 ICT Mentorship Episode 35.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\35 - 2022 ICT Mentorship Episode 35.en-orig.vtt
+
+[download]    1.00KiB at  924.47KiB/s (00:00:00)
+[download]    3.00KiB at    1.55MiB/s (00:00:00)
+[download]    7.00KiB at    1.93MiB/s (00:00:00)
+[download]   15.00KiB at  737.01KiB/s (00:00:00)
+[download]   31.00KiB at 1000.60KiB/s (00:00:00)
+[download]   63.00KiB at    1.14MiB/s (00:00:00)
+[download]  127.00KiB at  939.68KiB/s (00:00:00)
+[download]  132.92KiB at  969.51KiB/s (00:00:00)
+[download] 100% of  132.92KiB in 00:00:00 at 338.49KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\35 - 2022 ICT Mentorship Episode 35.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\35 - 2022 ICT Mentorship Episode 35.en.vtt
+
+[download]    1.00KiB at  662.19KiB/s (00:00:00)
+[download]    3.00KiB at    1.14MiB/s (00:00:00)
+[download]    7.00KiB at  290.67KiB/s (00:00:00)
+[download]   15.00KiB at  587.60KiB/s (00:00:00)
+[download]   31.00KiB at  904.32KiB/s (00:00:00)
+[download]   63.00KiB at  884.84KiB/s (00:00:00)
+[download]  127.00KiB at  868.44KiB/s (00:00:00)
+[download]  132.92KiB at  900.54KiB/s (00:00:00)
+[download] 100% of  132.92KiB in 00:00:00 at 372.07KiB/s
+[download] Downloading item 36 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=pWnMpdN_g98
+[youtube] Sleeping 1.0 seconds ...
+[youtube] pWnMpdN_g98: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] pWnMpdN_g98: Downloading android vr player API JSON
+[info] pWnMpdN_g98: Downloading subtitles: en-orig, en
+[info] pWnMpdN_g98: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\36 - 2022 ICT Mentorship Episode 36.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\36 - 2022 ICT Mentorship Episode 36.en-orig.vtt
+
+[download]    1.00KiB at  473.67KiB/s (00:00:00)
+[download]    3.00KiB at  922.30KiB/s (00:00:00)
+[download]    7.00KiB at    1.52MiB/s (00:00:00)
+[download]   15.00KiB at    1.04MiB/s (00:00:00)
+[download]   31.00KiB at  650.62KiB/s (00:00:00)
+[download]   63.00KiB at 1007.12KiB/s (00:00:00)
+[download]   73.34KiB at  979.51KiB/s (00:00:00)
+[download] 100% of   73.34KiB in 00:00:00 at 239.21KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\36 - 2022 ICT Mentorship Episode 36.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\36 - 2022 ICT Mentorship Episode 36.en.vtt
+
+[download]    1.00KiB at  689.06KiB/s (00:00:00)
+[download]    3.00KiB at    1.13MiB/s (00:00:00)
+[download]    7.00KiB at  443.89KiB/s (00:00:00)
+[download]   15.00KiB at  608.83KiB/s (00:00:00)
+[download]   31.00KiB at  587.15KiB/s (00:00:00)
+[download]   63.00KiB at  746.25KiB/s (00:00:00)
+[download]   73.34KiB at  841.78KiB/s (00:00:00)
+[download] 100% of   73.34KiB in 00:00:00 at 234.00KiB/s
+[download] Downloading item 37 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=HuZurY0ghDI
+[youtube] Sleeping 1.0 seconds ...
+[youtube] HuZurY0ghDI: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] HuZurY0ghDI: Downloading android vr player API JSON
+[info] HuZurY0ghDI: Downloading subtitles: en-orig, en
+[info] HuZurY0ghDI: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\37 - 2022 ICT Mentorship Episode 37.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\37 - 2022 ICT Mentorship Episode 37.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.82MiB/s (00:00:00)
+[download]    7.00KiB at  548.15KiB/s (00:00:00)
+[download]   15.00KiB at  678.26KiB/s (00:00:00)
+[download]   31.00KiB at  720.80KiB/s (00:00:00)
+[download]   63.00KiB at  815.24KiB/s (00:00:00)
+[download]  127.00KiB at  488.04KiB/s (00:00:00)
+[download]  208.04KiB at  794.25KiB/s (00:00:00)
+[download] 100% of  208.04KiB in 00:00:00 at 429.58KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\37 - 2022 ICT Mentorship Episode 37.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\37 - 2022 ICT Mentorship Episode 37.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.73MiB/s (00:00:00)
+[download]    7.00KiB at    1.59MiB/s (00:00:00)
+[download]   15.00KiB at    1.32MiB/s (00:00:00)
+[download]   31.00KiB at  882.15KiB/s (00:00:00)
+[download]   63.00KiB at  811.65KiB/s (00:00:00)
+[download]  127.00KiB at  844.59KiB/s (00:00:00)
+[download]  208.04KiB at  844.29KiB/s (00:00:00)
+[download] 100% of  208.04KiB in 00:00:00 at 421.80KiB/s
+[download] Downloading item 38 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=36184dDAqtM
+[youtube] Sleeping 1.0 seconds ...
+[youtube] 36184dDAqtM: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] 36184dDAqtM: Downloading android vr player API JSON
+[info] 36184dDAqtM: Downloading subtitles: en-orig, en
+[info] 36184dDAqtM: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\38 - 2022 ICT Mentorship Episode 38.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\38 - 2022 ICT Mentorship Episode 38.en-orig.vtt
+
+[download]    1.00KiB at  593.25KiB/s (00:00:00)
+[download]    3.00KiB at    1.14MiB/s (00:00:00)
+[download]    7.00KiB at  740.18KiB/s (00:00:00)
+[download]   15.00KiB at  278.12KiB/s (00:00:00)
+[download]   31.00KiB at  564.44KiB/s (00:00:00)
+[download]   63.00KiB at  854.57KiB/s (00:00:00)
+[download]  127.00KiB at  919.08KiB/s (00:00:00)
+[download]  255.00KiB at  854.28KiB/s (00:00:00)
+[download]  433.58KiB at  907.12KiB/s (00:00:00)
+[download] 100% of  433.58KiB in 00:00:00 at 576.60KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\38 - 2022 ICT Mentorship Episode 38.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\38 - 2022 ICT Mentorship Episode 38.en.vtt
+
+[download]    1.00KiB at  850.77KiB/s (00:00:00)
+[download]    3.00KiB at    1.56MiB/s (00:00:00)
+[download]    7.00KiB at  628.64KiB/s (00:00:00)
+[download]   15.00KiB at  738.73KiB/s (00:00:00)
+[download]   31.00KiB at  808.12KiB/s (00:00:00)
+[download]   63.00KiB at  876.29KiB/s (00:00:00)
+[download]  127.00KiB at  876.09KiB/s (00:00:00)
+[download]  255.00KiB at  804.35KiB/s (00:00:00)
+[download]  433.58KiB at  929.42KiB/s (00:00:00)
+[download] 100% of  433.58KiB in 00:00:00 at 610.82KiB/s
+[download] Downloading item 39 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=yFpHbBnsK_c
+[youtube] Sleeping 1.0 seconds ...
+[youtube] yFpHbBnsK_c: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] yFpHbBnsK_c: Downloading android vr player API JSON
+[info] yFpHbBnsK_c: Downloading subtitles: en-orig, en
+[info] yFpHbBnsK_c: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\39 - 2022 ICT Mentorship Episode 39.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\39 - 2022 ICT Mentorship Episode 39.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.69MiB/s (00:00:00)
+[download]    7.00KiB at  614.31KiB/s (00:00:00)
+[download]   15.00KiB at  773.41KiB/s (00:00:00)
+[download]   31.00KiB at  655.77KiB/s (00:00:00)
+[download]   63.00KiB at  891.26KiB/s (00:00:00)
+[download]  127.00KiB at  932.78KiB/s (00:00:00)
+[download]  255.00KiB at  915.90KiB/s (00:00:00)
+[download]  511.00KiB at  935.21KiB/s (00:00:00)
+[download]  695.62KiB at  959.61KiB/s (00:00:01)
+[download] 100% of  695.62KiB in 00:00:01 at 682.70KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\39 - 2022 ICT Mentorship Episode 39.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\39 - 2022 ICT Mentorship Episode 39.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.75MiB/s (00:00:00)
+[download]    7.00KiB at    2.38MiB/s (00:00:00)
+[download]   15.00KiB at    1.82MiB/s (00:00:00)
+[download]   31.00KiB at    1.12MiB/s (00:00:00)
+[download]   63.00KiB at  887.73KiB/s (00:00:00)
+[download]  127.00KiB at 1001.52KiB/s (00:00:00)
+[download]  255.00KiB at    1.07MiB/s (00:00:00)
+[download]  511.00KiB at    1.03MiB/s (00:00:00)
+[download]  695.62KiB at    1.11MiB/s (00:00:00)
+[download] 100% of  695.62KiB in 00:00:00 at 765.00KiB/s
+[download] Downloading item 40 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=koN1ge8bewI
+[youtube] Sleeping 1.0 seconds ...
+[youtube] koN1ge8bewI: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] koN1ge8bewI: Downloading android vr player API JSON
+[info] koN1ge8bewI: Downloading subtitles: en-orig, en
+[info] koN1ge8bewI: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\40 - 2022 ICT Mentorship Episode 40.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\40 - 2022 ICT Mentorship Episode 40.en-orig.vtt
+
+[download]    1.00KiB at  686.47KiB/s (00:00:00)
+[download]    3.00KiB at    1.35MiB/s (00:00:00)
+[download]    7.00KiB at  478.65KiB/s (00:00:00)
+[download]   15.00KiB at  957.24KiB/s (00:00:00)
+[download]   31.00KiB at  187.75KiB/s (00:00:00)
+[download]   63.00KiB at  379.11KiB/s (00:00:00)
+[download]  127.00KiB at  757.28KiB/s (00:00:00)
+[download]  255.00KiB at    1.20MiB/s (00:00:00)
+[download]  401.23KiB at    1.13MiB/s (00:00:00)
+[download] 100% of  401.23KiB in 00:00:00 at 654.81KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\40 - 2022 ICT Mentorship Episode 40.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\40 - 2022 ICT Mentorship Episode 40.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.75MiB/s (00:00:00)
+[download]    7.00KiB at    1.37MiB/s (00:00:00)
+[download]   15.00KiB at    1.37MiB/s (00:00:00)
+[download]   31.00KiB at    1.31MiB/s (00:00:00)
+[download]   63.00KiB at    1.51MiB/s (00:00:00)
+[download]  127.00KiB at    1.26MiB/s (00:00:00)
+[download]  255.00KiB at    1.24MiB/s (00:00:00)
+[download]  401.23KiB at    1.01MiB/s (00:00:00)
+[download] 100% of  401.23KiB in 00:00:00 at 629.12KiB/s
+[download] Downloading item 41 of 41
+[youtube] Extracting URL: https://www.youtube.com/watch?v=2XhDi5GoNUI
+[youtube] Sleeping 1.0 seconds ...
+[youtube] 2XhDi5GoNUI: Downloading webpage
+[youtube] Sleeping 1.0 seconds ...
+[youtube] 2XhDi5GoNUI: Downloading android vr player API JSON
+[info] 2XhDi5GoNUI: Downloading subtitles: en-orig, en
+[info] 2XhDi5GoNUI: Downloading 1 format(s): 399+251
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\41 - 2022 ICT Mentorship - Episode 41 & Final.en-orig.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\41 - 2022 ICT Mentorship - Episode 41 & Final.en-orig.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.72MiB/s (00:00:00)
+[download]    7.00KiB at    1.31MiB/s (00:00:00)
+[download]   15.00KiB at    2.48MiB/s (00:00:00)
+[download]   31.00KiB at    1.28MiB/s (00:00:00)
+[download]   63.00KiB at    1.31MiB/s (00:00:00)
+[download]  127.00KiB at    1.28MiB/s (00:00:00)
+[download]  255.00KiB at    1.35MiB/s (00:00:00)
+[download]  430.80KiB at    1.25MiB/s (00:00:00)
+[download] 100% of  430.80KiB in 00:00:00 at 708.10KiB/s
+[info] Writing video subtitles to: C:\Repos\Personal\ICT transcribe\.raw\mentorship\41 - 2022 ICT Mentorship - Episode 41 & Final.en.vtt
+[download] Destination: C:\Repos\Personal\ICT transcribe\.raw\mentorship\41 - 2022 ICT Mentorship - Episode 41 & Final.en.vtt
+
+[download]    1.00KiB at  Unknown B/s (00:00:00)
+[download]    3.00KiB at    1.75MiB/s (00:00:00)
+[download]    7.00KiB at    1.75MiB/s (00:00:00)
+[download]   15.00KiB at  951.92KiB/s (00:00:00)
+[download]   31.00KiB at  812.12KiB/s (00:00:00)
+[download]   63.00KiB at    1.27MiB/s (00:00:00)
+[download]  127.00KiB at    1.33MiB/s (00:00:00)
+[download]  255.00KiB at  890.47KiB/s (00:00:00)
+[download]  430.80KiB at    1.28MiB/s (00:00:00)
+[download] 100% of  430.80KiB in 00:00:00 at 722.42KiB/s
+[download] Finished downloading playlist: 2022 ICT Mentorship

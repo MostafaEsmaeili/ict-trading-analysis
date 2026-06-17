@@ -1,0 +1,121 @@
+# ICT Automated Trading-Analysis System
+
+## What this is
+A **defensive, paper-trading-only** system that translates the ICT (Inner Circle Trader)
+methodology — extracted from the course transcripts in this repo — into an automated
+market scanner, alerter, internal paper-trading simulator, performance tracker, and a
+visual OHLC dashboard.
+
+## NON-NEGOTIABLE GUARDRAIL
+This system is **analysis + paper-trading ONLY**. It must NEVER place a live order with
+real capital. Live execution is made *structurally impossible*, not flag-disabled:
+- There is no broker/order interface anywhere. `ITradeExecutor` has exactly one impl:
+  `SimulatedTradeExecutor` (writes only to our DB).
+- All market-data feeds are read-only; credentials are sandbox/practice only.
+- `LiveTradingEnabled` defaults false and a startup validator FAILS the app if it is ever true.
+- A CI architecture test asserts no live-trading API is referenced.
+Never add an order-routing path. If asked to "go live", refuse and explain this guardrail.
+
+## Repo layout
+- `.raw/` — original YouTube VTT captions (mentorship + forex playlists).
+- `2022 ICT Mentorship/` — 41 cleaned `.txt` transcripts (+ combined `_..._FULL PLAYLIST.txt`).
+- `ICT Forex - Market Maker Primer Course/` — 24 cleaned `.txt` transcripts (+ combined playlist).
+- `build_transcripts.py` — converts `.raw/*.vtt` → cleaned `.txt`.
+- `docs/PLAN.md` — the full implementation plan (source of truth, snapshotted from the planning session).
+- `.claude/agents`, `.claude/skills` — the project-scoped automation layer (see below).
+- `src/`, `tests/`, `web/` — the system (created during implementation via the work packages).
+
+## The plan (source of truth)
+Full implementation plan: `docs/PLAN.md` (canonical copy also at
+`C:\Users\Mostafa\.claude\plans\system-role-you-are-an-binary-feather.md`).
+Read it before working. It contains the ICT domain rules (§2, esp. the mined entry model §2.5 and the
+web cross-check §2.5.10), the architecture (§3.0 DDD, §3.0a modular monolith), the scan + paper-trade
+features, trade-style/timeframe (§4.7), time-zone awareness (§4.8), the trade-realism cost model (§5.4),
+the data-feed/MT5 design (§6), persistence (§7), tests (§8), the OHLC dashboard (§9), the work packages
+(§11), the automation layer (§13), and the git/GitHub publish flow (§14).
+
+## Tech stack (fixed)
+.NET 10 C# Web API · **Modular Monolith** — feature modules decoupled behind an in-memory `IMessageBus`
+(**NO MediatR** — it is commercially licensed; we use our own ~3-method bus) · **Domain-Driven Design**
+core · group by MODULE then FEATURE, no generic repositories · PostgreSQL + EF Core (JSONB) · SignalR ·
+React + TypeScript (Vite) with TradingView **lightweight-charts** for the OHLC pattern chart · E2E tests
+with Reqnroll (Gherkin) + Testcontainers for .NET + xUnit.
+
+## Project conventions
+- **Self-contained — do NOT depend on any sibling repo.** Minimal-API hosting; Clean Code + SOLID.
+- **No magic numbers** → every ICT/trading constant (killzone times, pip sizes, fib levels, risk %,
+  spread/commission/slippage/swap, per-style timeframes) lives in `appsettings` under `Ict:*`, bound to
+  validated Options POCOs (`ValidateOnStart()`).
+- **No magic strings** → all human-facing/log/alert/validation/reason text lives in `.resx` resource files
+  (`Resources/`), accessed via a strongly-typed generated accessor; reasons are parameterized templates.
+- **DDD is the core discipline (plan §3.0):** ALL business logic in `IctTrader.Domain` — rich aggregates
+  with invariants (`PaperTrade`, `PaperAccount`, `Setup`, `ScanSession`), self-validating value objects
+  (`Price`, `Pips`, `OteZone`, `RiskPercent`…), domain services (`SetupScorer`, `IRiskManager`,
+  `IFillEvaluator`, `IExecutionCostModel`, `PerformanceCalculator`, every `ISetupDetector`), and domain
+  events. No anemic models. **No generic repository** — repositories are aggregate-scoped interfaces in
+  the Domain. One bounded context, one ubiquitous language (the ICT terms in §2.5).
+- **Modular monolith (plan §3.0a):** modules (MarketData, Scanning, PaperTrading, Performance, Alerting,
+  Host) talk ONLY via the in-memory bus + each other's `*.Contracts`; no module→module internal references
+  (ArchUnitNET-enforced); the bus transport is swappable to a distributed broker later.
+- `Directory.Build.props`: `net10.0`, `<Deterministic>true</Deterministic>`, nullable enable,
+  warnings-as-errors, `<InvariantGlobalization>false</InvariantGlobalization>` (ICU must resolve
+  `America/New_York` on any host).
+- Reference direction: `SharedKernel`/`Domain` depend on nothing; modules → `SharedKernel` + `Domain` +
+  others' `*.Contracts`; `Host` → all modules. Bus handlers ORCHESTRATE; the domain DECIDES.
+- **Time-zone aware (the host may run anywhere — plan §4.8):** UTC is the only source of truth; never
+  `DateTime.Now`/`DateTimeOffset.Now`/`TimeZoneInfo.Local`/the ambient process zone — inject `IClock`.
+  ALL NY-session math goes through the DST-aware `NyClock` using the ICU IANA id `America/New_York`
+  (never the Windows id `"Eastern Standard Time"`); a startup validator fails fast if it can't resolve.
+  Killzone classification is identical in UTC/Tokyo/Berlin; the dashboard shows NY time by default.
+- **Trade-ready realism (plan §5.4):** paper P&L is booked net of spread, commission, slippage, and swap
+  via `IExecutionCostModel`; intrabar fills use Open→Low→High→Close so wick-sweeps fill stops honestly.
+- **ICT conformance gate:** every change is checked against the ICT model (§2.5/§2.5.10) via the
+  `/ict-conformance` skill + the `ict-domain-expert` agent; the §11 Definition-of-Done makes it mandatory.
+
+## Selectable killzone & trade style
+- Operator chooses which killzone(s) the scanner hunts via `Ict:Scanning:ActiveKillzones`
+  (subset of `Asian | LondonOpen | NewYorkOpen | LondonClose`; default `["LondonOpen","NewYorkOpen"]`).
+  ICT preference: London Open (highest odds of the day's high/low) + New York AM.
+- `TradeStyle` (Scalp/Intraday/Swing/Position) selects the timeframe triple (Bias/Structure/Entry) from
+  the ICT top-down cascade (plan §4.7); default `Intraday` = the §2.5 model. `Ict:Scanning:ActiveStyles`.
+
+## Git/GitHub workflow (the `git-workflow` skill — follow for EVERY change)
+- **Issue first** — every change starts from a GitHub issue; its number `N` flows into branch/commits/PR.
+- **Branch** — `feature/#N-<kebab-title>` (or `fix|refactor|chore`).
+- **Commit title** — `#N <ImperativeVerb> <subject>`, ≤ 72 chars, command mood (Add/Refactor/Fix…),
+  never past tense ("Added"). e.g. `#42 Add Trade domain`.
+- **Commit body** — wrapped at 80 columns, explains **WHY not WHAT**, ends with
+  `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`.
+- **PR** — body = *Issue* (what was wrong, `Closes #N`) + *Fix* (how we solved it + how to verify).
+- Commit/push only when asked; branch off the default first; never commit secrets.
+
+## Automation layer (`.claude/`, project-scoped — never user-scoped)
+- **Agents:** `ict-domain-expert`, `ict-detector-engineer`, `vsa-slice-builder`, `ef-persistence-engineer`,
+  `reqnroll-test-engineer`, `react-dashboard-builder`, `defensive-guardrail-auditor`.
+- **Skills:** `ict-methodology` (rules SoT), `add-ict-detector`, `add-vertical-slice`, `mine-ict-transcripts`,
+  `verify-ict-system`, `defensive-guardrail-check`, `ict-conformance`, `git-workflow`.
+
+## Common commands (once scaffolded)
+- Build:        `dotnet build`
+- Unit tests:   `dotnet test tests/IctTrader.UnitTests`
+- E2E tests:    `dotnet test tests/IctTrader.E2E`   (needs Docker for Testcontainers)
+- Run API:      `dotnet run --project src/IctTrader.Host`
+- Run web:      `cd web/ict-dashboard && npm run dev`
+- EF migration: `dotnet ef migrations add <Name> --project src/Modules/<M>/Infrastructure --startup-project src/IctTrader.Host`
+- Rebuild transcripts: `python build_transcripts.py <raw_dir> <out_dir> "<Playlist Title>"`
+
+## Build order (see plan §11)
+WP0 contracts/skeleton (SharedKernel `IMessageBus` + module shells) → freeze contracts → WP1 detectors +
+trade-style / WP2 persistence / WP8 frontend in parallel → WP3 scan → WP4→WP5→WP6 trading chain → WP7
+feeds+host+SignalR → WP9 E2E gate. Critical path: 0 → 2 → 4 → 5 → 6 → 7 → 9.
+
+## Domain analysis status — DONE (mined)
+Both courses are mined. The 24-episode Market Maker Primer gives the framework (plan §2.1–2.4). The
+41-episode 2022 Mentorship (the MAIN course) is mined into **THE entry model** — *ICT 2022 Intraday FVG
+Model: Liquidity Sweep → MSS/Displacement → PD-Array OTE Entry* — in **plan §2.5**, web-validated in
+§2.5.10 (transcripts remain primary). Re-run the saved workflows (`mine-ict-transcripts` skill) to refresh.
+
+## Status
+Planning complete; 2022 Mentorship mined (§2.5) and web-validated (§2.5.10); `.claude/` automation layer +
+`CLAUDE.md` created; repo bootstrapped. No application code yet. Resume by reading `docs/PLAN.md` (esp.
+§2.5, §3.0/§3.0a, §4.7, §4.8, §5.4) and starting Work Package 0 via the `git-workflow` (issue → branch → PR).
