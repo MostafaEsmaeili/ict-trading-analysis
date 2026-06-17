@@ -1,0 +1,28 @@
+<Project>
+
+  <!--
+    Repo-wide build settings (plan §3.1). Applies to every .csproj under the tree.
+
+    InvariantGlobalization=false is NON-NEGOTIABLE (plan §4.8): ICU must be present so the
+    IANA id "America/New_York" resolves on any host, otherwise killzone classification would
+    silently mis-time on a non-Windows or invariant host.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Clean-code gate: the build fails on ANY compiler warning. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningLevel>9999</WarningLevel>
+
+    <!-- Reproducible builds. -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+
+    <!-- ICU / time-zone correctness on any host (plan §4.8). -->
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+
+</Project>

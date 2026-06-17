@@ -1,0 +1,28 @@
+# Normalize line endings for the .NET/TypeScript source we add (Windows dev + Linux CI/Testcontainers).
+# Scoped to source file types introduced with the code so `dotnet format` (end_of_line = lf) stays clean
+# on every host regardless of core.autocrlf. Pre-existing committed files (transcripts, .md, .json, .ps1,
+# .gitignore, .py) are intentionally left out so they are NOT renormalized by this change.
+
+*.cs         text eol=lf
+*.csx        text eol=lf
+*.csproj     text eol=lf
+*.props      text eol=lf
+*.targets    text eol=lf
+*.slnx       text eol=lf
+.editorconfig text eol=lf
+
+# Frontend source (added in WP8).
+*.ts         text eol=lf
+*.tsx        text eol=lf
+*.js         text eol=lf
+*.jsx        text eol=lf
+*.css        text eol=lf
+*.scss       text eol=lf
+*.html       text eol=lf
+
+# Binary assets — never touch.
+*.pfx        binary
+*.p12        binary
+*.png        binary
+*.jpg        binary
+*.ico        binary

@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\SharedKernel\IctTrader.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\IctTrader.Domain\IctTrader.Domain.csproj" />
+    <ProjectReference Include="..\Contracts\IctTrader.Alerting.Contracts.csproj" />
+    <ProjectReference Include="..\Application\IctTrader.Alerting.Application.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
