@@ -13,4 +13,9 @@ public enum Killzone
     LondonOpen,
     NewYorkOpen,
     LondonClose,
+
+    // WP1 delta (plan §11.1 permits additive enum growth): the §2.5.5 entry model also hunts the FX
+    // afternoon (PM) and the index-futures morning (AM) killzones. Selectable via Ict:Scanning:ActiveKillzones.
+    Pm,
+    Am,
 }

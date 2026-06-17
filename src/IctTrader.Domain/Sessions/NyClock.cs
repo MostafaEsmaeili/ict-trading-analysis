@@ -56,6 +56,11 @@ public sealed class NyClock
     /// <summary>The New-York calendar date for an instant — the financial day starts 00:00 NY (plan §2.1).</summary>
     public DateOnly NewYorkDate(DateTimeOffset instant) => DateOnly.FromDateTime(ToNewYork(instant).Date);
 
-    /// <summary>Whether New York observes daylight saving time at the given instant.</summary>
-    public bool IsNewYorkDaylightSaving(DateTimeOffset instant) => _newYork.IsDaylightSavingTime(instant);
+    /// <summary>
+    /// Whether New York observes daylight saving time at the given instant. Derived from the actual UTC
+    /// offset (EDT = base −05:00 shifted to −04:00) rather than <c>IsDaylightSavingTime</c> on a converted
+    /// local time, which is wrong on the fall-back ambiguous hour.
+    /// </summary>
+    public bool IsNewYorkDaylightSaving(DateTimeOffset instant)
+        => _newYork.GetUtcOffset(instant) != _newYork.BaseUtcOffset;
 }
