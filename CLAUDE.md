@@ -141,17 +141,35 @@ Model: Liquidity Sweep → MSS/Displacement → PD-Array OTE Entry* — in **pla
 Planning complete; 2022 Mentorship mined (§2.5) and web-validated (§2.5.10); `.claude/` automation layer +
 `CLAUDE.md` created; repo bootstrapped.
 
-**WP0 (issue #1, branch `feature/#1-contracts-skeleton`) — implemented, in review.** The 22-project
-modular-monolith solution (`IctTrader.slnx`) is up: `SharedKernel` (`IMessageBus` + `ICommand/IQuery/IEvent`
-markers + handlers), `IctTrader.Domain` (building blocks `Entity`/`AggregateRoot`/`Guard`; enums
-`Direction`/`TradeDirection`/`Killzone`/`Timeframe`/`TradeStyle`/`SetupGrade`; value objects
-`Price`/`Pips`/`Symbol`/`PriceRange`/`Risk`/`OteZone`/`Candle`/`Tick`; `TimeframePolicy`), the 5 module
-trios (Contracts hold the frozen DTOs + bus messages; Application/Infrastructure are empty shells), and
-`IctTrader.Host` (frozen REST surface `/api/{alerts,trades/active,performance,chart/{symbol},paper-trades}`,
-SignalR `TradingHub` at `/hubs/trading`, `DefensiveOptions` live-trading guardrail + validator + `DEFENSIVE
-MODE` boot log, `TimeProvider.System`, `public partial class Program`). Builds Release **0 warnings**;
-tests green (UnitTests 6, ArchitectureTests 21 reflection-based boundary/no-MediatR checks; Integration/E2E
-skipped placeholders); `dotnet format` clean (LF). The reference graph is frozen.
+**WP0 — DONE & MERGED** (PR #2 → `main`; tag `contracts-v1`). The 22-project modular-monolith solution
+(`IctTrader.slnx`) with `SharedKernel` (`IMessageBus` + markers/handlers), the pure `IctTrader.Domain`
+primitives, the 5 module Contracts (frozen DTOs + bus messages), and `IctTrader.Host` (frozen REST + SignalR
+surface, `DefensiveOptions` live-trading guardrail + `DEFENSIVE MODE` log, `TimeProvider.System`). Reflection-
+based architecture tests enforce the boundaries.
 
-**Next:** run `pr-reviewer`, tag `contracts-v1`, open the PR. Then WP1 (detectors + trade-style, encoding
-§2.5) / WP2 (persistence) / WP8 (frontend) proceed in parallel — see the build order below.
+**WP1 (issue #3, branch `feature/#3-detection-foundation`) — detection layer in progress.** The pure-domain
+ICT detectors encoding §2.5, built TDD with an ICT-verified spec (the `wp1-detector-spec` workflow → adversarial
+fidelity pass → [docs/wp1-detector-spec.md]; §5 there lists 18 open ICT decisions on the documented defaults).
+Landed (95 unit tests, Release 0 warnings, `dotnet format` clean):
+- **Time/session:** `NyClock` (DST via UTC-offset), `KillzoneClock` (instrument-class windows, hard lunch,
+  AM cutoff, Asian wrap; `Killzone` extended with `Pm`/`Am`).
+- **Confluence engine:** `ConfluenceCondition`, tunable `ConfluenceOptions` (weights/required/thresholds/floor),
+  `SetupScorer` (§2.5.4 grading), `DetectorResult`, `EvidenceKeys`, `ReasonFragments`.
+- **Market-structure VOs** (rich lifecycle): `SwingPoint`, `FairValueGap`, `OrderBlock`, `LiquidityPool`,
+  `Displacement`, `MarketStructureShift`, `DealingRange`.
+- **State + contract:** `ISetupDetector`, deterministic `MarketContext` (ring buffers + registries + session/
+  bias/sweep/MSS/midnight-open), `SymbolSpec`.
+- **Detectors (TDD):** `SwingPointDetector` · `DisplacementDetector` (quantified energy gate) ·
+  `LiquidityPoolDetector` + `LiquiditySweepDetector` (sweep≠run, Judas on the penetration) ·
+  `MarketStructureShiftDetector` (single `DisplacementMss` 0.95, sweep-must-precede) ·
+  `FairValueGapDetector` (**corrected** discount/premium operators, two-touch void, mitigation) ·
+  `OrderBlockDetector` (requires linked FVG, mean-threshold, correct-half).
+- **Trade style:** `TradeStyleClassifier` + per-style `TradeStyleOptions` (Scalp direct-FVG **off** to preserve
+  the OTE RequiredCondition).
+- **Everything configurable:** each detector takes a validated Options POCO (`Ict:*`) with verified defaults +
+  `Validate()`; pip math via `SymbolSpec`. The Host appsettings **binding + `ValidateOnStart`** wiring lands
+  with the scanner module that consumes them (WP3/WP7).
+
+**WP1 still to come (next slice / WP3):** `DailyBias` + `DealingRangeEquilibrium`/`PremiumDiscountGate` + `OteFib`,
+the `CalendarGate`, the confluence FSM (`ScanSession`/`SetupCandidate`) that assembles a graded `Setup`, and the
+extended/long-tail detectors. Then WP2 (persistence) / WP8 (frontend) in parallel.
