@@ -48,6 +48,9 @@ public sealed class MarketContext
 
     public DealingRange? DailyRange { get; private set; }
 
+    /// <summary>The most recent displacement leg — its 50% is the premium/discount anchor the FVG half-gate uses.</summary>
+    public Displacement? LastDisplacement { get; private set; }
+
     public IReadOnlyList<FairValueGap> OpenFvgs => _openFvgs;
 
     public IReadOnlyList<OrderBlock> OpenOrderBlocks => _openOrderBlocks;
@@ -90,6 +93,12 @@ public sealed class MarketContext
     {
         ArgumentNullException.ThrowIfNull(range);
         DailyRange = range;
+    }
+
+    public void SetDisplacement(Displacement displacement)
+    {
+        ArgumentNullException.ThrowIfNull(displacement);
+        LastDisplacement = displacement;
     }
 
     private List<Candle> GetOrCreateWindow(Timeframe timeframe)
