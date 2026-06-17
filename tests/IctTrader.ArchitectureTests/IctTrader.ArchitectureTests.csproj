@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="FluentAssertions" Version="7.2.2" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\SharedKernel\IctTrader.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\src\IctTrader.Domain\IctTrader.Domain.csproj" />
+    <ProjectReference Include="..\..\src\IctTrader.Host\IctTrader.Host.csproj" />
+    <ProjectReference Include="..\..\src\Modules\MarketData\Contracts\IctTrader.MarketData.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\MarketData\Application\IctTrader.MarketData.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\MarketData\Infrastructure\IctTrader.MarketData.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Scanning\Contracts\IctTrader.Scanning.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Scanning\Application\IctTrader.Scanning.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Scanning\Infrastructure\IctTrader.Scanning.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\PaperTrading\Contracts\IctTrader.PaperTrading.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\PaperTrading\Application\IctTrader.PaperTrading.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\PaperTrading\Infrastructure\IctTrader.PaperTrading.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Performance\Contracts\IctTrader.Performance.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Performance\Application\IctTrader.Performance.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Performance\Infrastructure\IctTrader.Performance.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Alerting\Contracts\IctTrader.Alerting.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Alerting\Application\IctTrader.Alerting.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Alerting\Infrastructure\IctTrader.Alerting.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

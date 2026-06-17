@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\SharedKernel\IctTrader.SharedKernel.csproj" />
+    <ProjectReference Include="..\IctTrader.Domain\IctTrader.Domain.csproj" />
+    <ProjectReference Include="..\Modules\MarketData\Application\IctTrader.MarketData.Application.csproj" />
+    <ProjectReference Include="..\Modules\MarketData\Infrastructure\IctTrader.MarketData.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\Scanning\Application\IctTrader.Scanning.Application.csproj" />
+    <ProjectReference Include="..\Modules\Scanning\Infrastructure\IctTrader.Scanning.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\PaperTrading\Application\IctTrader.PaperTrading.Application.csproj" />
+    <ProjectReference Include="..\Modules\PaperTrading\Infrastructure\IctTrader.PaperTrading.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\Performance\Application\IctTrader.Performance.Application.csproj" />
+    <ProjectReference Include="..\Modules\Performance\Infrastructure\IctTrader.Performance.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\Alerting\Application\IctTrader.Alerting.Application.csproj" />
+    <ProjectReference Include="..\Modules\Alerting\Infrastructure\IctTrader.Alerting.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>

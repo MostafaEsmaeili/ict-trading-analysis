@@ -56,15 +56,22 @@ with Reqnroll (Gherkin) + Testcontainers for .NET + xUnit.
   the Domain. One bounded context, one ubiquitous language (the ICT terms in §2.5).
 - **Modular monolith (plan §3.0a):** modules (MarketData, Scanning, PaperTrading, Performance, Alerting,
   Host) talk ONLY via the in-memory bus + each other's `*.Contracts`; no module→module internal references
-  (ArchUnitNET-enforced); the bus transport is swappable to a distributed broker later.
+  (enforced by the architecture tests in `IctTrader.ArchitectureTests`); the bus transport is swappable to
+  a distributed broker later.
 - `Directory.Build.props`: `net10.0`, `<Deterministic>true</Deterministic>`, nullable enable,
   warnings-as-errors, `<InvariantGlobalization>false</InvariantGlobalization>` (ICU must resolve
-  `America/New_York` on any host).
+  `America/New_York` on any host). Solution is the new `.slnx` format. Line endings are LF, enforced via
+  `.gitattributes` so `dotnet format` (`end_of_line = lf`) stays clean on Windows dev + Linux CI.
+- **Dependencies — latest stable, license-aware:** every NuGet **and** npm package is pinned to its newest
+  stable release, EXCEPT where the latest is commercially licensed — then pin the newest free/OSS version
+  and note why (FluentAssertions pinned to **7.x** because 8+ is commercial; MediatR avoided entirely).
+  Central package management is off; versions live in each `.csproj`.
 - Reference direction: `SharedKernel`/`Domain` depend on nothing; modules → `SharedKernel` + `Domain` +
   others' `*.Contracts`; `Host` → all modules. Bus handlers ORCHESTRATE; the domain DECIDES.
 - **Time-zone aware (the host may run anywhere — plan §4.8):** UTC is the only source of truth; never
-  `DateTime.Now`/`DateTimeOffset.Now`/`TimeZoneInfo.Local`/the ambient process zone — inject `IClock`.
-  ALL NY-session math goes through the DST-aware `NyClock` using the ICU IANA id `America/New_York`
+  `DateTime.Now`/`DateTimeOffset.Now`/`TimeZoneInfo.Local`/the ambient process zone — inject the BCL
+  **`TimeProvider`** (`TimeProvider.System` in prod, `FakeTimeProvider` in tests; not a custom `IClock`).
+  ALL NY-session math goes through the DST-aware `NyClock` (wrapping `TimeProvider`) using the ICU IANA id `America/New_York`
   (never the Windows id `"Eastern Standard Time"`); a startup validator fails fast if it can't resolve.
   Killzone classification is identical in UTC/Tokyo/Berlin; the dashboard shows NY time by default.
 - **Trade-ready realism (plan §5.4):** paper P&L is booked net of spread, commission, slippage, and swap
@@ -108,13 +115,15 @@ with Reqnroll (Gherkin) + Testcontainers for .NET + xUnit.
   `CLAUDE.md` (## Status + any changed convention/command/config) and `docs/PLAN.md` so the next session
   resumes accurately. The Stop hook reminds you while code changes are pending.
 
-## Common commands (once scaffolded)
-- Build:        `dotnet build`
-- Unit tests:   `dotnet test tests/IctTrader.UnitTests`
-- E2E tests:    `dotnet test tests/IctTrader.E2E`   (needs Docker for Testcontainers)
-- Run API:      `dotnet run --project src/IctTrader.Host`
-- Run web:      `cd web/ict-dashboard && npm run dev`
-- EF migration: `dotnet ef migrations add <Name> --project src/Modules/<M>/Infrastructure --startup-project src/IctTrader.Host`
+## Common commands
+- Build (zero warnings): `dotnet build IctTrader.slnx -c Release`
+- Format check:  `dotnet format IctTrader.slnx --verify-no-changes`
+- Unit tests:    `dotnet test tests/IctTrader.UnitTests`
+- Arch tests:    `dotnet test tests/IctTrader.ArchitectureTests` (module boundaries; reflection-based)
+- E2E tests:     `dotnet test tests/IctTrader.E2E`   (needs Docker for Testcontainers — WP9)
+- Run API:       `dotnet run --project src/IctTrader.Host`
+- Run web:       `cd web/ict-dashboard && npm run dev`
+- EF migration:  `dotnet ef migrations add <Name> --project src/Modules/<M>/Infrastructure --startup-project src/IctTrader.Host`
 - Rebuild transcripts: `python build_transcripts.py <raw_dir> <out_dir> "<Playlist Title>"`
 
 ## Build order (see plan §11)
@@ -130,5 +139,19 @@ Model: Liquidity Sweep → MSS/Displacement → PD-Array OTE Entry* — in **pla
 
 ## Status
 Planning complete; 2022 Mentorship mined (§2.5) and web-validated (§2.5.10); `.claude/` automation layer +
-`CLAUDE.md` created; repo bootstrapped. No application code yet. Resume by reading `docs/PLAN.md` (esp.
-§2.5, §3.0/§3.0a, §4.7, §4.8, §5.4) and starting Work Package 0 via the `git-workflow` (issue → branch → PR).
+`CLAUDE.md` created; repo bootstrapped.
+
+**WP0 (issue #1, branch `feature/#1-contracts-skeleton`) — implemented, in review.** The 22-project
+modular-monolith solution (`IctTrader.slnx`) is up: `SharedKernel` (`IMessageBus` + `ICommand/IQuery/IEvent`
+markers + handlers), `IctTrader.Domain` (building blocks `Entity`/`AggregateRoot`/`Guard`; enums
+`Direction`/`TradeDirection`/`Killzone`/`Timeframe`/`TradeStyle`/`SetupGrade`; value objects
+`Price`/`Pips`/`Symbol`/`PriceRange`/`Risk`/`OteZone`/`Candle`/`Tick`; `TimeframePolicy`), the 5 module
+trios (Contracts hold the frozen DTOs + bus messages; Application/Infrastructure are empty shells), and
+`IctTrader.Host` (frozen REST surface `/api/{alerts,trades/active,performance,chart/{symbol},paper-trades}`,
+SignalR `TradingHub` at `/hubs/trading`, `DefensiveOptions` live-trading guardrail + validator + `DEFENSIVE
+MODE` boot log, `TimeProvider.System`, `public partial class Program`). Builds Release **0 warnings**;
+tests green (UnitTests 6, ArchitectureTests 21 reflection-based boundary/no-MediatR checks; Integration/E2E
+skipped placeholders); `dotnet format` clean (LF). The reference graph is frozen.
+
+**Next:** run `pr-reviewer`, tag `contracts-v1`, open the PR. Then WP1 (detectors + trade-style, encoding
+§2.5) / WP2 (persistence) / WP8 (frontend) proceed in parallel — see the build order below.

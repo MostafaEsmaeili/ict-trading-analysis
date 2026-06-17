@@ -32,14 +32,18 @@ ambiguity, defer to the `ict-domain-expert` agent. Ensure the change actually al
   no cross-module internals, SharedKernel/Domain depend on nothing.
 - **Code smells (flag each):** anemic models / business logic in handlers; magic numbers (not in Options) or
   magic strings (not in `.resx`); generic repository; `DateTime.Now`/`TimeZoneInfo.Local` instead of
-  `IClock`/`NyClock`; primitive obsession (raw decimals instead of `Price`/`Pips`); long methods, deep
-  nesting, duplication; missing `CancellationToken`; swallowed exceptions; public surface that should be
-  internal; non-deterministic detector logic. Prefer the project analyzers (enable .NET analyzers /
-  Roslynator) and report their output.
+  the BCL `TimeProvider`/`NyClock`; primitive obsession (raw decimals instead of `Price`/`Pips`); long
+  methods, deep nesting, duplication; missing `CancellationToken`; swallowed exceptions; public surface
+  that should be internal; non-deterministic detector logic. Prefer the project analyzers (enable .NET
+  analyzers / Roslynator) and report their output.
+- **Dependencies:** every NuGet package is pinned to the **latest stable** version, EXCEPT where the newest
+  release is commercially licensed — then the newest free/OSS version is used and the reason noted (e.g.
+  FluentAssertions is pinned to 7.x because 8+ is commercial, MediatR is avoided entirely). Flag stale or
+  newly-commercial dependencies.
 
 ## 3. React / TypeScript review
 - Run `cd web/ict-dashboard && npm run typecheck && npm run lint` (or `tsc --noEmit` + `eslint .`) — MUST be
-  clean. Run `vitest` if tests changed.
+  clean. Run `vitest` if tests changed. npm packages should be on their **latest stable** version.
 - Review: no `any`/non-null abuse; types match backend DTOs (`src/types/api.ts`); components are small and
   pure; server state via React Query (no ad-hoc fetch-in-effect); chart overlays read from Setup evidence;
   times rendered in NY by default (§4.8); no dead code; basic a11y on interactive elements.

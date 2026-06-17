@@ -1068,6 +1068,25 @@ force-push shared branches, never skip hooks (`--no-verify`) unless explicitly a
 
 > **STATUS UPDATE (executed):** all of the above are DONE — repo live at `MostafaEsmaeili/ict-trading-analysis` (private). 8 agents + 10 skills + both hooks created; genesis + conformance-hook + this review/memory batch committed. Application code (WP0+) proceeds via issue → branch → `pr-reviewer` → PR.
 
+> **WP0 AMENDMENTS (these refine the plan; supersede the inline mentions where they differ):**
+> 1. **Time abstraction = the BCL `TimeProvider`**, NOT a custom `IClock`. Inject `TimeProvider`
+>    (`TimeProvider.System` in prod, `FakeTimeProvider` in tests); `NyClock` (WP1) wraps it over the IANA
+>    id `America/New_York`. Everywhere this plan says `IClock`, read `TimeProvider`.
+> 2. **Architecture tests are reflection-based** (assembly-reference inspection in
+>    `IctTrader.ArchitectureTests`), not ArchUnitNET — dependency-free and already green; they assert the
+>    same boundaries (SharedKernel/Domain depend on nothing internal; modules reach others only via
+>    `*.Contracts`; no MediatR/commercial-test libs in production). ArchUnitNET may be layered in later for
+>    type-level rules. Everywhere this plan says "ArchUnitNET-enforced", read "architecture-test-enforced".
+> 3. **Dependency policy — latest stable, license-aware:** every NuGet **and** npm package is pinned to its
+>    newest stable release, EXCEPT where the latest is commercially licensed — then pin the newest free/OSS
+>    version and note why. Applied: **FluentAssertions 7.2.2** (8+ is commercial), MediatR avoided entirely,
+>    ArchUnitNET dropped. Central package management is off (versions in each `.csproj`).
+> 4. **Build/repo facts:** `.slnx` solution format; **22 projects**; LF line endings via `.gitattributes`
+>    (so `dotnet format` `end_of_line = lf` is clean on Windows dev + Linux CI); `Killzone` enum is
+>    `{ None, Asian, LondonOpen, NewYorkOpen, LondonClose }` (PM added later if WP1 needs it); module
+>    Application/Infrastructure are empty shells in WP0; aggregate-coupled abstractions (`ITradeExecutor`,
+>    `IRiskManager`, `IFillEvaluator`, repositories) land with their aggregates in WP4/WP5, not WP0.
+
 ---
 
 ## 14. Initialize git + publish to GitHub (`gh`)

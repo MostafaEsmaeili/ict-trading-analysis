@@ -1,0 +1,66 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/IctTrader.Domain/IctTrader.Domain.csproj" />
+    <Project Path="src/IctTrader.Host/IctTrader.Host.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Alerting/" />
+  <Folder Name="/src/Modules/Alerting/Application/">
+    <Project Path="src/Modules/Alerting/Application/IctTrader.Alerting.Application.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Alerting/Contracts/">
+    <Project Path="src/Modules/Alerting/Contracts/IctTrader.Alerting.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Alerting/Infrastructure/">
+    <Project Path="src/Modules/Alerting/Infrastructure/IctTrader.Alerting.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/MarketData/" />
+  <Folder Name="/src/Modules/MarketData/Application/">
+    <Project Path="src/Modules/MarketData/Application/IctTrader.MarketData.Application.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/MarketData/Contracts/">
+    <Project Path="src/Modules/MarketData/Contracts/IctTrader.MarketData.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/MarketData/Infrastructure/">
+    <Project Path="src/Modules/MarketData/Infrastructure/IctTrader.MarketData.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/PaperTrading/" />
+  <Folder Name="/src/Modules/PaperTrading/Application/">
+    <Project Path="src/Modules/PaperTrading/Application/IctTrader.PaperTrading.Application.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/PaperTrading/Contracts/">
+    <Project Path="src/Modules/PaperTrading/Contracts/IctTrader.PaperTrading.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/PaperTrading/Infrastructure/">
+    <Project Path="src/Modules/PaperTrading/Infrastructure/IctTrader.PaperTrading.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Performance/" />
+  <Folder Name="/src/Modules/Performance/Application/">
+    <Project Path="src/Modules/Performance/Application/IctTrader.Performance.Application.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Performance/Contracts/">
+    <Project Path="src/Modules/Performance/Contracts/IctTrader.Performance.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Performance/Infrastructure/">
+    <Project Path="src/Modules/Performance/Infrastructure/IctTrader.Performance.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Scanning/" />
+  <Folder Name="/src/Modules/Scanning/Application/">
+    <Project Path="src/Modules/Scanning/Application/IctTrader.Scanning.Application.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Scanning/Contracts/">
+    <Project Path="src/Modules/Scanning/Contracts/IctTrader.Scanning.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Scanning/Infrastructure/">
+    <Project Path="src/Modules/Scanning/Infrastructure/IctTrader.Scanning.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/SharedKernel/">
+    <Project Path="src/SharedKernel/IctTrader.SharedKernel.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/IctTrader.ArchitectureTests/IctTrader.ArchitectureTests.csproj" />
+    <Project Path="tests/IctTrader.E2E/IctTrader.E2E.csproj" />
+    <Project Path="tests/IctTrader.IntegrationTests/IctTrader.IntegrationTests.csproj" />
+    <Project Path="tests/IctTrader.UnitTests/IctTrader.UnitTests.csproj" />
+  </Folder>
+</Solution>

@@ -17,7 +17,7 @@ Rules:
   rich aggregate (`PaperTrade`, `Setup`, `PaperAccount`) or a domain service (`SetupScorer`,
   `IRiskManager`, `PerformanceCalculator`). No anemic models.
 - Modules talk ONLY via the bus + each other's `*.Contracts`; never reference another module's internals
-  (ArchUnitNET-enforced). Aggregate repositories are interfaces in `IctTrader.Domain` — NO generic repo.
+  (enforced by the architecture tests). Aggregate repositories are interfaces in `IctTrader.Domain` — NO generic repo.
 - Strict Options for every constant (no magic numbers); all strings in `.resx` resources (no magic strings).
 - Side effects (alerts/SignalR/persistence) react to published domain events, not inline calls.
 Add a FluentValidation validator (input shape only) + a focused test, build, and run it green before done.
