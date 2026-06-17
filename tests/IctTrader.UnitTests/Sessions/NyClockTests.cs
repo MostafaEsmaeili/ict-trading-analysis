@@ -57,6 +57,22 @@ public class NyClockTests
     }
 
     [Fact]
+    public void Dst_fall_back_overlap_is_disambiguated_by_the_utc_offset()
+    {
+        // On 2024-11-03 New York falls back at 02:00 EDT -> 01:00 EST, so 01:30 NY occurs twice.
+        var beforeFallBack = new DateTimeOffset(2024, 11, 3, 5, 30, 0, TimeSpan.Zero); // 01:30 EDT (UTC-4)
+        var afterFallBack = new DateTimeOffset(2024, 11, 3, 6, 30, 0, TimeSpan.Zero);  // 01:30 EST (UTC-5)
+
+        Clock.NewYorkTimeOfDay(beforeFallBack).Should().Be(new TimeOnly(1, 30));
+        Clock.NewYorkTimeOfDay(afterFallBack).Should().Be(new TimeOnly(1, 30)); // same wall-clock time
+
+        Clock.ToNewYork(beforeFallBack).Offset.Should().Be(TimeSpan.FromHours(-4));
+        Clock.ToNewYork(afterFallBack).Offset.Should().Be(TimeSpan.FromHours(-5));
+        Clock.IsNewYorkDaylightSaving(beforeFallBack).Should().BeTrue();
+        Clock.IsNewYorkDaylightSaving(afterFallBack).Should().BeFalse();
+    }
+
+    [Fact]
     public void Utc_now_comes_only_from_the_injected_time_provider()
     {
         var instant = new DateTimeOffset(2024, 3, 10, 6, 30, 0, TimeSpan.Zero);
