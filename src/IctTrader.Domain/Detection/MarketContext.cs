@@ -23,6 +23,7 @@ public sealed class MarketContext
     private readonly List<SwingPoint> _swingPoints = [];
     private readonly KillzoneClock _killzoneClock;
     private readonly MarketContextOptions _options;
+    private DateOnly? _lastNyDate;
 
     public MarketContext(SymbolSpec symbolSpec, KillzoneClock killzoneClock, MarketContextOptions options)
     {
@@ -51,6 +52,18 @@ public sealed class MarketContext
     /// <summary>The most recent displacement leg — its 50% is the premium/discount anchor the FVG half-gate uses.</summary>
     public Displacement? LastDisplacement { get; private set; }
 
+    /// <summary>The most recent liquidity sweep — the MSS detector requires one within its bar window.</summary>
+    public SweepRecord? LastSweep { get; private set; }
+
+    /// <summary>The most recent confirmed market-structure shift.</summary>
+    public MarketStructureShift? LastMss { get; private set; }
+
+    /// <summary>Monotonic count of candles appended — used for bar-distance windows (sweep→MSS).</summary>
+    public long BarsProcessed { get; private set; }
+
+    /// <summary>The open of the first candle of the current New-York day (00:00 NY reference for the Judas read).</summary>
+    public decimal? MidnightOpen { get; private set; }
+
     public IReadOnlyList<FairValueGap> OpenFvgs => _openFvgs;
 
     public IReadOnlyList<OrderBlock> OpenOrderBlocks => _openOrderBlocks;
@@ -75,6 +88,8 @@ public sealed class MarketContext
             window.RemoveAt(0);
         }
 
+        BarsProcessed++;
+        TrackNewYorkDay(candle);
         Session = _killzoneClock.Classify(candle.OpenTimeUtc, InstrumentClass);
         PruneDeadArrays();
     }
@@ -99,6 +114,24 @@ public sealed class MarketContext
     {
         ArgumentNullException.ThrowIfNull(displacement);
         LastDisplacement = displacement;
+    }
+
+    public void SetSweep(SweepRecord sweep) => LastSweep = sweep;
+
+    public void SetMarketStructureShift(MarketStructureShift shift)
+    {
+        ArgumentNullException.ThrowIfNull(shift);
+        LastMss = shift;
+    }
+
+    private void TrackNewYorkDay(Candle candle)
+    {
+        var nyDate = _killzoneClock.NewYorkDate(candle.OpenTimeUtc);
+        if (_lastNyDate != nyDate)
+        {
+            _lastNyDate = nyDate;
+            MidnightOpen = candle.Open;
+        }
     }
 
     private List<Candle> GetOrCreateWindow(Timeframe timeframe)

@@ -31,6 +31,9 @@ public sealed class KillzoneClock
         _schedule = schedule;
     }
 
+    /// <summary>The New-York calendar date of an instant — the financial day boundary (00:00 NY).</summary>
+    public DateOnly NewYorkDate(DateTimeOffset instant) => _nyClock.NewYorkDate(instant);
+
     /// <summary>Classifies an instant for the given instrument class.</summary>
     public KillzoneClassification Classify(DateTimeOffset openTimeUtc, InstrumentClass instrumentClass)
     {
