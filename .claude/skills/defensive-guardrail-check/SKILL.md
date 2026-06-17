@@ -11,7 +11,7 @@ allowed-tools: Read Grep Glob Bash(dotnet test *)
 3. **LiveTradingEnabled** — defaults false; an `IValidateOptions<>` FAILS startup if ever true. Confirm
    the validator exists and is registered.
 4. **Read-only feeds** — every `IMarketDataFeed` is `IsReadOnly = true`; credentials sandbox/practice only.
-5. **Module boundaries** — the ArchUnitNET test passes (no cross-module internals; no MediatR; SharedKernel/
+5. **Module boundaries** — the architecture tests pass (no cross-module internals; no MediatR; SharedKernel/
    Domain depend on nothing).
 6. **Architecture test** — the CI architecture test asserting 1–5 exists and passes:
    `dotnet test tests/IctTrader.ArchitectureTests`.

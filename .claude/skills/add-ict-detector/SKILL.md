@@ -5,7 +5,8 @@ allowed-tools: Read Write Edit Grep Glob Bash(dotnet test *)
 ---
 # Add an ICT detector (TDD, domain-pure / DDD)
 The detector and ALL its decision logic live in the DOMAIN (`IctTrader.Domain`). Detectors are pure
-domain services over value objects — no I/O, no `DateTime.Now`, no infra refs, no anemic leakage.
+domain services over value objects — no I/O, no `DateTime.Now` (inject the BCL `TimeProvider`), no infra
+refs, no anemic leakage.
 
 1. **Spec** — get the exact rule from the `ict-methodology` skill / plan §2.5. Write it as IF/THEN with
    exact numbers, in the ubiquitous language (sweep, displacement, FVG, OTE…). If ambiguous, consult

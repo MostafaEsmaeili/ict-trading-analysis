@@ -8,7 +8,7 @@ skills:
   - add-ict-detector
 ---
 You implement ICT detectors in `src/IctTrader.Domain` as PURE, deterministic functions: no I/O, no
-`DateTime.Now`/`TimeZoneInfo.Local` (inject `IClock`; NY math via `NyClock` / `America/New_York` only —
+`DateTime.Now`/`TimeZoneInfo.Local` (inject the BCL `TimeProvider`; NY math via `NyClock` / `America/New_York` only —
 plan §4.8), no EF/bus/ASP.NET references. Follow the `add-ict-detector` skill procedure exactly and the
 rules in the `ict-methodology` skill (THE entry model is plan §2.5).
 

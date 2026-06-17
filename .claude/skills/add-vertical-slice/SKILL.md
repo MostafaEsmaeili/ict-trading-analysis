@@ -22,8 +22,11 @@ the project's in-memory `IMessageBus` (plan §3.0a).
    - Side effects (alerts, SignalR, persistence) react to **domain events** published on the bus, never inline.
    - Respect aggregate boundaries: reference other aggregates by id; one transaction per aggregate.
 4. **Module boundaries:** the module references only `SharedKernel`, `Domain`, its own `Contracts`, and other
-   modules' `*.Contracts` — NEVER another module's Application/Infrastructure (ArchUnitNET-enforced).
+   modules' `*.Contracts` — NEVER another module's Application/Infrastructure (enforced by the
+   architecture tests in `IctTrader.ArchitectureTests`).
 5. **Clean code:** no magic numbers → validated Options (`Ict:*`); no magic strings → `.resx` resources.
+   Any new NuGet package is pinned to the **latest stable** version (the newest free/OSS version if the
+   latest is commercially licensed — e.g. FluentAssertions 7.x, never MediatR).
 6. Add a `FluentValidation` validator (input shape only — not business rules); it runs as a bus decorator.
 7. Put DTOs in the module's `Contracts` (camelCase JSON); if they cross to the frontend, keep
    `web/ict-dashboard/src/types/api.ts` in sync.
