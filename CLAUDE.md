@@ -91,9 +91,22 @@ with Reqnroll (Gherkin) + Testcontainers for .NET + xUnit.
 
 ## Automation layer (`.claude/`, project-scoped — never user-scoped)
 - **Agents:** `ict-domain-expert`, `ict-detector-engineer`, `vsa-slice-builder`, `ef-persistence-engineer`,
-  `reqnroll-test-engineer`, `react-dashboard-builder`, `defensive-guardrail-auditor`.
+  `reqnroll-test-engineer`, `react-dashboard-builder`, `defensive-guardrail-auditor`, `pr-reviewer`.
 - **Skills:** `ict-methodology` (rules SoT), `add-ict-detector`, `add-vertical-slice`, `mine-ict-transcripts`,
-  `verify-ict-system`, `defensive-guardrail-check`, `ict-conformance`, `git-workflow`.
+  `verify-ict-system`, `defensive-guardrail-check`, `ict-conformance`, `git-workflow`, `update-memory`.
+- **Hooks (`.claude/settings.json`):** PostToolUse → `ict-conformance-reminder.ps1` (nudges `/ict-conformance`
+  when `src/**` trading code changes); Stop → `memory-update-reminder.ps1` (reminds to `/update-memory` while
+  code changes are pending under `src/`/`tests/`/`web/`).
+
+## Review gate & memory hygiene (mandatory)
+- **PR review gate:** before `gh pr create`, run the **`pr-reviewer`** agent on the branch. It checks ICT
+  conformance (alignment to §2.5/§2.5.10), the .NET code (**must build with ZERO warnings** — repo is
+  warnings-as-errors — `dotnet format` clean, no code smells, DDD/module-boundaries/guardrail, tests pass),
+  and the React/TypeScript code (typecheck + lint clean). Fix all **Critical** and **Should-fix** findings
+  before opening the PR.
+- **Memory hygiene:** after each period of work / before stopping, run **`/update-memory`** to update this
+  `CLAUDE.md` (## Status + any changed convention/command/config) and `docs/PLAN.md` so the next session
+  resumes accurately. The Stop hook reminds you while code changes are pending.
 
 ## Common commands (once scaffolded)
 - Build:        `dotnet build`

@@ -36,11 +36,18 @@ EOF
 )"
 ```
 
-## 4. Pull request — what was the issue, how we fixed it
-`gh pr create` with title `#N <Verb> <subject>`. Body has two sections:
+## 4. Pull request — review first, then what was the issue & how we fixed it
+**Before opening the PR, run the `pr-reviewer` agent on the branch** (ICT conformance + .NET zero-warning
+clean build + no code smells + React typecheck/lint + guardrail). Fix every Critical and Should-fix finding.
+Then `gh pr create` with title `#N <Verb> <subject>`. Body has two sections:
 - **Issue** — what was wrong or what was needed (link `Closes #N`).
 - **Fix** — how we addressed it (approach + notable decisions) and how to verify.
 - Last line: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
+
+## 5. After work — update memory
+Before stopping a work session, run the `update-memory` skill: refresh `CLAUDE.md` (## Status + any changed
+convention/command/config) and `docs/PLAN.md` so the next session resumes accurately. The Stop hook reminds
+you while code changes are pending.
 
 ## Guardrails
 Commit/push only when the user asks; if on the default branch, branch first. Never commit secrets, never

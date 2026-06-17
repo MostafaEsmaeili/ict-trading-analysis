@@ -655,6 +655,7 @@ Any change to 1–6 after freeze = coordinated version bump + notice to WP7/8/9.
 | `reqnroll-test-engineer` | Gherkin + Testcontainers + xUnit | 9 (+unit/integration) | Read, Write, Edit, Bash, Grep, Glob | opus | `ict-methodology` |
 | `react-dashboard-builder` | React/TS dashboard + SignalR + Recharts | 8 | Read, Write, Edit, Bash, Grep, Glob | opus | — (invokes `frontend-design`) |
 | `defensive-guardrail-auditor` | Read-only auditor enforcing the no-live-trading guardrail | all (pre-merge) | Read, Grep, Glob, Bash | sonnet | `defensive-guardrail-check` |
+| `pr-reviewer` | PR gate: ICT conformance + .NET zero-warning clean build/no smells + React typecheck/lint + guardrail; APPROVE/REQUEST-CHANGES | every PR | Read, Grep, Glob, Bash | opus | `ict-methodology`, `ict-conformance`, `defensive-guardrail-check` |
 
 Staged file contents (create verbatim on approval):
 
@@ -808,6 +809,9 @@ true; a writable/non-sandbox feed; or a missing/failing architecture test. Recom
 | `defensive-guardrail-check` | The mechanical no-live-trading checklist (pre-merge + CI) | `/defensive-guardrail-check` |
 | **`ict-conformance`** | **Gate every code change against the ICT model (§2.5/§2.5.10) — run on each change** | `/ict-conformance` |
 | **`git-workflow`** | **Issue → branch → imperative commits (title+body, WHY-not-WHAT) → PR; the team's contribution convention (§14)** | `/git-workflow` |
+| **`update-memory`** | **After each work session, refresh CLAUDE.md (## Status) + docs/PLAN.md so memory stays current** | `/update-memory` |
+
+> **PR review gate + memory hygiene:** before `gh pr create`, the **`pr-reviewer`** agent reviews the branch (ICT conformance + .NET zero-warning clean build + no code smells + React typecheck/lint + guardrail) — fix all Critical/Should-fix first. After each work period, **`/update-memory`** updates CLAUDE.md + the plan. Two hooks in `.claude/settings.json` enforce both: PostToolUse `ict-conformance-reminder.ps1` and Stop `memory-update-reminder.ps1` (blocks the stop once while `src/`/`tests/`/`web/` changes are pending).
 
 Staged file contents (create verbatim on approval):
 
@@ -1056,10 +1060,13 @@ force-push shared branches, never skip hooks (`--no-verify`) unless explicitly a
 - ✅ **Created on disk (need an architecture-v2 scrub):** all 7 sub-agents; 3 skills (`ict-methodology`, `add-ict-detector`, `add-vertical-slice`). These still mention **MediatR/LlmKit** and must be edited on resume to: drop MediatR → in-memory bus; drop LlmKit; add modular-monolith + resources/no-magic-string rules; `ict-methodology` already DDD/§2.5-aware (refresh with §2.5.10).
 - ⏳ **Pending (resume after approval):**
   1. Scrub the 3 existing skills + 7 agents of MediatR/LlmKit (above).
-  2. Create 5 more skills: `mine-ict-transcripts`, `verify-ict-system`, `defensive-guardrail-check`, **`ict-conformance`**, **`git-workflow`**.
-  3. Create `.claude/settings.json` + `.claude/hooks/ict-conformance-reminder.ps1` (the every-change ICT gate).
-  4. Refresh `CLAUDE.md` from Appendix A (modular monolith, no-MediatR/LlmKit, resources, trade-realism, ICT gate, mining-done).
-  5. Then §14: `.gitignore` + `docs/PLAN.md` + `README.md` → `git init` + commit → `gh repo create ict-trading-analysis --private --source=. --remote=origin --push`.
+  2. Create 6 more skills: `mine-ict-transcripts`, `verify-ict-system`, `defensive-guardrail-check`, **`ict-conformance`**, **`git-workflow`**, **`update-memory`**.
+  3. Create the **`pr-reviewer`** agent (PR review gate).
+  4. Create `.claude/settings.json` + `.claude/hooks/ict-conformance-reminder.ps1` (PostToolUse ICT gate) + `.claude/hooks/memory-update-reminder.ps1` (Stop memory gate).
+  5. Refresh `CLAUDE.md` from Appendix A (modular monolith, no-MediatR/LlmKit, resources, trade-realism, ICT gate, review gate + memory hygiene, mining-done).
+  6. Then §14: `.gitignore` + `docs/PLAN.md` + `README.md` → `git init` + commit → `gh repo create ict-trading-analysis --private --source=. --remote=origin --push`.
+
+> **STATUS UPDATE (executed):** all of the above are DONE — repo live at `MostafaEsmaeili/ict-trading-analysis` (private). 8 agents + 10 skills + both hooks created; genesis + conformance-hook + this review/memory batch committed. Application code (WP0+) proceeds via issue → branch → `pr-reviewer` → PR.
 
 ---
 
