@@ -190,7 +190,26 @@ ordering race, and true bar-window leg-membership for the OB↔FVG link.
 **Convention added:** after acting on any code review (CodeRabbit or human), post one per-finding resolution
 summary that **tags `@coderabbitai`** (git-workflow skill §5 + the review-gate section above).
 
-**WP1 still to come (next slice / WP3):** `DailyBias` + `DealingRangeEquilibrium`/`PremiumDiscountGate` + `OteFib`,
-the `CalendarGate`, the confluence FSM (`ScanSession`/`SetupCandidate`) that assembles a graded `Setup` (and pins
-detector ordering so the MSS-vs-breach race above cannot bite), and the extended/long-tail detectors. Then WP2
-(persistence) / WP8 (frontend) in parallel.
+**§2.5 RequiredCondition detectors (issue #3 → #5, PR #8 open) — DONE.** Every §2.5.2 RequiredCondition now has an
+emitting detector, so the confluence FSM has a complete feeder set. Added (TDD, **172 tests**, 0 warnings, format
+clean; `pr-reviewer` APPROVE + adversarial ICT-conformance SHIP 4/5 CONFORMANT):
+- **`DealingRangeContextDetector`** (non-scoring) — anchors `MarketContext.DailyRange` from active swing extremes,
+  expand-only re-anchor.
+- **`DailyBiasDetector`** → `BiasAligned` — discount⇒bullish / premium⇒bearish / equilibrium⇒neutral; 3-close
+  corroboration OFF by default; sole writer of `ctx.Bias`.
+- **`PremiumDiscountGateDetector`** → `PremiumDiscountHalf` — entry-half veto; emits half-allowed direction,
+  non-directional match at an inclusive equilibrium (FSM realises the veto via the direction lock).
+- **`OteFibDetector`** → `OteZone` — 62–79% band (sweet spot 70.5%, Primer-flagged) on the pre-validated
+  displacement leg; needs a same-direction same-timeframe FVG/OB level in the band.
+- **`CalendarGateDetector`** → `CalendarClear` — blocks post-FOMC + the NFP release window from `MarketContext`
+  events; NY-date keyed; fail-open when unloaded.
+- Shared `EquilibriumBoundaryPolicy` (single 50%-boundary definition), `Sessions/EconomicEvent.cs`, new
+  `MarketContext` calendar state (`CurrentNewYorkDate`/`IsCalendarLoaded`/`EconomicEvents`/`LoadCalendar`), five new
+  `Ict:Detection:*` Options POCOs. **Two fast-follow issues open:** #6 (OTE distinct `OteVoidedOnFvgInvalidation`
+  signal) · #7 (DealingRange broken-swing body-to-body anchoring). Spec §5 now lists **22** open items.
+
+**WP1 still to come (next slice / WP3):** the confluence FSM (`ScanSession`/`SetupCandidate`) that accumulates the
+matched conditions, applies the direction lock + the PremiumDiscount/Calendar vetoes, and assembles a graded,
+alertable `Setup` (and pins detector ordering so the MSS-vs-breach race above cannot bite); the `DrawOnLiquidity`
++ `DrawTargetRrMet` detectors; and the extended/long-tail detectors (SMT, Breaker, SD projection, session macros).
+Then WP2 (persistence) / WP8 (frontend) in parallel.
