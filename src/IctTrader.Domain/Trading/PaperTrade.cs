@@ -78,6 +78,12 @@ public sealed class PaperTrade : AggregateRoot<Guid>
     /// <summary>The money at risk if the stop is hit — the trade's reserved share of the portfolio cap.</summary>
     public Money RiskBudget { get; }
 
+    /// <summary>
+    /// The value-per-pip for the WHOLE position (per-pip value × lots) — the money geometry the execution-cost
+    /// model and the P&amp;L booking share, so a computed cost can never disagree with the realized P&amp;L.
+    /// </summary>
+    public decimal ValuePerPipForPosition => _valuePerPipForPosition;
+
     public DateTimeOffset OpenedAtUtc { get; }
 
     /// <summary>The original |entry − stop| in price units, frozen at open so R is always vs the original 1R.</summary>
@@ -91,11 +97,25 @@ public sealed class PaperTrade : AggregateRoot<Guid>
 
     public TradeCloseReason? CloseReason { get; private set; }
 
-    /// <summary>The signed realized reward-to-risk in R (−1 at a full stop-out), set on close.</summary>
+    /// <summary>The signed realized reward-to-risk in R, measured on PRICE vs the frozen 1R (−1 at a full stop-out,
+    /// the plan RR at the runner). It is the strategy's structural edge and is NOT reduced by costs (§5.2).</summary>
     public decimal? RealizedR { get; private set; }
 
-    /// <summary>The signed gross realized P&amp;L in account currency, set on close (net costs are WP5).</summary>
+    /// <summary>The signed GROSS realized P&amp;L in account currency (before costs), set on close.</summary>
+    public Money? GrossPnl { get; private set; }
+
+    /// <summary>The total execution costs deducted at close (§5.4 — round-trip spread + commission this slice).</summary>
+    public Money? Costs { get; private set; }
+
+    /// <summary>The signed NET realized P&amp;L (gross − costs) — the figure booked to the account on settle.</summary>
     public Money? RealizedPnl { get; private set; }
+
+    /// <summary>Alias for the booked net P&amp;L — the after-cost money result (§5.4).</summary>
+    public Money? NetPnl => RealizedPnl;
+
+    /// <summary>The after-cost reward-to-risk: net P&amp;L over the reserved risk budget (§5.4). A stop-out is worse
+    /// than −1R here because the round-trip costs come on top of the 1R price loss.</summary>
+    public decimal? NetR => RealizedPnl is null ? null : RealizedPnl.Value.Amount / RiskBudget.Amount;
 
     public Direction Direction => Plan.Direction;
 
@@ -104,11 +124,13 @@ public sealed class PaperTrade : AggregateRoot<Guid>
     public Price Stop => Plan.Stop;
 
     /// <summary>
-    /// Closes the trade at <paramref name="exitPrice"/>, realizing the gross R and P&amp;L. Legal only from
-    /// <see cref="TradeStatus.Open"/>. A close at exactly the stop yields −1R and a loss equal to the risk budget;
-    /// a close at the runner target yields the plan's reward-to-risk.
+    /// Closes the trade at <paramref name="exitPrice"/>, realizing the price-based R and the gross/net P&amp;L. Legal
+    /// only from <see cref="TradeStatus.Open"/>. <paramref name="costs"/> (the §5.4 execution costs, computed by an
+    /// <see cref="IExecutionCostModel"/>) are subtracted from the gross P&amp;L to book the net; <see cref="RealizedR"/>
+    /// stays the structural price R (a close at the stop is exactly −1R gross, at the runner the plan's RR), while
+    /// <see cref="NetR"/> reflects the after-cost money result.
     /// </summary>
-    public void Close(Price exitPrice, TradeCloseReason reason, DateTimeOffset closedAtUtc)
+    public void Close(Price exitPrice, TradeCloseReason reason, TradeCosts costs, DateTimeOffset closedAtUtc)
     {
         Guard.Against(Status != TradeStatus.Open, "Only an open paper trade can be closed.");
         Guard.Against(closedAtUtc.Offset != TimeSpan.Zero, "PaperTrade.ClosedAtUtc must be UTC.");
@@ -119,15 +141,20 @@ public sealed class PaperTrade : AggregateRoot<Guid>
             : Entry.Value - exitPrice.Value;
 
         var realizedR = signedMove / InitialRiskPerUnit;
-        var realizedPnl = new Money(signedMove / _pipSize * _valuePerPipForPosition);
+        var grossPnl = new Money(signedMove / _pipSize * _valuePerPipForPosition);
+        var netPnl = grossPnl - costs.Total;
 
         ExitPrice = exitPrice;
         CloseReason = reason;
         ClosedAtUtc = closedAtUtc;
         RealizedR = realizedR;
-        RealizedPnl = realizedPnl;
+        GrossPnl = grossPnl;
+        Costs = costs.Total;
+        RealizedPnl = netPnl;
         Status = TradeStatus.Closed;
 
-        RaiseDomainEvent(new PaperTradeClosed(Id, AccountId, realizedR, realizedPnl, reason, closedAtUtc));
+        var netR = netPnl.Amount / RiskBudget.Amount;
+        RaiseDomainEvent(new PaperTradeClosed(
+            Id, AccountId, realizedR, netR, grossPnl, costs.Total, netPnl, reason, closedAtUtc));
     }
 }

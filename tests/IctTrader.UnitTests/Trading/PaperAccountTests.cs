@@ -112,12 +112,27 @@ public class PaperAccountTests
         var account = Account();
         var trade = OpenTrade(account.Id, 0.31m);
         account.RegisterOpen(trade);
-        trade.Close(new Price(1.0920m), TradeCloseReason.TargetHit, Utc.AddHours(1)); // +272.8
+        trade.Close(new Price(1.0920m), TradeCloseReason.TargetHit, TradeCosts.Zero, Utc.AddHours(1)); // +272.8
 
         account.Settle(trade);
 
         account.OpenRisk.Amount.Should().Be(0m);
         account.Equity.Amount.Should().Be(10_272.8m);
+    }
+
+    [Fact]
+    public void Settling_books_the_net_pnl_and_releases_the_unchanged_risk_budget()
+    {
+        var account = Account();
+        var trade = OpenTrade(account.Id, 0.31m);
+        account.RegisterOpen(trade);
+        var costs = new TradeCosts(new Money(4.34m), new Money(1.86m)); // 6.20 round-trip cost
+        trade.Close(new Price(1.0920m), TradeCloseReason.TargetHit, costs, Utc.AddHours(1)); // +272.8 gross
+
+        account.Settle(trade);
+
+        account.OpenRisk.Amount.Should().Be(0m);      // the price-based RiskBudget (99.2) is released, not the net
+        account.Equity.Amount.Should().Be(10_266.6m); // equity books NET of the 6.20 costs (272.8 − 6.20)
     }
 
     [Fact]
@@ -130,7 +145,7 @@ public class PaperAccountTests
         var settleWhileOpen = () => account.Settle(trade);
         settleWhileOpen.Should().Throw<DomainException>(); // still Open
 
-        trade.Close(new Price(1.0920m), TradeCloseReason.TargetHit, Utc.AddHours(1));
+        trade.Close(new Price(1.0920m), TradeCloseReason.TargetHit, TradeCosts.Zero, Utc.AddHours(1));
         account.Settle(trade);
 
         var settleAgain = () => account.Settle(trade);
@@ -143,7 +158,7 @@ public class PaperAccountTests
         var account = Account(equity: 100m); // cap 5 -> a 0.01-lot trade risks 3.2, well within
         var trade = OpenTrade(account.Id, 0.01m);
         account.RegisterOpen(trade);
-        trade.Close(new Price(0.9000m), TradeCloseReason.Manual, Utc.AddHours(1)); // catastrophic loss
+        trade.Close(new Price(0.9000m), TradeCloseReason.Manual, TradeCosts.Zero, Utc.AddHours(1)); // catastrophic loss
 
         var act = () => account.Settle(trade);
 

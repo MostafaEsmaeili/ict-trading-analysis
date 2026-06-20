@@ -314,9 +314,33 @@ trade leaves the market. ict-domain-expert spec-reviewed, `pr-reviewer` APPROVE 
   partial scale-outs + breakeven arming + time-exit (need partial-close/stop-move on `PaperTrade`); entry-arming
   (Pending→Open); tick/sub-bar OLHC replay. `FillOptions` Host binding lands with the PaperTrading/Scanner wiring.
 
-**WP5 still to come (next slice):** the **§5.4 `IExecutionCostModel`** (spread/commission/slippage/swap, weekend
-gap-through — books P&L NET) and the **partial/breakeven/time-exit management** (T1 scale-out + trail 50%→25%/75%→BE +
-max-hold) on `PaperTrade`, plus the post-confirmation **Armed/Triggered** (Pending→Open) entry-arming; then the adaptive
-**loss-ladder/`IRiskManager`** fast-follow + the `Performance` calculator (WP6); the extended/long-tail detectors (SMT,
-Breaker, SD projection, session macros). Then WP2 (persistence) / WP8 (frontend) in parallel. Spec §5 item **20**
-(grading denominator / alert floor) still needs a call before alerting.
+**WP5 execution-cost model — paper P&L booked NET (issue #20, branch `feature/#20-execution-cost-model`, PR #21) —
+DONE.** The first §5.4 cut: a PURE `IExecutionCostModel`/`ExecutionCostModel` (`IctTrader.Domain/Trading/`) prices the
+two deterministic always-present FX costs into a `TradeCosts`, and `PaperTrade.Close` now books NET. ict-domain-expert
+spec-reviewed, `pr-reviewer` APPROVE (no Critical/Should-fix), `defensive-guardrail-auditor` 7/7 PASS, **275 tests**
+(252 unit + 23 arch), 0 warnings, format clean:
+- **Round-trip spread** = `2 × BasePips × valuePerPipForPosition` (cross the spread on BOTH legs, §5.4) + **commission**
+  = `PerLotRoundTripUsd × lots` (round-turn, levied once). Both read the trade's OWN money geometry
+  (`PaperTrade.ValuePerPipForPosition`, now exposed) so a cost can never disagree with booked P&L.
+- **`PaperTrade.Close(exitPrice, reason, TradeCosts, closedAtUtc)`** — signature now takes the computed costs (the model
+  DECIDES, `Close` APPLIES). Exposes `GrossPnl` / `Costs` / `NetPnl`; `RealizedPnl` = **net** (what `PaperAccount.Settle`
+  books); `RealizedR` stays the **price-based gross R** (§5.2 frozen-1R — a stop-out is still exactly −1R gross) + a new
+  `NetR = NetPnl / RiskBudget`. The reserved `RiskBudget` (price-based stop risk) is **unchanged** by costs.
+  `PaperTradeClosed` now carries RealizedR + NetR + GrossPnl + Costs + NetPnl (for the §5.3 perf views). 13 existing
+  `Close` call sites pass `TradeCosts.Zero` (gross-geometry tests stay valid: net == gross when costs are zero).
+- **`ExecutionCostOptions`** (`Ict:Execution` → `Spread.BasePips` 0.7 / `Commission.PerLotRoundTripUsd` 6.0), `Validate()`
+  -gated, wired into `OptionsValidationTests`. Flat base spread is faithful for killzone-gated FX entries (base≈peak
+  there; the news minute is already vetoed by `CalendarClear`). No magic numbers; `RoundTripLegs` is a named const.
+- **Spread is the COST LINE here; the §2.5.8 `level+spread` fill-price worsening stays in `FillEvaluator` (deferred) so
+  the same dollars are never double-counted.**
+- **Deferred (spec §5 item 25):** session-stepped spread (+ its model selector); **slippage tiers**; **swap/rollover**
+  (17:00 ET night-counting + triple-Wednesday — safe to defer while the no-overnight max-hold holds → 0 nights); weekend
+  gap; partial fills/latency; dynamic account-currency conversion. `Ict:Execution` Host binding lands with the
+  PaperTrading module.
+
+**WP5 still to come (next slice):** the **partial/breakeven/time-exit management** on `PaperTrade` (T1 scale-out + trail
+50%→25%/75%→BE + max-hold / no-overnight — needs partial-close + stop-move methods on the aggregate), then the
+post-confirmation **Armed/Triggered** (Pending→Open) entry-arming, the **slippage** + **session-stepped spread** + **swap**
+cost follow-ons, the adaptive **loss-ladder/`IRiskManager`** fast-follow, and the `Performance` calculator (WP6); the
+extended/long-tail detectors (SMT, Breaker, SD projection, session macros). Then WP2 (persistence) / WP8 (frontend) in
+parallel. Spec §5 item **20** (grading denominator / alert floor) still needs a call before alerting.
