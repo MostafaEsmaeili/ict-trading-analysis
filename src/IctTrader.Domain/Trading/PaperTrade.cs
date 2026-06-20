@@ -57,6 +57,7 @@ public sealed class PaperTrade : AggregateRoot<Guid>
         Plan = plan;
         Size = size;
         RemainingSize = size;
+        CurrentStop = plan.Stop;
         OpenedAtUtc = openedAtUtc;
         InitialRiskPerUnit = initialRiskPerUnit;
         Status = TradeStatus.Open;
@@ -147,7 +148,19 @@ public sealed class PaperTrade : AggregateRoot<Guid>
 
     public Price Entry => Plan.Entry;
 
+    /// <summary>The ORIGINAL stop, frozen for the 1R geometry / snapshot readers. The live stop is <see cref="CurrentStop"/>.</summary>
     public Price Stop => Plan.Stop;
+
+    /// <summary>The live stop after any ratchet (starts at the frozen <see cref="Stop"/>). The fill evaluator reads
+    /// THIS, so a trailed stop governs the exit; <see cref="RiskBudget"/> and the <see cref="RealizedR"/> denominator
+    /// stay the frozen original 1R, so a breakeven stop-out books ~0R rather than −1R (§5.2).</summary>
+    public Price CurrentStop { get; private set; }
+
+    /// <summary>True once the stop has been ratcheted to entry-or-better in the trade direction — the loss is capped
+    /// off the original 1R. Derived (not a lifecycle state), so it composes with <see cref="HasScaledOut"/>.</summary>
+    public bool IsBreakevenArmed => Direction == Direction.Bullish
+        ? CurrentStop.Value >= Entry.Value
+        : CurrentStop.Value <= Entry.Value;
 
     /// <summary>
     /// Books a T1 partial scale-out (plan §2.5.9): closes <paramref name="legSize"/> lots at the resting
@@ -178,6 +191,39 @@ public sealed class PaperTrade : AggregateRoot<Guid>
         RaiseDomainEvent(new PaperTradePartialClosed(
             Id, AccountId, LegPriceR(leg), legGross, legCosts.Total, legGross - legCosts.Total,
             legSize.Lots / Size.Lots, legSize, RemainingSize, reason, atUtc));
+    }
+
+    /// <summary>
+    /// Ratchets the protective stop toward profit (plan §2.5.9 stop management). Legal only from an open trade; the
+    /// new stop must strictly TIGHTEN in the trade direction (a long stop only moves up, a short only down) and may
+    /// cross entry to lock profit, but may not reach the runner target. It changes only <see cref="CurrentStop"/>
+    /// (the level the fill evaluator honors) — the frozen <see cref="RiskBudget"/> and the <see cref="RealizedR"/>
+    /// denominator are untouched, so R stays measured vs the original 1R. The WHEN/where decision (the trail ladder)
+    /// is a candle-driven policy outside the aggregate (Slice C).
+    /// </summary>
+    public void MoveStop(Price newStop, DateTimeOffset atUtc)
+    {
+        Guard.Against(Status != TradeStatus.Open, "Only an open paper trade can move its stop.");
+        Guard.Against(atUtc.Offset != TimeSpan.Zero, "PaperTrade stop-move time must be UTC.");
+        Guard.Against(atUtc < OpenedAtUtc, "A paper trade cannot move its stop before it opened.");
+        Guard.Against(
+            _legs.Count > 0 && atUtc < _legs[^1].AtUtc,
+            "A stop move cannot predate the last scale-out (the timeline must be monotonic).");
+
+        var tightens = Direction == Direction.Bullish
+            ? newStop.Value > CurrentStop.Value
+            : newStop.Value < CurrentStop.Value;
+        Guard.Against(!tightens, "A stop can only ratchet toward profit, never loosen.");
+
+        var beforeRunner = Direction == Direction.Bullish
+            ? newStop.Value < Plan.Targets.Runner.Value
+            : newStop.Value > Plan.Targets.Runner.Value;
+        Guard.Against(!beforeRunner, "A stop cannot trail to or past the runner target.");
+
+        var previousStop = CurrentStop;
+        CurrentStop = newStop;
+
+        RaiseDomainEvent(new PaperTradeStopMoved(Id, AccountId, previousStop, newStop, IsBreakevenArmed, atUtc));
     }
 
     /// <summary>

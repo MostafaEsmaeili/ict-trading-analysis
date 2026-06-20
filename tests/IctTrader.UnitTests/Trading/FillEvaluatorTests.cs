@@ -187,6 +187,37 @@ public class FillEvaluatorTests
     }
 
     [Fact]
+    public void A_trailed_breakeven_stop_fills_at_the_moved_level_and_books_about_zero_r()
+    {
+        var trade = BullishTrade();
+        trade.MoveStop(new Price(1.0832m), BarTime); // ratchet to breakeven (entry)
+
+        var decision = Evaluator.Evaluate(trade, Bar(1.0835m, 1.0840m, 1.0830m, 1.0838m)); // low 1.0830 ≤ 1.0832
+
+        decision.Outcome.Should().Be(FillOutcome.StopHit);
+        decision.ExitPrice!.Value.Value.Should().Be(1.0832m); // the trailed level, not the original 1.0800
+
+        trade.Close(decision.ExitPrice!.Value, decision.CloseReason!.Value, TradeCosts.Zero, BarTime);
+        trade.RealizedR!.Value.Should().Be(0m);            // breakeven, not −1R
+        trade.RealizedPnl!.Value.Amount.Should().Be(0m);
+        trade.RiskBudget.Amount.Should().Be(99.2m);        // the reserved risk is unchanged by the trail
+    }
+
+    [Fact]
+    public void A_trailed_quarter_risk_stop_books_about_minus_quarter_r()
+    {
+        var trade = BullishTrade();
+        trade.MoveStop(new Price(1.0824m), BarTime); // entry − 0.25 × 32-pip 1R → 25% residual risk
+
+        var decision = Evaluator.Evaluate(trade, Bar(1.0828m, 1.0830m, 1.0820m, 1.0826m)); // low 1.0820 ≤ 1.0824
+
+        decision.ExitPrice!.Value.Value.Should().Be(1.0824m);
+
+        trade.Close(decision.ExitPrice!.Value, decision.CloseReason!.Value, TradeCosts.Zero, BarTime);
+        trade.RealizedR!.Value.Should().BeApproximately(-0.25m, 0.0001m);
+    }
+
+    [Fact]
     public void Applying_a_runner_decision_books_the_plan_reward_to_risk()
     {
         var trade = BullishTrade();

@@ -51,3 +51,16 @@ public sealed record PaperTradePartialClosed(
     PositionSize RemainingSize,
     TradeCloseReason Reason,
     DateTimeOffset OccurredOnUtc) : IDomainEvent;
+
+/// <summary>
+/// Raised when a paper trade ratchets its stop toward profit (plan §2.5.9). Carries the previous and new stop and a
+/// snapshot of whether the stop is now at-or-beyond breakeven, so Alerting/the dashboard need not recompute. A stop
+/// move books no money — the frozen risk and R denominator are unchanged.
+/// </summary>
+public sealed record PaperTradeStopMoved(
+    Guid TradeId,
+    Guid AccountId,
+    Price PreviousStop,
+    Price NewStop,
+    bool BreakevenArmed,
+    DateTimeOffset OccurredOnUtc) : IDomainEvent;
