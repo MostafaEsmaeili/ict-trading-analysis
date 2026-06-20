@@ -6,6 +6,7 @@ using IctTrader.Domain.Detection.Detectors;
 using IctTrader.Domain.MarketStructure;
 using IctTrader.Domain.Sessions;
 using IctTrader.Domain.Setups;
+using IctTrader.Domain.Styles;
 using IctTrader.Domain.ValueObjects;
 using Microsoft.Extensions.Time.Testing;
 
@@ -207,5 +208,15 @@ public class ScanSessionTests
             ConfluenceCondition.KillzoneEntry, ConfluenceCondition.DrawTargetRrMet,
             ConfluenceCondition.BiasAligned, ConfluenceCondition.PremiumDiscountHalf, ConfluenceCondition.CalendarClear,
         ]);
+
+        // The confirmation carries the priced draw frame, so the factory prices the advisory Setup end-to-end.
+        confirmation.Frame.Should().NotBeNull();
+        var setup = new SetupFactory(new TargetLadderOptions(), new TradeStyleOptions())
+            .Create(confirmation, TradeStyle.Intraday);
+        setup.Direction.Should().Be(Direction.Bullish);
+        setup.Plan.Entry.Value.Should().Be(1.0832m);              // the OTE array level
+        setup.Plan.Targets.Runner.Value.Should().Be(1.0920m);     // the draw
+        setup.Plan.RewardRatio.Value.Should().BeGreaterThanOrEqualTo(2.5m);
+        setup.IsAdvisoryOnly.Should().BeTrue();
     }
 }

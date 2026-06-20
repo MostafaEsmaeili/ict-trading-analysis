@@ -25,6 +25,14 @@ public class OptionsValidationTests
         new SetupCandidateOptions().Validate().Should().BeEmpty();
         new KillzoneEntryOptions().Validate().Should().BeEmpty();
         new DrawOnLiquidityOptions().Validate().Should().BeEmpty();
+        new TargetLadderOptions().Validate().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void A_target_equilibrium_fraction_outside_the_open_unit_interval_is_rejected()
+    {
+        new TargetLadderOptions { T1EquilibriumFraction = 0m }.Validate().Should().NotBeEmpty();
+        new TargetLadderOptions { T1EquilibriumFraction = 1m }.Validate().Should().NotBeEmpty();
     }
 
     [Fact]

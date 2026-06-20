@@ -247,7 +247,25 @@ by a new `ScanSessionTests` integration test). ict-domain-expert spec-reviewed, 
 - **Scoped/deferred (spec §5):** the draw targets **registered pools only** — the broader §2.5.1-step-2 set
   (prior-day H/L, HTF FVG, big figures) + stacked/array-anchored stops are the priced-`Setup` (WP4/WP5) work.
 
-**WP1 still to come (next slice):** the priced `Setup` aggregate (entry/stop/targets/RR) + the post-confirmation
-**Armed/Triggered** entry-arming + fill chain (WP4/WP5); the extended/long-tail detectors (SMT, Breaker, SD
-projection, session macros). Then WP2 (persistence) / WP8 (frontend) in parallel. Spec §5 item **20** (grading
-denominator / alert floor) still needs a call before alerting.
+**Priced `Setup` aggregate (issue #13, branch `feature/#13-setup-aggregate`, PR #13) — DONE.** The confirmed,
+advisory, **priced** setup (`IctTrader.Domain/Setups/`) the Alerting + PaperTrading modules consume.
+ict-domain-expert spec-reviewed, `pr-reviewer` APPROVE, **217 tests** (194 unit + 23 arch), 0 warnings, format clean:
+- **`Setup`** aggregate root — grade gate (**only A/B** become a Setup; C/Reject never do), structurally
+  `IsAdvisoryOnly`, carries the `TradePlan` + `SetupReason` + `TradeStyle`/`Timeframe` (which name the
+  max-hold/no-overnight policy the simulator applies — not mutable management fields).
+- **`TradePlan` + `TargetLadder`** VOs — total-order invariant `stop < entry < T1 < T2` (mirror for short); RR
+  recomputed entry→runner from geometry. T2 = the **exact** draw; T1 = the entry→T2 **equilibrium**
+  (`TargetLadderOptions.T1EquilibriumFraction`, §2.5.5 50%); two tiers, SD ladder deferred.
+- **`PricedFrame`** — the FSM captures entry/stop/target/RR from the `DrawTargetRrMet` evidence onto the
+  `SetupConfirmation`, so `SetupFactory` prices the plan against the **frozen gated draw** (never re-derives it).
+- **`SetupFactory`** — builds the Setup, re-checks the style RR floor (belt-and-suspenders), composes the reason
+  (rank-sorted clauses + a priced `TradePlanSummary`). The end-to-end `ScanSessionTests` now prices a Setup from
+  the real pipeline.
+- **Deferred (pr-reviewer nits / spec §5):** tick-round T1 in the fill layer; a `TryCreate` for multi-style
+  orchestration (so "doesn't qualify for this style" isn't exception-driven); the §2.5.7 management fractions +
+  Armed/fill stay WP5.
+
+**WP1/WP3 still to come (next slice):** the post-confirmation **Armed/Triggered** entry-arming + realistic
+fill/execution-cost chain + `PaperTrade`/`PaperAccount` aggregates (WP4/WP5); the extended/long-tail detectors
+(SMT, Breaker, SD projection, session macros). Then WP2 (persistence) / WP8 (frontend) in parallel. Spec §5 item
+**20** (grading denominator / alert floor) still needs a call before alerting.

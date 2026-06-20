@@ -39,6 +39,10 @@ public static class ReasonFragments
     public static string DrawTarget(Direction direction, decimal targetLevel, decimal rewardRatio)
         => $"{direction} draw on liquidity at {N(targetLevel)} ({N(rewardRatio)}R)";
 
+    public static string TradePlanSummary(
+        Direction direction, decimal entry, decimal stop, decimal t1, decimal t2, decimal rewardRatio)
+        => $"{direction} entry {N(entry)}, stop {N(stop)}, T1 {N(t1)}, T2 {N(t2)} ({N(rewardRatio)}R)";
+
     public static string DailyBias(Direction direction, decimal positionPercent)
         => $"Daily bias {direction} at {N(positionPercent)}% of the dealing range";
 
