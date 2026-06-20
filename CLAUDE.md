@@ -154,8 +154,8 @@ based architecture tests enforce the boundaries.
 
 **WP1 (issue #3, branch `feature/#3-detection-foundation`) — detection layer in progress.** The pure-domain
 ICT detectors encoding §2.5, built TDD with an ICT-verified spec (the `wp1-detector-spec` workflow → adversarial
-fidelity pass → [docs/wp1-detector-spec.md]; §5 there lists 18 open ICT decisions on the documented defaults).
-Landed (95 unit tests, Release 0 warnings, `dotnet format` clean):
+fidelity pass → [docs/wp1-detector-spec.md]; §5 there lists 19 open ICT decisions on the documented defaults).
+Landed (115 unit + 23 architecture tests after the review pass, Release 0 warnings, `dotnet format` clean):
 - **Time/session:** `NyClock` (DST via UTC-offset), `KillzoneClock` (instrument-class windows, hard lunch,
   AM cutoff, Asian wrap; `Killzone` extended with `Pm`/`Am`).
 - **Confluence engine:** `ConfluenceCondition`, tunable `ConfluenceOptions` (weights/required/thresholds/floor),
@@ -175,6 +175,22 @@ Landed (95 unit tests, Release 0 warnings, `dotnet format` clean):
   `Validate()`; pip math via `SymbolSpec`. The Host appsettings **binding + `ValidateOnStart`** wiring lands
   with the scanner module that consumes them (WP3/WP7).
 
+**WP1 review hardening (PR #4, code review resolved):** addressed all 22 CodeRabbit findings + an adversarial
+ICT-conformance/guardrail verification pass. Tightened every Options `Validate()` (enum-defined grade,
+displacement/FVG/ATR gates, null-safe + frozen-subset `ActiveKillzones`, hard 2:1 floor, throwing
+`TradeStyleOptions.For`), made the market-structure VOs self-validate, and corrected the detectors: MSS ignores
+inactive/stale swings; `MarketContext` clears intraday state **only on a genuine NY-day rollover** (first candle
+initialises, never resets); the OB↔FVG link is timeframe-scoped behind `OrderBlockOptions.RequireSameTimeframeFvg`
+(default true, a §2.5.7-deferred proxy for leg membership). **ICT correction over the review:** a sweep close
+landing *exactly on* the level stays UNTAPPED (a run is a close *beyond*, §2.5.8) — not consumed. Tests use
+`FakeTimeProvider`. Now **138 tests** (115 unit + 23 arch), 0 warnings, `dotnet format` clean. Two deeper items
+tracked as WP3 spec work in [docs/wp1-detector-spec.md] §5 (now **19** open items): the MSS-vs-`SwingPointDetector`
+ordering race, and true bar-window leg-membership for the OB↔FVG link.
+
+**Convention added:** after acting on any code review (CodeRabbit or human), post one per-finding resolution
+summary that **tags `@coderabbitai`** (git-workflow skill §5 + the review-gate section above).
+
 **WP1 still to come (next slice / WP3):** `DailyBias` + `DealingRangeEquilibrium`/`PremiumDiscountGate` + `OteFib`,
-the `CalendarGate`, the confluence FSM (`ScanSession`/`SetupCandidate`) that assembles a graded `Setup`, and the
-extended/long-tail detectors. Then WP2 (persistence) / WP8 (frontend) in parallel.
+the `CalendarGate`, the confluence FSM (`ScanSession`/`SetupCandidate`) that assembles a graded `Setup` (and pins
+detector ordering so the MSS-vs-breach race above cannot bite), and the extended/long-tail detectors. Then WP2
+(persistence) / WP8 (frontend) in parallel.
