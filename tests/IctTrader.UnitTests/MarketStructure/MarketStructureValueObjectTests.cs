@@ -18,6 +18,20 @@ public class MarketStructureValueObjectTests
         new(Direction.Bullish, Timeframe.M5, new Price(1.0832m), new Price(1.0840m), Utc);
 
     [Fact]
+    public void Breaching_a_swing_stamps_the_breaching_candle_for_same_candle_mss_recognition()
+    {
+        var swing = new SwingPoint(SwingKind.High, Timeframe.M5, new Price(1.0900m), Utc);
+        swing.BreachedAtUtc.Should().BeNull();
+
+        swing.Breach(Utc);
+
+        swing.State.Should().Be(SwingState.Breached);
+        swing.IsActive.Should().BeFalse();
+        swing.WasBreachedOn(Utc).Should().BeTrue();
+        swing.WasBreachedOn(Utc.AddMinutes(5)).Should().BeFalse(); // a different candle did not breach it
+    }
+
+    [Fact]
     public void Fvg_voids_on_the_configured_touch_count_and_can_mitigate()
     {
         var fvg = BullishFvg();

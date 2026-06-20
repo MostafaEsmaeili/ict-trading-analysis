@@ -43,6 +43,9 @@ public sealed class SwingPoint
 
     public SwingState State { get; private set; } = SwingState.Active;
 
+    /// <summary>The candle (UTC open) that breached this swing, or null while it is still active/consumed.</summary>
+    public DateTimeOffset? BreachedAtUtc { get; private set; }
+
     public Direction EnablesDirection => Kind == SwingKind.High ? Direction.Bearish : Direction.Bullish;
 
     public bool IsActive => State == SwingState.Active;
@@ -56,6 +59,18 @@ public sealed class SwingPoint
         }
     }
 
-    /// <summary>Invalidation: price CLOSED beyond the swing (ITH/ITL breach) — a structural break, not a sweep.</summary>
-    public void Breach() => State = SwingState.Breached;
+    /// <summary>
+    /// Invalidation: price CLOSED beyond the swing (ITH/ITL breach) — a structural break, not a sweep. The
+    /// breaching candle is stamped so the MSS detector can still claim a swing broken by the SAME displacement
+    /// candle (the breach-vs-MSS ordering race, spec §5 item 19), while excluding swings breached on earlier bars.
+    /// </summary>
+    public void Breach(DateTimeOffset breachedAtUtc)
+    {
+        Guard.Against(breachedAtUtc.Offset != TimeSpan.Zero, "SwingPoint.BreachedAtUtc must be UTC.");
+        State = SwingState.Breached;
+        BreachedAtUtc = breachedAtUtc;
+    }
+
+    /// <summary>Whether this swing was breached by the candle opening at <paramref name="utc"/>.</summary>
+    public bool WasBreachedOn(DateTimeOffset utc) => State == SwingState.Breached && BreachedAtUtc == utc;
 }
