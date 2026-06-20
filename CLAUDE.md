@@ -295,8 +295,28 @@ PR #17) — DONE.** The WP4 domain core (`IctTrader.Domain/Trading/`): a confirm
   later); instrument-class min-stop when index is wired; repositories = WP2; Host `Ict:Risk` binding lands with the
   PaperTrading module.
 
-**WP4/WP5 still to come (next slice):** the post-confirmation **Armed/Triggered** + realistic **fill/execution-cost
-chain** (the next consumer of `PaperTrade` — intrabar Open→Low→High→Close fills, partials, breakeven, time-exit,
-§5.4 cost model), then the adaptive **loss-ladder/`IRiskManager`** fast-follow + the `Performance` calculator (WP6);
-the extended/long-tail detectors (SMT, Breaker, SD projection, session macros). Then WP2 (persistence) / WP8
-(frontend) in parallel. Spec §5 item **20** (grading denominator / alert floor) still needs a call before alerting.
+**WP5 intrabar fill evaluator (issue #18, branch `feature/#18-fill-evaluator`, PR #19) — DONE.** The first WP5 cut:
+a PURE domain `IFillEvaluator`/`FillEvaluator` (`IctTrader.Domain/Trading/`, plan §5.2) that folds one `Candle` over one
+OPEN `PaperTrade` into a `FillDecision` (close at stop / runner, or no fill) — so the simulator finally decides WHERE a
+trade leaves the market. ict-domain-expert spec-reviewed, `pr-reviewer` APPROVE (no Critical/Should-fix),
+`defensive-guardrail-auditor` 7/7 PASS, **265 tests** (242 unit + 23 arch), 0 warnings, format clean:
+- **Touch tests read bar HIGH/LOW, never close-only** (§2.5.8) — long stop `Low≤stop` / TP `High≥runner`, short mirror;
+  inclusive boundary (an exact kiss fills). An ICT wick-sweep that closes back inside still stops the trade out.
+- **Resting orders fill at the LEVEL** (stop / runner price), so a stop-out books exactly **−1R** and a runner books the
+  **plan RR** (proved by applying the decision to `PaperTrade.Close`).
+- **Straddle tiebreak = conservative `StopFirst` for BOTH directions** (`FillOptions.StopVsTarget`, default worst-case) —
+  deliberately overriding the raw Open→Low→High→Close path, which would optimistically fill a SHORT's target first and
+  flatter the strategy. `IntrabarFillAssumption { StopFirst, TargetFirst }`; `TargetFirst` is a what-if escape hatch.
+- **Pure / DECIDE-vs-APPLY** — the evaluator returns an immutable `FillDecision` (no timestamp → clock-free, the caller
+  stamps the bar close); `PaperTrade.Close` applies it. `FillOptions` (`Ict:Execution:Fills`, `Validate()`-gated, wired
+  into `OptionsValidationTests`). No magic numbers.
+- **Deferred (spec §5 item 24):** gap-through + spread/slippage worsening (§5.4 cost model — P&L still **GROSS**); T1
+  partial scale-outs + breakeven arming + time-exit (need partial-close/stop-move on `PaperTrade`); entry-arming
+  (Pending→Open); tick/sub-bar OLHC replay. `FillOptions` Host binding lands with the PaperTrading/Scanner wiring.
+
+**WP5 still to come (next slice):** the **§5.4 `IExecutionCostModel`** (spread/commission/slippage/swap, weekend
+gap-through — books P&L NET) and the **partial/breakeven/time-exit management** (T1 scale-out + trail 50%→25%/75%→BE +
+max-hold) on `PaperTrade`, plus the post-confirmation **Armed/Triggered** (Pending→Open) entry-arming; then the adaptive
+**loss-ladder/`IRiskManager`** fast-follow + the `Performance` calculator (WP6); the extended/long-tail detectors (SMT,
+Breaker, SD projection, session macros). Then WP2 (persistence) / WP8 (frontend) in parallel. Spec §5 item **20**
+(grading denominator / alert floor) still needs a call before alerting.
