@@ -173,6 +173,19 @@ public class PaperTradeStopTrailTests
         trade.IsBreakevenArmed.Should().BeTrue();                 // and breakeven-armed (orthogonal)
     }
 
+    [Fact]
+    public void A_scale_out_cannot_predate_an_earlier_stop_move()
+    {
+        var trade = BullishTrade();
+        trade.MoveStop(new Price(1.0820m), Later); // stop move at 08:30
+
+        // A partial stamped before the stop move would make the management timeline non-monotonic.
+        var act = () =>
+            trade.ScaleOut(new Price(1.0864m), new PositionSize(0.15m), TradeCosts.Zero, TradeCloseReason.TargetHit, Open.AddMinutes(30));
+
+        act.Should().Throw<DomainException>();
+    }
+
     private static PaperTrade BullishTradeWithStopAt(decimal stop)
     {
         var trade = BullishTrade();

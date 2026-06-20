@@ -204,6 +204,42 @@ public class FillEvaluatorTests
     }
 
     [Fact]
+    public void A_long_stop_trailed_into_profit_books_positive_r_on_a_pullback()
+    {
+        var trade = BullishTrade();
+        trade.MoveStop(new Price(1.0848m), BarTime); // entry + 0.5R (16 pips above entry) → profit-lock
+
+        var decision = Evaluator.Evaluate(trade, Bar(1.0852m, 1.0855m, 1.0845m, 1.0850m)); // low 1.0845 ≤ 1.0848
+
+        decision.Outcome.Should().Be(FillOutcome.StopHit);
+        decision.ExitPrice!.Value.Value.Should().Be(1.0848m);
+
+        trade.Close(decision.ExitPrice!.Value, decision.CloseReason!.Value, TradeCosts.Zero, BarTime);
+        trade.RealizedR!.Value.Should().BeApproximately(0.5m, 0.0001m); // a pullback to the locked stop is a WIN
+    }
+
+    [Fact]
+    public void A_short_breakeven_trail_fills_at_entry_for_about_zero_r()
+    {
+        // entry 1.0870, stop 1.0900 (30-pip 1R), runner 1.0790.
+        var plan = new TradePlan(
+            Direction.Bearish, new Price(1.0870m), new Price(1.0900m),
+            new TargetLadder(Direction.Bearish, new Price(1.0820m), new Price(1.0790m)));
+        var trade = new PaperTrade(
+            Guid.NewGuid(), Guid.NewGuid(), Eurusd, TradeStyle.Intraday, Timeframe.M5,
+            plan, new PositionSize(0.30m), pipSize: 0.0001m, valuePerPip: 10m, OpenedAt);
+        trade.MoveStop(new Price(1.0870m), BarTime); // short stop ratchets DOWN to breakeven (entry)
+
+        var decision = Evaluator.Evaluate(trade, Bar(1.0866m, 1.0872m, 1.0860m, 1.0868m)); // high 1.0872 ≥ 1.0870
+
+        decision.Outcome.Should().Be(FillOutcome.StopHit);
+        decision.ExitPrice!.Value.Value.Should().Be(1.0870m);
+
+        trade.Close(decision.ExitPrice!.Value, decision.CloseReason!.Value, TradeCosts.Zero, BarTime);
+        trade.RealizedR!.Value.Should().Be(0m);
+    }
+
+    [Fact]
     public void A_trailed_quarter_risk_stop_books_about_minus_quarter_r()
     {
         var trade = BullishTrade();

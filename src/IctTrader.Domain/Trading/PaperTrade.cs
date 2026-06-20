@@ -27,6 +27,10 @@ public sealed class PaperTrade : AggregateRoot<Guid>
     private readonly decimal _valuePerPipForPosition;
     private readonly List<FillLeg> _legs = [];
 
+    // The latest timestamp of any stamped operation (open, scale-out, stop-move, close) — keeps the whole
+    // management timeline monotonic, not just the leg ledger.
+    private DateTimeOffset _lastActivityAtUtc;
+
     public PaperTrade(
         Guid id,
         Guid accountId,
@@ -59,6 +63,7 @@ public sealed class PaperTrade : AggregateRoot<Guid>
         RemainingSize = size;
         CurrentStop = plan.Stop;
         OpenedAtUtc = openedAtUtc;
+        _lastActivityAtUtc = openedAtUtc;
         InitialRiskPerUnit = initialRiskPerUnit;
         Status = TradeStatus.Open;
         Lifecycle = TradeLifecycle.Open;
@@ -175,8 +180,7 @@ public sealed class PaperTrade : AggregateRoot<Guid>
         Guard.Against(Status != TradeStatus.Open, "Only an open paper trade can be scaled out.");
         Guard.Against(
             Lifecycle != TradeLifecycle.Open, "A paper trade can take only one partial scale-out in this model.");
-        Guard.Against(atUtc.Offset != TimeSpan.Zero, "PaperTrade scale-out time must be UTC.");
-        Guard.Against(atUtc < OpenedAtUtc, "A paper trade cannot scale out before it opened.");
+        GuardActivityTime(atUtc, "scale-out");
         Guard.Against(
             legSize.Lots >= RemainingSize.Lots,
             "A partial scale-out must close strictly fewer lots than remain (a full close is Close).");
@@ -186,6 +190,7 @@ public sealed class PaperTrade : AggregateRoot<Guid>
         RemainingSize = new PositionSize(Size.Lots - legSize.Lots);
         HasScaledOut = true;
         Lifecycle = TradeLifecycle.PartialTaken;
+        _lastActivityAtUtc = atUtc;
 
         var legGross = LegGross(leg);
         RaiseDomainEvent(new PaperTradePartialClosed(
@@ -204,11 +209,7 @@ public sealed class PaperTrade : AggregateRoot<Guid>
     public void MoveStop(Price newStop, DateTimeOffset atUtc)
     {
         Guard.Against(Status != TradeStatus.Open, "Only an open paper trade can move its stop.");
-        Guard.Against(atUtc.Offset != TimeSpan.Zero, "PaperTrade stop-move time must be UTC.");
-        Guard.Against(atUtc < OpenedAtUtc, "A paper trade cannot move its stop before it opened.");
-        Guard.Against(
-            _legs.Count > 0 && atUtc < _legs[^1].AtUtc,
-            "A stop move cannot predate the last scale-out (the timeline must be monotonic).");
+        GuardActivityTime(atUtc, "stop move");
 
         var tightens = Direction == Direction.Bullish
             ? newStop.Value > CurrentStop.Value
@@ -222,6 +223,7 @@ public sealed class PaperTrade : AggregateRoot<Guid>
 
         var previousStop = CurrentStop;
         CurrentStop = newStop;
+        _lastActivityAtUtc = atUtc;
 
         RaiseDomainEvent(new PaperTradeStopMoved(Id, AccountId, previousStop, newStop, IsBreakevenArmed, atUtc));
     }
@@ -236,13 +238,10 @@ public sealed class PaperTrade : AggregateRoot<Guid>
     public void Close(Price exitPrice, TradeCloseReason reason, TradeCosts costs, DateTimeOffset closedAtUtc)
     {
         Guard.Against(Status != TradeStatus.Open, "Only an open paper trade can be closed.");
-        Guard.Against(closedAtUtc.Offset != TimeSpan.Zero, "PaperTrade.ClosedAtUtc must be UTC.");
-        Guard.Against(closedAtUtc < OpenedAtUtc, "A paper trade cannot close before it opened.");
-        Guard.Against(
-            _legs.Count > 0 && closedAtUtc < _legs[^1].AtUtc,
-            "A paper trade cannot close before its last scale-out (the leg timeline must be monotonic).");
+        GuardActivityTime(closedAtUtc, "close");
 
         _legs.Add(new FillLeg(RemainingSize, exitPrice, reason, costs, closedAtUtc));
+        _lastActivityAtUtc = closedAtUtc;
 
         // Fold the blended totals over ALL legs — ONE source of truth. Gross is the additive money sum; RealizedR is
         // DERIVED from it (gross / risk-budget), so the price-R and the money can never drift apart.
@@ -272,6 +271,16 @@ public sealed class PaperTrade : AggregateRoot<Guid>
         var netR = netPnl.Amount / RiskBudget.Amount;
         RaiseDomainEvent(new PaperTradeClosed(
             Id, AccountId, realizedR, netR, grossPnl, totalCosts, netPnl, reason, closedAtUtc));
+    }
+
+    /// <summary>Guards a stamped operation's time: it must be UTC and must not predate any prior activity, so the
+    /// open → scale-out → stop-move → close timeline stays monotonic (the first op is bounded by the open time).</summary>
+    private void GuardActivityTime(DateTimeOffset atUtc, string operation)
+    {
+        Guard.Against(atUtc.Offset != TimeSpan.Zero, $"PaperTrade {operation} time must be UTC.");
+        Guard.Against(
+            atUtc < _lastActivityAtUtc,
+            $"A paper trade {operation} cannot predate its last activity (the timeline must be monotonic).");
     }
 
     /// <summary>The signed gross money of one leg: its price move over the frozen pip geometry, weighted by its lots.</summary>
