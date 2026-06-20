@@ -18,7 +18,7 @@ public sealed class CalendarOptions
 
     public bool BlockNfpWeek { get; init; } = true;
 
-    /// <summary>Block this many days BEFORE the NFP release (2 ⇒ Wednesday/Thursday/Friday of NFP week).</summary>
+    /// <summary>Block this many days up to and including the NFP release (2 ⇒ Wed/Thu/Fri for a Friday NFP).</summary>
     public int NfpBlockDaysBefore { get; init; } = 2;
 
     /// <summary>When no calendar has been loaded, whether to block (true) or treat as clear (false, fail-open).</summary>

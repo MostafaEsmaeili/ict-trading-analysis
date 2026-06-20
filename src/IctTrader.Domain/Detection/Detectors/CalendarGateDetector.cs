@@ -7,8 +7,8 @@ namespace IctTrader.Domain.Detection.Detectors;
 
 /// <summary>
 /// The economic-calendar no-trade gate (plan §2.5.2/§2.5.8). Emits <see cref="ConfluenceCondition.CalendarClear"/>
-/// (required) ONLY when the current New-York date is not calendar-blocked: a post-FOMC window or the NFP week from
-/// Wednesday (covering NFP Thursday + Friday). It reads the events loaded onto the <see cref="MarketContext"/>; a
+/// (required) ONLY when the current New-York date is not calendar-blocked: a post-FOMC window or the days up to
+/// and including the NFP release (Wed→Fri for a Friday NFP). It reads the events loaded onto the <see cref="MarketContext"/>; a
 /// blocked day emits no match, so the FSM (which requires CalendarClear) rejects the setup. When the calendar has
 /// not been loaded the behaviour is config-gated (fail-open by default). All dates are New-York to stay
 /// host-zone-independent (plan §4.8).
@@ -66,7 +66,7 @@ public sealed class CalendarGateDetector : ISetupDetector
                     break;
 
                 case CalendarEventType.Nfp when _options.BlockNfpWeek:
-                    // The configured days BEFORE the NFP release (Wed/Thu/Fri of NFP week) through the release.
+                    // The configured days up to and including the NFP release (Wed/Thu/Fri for a Friday NFP).
                     if (date <= economicEvent.NyDate
                         && economicEvent.NyDate.DayNumber - date.DayNumber <= _options.NfpBlockDaysBefore)
                     {
