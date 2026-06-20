@@ -79,4 +79,62 @@ public class ExecutionCostModelTests
 
         act.Should().Throw<DomainException>();
     }
+
+    [Fact]
+    public void Entry_and_full_exit_legs_sum_to_the_round_trip()
+    {
+        var model = new ExecutionCostModel(new ExecutionCostOptions());
+        var trade = Trade(0.31m);
+
+        var entry = model.ComputeEntryLeg(trade);
+        var exit = model.ComputeExitLeg(trade, trade.Size);
+        var roundTrip = model.Compute(trade);
+
+        (entry.Total.Amount + exit.Total.Amount).Should().Be(roundTrip.Total.Amount); // no double-count
+        roundTrip.Total.Amount.Should().Be(6.2m);
+    }
+
+    [Fact]
+    public void The_entry_leg_is_spread_only_with_no_commission()
+    {
+        var entry = new ExecutionCostModel(new ExecutionCostOptions()).ComputeEntryLeg(Trade(0.31m));
+
+        entry.SpreadCost.Amount.Should().Be(2.17m); // 0.7 pips * 3.1 per pip, one crossing
+        entry.Commission.Amount.Should().Be(0m);    // commission rides on the exit leg(s)
+    }
+
+    [Fact]
+    public void An_exit_leg_scales_spread_and_commission_by_its_lots()
+    {
+        var exit = new ExecutionCostModel(new ExecutionCostOptions())
+            .ComputeExitLeg(Trade(0.30m), new PositionSize(0.15m));
+
+        exit.SpreadCost.Amount.Should().Be(1.05m); // 0.7 * (3.0/0.30 per lot) * 0.15
+        exit.Commission.Amount.Should().Be(0.9m);  // 6.0 per lot * 0.15
+    }
+
+    [Fact]
+    public void An_exit_leg_larger_than_the_trade_size_is_rejected()
+    {
+        var model = new ExecutionCostModel(new ExecutionCostOptions());
+
+        var act = () => model.ComputeExitLeg(Trade(0.30m), new PositionSize(0.31m));
+
+        act.Should().Throw<DomainException>(); // would overcharge and break the leg-sum invariant
+    }
+
+    [Fact]
+    public void Split_exit_legs_sum_to_one_full_exit_for_an_awkward_lot_size()
+    {
+        // A 0.33-lot trade split 0.11 / 0.22 — the per-lot value-per-pip reconstruction must keep the partial +
+        // runner exit costs equal to one full exit crossing, with no rounding double-count.
+        var model = new ExecutionCostModel(new ExecutionCostOptions());
+        var trade = Trade(0.33m);
+
+        var partial = model.ComputeExitLeg(trade, new PositionSize(0.11m));
+        var runner = model.ComputeExitLeg(trade, new PositionSize(0.22m));
+        var full = model.ComputeExitLeg(trade, trade.Size);
+
+        (partial.Total.Amount + runner.Total.Amount).Should().BeApproximately(full.Total.Amount, 1e-7m);
+    }
 }

@@ -31,3 +31,23 @@ public sealed record PaperTradeClosed(
     Money NetPnl,
     TradeCloseReason Reason,
     DateTimeOffset OccurredOnUtc) : IDomainEvent;
+
+/// <summary>
+/// Raised when a paper trade takes a partial scale-out (plan §2.5.9) — one exit leg booked while the runner stays
+/// open. Carries the DERIVED per-leg figures (the leg's price-R, its gross/cost/net money, the size fraction and
+/// the remaining size) so Performance and the dashboard can reconstruct the blend without the leg storing them.
+/// No account settlement happens here — the money lands on equity in the single terminal
+/// <see cref="PaperTradeClosed"/>.
+/// </summary>
+public sealed record PaperTradePartialClosed(
+    Guid TradeId,
+    Guid AccountId,
+    decimal LegR,
+    Money LegGross,
+    Money LegCosts,
+    Money LegNet,
+    decimal Fraction,
+    PositionSize LegSize,
+    PositionSize RemainingSize,
+    TradeCloseReason Reason,
+    DateTimeOffset OccurredOnUtc) : IDomainEvent;

@@ -136,6 +136,27 @@ public class PaperAccountTests
     }
 
     [Fact]
+    public void A_scaled_trade_settles_once_for_the_blended_net_and_releases_the_full_risk()
+    {
+        var account = Account();
+        var trade = OpenTrade(account.Id, 0.30m); // RiskBudget 96 (32 pips * 3.0/pip)
+        account.RegisterOpen(trade);
+
+        trade.ScaleOut(
+            new Price(1.0864m), new PositionSize(0.15m), TradeCosts.Zero, TradeCloseReason.TargetHit, Utc.AddMinutes(30));
+        account.OpenRisk.Amount.Should().Be(96m); // the partial does NOT touch the account
+
+        var settleEarly = () => account.Settle(trade);
+        settleEarly.Should().Throw<DomainException>(); // still Open until the final close
+
+        trade.Close(new Price(1.0928m), TradeCloseReason.TargetHit, TradeCosts.Zero, Utc.AddHours(1));
+        account.Settle(trade);
+
+        account.OpenRisk.Amount.Should().Be(0m);     // the full original RiskBudget is released
+        account.Equity.Amount.Should().Be(10_192m);  // 10,000 + blended gross 192 (0.5*+1R + 0.5*+3R)
+    }
+
+    [Fact]
     public void Cannot_settle_an_open_or_unreserved_trade_and_cannot_settle_twice()
     {
         var account = Account();

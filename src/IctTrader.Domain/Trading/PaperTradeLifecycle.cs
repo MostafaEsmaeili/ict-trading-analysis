@@ -1,12 +1,26 @@
 namespace IctTrader.Domain.Trading;
 
 /// <summary>
-/// The paper-trade lifecycle state (plan §5.2). This slice models the minimal Open → Closed path; the
-/// realistic <c>Pending</c> (entry-touch) state and intrabar fills arrive with the fill simulator (WP5).
+/// The account/ledger flag for a paper trade (plan §5.2). It stays the minimal Open → Closed pair that
+/// <see cref="PaperAccount"/> keys settlement off — a partially-scaled trade is still <c>Open</c> until the final
+/// close, so the account can never settle a not-yet-final trade. The richer management state lives on
+/// <see cref="TradeLifecycle"/>.
 /// </summary>
 public enum TradeStatus
 {
     Open,
+    Closed,
+}
+
+/// <summary>
+/// The richer §2.5.9 trade-management state, carried ALONGSIDE <see cref="TradeStatus"/>. <c>PartialTaken</c>
+/// means a T1 scale-out has booked one exit leg while the runner is still open; <c>Closed</c> always coincides
+/// with <see cref="TradeStatus.Closed"/>. (The <c>BreakevenArmed</c> state arrives with the stop-trail slice.)
+/// </summary>
+public enum TradeLifecycle
+{
+    Open,
+    PartialTaken,
     Closed,
 }
 
