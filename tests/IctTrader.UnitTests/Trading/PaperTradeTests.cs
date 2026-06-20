@@ -131,6 +131,24 @@ public class PaperTradeTests
     }
 
     [Fact]
+    public void A_short_trade_scale_out_blends_the_realized_reward_mirrored()
+    {
+        // Short: entry 1.0870, stop 1.0900 (30-pip 1R), 0.30 lots, 10/pip -> RiskBudget 90.
+        var plan = new TradePlan(
+            Direction.Bearish, new Price(1.0870m), new Price(1.0900m),
+            new TargetLadder(Direction.Bearish, new Price(1.0830m), new Price(1.0790m)));
+        var trade = new PaperTrade(
+            Guid.NewGuid(), Guid.NewGuid(), Eurusd, TradeStyle.Intraday, Timeframe.M5,
+            plan, new PositionSize(0.30m), pipSize: 0.0001m, valuePerPip: 10m, Open);
+
+        trade.ScaleOut(new Price(1.0840m), new PositionSize(0.15m), TradeCosts.Zero, TradeCloseReason.TargetHit, Later); // +1R
+        trade.Close(new Price(1.0780m), TradeCloseReason.TargetHit, TradeCosts.Zero, Later);                            // +3R
+
+        trade.RealizedR!.Value.Should().Be(2.0m);       // 0.5*(+1R) + 0.5*(+3R)
+        trade.GrossPnl!.Value.Amount.Should().Be(180m); // 45 + 135
+    }
+
+    [Fact]
     public void The_gross_to_r_identity_holds_for_a_scaled_trade()
     {
         var trade = BullishTrade(0.30m);
