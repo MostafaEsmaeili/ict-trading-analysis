@@ -48,4 +48,7 @@ public static class EvidenceKeys
     public const string PositionPercent = "positionPercent";
     public const string OteSweetSpot = "oteSweetSpot";
     public const string RewardRatio = "rewardRatio";
+
+    // Calendar
+    public const string CalendarDate = "calendarDate";
 }

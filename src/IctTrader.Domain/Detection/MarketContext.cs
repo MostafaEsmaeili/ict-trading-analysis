@@ -21,6 +21,7 @@ public sealed class MarketContext
     private readonly List<OrderBlock> _openOrderBlocks = [];
     private readonly List<LiquidityPool> _liquidityPools = [];
     private readonly List<SwingPoint> _swingPoints = [];
+    private readonly List<EconomicEvent> _economicEvents = [];
     private readonly KillzoneClock _killzoneClock;
     private readonly MarketContextOptions _options;
     private DateOnly? _lastNyDate;
@@ -63,6 +64,15 @@ public sealed class MarketContext
 
     /// <summary>The open of the first candle of the current New-York day (00:00 NY reference for the Judas read).</summary>
     public decimal? MidnightOpen { get; private set; }
+
+    /// <summary>The New-York calendar date of the most recently appended candle (the financial day, 00:00 NY).</summary>
+    public DateOnly? CurrentNewYorkDate => _lastNyDate;
+
+    /// <summary>Whether the economic calendar has been loaded — distinguishes "no events" from "data not yet supplied".</summary>
+    public bool IsCalendarLoaded { get; private set; }
+
+    /// <summary>The scheduled economic events the calendar gate reads (sourced by the host/ingestion).</summary>
+    public IReadOnlyList<EconomicEvent> EconomicEvents => _economicEvents;
 
     public IReadOnlyList<FairValueGap> OpenFvgs => _openFvgs;
 
@@ -122,6 +132,15 @@ public sealed class MarketContext
     {
         ArgumentNullException.ThrowIfNull(shift);
         LastMss = shift;
+    }
+
+    /// <summary>Loads the economic calendar (replacing any prior set) and marks it available to the gate.</summary>
+    public void LoadCalendar(IEnumerable<EconomicEvent> events)
+    {
+        ArgumentNullException.ThrowIfNull(events);
+        _economicEvents.Clear();
+        _economicEvents.AddRange(events);
+        IsCalendarLoaded = true;
     }
 
     private void TrackNewYorkDay(Candle candle)

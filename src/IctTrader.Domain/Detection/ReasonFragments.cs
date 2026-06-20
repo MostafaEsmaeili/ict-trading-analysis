@@ -43,4 +43,7 @@ public static class ReasonFragments
 
     public static string CalendarClear(DateOnly nyDate)
         => $"Calendar clear for {nyDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}";
+
+    public static string CalendarClearUnverified()
+        => "Calendar clear (no calendar data loaded)";
 }
