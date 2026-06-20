@@ -154,6 +154,17 @@ public class FillEvaluatorTests
     }
 
     [Fact]
+    public void A_candle_for_a_different_symbol_is_rejected()
+    {
+        var foreignBar = new Candle(
+            new Symbol("GBPUSD"), Timeframe.M5, BarTime, 1.0832m, 1.0850m, 1.0820m, 1.0840m, 1_000m);
+
+        var act = () => Evaluator.Evaluate(BullishTrade(), foreignBar);
+
+        act.Should().Throw<DomainException>();
+    }
+
+    [Fact]
     public void A_null_trade_or_null_options_is_rejected()
     {
         var act = () => Evaluator.Evaluate(null!, Bar(1.0832m, 1.0850m, 1.0820m, 1.0840m));

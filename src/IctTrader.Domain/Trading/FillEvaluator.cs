@@ -26,6 +26,12 @@ public sealed class FillEvaluator : IFillEvaluator
         ArgumentNullException.ThrowIfNull(trade);
         Guard.Against(trade.Status != TradeStatus.Open, "Only an open paper trade can be evaluated for a fill.");
 
+        // A fill can only be resolved against the trade's own instrument — a misrouted candle would silently
+        // corrupt the simulation. (Candle is a value type, so it cannot be null; the timeframe is deliberately
+        // NOT pinned to the trade's trigger timeframe — the planned sub-bar/tick fill path evaluates fills on a
+        // finer timeframe, §5.2.)
+        Guard.Against(candle.Symbol != trade.Symbol, "The candle must be for the trade's symbol.");
+
         var plan = trade.Plan;
 
         // High/Low touch tests, never close-only, so an ICT wick-sweep that closes back inside still fills the
