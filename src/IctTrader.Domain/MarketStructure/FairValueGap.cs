@@ -56,6 +56,7 @@ public sealed class FairValueGap
     /// <summary>Records a retrace into the gap; voids the array once <paramref name="voidOnTouchCount"/> is reached.</summary>
     public void RegisterTouch(int voidOnTouchCount)
     {
+        Guard.Against(voidOnTouchCount < 1, "FairValueGap voidOnTouchCount must be at least 1.");
         if (!IsOpen)
         {
             return;

@@ -1,3 +1,4 @@
+using IctTrader.Domain.Common;
 using IctTrader.Domain.Configuration;
 using IctTrader.Domain.ValueObjects;
 
@@ -38,6 +39,7 @@ public sealed class TradeStyleClassifier
     /// </summary>
     public TradeStyle ClassifyByHold(TimeSpan expectedHold)
     {
+        Guard.Against(expectedHold <= TimeSpan.Zero, "Expected hold must be positive.");
         var minutes = expectedHold.TotalMinutes;
 
         if (minutes <= _options.Scalp.MaxHoldMinutes)

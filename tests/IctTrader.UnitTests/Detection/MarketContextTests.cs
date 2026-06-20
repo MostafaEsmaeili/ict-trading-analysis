@@ -5,6 +5,7 @@ using IctTrader.Domain.Detection;
 using IctTrader.Domain.MarketStructure;
 using IctTrader.Domain.Sessions;
 using IctTrader.Domain.ValueObjects;
+using Microsoft.Extensions.Time.Testing;
 
 namespace IctTrader.UnitTests.Detection;
 
@@ -15,7 +16,8 @@ namespace IctTrader.UnitTests.Detection;
 public class MarketContextTests
 {
     private static readonly Symbol Eurusd = new("EURUSD");
-    private static readonly KillzoneClock Clock = new(new NyClock(TimeProvider.System), KillzoneSchedule.CreateDefault());
+    private static readonly FakeTimeProvider Time = new(new DateTimeOffset(2024, 7, 1, 7, 0, 0, TimeSpan.Zero));
+    private static readonly KillzoneClock Clock = new(new NyClock(Time), KillzoneSchedule.CreateDefault());
 
     private static MarketContext NewContext(int windowCapacity = 512) =>
         new(SymbolSpec.FxMajor(Eurusd), Clock, new MarketContextOptions { WindowCapacity = windowCapacity });
@@ -96,5 +98,34 @@ public class MarketContextTests
 
         a.Session.Should().Be(b.Session);
         a.Window(Timeframe.M5).Should().BeEquivalentTo(b.Window(Timeframe.M5));
+    }
+
+    [Fact]
+    public void A_new_york_day_rollover_resets_session_scoped_state()
+    {
+        var ctx = NewContext();
+        ctx.Append(Candle(new DateTimeOffset(2024, 7, 1, 12, 0, 0, TimeSpan.Zero))); // NY day 1
+        ctx.SetBias(Direction.Bullish);
+        ctx.SetSweep(new SweepRecord(Direction.Bullish, 1.0850m,
+            new DateTimeOffset(2024, 7, 1, 12, 0, 0, TimeSpan.Zero), ctx.BarsProcessed));
+
+        // The next financial day (08:00 NY on 2024-07-02) crosses 00:00 NY -> intraday state clears.
+        ctx.Append(Candle(new DateTimeOffset(2024, 7, 2, 12, 0, 0, TimeSpan.Zero)));
+
+        ctx.Bias.Should().BeNull();
+        ctx.LastSweep.Should().BeNull();
+        ctx.MidnightOpen.Should().Be(1.0840m); // re-anchored to the new day's first candle open
+    }
+
+    [Fact]
+    public void The_first_candle_initialises_the_day_without_clearing_seeded_state()
+    {
+        var ctx = NewContext();
+        ctx.SetBias(Direction.Bullish); // a warm-started bias seeded before any candle
+
+        ctx.Append(Candle(new DateTimeOffset(2024, 7, 1, 12, 0, 0, TimeSpan.Zero)));
+
+        ctx.Bias.Should().Be(Direction.Bullish); // initialisation is NOT a rollover, so it must not reset
+        ctx.MidnightOpen.Should().Be(1.0840m);
     }
 }

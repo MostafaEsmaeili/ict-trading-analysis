@@ -43,9 +43,24 @@ public sealed class FvgOptions
             errors.Add($"MinGapPips cannot be negative but was {MinGapPips}.");
         }
 
+        if (AtrPeriod < 1)
+        {
+            errors.Add($"AtrPeriod must be at least 1 but was {AtrPeriod}.");
+        }
+
+        if (AtrMultiple < 0m)
+        {
+            errors.Add($"AtrMultiple cannot be negative but was {AtrMultiple}.");
+        }
+
         if (EquilibriumPercent is < 0m or > 1m)
         {
             errors.Add($"EquilibriumPercent must be within [0, 1] but was {EquilibriumPercent}.");
+        }
+
+        if (StackProximityPips < 0m)
+        {
+            errors.Add($"StackProximityPips cannot be negative but was {StackProximityPips}.");
         }
 
         return errors;

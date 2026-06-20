@@ -57,15 +57,18 @@ public sealed class LiquiditySweepDetector : ISetupDetector
             return null; // no penetrating wick (strict)
         }
 
+        // A close strictly BEYOND the high is a run/HRLR (§2.5.8) — consume the pool and do not fade.
         if (current.Close > pool.Level.Value)
         {
-            pool.MarkRun(); // closed beyond -> run, not a sweep
+            pool.MarkRun();
             return null;
         }
 
-        if (!(current.Close < pool.Level.Value))
+        // A close exactly ON the level has no rejection body, so it is not a clean sweep — but the resting
+        // liquidity was never run THROUGH, so the pool stays UNTAPPED for a genuine later sweep (§2.5.1 step 4).
+        if (current.Close == pool.Level.Value)
         {
-            return null; // closed exactly on the level: not a clean sweep
+            return null;
         }
 
         return Sweep(context, current, pool, Direction.Bearish, SwingKind.High, judasInPremium: true);
@@ -78,13 +81,15 @@ public sealed class LiquiditySweepDetector : ISetupDetector
             return null;
         }
 
+        // Mirror of the buy-side: a close strictly below the low is a run (consume); a close exactly ON the
+        // level is the boundary — not a sweep, but the pool stays untapped for a genuine later sweep.
         if (current.Close < pool.Level.Value)
         {
             pool.MarkRun();
             return null;
         }
 
-        if (!(current.Close > pool.Level.Value))
+        if (current.Close == pool.Level.Value)
         {
             return null;
         }

@@ -49,7 +49,11 @@ public sealed class OrderBlock
     public bool IsOpen => State == OrderBlockState.Open;
 
     /// <summary>The mean-threshold price at the given fraction of the block's range (default 0.50).</summary>
-    public decimal MeanThreshold(decimal meanPercent) => Low.Value + ((High.Value - Low.Value) * meanPercent);
+    public decimal MeanThreshold(decimal meanPercent)
+    {
+        Guard.Against(meanPercent is < 0m or > 1m, "OrderBlock meanPercent must be within [0, 1].");
+        return Low.Value + ((High.Value - Low.Value) * meanPercent);
+    }
 
     /// <summary>Invalidation: price closed through beyond the open, or the linked FVG mitigated.</summary>
     public void Mitigate()

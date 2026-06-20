@@ -5,6 +5,7 @@ using IctTrader.Domain.Detection.Detectors;
 using IctTrader.Domain.MarketStructure;
 using IctTrader.Domain.Sessions;
 using IctTrader.Domain.ValueObjects;
+using Microsoft.Extensions.Time.Testing;
 
 namespace IctTrader.UnitTests.Detection;
 
@@ -17,10 +18,11 @@ public class MarketStructureShiftDetectorTests
 {
     private static readonly Symbol Eurusd = new("EURUSD");
     private static readonly DateTimeOffset Base = new(2024, 7, 1, 7, 0, 0, TimeSpan.Zero);
+    private static readonly FakeTimeProvider Time = new(Base);
 
     private static MarketContext NewContext() => new(
         SymbolSpec.FxMajor(Eurusd),
-        new KillzoneClock(new NyClock(TimeProvider.System), KillzoneSchedule.CreateDefault()),
+        new KillzoneClock(new NyClock(Time), KillzoneSchedule.CreateDefault()),
         new MarketContextOptions());
 
     private static Candle Candle(decimal open, decimal high, decimal low, decimal close)
@@ -96,6 +98,16 @@ public class MarketStructureShiftDetectorTests
         ctx.Append(current);
         ctx.SetSweep(new SweepRecord(Direction.Bullish, 1.0850m, Base, ctx.BarsProcessed));
         // no displacement set for the current candle
+
+        Detector.Detect(ctx, current).Should().Be(DetectorResult.NoMatch);
+    }
+
+    [Fact]
+    public void A_consumed_swing_is_stale_structure_and_is_not_re_selected()
+    {
+        var ctx = NewContext();
+        var current = ArrangeBullish(ctx, closeAboveSwing: 1.0920m);
+        ctx.SwingPoints.Single().MarkConsumed(); // already swept -> no longer live structure to break
 
         Detector.Detect(ctx, current).Should().Be(DetectorResult.NoMatch);
     }

@@ -23,6 +23,15 @@ public sealed class MarketContextOptions
 
     public IReadOnlyList<TradeStyle> ActiveStyles { get; init; } = [TradeStyle.Intraday];
 
+    /// <summary>
+    /// The killzones an operator may enable via <c>Ict:Scanning:ActiveKillzones</c> — the FROZEN CONTRACT
+    /// subset (plan §11.1). <see cref="Killzone.Pm"/>/<see cref="Killzone.Am"/> are internal classification
+    /// outcomes (FX afternoon / index morning) governed by instrument class, not operator-selectable here;
+    /// <see cref="Killzone.None"/> is not a killzone.
+    /// </summary>
+    public static IReadOnlyList<Killzone> SelectableKillzones { get; } =
+        [Killzone.Asian, Killzone.LondonOpen, Killzone.NewYorkOpen, Killzone.LondonClose];
+
     public IReadOnlyList<string> Validate()
     {
         var errors = new List<string>();
@@ -37,12 +46,19 @@ public sealed class MarketContextOptions
             errors.Add($"MaxOpenArraysPerType must be at least 1 but was {MaxOpenArraysPerType}.");
         }
 
-        if (ActiveKillzones.Count == 0)
+        if (ActiveKillzones is null || ActiveKillzones.Count == 0)
         {
             errors.Add("At least one active killzone must be configured.");
         }
+        else
+        {
+            foreach (var killzone in ActiveKillzones.Where(k => !SelectableKillzones.Contains(k)))
+            {
+                errors.Add($"ActiveKillzones must be a subset of [{string.Join(", ", SelectableKillzones)}] but contained {killzone}.");
+            }
+        }
 
-        if (ActiveStyles.Count == 0)
+        if (ActiveStyles is null || ActiveStyles.Count == 0)
         {
             errors.Add("At least one active trade style must be configured.");
         }

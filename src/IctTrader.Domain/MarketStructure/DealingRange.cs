@@ -29,7 +29,11 @@ public sealed class DealingRange
     public decimal Size => High.Value - Low.Value;
 
     /// <summary>The equilibrium price at the given fraction of the range (default 0.50).</summary>
-    public decimal Equilibrium(decimal equilibriumFib) => Low.Value + (Size * equilibriumFib);
+    public decimal Equilibrium(decimal equilibriumFib)
+    {
+        Guard.Against(equilibriumFib is < 0m or > 1m, "DealingRange equilibriumFib must be within [0, 1].");
+        return Low.Value + (Size * equilibriumFib);
+    }
 
     /// <summary>Where a price sits in the range as a percent (0 = low, 100 = high); 50 for a degenerate range.</summary>
     public decimal PositionPercent(Price price)

@@ -88,7 +88,9 @@ public sealed class MarketStructureShiftDetector : ISetupDetector
 
         foreach (var swing in context.SwingPoints)
         {
-            if (swing.Kind != kind)
+            // Only live structure can be broken: a consumed (swept) or already-breached swing is stale and
+            // must not produce a repeated MSS match.
+            if (!swing.IsActive || swing.Kind != kind)
             {
                 continue;
             }

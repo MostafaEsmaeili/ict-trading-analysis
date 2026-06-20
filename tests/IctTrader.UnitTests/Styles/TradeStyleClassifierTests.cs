@@ -1,4 +1,5 @@
 using FluentAssertions;
+using IctTrader.Domain.Common;
 using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Styles;
 using IctTrader.Domain.ValueObjects;
@@ -78,5 +79,13 @@ public class TradeStyleClassifierTests
         };
 
         options.Validate().Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public void A_non_positive_expected_hold_is_rejected()
+    {
+        var act = () => Classifier.ClassifyByHold(TimeSpan.Zero);
+
+        act.Should().Throw<DomainException>();
     }
 }

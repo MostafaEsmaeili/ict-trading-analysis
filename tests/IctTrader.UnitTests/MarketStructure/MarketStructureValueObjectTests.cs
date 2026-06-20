@@ -1,4 +1,5 @@
 using FluentAssertions;
+using IctTrader.Domain.Common;
 using IctTrader.Domain.MarketStructure;
 using IctTrader.Domain.ValueObjects;
 
@@ -101,5 +102,33 @@ public class MarketStructureValueObjectTests
 
         ob.Invert();
         ob.State.Should().Be(OrderBlockState.Inverted);
+    }
+
+    [Fact]
+    public void Fvg_register_touch_rejects_a_non_positive_void_count()
+    {
+        var act = () => BullishFvg().RegisterTouch(voidOnTouchCount: 0);
+
+        act.Should().Throw<DomainException>();
+    }
+
+    [Fact]
+    public void Order_block_mean_threshold_rejects_a_fraction_outside_the_unit_interval()
+    {
+        var ob = new OrderBlock(Direction.Bullish, Timeframe.M5, new Price(1.0820m), new Price(1.0830m), new Price(1.0810m), Utc);
+
+        var act = () => ob.MeanThreshold(1.5m);
+
+        act.Should().Throw<DomainException>();
+    }
+
+    [Fact]
+    public void Dealing_range_equilibrium_rejects_a_fib_outside_the_unit_interval()
+    {
+        var range = new DealingRange(new Price(1.0800m), new Price(1.0900m), Utc);
+
+        var act = () => range.Equilibrium(1.5m);
+
+        act.Should().Throw<DomainException>();
     }
 }

@@ -89,6 +89,11 @@ public sealed class ConfluenceOptions
             errors.Add("At least one RequiredCondition must be configured.");
         }
 
+        if (!Enum.IsDefined(AlertMinimumGrade))
+        {
+            errors.Add($"AlertMinimumGrade must be a valid {nameof(SetupGrade)} value but was {(int)AlertMinimumGrade}.");
+        }
+
         return errors;
     }
 }

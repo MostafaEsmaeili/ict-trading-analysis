@@ -32,12 +32,17 @@ public sealed class TradeStyleOptions
         TradeStyle.Intraday => Intraday,
         TradeStyle.Swing => Swing,
         TradeStyle.Position => Position,
-        _ => Intraday,
+        _ => throw new ArgumentOutOfRangeException(nameof(style), style, "Unsupported trade style."),
     };
 
     public IReadOnlyList<string> Validate()
     {
         var errors = new List<string>();
+
+        if (AbsoluteMinRewardRatio < 2.0m)
+        {
+            errors.Add($"AbsoluteMinRewardRatio must be at least the hard 2.0 floor but was {AbsoluteMinRewardRatio}.");
+        }
 
         foreach (var style in Enum.GetValues<TradeStyle>())
         {

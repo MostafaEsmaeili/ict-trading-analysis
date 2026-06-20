@@ -12,6 +12,14 @@ public sealed class OrderBlockOptions
     /// <summary>An order block is invalid without a linked FVG in the same leg/direction.</summary>
     public bool RequireFvg { get; init; } = true;
 
+    /// <summary>
+    /// Require the linked FVG to be on the order block's OWN timeframe — a §2.5.7-deferred approximation of true
+    /// displacement-leg membership (§2.5.1 step 6 scans the entry FVG 15m→1m, so a higher-TF OB may legitimately
+    /// link to a finer-TF FVG). Defaults TRUE to suppress stale cross-timeframe false confluence in the single-
+    /// entry-timeframe WP1 slice; the confluence FSM replaces it with bar-window leg linkage (WP3).
+    /// </summary>
+    public bool RequireSameTimeframeFvg { get; init; } = true;
+
     public decimal MeanThresholdPercent { get; init; } = 0.50m;
 
     public decimal EntryOffsetPipsFx { get; init; } = 3m;

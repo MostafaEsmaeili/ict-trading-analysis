@@ -127,10 +127,25 @@ public sealed class MarketContext
     private void TrackNewYorkDay(Candle candle)
     {
         var nyDate = _killzoneClock.NewYorkDate(candle.OpenTimeUtc);
-        if (_lastNyDate != nyDate)
+        if (_lastNyDate == nyDate)
         {
-            _lastNyDate = nyDate;
-            MidnightOpen = candle.Open;
+            return;
+        }
+
+        // The first candle initialises the day — that is NOT a rollover, so it must not clear state.
+        var crossedNyMidnight = _lastNyDate is not null;
+        _lastNyDate = nyDate;
+        MidnightOpen = candle.Open;
+
+        // 00:00 NY is the financial-day boundary (plan §2.1/§4.8): intraday session-scoped state must not
+        // bleed across days when the operator enables the reset.
+        if (crossedNyMidnight && _options.ResetSessionStateAtNyMidnight)
+        {
+            Bias = null;
+            DailyRange = null;
+            LastDisplacement = null;
+            LastSweep = null;
+            LastMss = null;
         }
     }
 

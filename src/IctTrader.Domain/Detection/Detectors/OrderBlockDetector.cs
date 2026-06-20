@@ -34,9 +34,9 @@ public sealed class OrderBlockDetector : ISetupDetector
 
         var direction = displacement.Direction;
 
-        if (_options.RequireFvg && !HasLinkedFvg(context, direction))
+        if (_options.RequireFvg && !HasLinkedFvg(context, direction, current.Timeframe))
         {
-            return DetectorResult.NoMatch; // an OB without its FVG is invalid
+            return DetectorResult.NoMatch; // an OB without its (leg-linked) FVG is invalid
         }
 
         var origin = FindLastOppositeCloseCandle(context, direction, current);
@@ -65,8 +65,14 @@ public sealed class OrderBlockDetector : ISetupDetector
             direction, block.Open, ReasonFragments.OrderBlock(direction, block.Open, current.Timeframe), evidence);
     }
 
-    private static bool HasLinkedFvg(MarketContext context, Direction direction)
-        => context.OpenFvgs.Any(fvg => fvg.IsOpen && fvg.Direction == direction);
+    // The linked FVG must belong to the same displacement leg. As a §2.5.7-deferred approximation we require
+    // same direction AND (when RequireSameTimeframeFvg) the OB's own timeframe, so a stale same-direction gap
+    // from another leg/timeframe cannot manufacture false confluence. Precise bar-window leg linkage (which
+    // permits the §2.5 step-6 15m→1m finer-TF entry FVG) is owned by the SetupCandidate FSM in WP3.
+    private bool HasLinkedFvg(MarketContext context, Direction direction, Timeframe timeframe)
+        => context.OpenFvgs.Any(fvg => fvg.IsOpen
+            && fvg.Direction == direction
+            && (!_options.RequireSameTimeframeFvg || fvg.Timeframe == timeframe));
 
     // For a bullish displacement the OB is the last DOWN-close candle before it; mirror for bearish.
     private static Candle? FindLastOppositeCloseCandle(MarketContext context, Direction direction, Candle current)

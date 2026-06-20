@@ -5,6 +5,7 @@ using IctTrader.Domain.Detection.Detectors;
 using IctTrader.Domain.MarketStructure;
 using IctTrader.Domain.Sessions;
 using IctTrader.Domain.ValueObjects;
+using Microsoft.Extensions.Time.Testing;
 
 namespace IctTrader.UnitTests.Detection;
 
@@ -17,10 +18,11 @@ public class LiquiditySweepDetectorTests
 {
     private static readonly Symbol Eurusd = new("EURUSD");
     private static readonly DateTimeOffset Base = new(2024, 7, 1, 7, 0, 0, TimeSpan.Zero);
+    private static readonly FakeTimeProvider Time = new(Base);
 
     private static MarketContext NewContext() => new(
         SymbolSpec.FxMajor(Eurusd),
-        new KillzoneClock(new NyClock(TimeProvider.System), KillzoneSchedule.CreateDefault()),
+        new KillzoneClock(new NyClock(Time), KillzoneSchedule.CreateDefault()),
         new MarketContextOptions());
 
     private static Candle Candle(int i, decimal open, decimal high, decimal low, decimal close)
@@ -97,5 +99,32 @@ public class LiquiditySweepDetectorTests
         result.Matched.Should().BeTrue();
         result.Direction.Should().Be(Direction.Bullish);
         result.KeyLevel.Should().Be(1.0840m);
+    }
+
+    [Fact]
+    public void A_wick_above_that_closes_exactly_on_the_level_is_not_a_sweep_but_leaves_the_pool_untapped()
+    {
+        var ctx = NewContext();
+        FormSwingHighPool(ctx);
+        var pool = ctx.LiquidityPools.Single(p => p.Side == LiquiditySide.BuySide);
+
+        var result = Pipeline(ctx, Candle(3, 1.0895m, 1.0908m, 1.0893m, 1.0900m)); // wick above 1.0900, closes EXACTLY on it
+
+        result.Should().Be(DetectorResult.NoMatch); // no rejection body -> not a clean sweep...
+        pool.Untapped.Should().BeTrue();             // ...but the level was never run THROUGH, so it stays sweepable (§2.5.8)
+    }
+
+    [Fact]
+    public void A_genuine_sweep_still_fires_after_a_prior_close_exactly_on_the_level()
+    {
+        var ctx = NewContext();
+        FormSwingHighPool(ctx);
+
+        Pipeline(ctx, Candle(3, 1.0895m, 1.0908m, 1.0893m, 1.0900m)); // close exactly on 1.0900 -> no-op, pool untapped
+        var result = Pipeline(ctx, Candle(4, 1.0898m, 1.0907m, 1.0892m, 1.0894m)); // wick above, closes back inside -> sweep
+
+        result.Matched.Should().BeTrue();
+        result.Direction.Should().Be(Direction.Bearish);
+        result.KeyLevel.Should().Be(1.0900m);
     }
 }

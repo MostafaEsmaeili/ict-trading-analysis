@@ -95,4 +95,15 @@ public class KillzoneClockTests
 
         Clock.IsActiveEntry(afterCutoff, InstrumentClass.Index, active).Should().BeFalse();
     }
+
+    [Fact]
+    public void Index_am_is_a_tradeable_entry_even_when_not_in_the_operator_set()
+    {
+        // The index morning is governed by instrument class, not the FX-flavoured operator-selectable set
+        // (§2.5.5): an Index AM entry is active even though Am is not a member of ActiveKillzones.
+        var amInstant = new DateTimeOffset(2024, 7, 1, 12, 30, 0, TimeSpan.Zero); // NY 08:30
+        Killzone[] fxActiveSet = [Killzone.LondonOpen, Killzone.NewYorkOpen];     // no Am
+
+        Clock.IsActiveEntry(amInstant, InstrumentClass.Index, fxActiveSet).Should().BeTrue();
+    }
 }

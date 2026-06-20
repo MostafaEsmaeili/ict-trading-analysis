@@ -4,6 +4,7 @@ using IctTrader.Domain.Detection;
 using IctTrader.Domain.Detection.Detectors;
 using IctTrader.Domain.Sessions;
 using IctTrader.Domain.ValueObjects;
+using Microsoft.Extensions.Time.Testing;
 
 namespace IctTrader.UnitTests.Detection;
 
@@ -16,10 +17,11 @@ public class DisplacementDetectorTests
 {
     private static readonly Symbol Eurusd = new("EURUSD");
     private static readonly DateTimeOffset Base = new(2024, 7, 1, 7, 0, 0, TimeSpan.Zero);
+    private static readonly FakeTimeProvider Time = new(Base);
 
     private static MarketContext NewContext() => new(
         SymbolSpec.FxMajor(Eurusd),
-        new KillzoneClock(new NyClock(TimeProvider.System), KillzoneSchedule.CreateDefault()),
+        new KillzoneClock(new NyClock(Time), KillzoneSchedule.CreateDefault()),
         new MarketContextOptions());
 
     private static Candle Candle(int i, decimal open, decimal high, decimal low, decimal close)

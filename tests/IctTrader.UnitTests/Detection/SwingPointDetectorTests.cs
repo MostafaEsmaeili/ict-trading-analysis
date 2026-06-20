@@ -5,6 +5,7 @@ using IctTrader.Domain.Detection.Detectors;
 using IctTrader.Domain.MarketStructure;
 using IctTrader.Domain.Sessions;
 using IctTrader.Domain.ValueObjects;
+using Microsoft.Extensions.Time.Testing;
 
 namespace IctTrader.UnitTests.Detection;
 
@@ -16,10 +17,11 @@ namespace IctTrader.UnitTests.Detection;
 public class SwingPointDetectorTests
 {
     private static readonly Symbol Eurusd = new("EURUSD");
+    private static readonly FakeTimeProvider Time = new(new DateTimeOffset(2024, 7, 1, 7, 0, 0, TimeSpan.Zero));
 
     private static MarketContext NewContext() => new(
         SymbolSpec.FxMajor(Eurusd),
-        new KillzoneClock(new NyClock(TimeProvider.System), KillzoneSchedule.CreateDefault()),
+        new KillzoneClock(new NyClock(Time), KillzoneSchedule.CreateDefault()),
         new MarketContextOptions());
 
     private static Candle Candle(int minuteOffset, decimal open, decimal high, decimal low, decimal close)

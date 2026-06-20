@@ -40,6 +40,16 @@ public sealed class DisplacementOptions
             errors.Add($"MinBodyToRangeRatio must be within [0, 1] but was {MinBodyToRangeRatio}.");
         }
 
+        if (MinDisplacementPips < 0m)
+        {
+            errors.Add($"MinDisplacementPips cannot be negative but was {MinDisplacementPips}.");
+        }
+
+        if (DisplacementLegMaxBars < 1)
+        {
+            errors.Add($"DisplacementLegMaxBars must be at least 1 but was {DisplacementLegMaxBars}.");
+        }
+
         return errors;
     }
 }

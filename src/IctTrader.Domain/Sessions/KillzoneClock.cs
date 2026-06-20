@@ -62,10 +62,16 @@ public sealed class KillzoneClock
     {
         ArgumentNullException.ThrowIfNull(activeKillzones);
         var classification = Classify(openTimeUtc, instrumentClass);
+
+        // The index morning (AM) is THE index killzone and is governed by instrument class, not by the
+        // FX-flavoured operator-selectable set — so an Index AM entry is not gated on set membership.
+        var bypassActiveSet =
+            instrumentClass == InstrumentClass.Index && classification.Killzone == Killzone.Am;
+
         return classification.Killzone != Killzone.None
             && !classification.LunchBlocked
             && !classification.NoNewEntry
-            && activeKillzones.Contains(classification.Killzone);
+            && (bypassActiveSet || activeKillzones.Contains(classification.Killzone));
     }
 
     private KillzoneClassification ClassifyFx(TimeOnly nyTime)

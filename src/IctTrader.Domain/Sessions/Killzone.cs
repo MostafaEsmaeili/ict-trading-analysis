@@ -14,8 +14,10 @@ public enum Killzone
     NewYorkOpen,
     LondonClose,
 
-    // WP1 delta (plan §11.1 permits additive enum growth): the §2.5.5 entry model also hunts the FX
-    // afternoon (PM) and the index-futures morning (AM) killzones. Selectable via Ict:Scanning:ActiveKillzones.
+    // WP1 delta (plan §11.1 permits additive enum growth): internal classification outcomes for the §2.5.5
+    // FX afternoon (PM) and index-futures morning (AM) windows. These are NOT part of the operator-selectable
+    // Ict:Scanning:ActiveKillzones contract (MarketContextOptions.SelectableKillzones) — PM/AM are governed by
+    // instrument class (KillzoneClock), not the FX-flavoured active set.
     Pm,
     Am,
 }
