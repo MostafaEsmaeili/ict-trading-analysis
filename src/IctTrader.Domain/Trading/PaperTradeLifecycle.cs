@@ -15,7 +15,8 @@ public enum TradeStatus
 /// <summary>
 /// The richer §2.5.9 trade-management state, carried ALONGSIDE <see cref="TradeStatus"/>. <c>PartialTaken</c>
 /// means a T1 scale-out has booked one exit leg while the runner is still open; <c>Closed</c> always coincides
-/// with <see cref="TradeStatus.Closed"/>. (The <c>BreakevenArmed</c> state arrives with the stop-trail slice.)
+/// with <see cref="TradeStatus.Closed"/>. Breakeven-armed is deliberately NOT a value here — it is orthogonal to
+/// the partial state (a trade can be both), so it is the derived <see cref="PaperTrade.IsBreakevenArmed"/> flag.
 /// </summary>
 public enum TradeLifecycle
 {
