@@ -62,9 +62,10 @@ public sealed class PaperAccount : AggregateRoot<Guid>
     }
 
     /// <summary>
-    /// Books a closed trade: releases its reserved risk and applies its realized P&amp;L to equity. Throws if the
-    /// trade is not this account's, is not closed, or was never reserved / already settled. Equity must stay
-    /// positive — a single trade's risk is capped well below equity, so a normal stop-out cannot drain it.
+    /// Books a closed trade: releases its reserved risk and applies its NET realized P&amp;L to equity (the §5.4
+    /// costs are already netted into <see cref="PaperTrade.RealizedPnl"/>). The released risk is the original
+    /// price-based <see cref="PaperTrade.RiskBudget"/>, unchanged by costs. Throws if the trade is not this
+    /// account's, is not closed, or was never reserved / already settled. Equity must stay positive.
     /// </summary>
     public void Settle(PaperTrade trade)
     {

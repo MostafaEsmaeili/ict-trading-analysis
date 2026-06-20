@@ -54,7 +54,7 @@ public class PaperTradeFactoryTests
         var account = new PaperAccount(Guid.NewGuid(), new Money(10_000m), 5m);
         var trade = Factory.Open(BullishSetup(), account, Spec, Contract, Utc);
 
-        trade.Close(trade.Plan.Targets.Runner, TradeCloseReason.TargetHit, Utc.AddHours(1));
+        trade.Close(trade.Plan.Targets.Runner, TradeCloseReason.TargetHit, TradeCosts.Zero, Utc.AddHours(1));
         account.Settle(trade);
 
         account.OpenRisk.Amount.Should().Be(0m);

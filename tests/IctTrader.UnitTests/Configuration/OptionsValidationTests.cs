@@ -29,11 +29,20 @@ public class OptionsValidationTests
         new TargetLadderOptions().Validate().Should().BeEmpty();
         new RiskOptions().Validate().Should().BeEmpty();
         new FillOptions().Validate().Should().BeEmpty();
+        new ExecutionCostOptions().Validate().Should().BeEmpty();
     }
 
     [Fact]
     public void An_undefined_intrabar_fill_assumption_is_rejected()
         => new FillOptions { StopVsTarget = (IntrabarFillAssumption)99 }.Validate().Should().NotBeEmpty();
+
+    [Fact]
+    public void Negative_execution_costs_are_rejected()
+    {
+        new ExecutionCostOptions { Spread = new SpreadOptions { BasePips = -0.1m } }.Validate().Should().NotBeEmpty();
+        new ExecutionCostOptions { Commission = new CommissionOptions { PerLotRoundTripUsd = -1m } }
+            .Validate().Should().NotBeEmpty();
+    }
 
     [Fact]
     public void Risk_percentages_outside_their_contract_are_rejected()

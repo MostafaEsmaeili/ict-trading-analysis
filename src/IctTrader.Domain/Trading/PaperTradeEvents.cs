@@ -16,13 +16,18 @@ public sealed record PaperTradeOpened(
     DateTimeOffset OccurredOnUtc) : IDomainEvent;
 
 /// <summary>
-/// Raised when a paper trade closes (plan §3.0 domain events), carrying the realized R (vs the original 1R)
-/// and the gross realized P&amp;L. Performance reacts to this; the cost-netting (§5.4) is applied later (WP5).
+/// Raised when a paper trade closes (plan §3.0 domain events). It carries BOTH performance views (§5.3): the
+/// price-based gross <see cref="RealizedR"/> (vs the original 1R — the structural edge) and the after-cost
+/// <see cref="NetR"/>, plus the <see cref="GrossPnl"/>, the §5.4 <see cref="Costs"/>, and the booked
+/// <see cref="NetPnl"/>. Performance reacts to this; the account books the net.
 /// </summary>
 public sealed record PaperTradeClosed(
     Guid TradeId,
     Guid AccountId,
     decimal RealizedR,
-    Money RealizedPnl,
+    decimal NetR,
+    Money GrossPnl,
+    Money Costs,
+    Money NetPnl,
     TradeCloseReason Reason,
     DateTimeOffset OccurredOnUtc) : IDomainEvent;

@@ -8,9 +8,10 @@ using IctTrader.Domain.ValueObjects;
 namespace IctTrader.UnitTests.Trading;
 
 /// <summary>
-/// Locks the <see cref="PaperTrade"/> lifecycle (plan §5.1/§5.2): construction opens the trade and freezes the
-/// original 1R, a close realizes R against that frozen risk (−1R at the stop, the plan RR at the runner) and
-/// the gross P&amp;L, the bearish case mirrors, and a close is legal only once and only from an open trade.
+/// Locks the <see cref="PaperTrade"/> lifecycle (plan §5.1/§5.2/§5.4): construction opens the trade and freezes
+/// the original 1R, a close realizes R against that frozen risk (−1R at the stop, the plan RR at the runner) and
+/// the gross/net P&amp;L (§5.4 costs subtracted to the net while the price-based R is unchanged), the bearish case
+/// mirrors, and a close is legal only once and only from an open trade.
 /// </summary>
 public class PaperTradeTests
 {
@@ -46,7 +47,7 @@ public class PaperTradeTests
     {
         var trade = BullishTrade();
 
-        trade.Close(new Price(1.0920m), TradeCloseReason.TargetHit, Later);
+        trade.Close(new Price(1.0920m), TradeCloseReason.TargetHit, TradeCosts.Zero, Later);
 
         trade.Status.Should().Be(TradeStatus.Closed);
         trade.RealizedR!.Value.Should().BeApproximately(2.75m, 0.0001m); // 88 pips / 32 pips
@@ -59,7 +60,7 @@ public class PaperTradeTests
     {
         var trade = BullishTrade();
 
-        trade.Close(new Price(1.0800m), TradeCloseReason.StopHit, Later);
+        trade.Close(new Price(1.0800m), TradeCloseReason.StopHit, TradeCosts.Zero, Later);
 
         trade.RealizedR!.Value.Should().Be(-1m);
         trade.RealizedPnl!.Value.Amount.Should().Be(-99.2m);
@@ -75,19 +76,48 @@ public class PaperTradeTests
             Guid.NewGuid(), Guid.NewGuid(), Eurusd, TradeStyle.Intraday, Timeframe.M5,
             plan, new PositionSize(0.30m), pipSize: 0.0001m, valuePerPip: 10m, Open);
 
-        trade.Close(new Price(1.0790m), TradeCloseReason.TargetHit, Later);
+        trade.Close(new Price(1.0790m), TradeCloseReason.TargetHit, TradeCosts.Zero, Later);
 
         trade.RealizedR!.Value.Should().BeApproximately(2.6667m, 0.001m); // 80 pips / 30 pips
         trade.RealizedPnl!.Value.IsPositive.Should().BeTrue();
     }
 
     [Fact]
+    public void Closing_with_costs_books_net_pnl_while_the_price_based_r_stays_gross()
+    {
+        var trade = BullishTrade();
+        var costs = new TradeCosts(new Money(4.34m), new Money(1.86m)); // round-trip spread + commission = 6.20
+
+        trade.Close(new Price(1.0800m), TradeCloseReason.StopHit, costs, Later);
+
+        trade.GrossPnl!.Value.Amount.Should().Be(-99.2m);
+        trade.Costs!.Value.Amount.Should().Be(6.2m);
+        trade.RealizedPnl!.Value.Amount.Should().Be(-105.4m); // gross −99.2 − costs 6.20
+        trade.NetPnl!.Value.Amount.Should().Be(-105.4m);
+        trade.RealizedR!.Value.Should().Be(-1m);              // structural R is unchanged by costs
+        trade.NetR!.Value.Should().BeApproximately(-1.0625m, 0.0001m); // −105.4 / 99.2
+    }
+
+    [Fact]
+    public void Closing_with_zero_costs_leaves_net_equal_to_gross()
+    {
+        var trade = BullishTrade();
+
+        trade.Close(new Price(1.0920m), TradeCloseReason.TargetHit, TradeCosts.Zero, Later);
+
+        trade.GrossPnl!.Value.Amount.Should().Be(272.8m);
+        trade.Costs!.Value.Amount.Should().Be(0m);
+        trade.NetPnl!.Value.Amount.Should().Be(272.8m);
+        trade.NetR!.Value.Should().Be(trade.RealizedR!.Value);
+    }
+
+    [Fact]
     public void A_trade_can_only_be_closed_once_and_only_while_open()
     {
         var trade = BullishTrade();
-        trade.Close(new Price(1.0920m), TradeCloseReason.TargetHit, Later);
+        trade.Close(new Price(1.0920m), TradeCloseReason.TargetHit, TradeCosts.Zero, Later);
 
-        var act = () => trade.Close(new Price(1.0876m), TradeCloseReason.Manual, Later);
+        var act = () => trade.Close(new Price(1.0876m), TradeCloseReason.Manual, TradeCosts.Zero, Later);
 
         act.Should().Throw<DomainException>();
     }
@@ -103,7 +133,7 @@ public class PaperTradeTests
         var nonUtcOpen = () => new PaperTrade(
             Guid.NewGuid(), Guid.NewGuid(), Eurusd, TradeStyle.Intraday, Timeframe.M5,
             plan, new PositionSize(0.31m), 0.0001m, 10m, local);
-        var nonUtcClose = () => BullishTrade().Close(new Price(1.0920m), TradeCloseReason.TargetHit, local);
+        var nonUtcClose = () => BullishTrade().Close(new Price(1.0920m), TradeCloseReason.TargetHit, TradeCosts.Zero, local);
 
         nonUtcOpen.Should().Throw<DomainException>();
         nonUtcClose.Should().Throw<DomainException>();

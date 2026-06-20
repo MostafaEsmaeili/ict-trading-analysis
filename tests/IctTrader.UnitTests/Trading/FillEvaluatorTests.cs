@@ -146,7 +146,7 @@ public class FillEvaluatorTests
     public void Evaluating_an_already_closed_trade_is_rejected()
     {
         var trade = BullishTrade();
-        trade.Close(new Price(1.0800m), TradeCloseReason.StopHit, BarTime);
+        trade.Close(new Price(1.0800m), TradeCloseReason.StopHit, TradeCosts.Zero, BarTime);
 
         var act = () => Evaluator.Evaluate(trade, Bar(1.0820m, 1.0830m, 1.0795m, 1.0805m));
 
@@ -180,7 +180,7 @@ public class FillEvaluatorTests
         var trade = BullishTrade();
         var decision = Evaluator.Evaluate(trade, Bar(1.0820m, 1.0830m, 1.0795m, 1.0805m));
 
-        trade.Close(decision.ExitPrice!.Value, decision.CloseReason!.Value, BarTime);
+        trade.Close(decision.ExitPrice!.Value, decision.CloseReason!.Value, TradeCosts.Zero, BarTime);
 
         trade.RealizedR.Should().Be(-1m);
         trade.RealizedPnl!.Value.Amount.Should().Be(-99.2m); // 0.31 lots * 32 pips * 10/pip
@@ -192,7 +192,7 @@ public class FillEvaluatorTests
         var trade = BullishTrade();
         var decision = Evaluator.Evaluate(trade, Bar(1.0900m, 1.0925m, 1.0890m, 1.0918m));
 
-        trade.Close(decision.ExitPrice!.Value, decision.CloseReason!.Value, BarTime);
+        trade.Close(decision.ExitPrice!.Value, decision.CloseReason!.Value, TradeCosts.Zero, BarTime);
 
         trade.RealizedR.Should().BeApproximately(2.75m, 0.0001m); // 88-pip reward / 32-pip risk
         trade.RealizedPnl!.Value.Amount.Should().Be(272.8m);      // 0.31 lots * 88 pips * 10/pip
