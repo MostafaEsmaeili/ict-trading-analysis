@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace IctTrader.Domain.Common;
 
 /// <summary>
@@ -24,7 +26,7 @@ public sealed class DomainException : Exception
 /// <summary>Guard clauses that enforce invariants by throwing <see cref="DomainException"/>.</summary>
 public static class Guard
 {
-    public static void Against(bool condition, string message)
+    public static void Against([DoesNotReturnIf(true)] bool condition, string message)
     {
         if (condition)
         {

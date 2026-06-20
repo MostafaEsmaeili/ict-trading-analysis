@@ -265,7 +265,38 @@ ict-domain-expert spec-reviewed, `pr-reviewer` APPROVE, **217 tests** (194 unit 
   orchestration (so "doesn't qualify for this style" isn't exception-driven); the §2.5.7 management fractions +
   Armed/fill stay WP5.
 
-**WP1/WP3 still to come (next slice):** the post-confirmation **Armed/Triggered** entry-arming + realistic
-fill/execution-cost chain + `PaperTrade`/`PaperAccount` aggregates (WP4/WP5); the extended/long-tail detectors
-(SMT, Breaker, SD projection, session macros). Then WP2 (persistence) / WP8 (frontend) in parallel. Spec §5 item
-**20** (grading denominator / alert floor) still needs a call before alerting.
+**Paper-trade core — `PaperAccount`/`PaperTrade` aggregates (issue #16, branch `feature/#16-paper-trade-aggregates`,
+PR #17) — DONE.** The WP4 domain core (`IctTrader.Domain/Trading/`): a confirmed advisory `Setup` becomes ONE sized
+`PaperTrade` opened against a `PaperAccount` (the FIRST consumer of `Setup`). ict-domain-expert spec-reviewed,
+`defensive-guardrail-auditor` PASS, `pr-reviewer` APPROVE (both Should-fix items hardened), **247 tests** (224 unit +
+23 arch), 0 warnings, format clean:
+- **VOs:** `Money` (signed account-currency, arithmetic + comparison), `PositionSize` (lots > 0), `ContractSpec` (the
+  MONEY geometry — value-per-pip / lot-step / min-lot — deliberately separate from `SymbolSpec`'s price geometry so
+  price-only detectors stay money-free; `FxMajor` default 10/pip, 0.01 step+min).
+- **`PositionSizer`** — the pure §5.1 chain (`riskPerUnit → stopPips → riskAmount → floor-to-lot-step qty`); floors
+  DOWN so realized risk ≤ budget; min-stop-distance guard (~10 pips FX) + min-lot guard (never a 0-lot trade).
+- **`PaperAccount`** aggregate root — equity + an **open-trade ledger keyed by trade id**: `RegisterOpen`/`Settle` are
+  account-scoped + **idempotent** (no double-reserve / double-settle / cross-account), the aggregate **open-risk cap**
+  (`MaxOpenPortfolioRiskPercent` ≈5%, §2.5.10) gates admission, settlement releases the trade's reserved risk + books
+  gross P&L and keeps equity positive.
+- **`PaperTrade`** aggregate root — opens at the plan entry (immediate, §5.1), **freezes `InitialRiskPerUnit`** so R
+  is always vs the original 1R (§5.2), and **derives its own `RiskBudget`** from the same geometry it books P&L with,
+  so the reserved risk and a stop-out loss can never disagree; `Close` realizes signed R + gross P&L; raises
+  `PaperTradeOpened`/`PaperTradeClosed` (the FIRST domain events — `AggregateRoot` event infra now exercised).
+  `TradeStatus`/`TradeCloseReason` lifecycle enums.
+- **`PaperTradeFactory`** — `Setup` + `PaperAccount` + `SymbolSpec` + `ContractSpec` → sized, cap-checked, **atomically**
+  opened `PaperTrade` (a refused trade leaves the account untouched); direction inherited from the bias-aligned Setup
+  (counter-bias structurally impossible).
+- **`RiskOptions`** (`Ict:Risk`): `BaseRiskPercent` 1.0 / `MaxOpenPortfolioRiskPercent` 5.0 / `MinStopDistancePips` 10,
+  all `Validate()`-gated (per-trade risk ≤ portfolio cap).
+- **Deferred (spec §5 item 23):** the adaptive **loss-ladder + win-cycle + `IRiskManager`** (§2.4/§2.5.5 — this slice
+  is flat base risk); the **fill/execution-cost chain** (Pending→Open intrabar fills, partials, breakeven, time-exit,
+  spread/commission/slippage/swap §5.4 — P&L here is **GROSS**) = WP5; static value-per-pip (dynamic FX conversion
+  later); instrument-class min-stop when index is wired; repositories = WP2; Host `Ict:Risk` binding lands with the
+  PaperTrading module.
+
+**WP4/WP5 still to come (next slice):** the post-confirmation **Armed/Triggered** + realistic **fill/execution-cost
+chain** (the next consumer of `PaperTrade` — intrabar Open→Low→High→Close fills, partials, breakeven, time-exit,
+§5.4 cost model), then the adaptive **loss-ladder/`IRiskManager`** fast-follow + the `Performance` calculator (WP6);
+the extended/long-tail detectors (SMT, Breaker, SD projection, session macros). Then WP2 (persistence) / WP8
+(frontend) in parallel. Spec §5 item **20** (grading denominator / alert floor) still needs a call before alerting.
