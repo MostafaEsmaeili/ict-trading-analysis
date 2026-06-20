@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using IctTrader.Domain.Common;
 using IctTrader.Domain.Configuration;
 using IctTrader.Domain.MarketStructure;
@@ -22,6 +23,11 @@ public sealed class MarketContext
     private readonly List<LiquidityPool> _liquidityPools = [];
     private readonly List<SwingPoint> _swingPoints = [];
     private readonly List<EconomicEvent> _economicEvents = [];
+    private readonly ReadOnlyCollection<FairValueGap> _openFvgsView;
+    private readonly ReadOnlyCollection<OrderBlock> _openOrderBlocksView;
+    private readonly ReadOnlyCollection<LiquidityPool> _liquidityPoolsView;
+    private readonly ReadOnlyCollection<SwingPoint> _swingPointsView;
+    private readonly ReadOnlyCollection<EconomicEvent> _economicEventsView;
     private readonly KillzoneClock _killzoneClock;
     private readonly MarketContextOptions _options;
     private DateOnly? _lastNyDate;
@@ -34,6 +40,14 @@ public sealed class MarketContext
         SymbolSpec = symbolSpec;
         _killzoneClock = killzoneClock;
         _options = options;
+
+        // Expose read-only WRAPPERS over the live backing lists so callers cannot cast and mutate them —
+        // the Register*/LoadCalendar methods stay the single controlled mutation path.
+        _openFvgsView = _openFvgs.AsReadOnly();
+        _openOrderBlocksView = _openOrderBlocks.AsReadOnly();
+        _liquidityPoolsView = _liquidityPools.AsReadOnly();
+        _swingPointsView = _swingPoints.AsReadOnly();
+        _economicEventsView = _economicEvents.AsReadOnly();
     }
 
     public SymbolSpec SymbolSpec { get; }
@@ -72,15 +86,15 @@ public sealed class MarketContext
     public bool IsCalendarLoaded { get; private set; }
 
     /// <summary>The scheduled economic events the calendar gate reads (sourced by the host/ingestion).</summary>
-    public IReadOnlyList<EconomicEvent> EconomicEvents => _economicEvents;
+    public IReadOnlyList<EconomicEvent> EconomicEvents => _economicEventsView;
 
-    public IReadOnlyList<FairValueGap> OpenFvgs => _openFvgs;
+    public IReadOnlyList<FairValueGap> OpenFvgs => _openFvgsView;
 
-    public IReadOnlyList<OrderBlock> OpenOrderBlocks => _openOrderBlocks;
+    public IReadOnlyList<OrderBlock> OpenOrderBlocks => _openOrderBlocksView;
 
-    public IReadOnlyList<LiquidityPool> LiquidityPools => _liquidityPools;
+    public IReadOnlyList<LiquidityPool> LiquidityPools => _liquidityPoolsView;
 
-    public IReadOnlyList<SwingPoint> SwingPoints => _swingPoints;
+    public IReadOnlyList<SwingPoint> SwingPoints => _swingPointsView;
 
     /// <summary>The candle ring buffer for a timeframe — oldest at index 0, newest at <c>[^1]</c> (plan §4.3).</summary>
     public IReadOnlyList<Candle> Window(Timeframe timeframe)

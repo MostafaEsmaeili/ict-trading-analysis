@@ -1,3 +1,5 @@
+using IctTrader.Domain.MarketStructure;
+
 namespace IctTrader.Domain.Configuration;
 
 /// <summary>
@@ -22,9 +24,11 @@ public sealed class DailyBiasOptions
     {
         var errors = new List<string>();
 
-        if (EquilibriumPercent is < 0m or > 1m)
+        // The equilibrium is the ICT 50% boundary, not a tuning knob — pin it so a config typo cannot silently
+        // move the bias split (and keep it identical to the premium/discount gate via the shared policy).
+        if (EquilibriumPercent != EquilibriumBoundaryPolicy.IctEquilibriumPercent)
         {
-            errors.Add($"EquilibriumPercent must be within [0, 1] but was {EquilibriumPercent}.");
+            errors.Add($"EquilibriumPercent must be the ICT equilibrium {EquilibriumBoundaryPolicy.IctEquilibriumPercent} but was {EquilibriumPercent}.");
         }
 
         if (ConsecutiveCloseCount < 1)

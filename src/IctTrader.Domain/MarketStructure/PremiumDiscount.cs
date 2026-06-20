@@ -18,6 +18,9 @@ public enum PremiumDiscount
 /// </summary>
 public static class EquilibriumBoundaryPolicy
 {
+    /// <summary>The ICT equilibrium is the 50% of the dealing range — a semantic invariant, not a tuning knob.</summary>
+    public const decimal IctEquilibriumPercent = 0.50m;
+
     /// <summary>Classifies a 0..100 position-percent against a 0..100 equilibrium percent.</summary>
     public static PremiumDiscount Classify(decimal positionPercent, decimal equilibriumPercent)
     {

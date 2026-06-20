@@ -58,4 +58,12 @@ public class OptionsValidationTests
 
         act.Should().Throw<ArgumentOutOfRangeException>();
     }
+
+    [Fact]
+    public void Moving_the_equilibrium_boundary_off_the_ict_fifty_percent_is_rejected()
+    {
+        // The premium/discount boundary is a semantic invariant, not a tuning knob.
+        new DailyBiasOptions { EquilibriumPercent = 0.40m }.Validate().Should().NotBeEmpty();
+        new PremiumDiscountOptions { EquilibriumPercent = 0.55m }.Validate().Should().NotBeEmpty();
+    }
 }

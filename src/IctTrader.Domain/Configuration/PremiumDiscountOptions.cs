@@ -1,3 +1,5 @@
+using IctTrader.Domain.MarketStructure;
+
 namespace IctTrader.Domain.Configuration;
 
 /// <summary>
@@ -22,9 +24,11 @@ public sealed class PremiumDiscountOptions
     {
         var errors = new List<string>();
 
-        if (EquilibriumPercent is < 0m or > 1m)
+        // The premium/discount veto boundary is the ICT 50% equilibrium — a semantic invariant. Pin it so a
+        // config change cannot silently move the "never sell in discount / never buy in premium" line.
+        if (EquilibriumPercent != EquilibriumBoundaryPolicy.IctEquilibriumPercent)
         {
-            errors.Add($"EquilibriumPercent must be within [0, 1] but was {EquilibriumPercent}.");
+            errors.Add($"EquilibriumPercent must be the ICT equilibrium {EquilibriumBoundaryPolicy.IctEquilibriumPercent} but was {EquilibriumPercent}.");
         }
 
         if (QuadrantBandPercent is < 0m or > 0.5m)
