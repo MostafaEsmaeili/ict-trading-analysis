@@ -26,6 +26,17 @@ public class OptionsValidationTests
         new KillzoneEntryOptions().Validate().Should().BeEmpty();
         new DrawOnLiquidityOptions().Validate().Should().BeEmpty();
         new TargetLadderOptions().Validate().Should().BeEmpty();
+        new RiskOptions().Validate().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Risk_percentages_outside_their_contract_are_rejected()
+    {
+        new RiskOptions { BaseRiskPercent = 0m }.Validate().Should().NotBeEmpty();
+        new RiskOptions { MaxOpenPortfolioRiskPercent = 0m }.Validate().Should().NotBeEmpty();
+        new RiskOptions { MinStopDistancePips = 0m }.Validate().Should().NotBeEmpty();
+        // a per-trade risk above the aggregate portfolio cap is incoherent
+        new RiskOptions { BaseRiskPercent = 6m, MaxOpenPortfolioRiskPercent = 5m }.Validate().Should().NotBeEmpty();
     }
 
     [Fact]
