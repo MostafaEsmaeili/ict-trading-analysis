@@ -75,8 +75,8 @@ public sealed class PaperAccount : AggregateRoot<Guid>
             !_reservedRiskByTrade.ContainsKey(trade.Id),
             "The trade is not open on this account (never reserved or already settled).");
 
-        var realizedPnl = trade.RealizedPnl ?? Money.Zero;
-        var newEquity = Equity + realizedPnl;
+        Guard.Against(trade.RealizedPnl is null, "A closed trade must carry a realized P&L to settle.");
+        var newEquity = Equity + trade.RealizedPnl.Value;
         Guard.Against(!newEquity.IsPositive, "A settlement cannot drive account equity to zero or below.");
 
         _reservedRiskByTrade.Remove(trade.Id);
