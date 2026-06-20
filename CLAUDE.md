@@ -230,6 +230,24 @@ stream into a graded, **advisory-only** `SetupConfirmation`. ICT-faithful (ict-d
   the *default* real pipeline cannot yet reach a confirmation (the FSM itself confirms; the live feeder set is
   incomplete, by design); the distinct OTE-invalidation teardown awaits issue #6.
 
-**WP1 still to come (next slice):** the `KillzoneEntry` + `DrawOnLiquidity`/`DrawTargetRrMet` detectors (completing
-the live pipeline), then the priced `Setup` aggregate + entry-arming/fill chain; the extended/long-tail detectors
-(SMT, Breaker, SD projection, session macros). Then WP2 (persistence) / WP8 (frontend) in parallel.
+**Live RequiredCondition feeders (issue #11, branch `feature/#11-killzone-draw-detectors`, PR #11) — DONE.** The
+two missing §2.5.2 emitters now exist, so the real ordered pipeline **confirms a graded setup end-to-end** (proved
+by a new `ScanSessionTests` integration test). ict-domain-expert spec-reviewed, `pr-reviewer` APPROVE, **207 tests**
+(184 unit + 23 arch), 0 warnings, format clean:
+- **`KillzoneEntryDetector`** → `KillzoneEntry` (1.0, required) — non-directional time gate; reuses the
+  active-entry rule, now extracted to `KillzoneClassification.IsActiveEntryFor` (clock + detector share it). Own
+  `KillzoneEntryOptions.ActiveKillzones` (the §4.6 operator hunt-set, frozen-subset validated).
+- **`DrawOnLiquidityDetector`** → `DrawTargetRrMet` (0.65, required) — direction from the **confirmed bias-aligned**
+  MSS; entry = the shared OTE level; stop beyond the swept extreme + pip buffer (orientation asserted); target =
+  nearest **untapped opposite-side** pool beyond entry (sweep one side, draw to the other), excluding the
+  just-swept level and HRLR runs; RR floor = the active style's `MinRewardRatio` clamped by
+  `AbsoluteMinRewardRatio` (**no new RR knob**); `RewardRatio` VO + zero-risk guard. `DrawOnLiquidityOptions`.
+- **Shared `OteEntryResolver`** — extracted from `OteFibDetector` (pure refactor, no behavior change) so the OTE
+  entry can't drift between the OTE and draw detectors.
+- **Scoped/deferred (spec §5):** the draw targets **registered pools only** — the broader §2.5.1-step-2 set
+  (prior-day H/L, HTF FVG, big figures) + stacked/array-anchored stops are the priced-`Setup` (WP4/WP5) work.
+
+**WP1 still to come (next slice):** the priced `Setup` aggregate (entry/stop/targets/RR) + the post-confirmation
+**Armed/Triggered** entry-arming + fill chain (WP4/WP5); the extended/long-tail detectors (SMT, Breaker, SD
+projection, session macros). Then WP2 (persistence) / WP8 (frontend) in parallel. Spec §5 item **20** (grading
+denominator / alert floor) still needs a call before alerting.
