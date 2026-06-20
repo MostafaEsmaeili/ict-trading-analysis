@@ -1,6 +1,6 @@
 ---
 name: git-workflow
-description: The team's Git/GitHub contribution workflow — open a GitHub issue first, branch as feature/#<issue>-<title>, write imperative commit titles "#<issue> Add X" (< 72 chars) with an 80-column-wrapped body explaining WHY (not what), and open a PR that states the issue and the fix. Use for every code change that will be committed, pushed, or PR'd.
+description: The team's Git/GitHub contribution workflow — open a GitHub issue first, branch as feature/#<issue>-<title>, write imperative commit titles "#<issue> Add X" (< 72 chars) with an 80-column-wrapped body explaining WHY (not what), open a PR that states the issue and the fix, and — after resolving any code review (CodeRabbit or human) — post a per-finding resolution summary that tags @coderabbitai. Use for every code change that will be committed, pushed, or PR'd, or whenever you act on PR review feedback.
 allowed-tools: Read Grep Glob Bash(git *) Bash(gh *)
 ---
 # Git / GitHub contribution workflow (follow for EVERY change)
@@ -44,7 +44,22 @@ Then `gh pr create` with title `#N <Verb> <subject>`. Body has two sections:
 - **Fix** — how we addressed it (approach + notable decisions) and how to verify.
 - Last line: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
 
-## 5. After work — update memory
+## 5. Resolving a code review — ALWAYS tag @coderabbitai with the resolution
+After acting on review feedback on a PR (CodeRabbit's automated review **or** a human review), post **one**
+summary comment that **tags `@coderabbitai`** and lists, per finding, what was resolved — and what was
+intentionally skipped, with a one-line reason. This is **MANDATORY for every code review you act on**, so the
+thread carries a clear, auditable resolution trail and CodeRabbit can re-check.
+
+- **Verify before fixing** — check each finding against the CURRENT code; fix only still-valid issues, and
+  for any you skip say so with a brief reason. Never silently ignore a finding.
+- **Re-run the gates first** — zero-warning build, `dotnet format --verify-no-changes`, and the unit +
+  architecture tests must be green before you post the summary.
+- **Post it** with `gh pr comment <N> --body "..."`: a short list/table grouped by severity, each line citing
+  `file:line` and its disposition (Fixed / Deferred-because…), and **end the comment with an `@coderabbitai`
+  mention** summarising the pass. Example closing line:
+  `@coderabbitai — resolved 20/22 findings (2 intentionally deferred, noted above); build green, 136 tests pass.`
+
+## 6. After work — update memory
 Before stopping a work session, run the `update-memory` skill: refresh `CLAUDE.md` (## Status + any changed
 convention/command/config) and `docs/PLAN.md` so the next session resumes accurately. The Stop hook reminds
 you while code changes are pending.

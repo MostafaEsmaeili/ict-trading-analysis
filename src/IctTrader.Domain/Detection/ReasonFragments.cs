@@ -1,0 +1,34 @@
+using System.Globalization;
+using IctTrader.Domain.MarketStructure;
+using IctTrader.Domain.ValueObjects;
+
+namespace IctTrader.Domain.Detection;
+
+/// <summary>
+/// Central, deterministic templates for the human-readable clause each detector contributes to a
+/// <see cref="DetectorResult.ReasonFragment"/> (plan §4.5). Centralised here so the detector logic carries
+/// no inline literals; the full localisable <c>.resx</c> migration is a later (Host/Resources) WP. Numbers
+/// are formatted with the invariant culture so the text is identical on any host.
+/// </summary>
+public static class ReasonFragments
+{
+    private static string N(decimal value) => value.ToString(CultureInfo.InvariantCulture);
+
+    public static string SwingFormed(SwingKind kind, decimal price, Timeframe timeframe)
+        => $"Swing {kind.ToString().ToLowerInvariant()} formed at {N(price)} on {timeframe}";
+
+    public static string FvgFormed(Direction direction, decimal bottom, decimal top, Timeframe timeframe)
+        => $"{direction} FVG ({N(bottom)}-{N(top)}) on {timeframe}";
+
+    public static string LiquiditySwept(LiquiditySide side, decimal level)
+        => $"{side} liquidity swept at {N(level)}";
+
+    public static string Displacement(Direction direction, decimal pips, Timeframe timeframe)
+        => $"{direction} displacement of {N(pips)} pips on {timeframe}";
+
+    public static string MarketStructureShift(Direction direction, decimal brokenLevel, Timeframe timeframe)
+        => $"{direction} MSS, broke swing {N(brokenLevel)} on {timeframe}";
+
+    public static string OrderBlock(Direction direction, decimal openingPrice, Timeframe timeframe)
+        => $"{direction} order block at {N(openingPrice)} on {timeframe}";
+}
