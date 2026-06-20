@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using IctTrader.Domain.Common;
 using IctTrader.Domain.Configuration;
 using IctTrader.Domain.MarketStructure;
@@ -21,6 +22,12 @@ public sealed class MarketContext
     private readonly List<OrderBlock> _openOrderBlocks = [];
     private readonly List<LiquidityPool> _liquidityPools = [];
     private readonly List<SwingPoint> _swingPoints = [];
+    private readonly List<EconomicEvent> _economicEvents = [];
+    private readonly ReadOnlyCollection<FairValueGap> _openFvgsView;
+    private readonly ReadOnlyCollection<OrderBlock> _openOrderBlocksView;
+    private readonly ReadOnlyCollection<LiquidityPool> _liquidityPoolsView;
+    private readonly ReadOnlyCollection<SwingPoint> _swingPointsView;
+    private readonly ReadOnlyCollection<EconomicEvent> _economicEventsView;
     private readonly KillzoneClock _killzoneClock;
     private readonly MarketContextOptions _options;
     private DateOnly? _lastNyDate;
@@ -33,6 +40,14 @@ public sealed class MarketContext
         SymbolSpec = symbolSpec;
         _killzoneClock = killzoneClock;
         _options = options;
+
+        // Expose read-only WRAPPERS over the live backing lists so callers cannot cast and mutate them —
+        // the Register*/LoadCalendar methods stay the single controlled mutation path.
+        _openFvgsView = _openFvgs.AsReadOnly();
+        _openOrderBlocksView = _openOrderBlocks.AsReadOnly();
+        _liquidityPoolsView = _liquidityPools.AsReadOnly();
+        _swingPointsView = _swingPoints.AsReadOnly();
+        _economicEventsView = _economicEvents.AsReadOnly();
     }
 
     public SymbolSpec SymbolSpec { get; }
@@ -64,13 +79,22 @@ public sealed class MarketContext
     /// <summary>The open of the first candle of the current New-York day (00:00 NY reference for the Judas read).</summary>
     public decimal? MidnightOpen { get; private set; }
 
-    public IReadOnlyList<FairValueGap> OpenFvgs => _openFvgs;
+    /// <summary>The New-York calendar date of the most recently appended candle (the financial day, 00:00 NY).</summary>
+    public DateOnly? CurrentNewYorkDate => _lastNyDate;
 
-    public IReadOnlyList<OrderBlock> OpenOrderBlocks => _openOrderBlocks;
+    /// <summary>Whether the economic calendar has been loaded — distinguishes "no events" from "data not yet supplied".</summary>
+    public bool IsCalendarLoaded { get; private set; }
 
-    public IReadOnlyList<LiquidityPool> LiquidityPools => _liquidityPools;
+    /// <summary>The scheduled economic events the calendar gate reads (sourced by the host/ingestion).</summary>
+    public IReadOnlyList<EconomicEvent> EconomicEvents => _economicEventsView;
 
-    public IReadOnlyList<SwingPoint> SwingPoints => _swingPoints;
+    public IReadOnlyList<FairValueGap> OpenFvgs => _openFvgsView;
+
+    public IReadOnlyList<OrderBlock> OpenOrderBlocks => _openOrderBlocksView;
+
+    public IReadOnlyList<LiquidityPool> LiquidityPools => _liquidityPoolsView;
+
+    public IReadOnlyList<SwingPoint> SwingPoints => _swingPointsView;
 
     /// <summary>The candle ring buffer for a timeframe — oldest at index 0, newest at <c>[^1]</c> (plan §4.3).</summary>
     public IReadOnlyList<Candle> Window(Timeframe timeframe)
@@ -122,6 +146,15 @@ public sealed class MarketContext
     {
         ArgumentNullException.ThrowIfNull(shift);
         LastMss = shift;
+    }
+
+    /// <summary>Loads the economic calendar (replacing any prior set) and marks it available to the gate.</summary>
+    public void LoadCalendar(IEnumerable<EconomicEvent> events)
+    {
+        ArgumentNullException.ThrowIfNull(events);
+        _economicEvents.Clear();
+        _economicEvents.AddRange(events);
+        IsCalendarLoaded = true;
     }
 
     private void TrackNewYorkDay(Candle candle)
