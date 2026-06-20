@@ -23,11 +23,21 @@ public class OptionsValidationTests
         new MarketContextOptions().Validate().Should().BeEmpty();
         new TradeStyleOptions().Validate().Should().BeEmpty();
         new SetupCandidateOptions().Validate().Should().BeEmpty();
+        new KillzoneEntryOptions().Validate().Should().BeEmpty();
+        new DrawOnLiquidityOptions().Validate().Should().BeEmpty();
     }
 
     [Fact]
     public void A_non_positive_assembly_window_is_rejected()
         => new SetupCandidateOptions { MaxAssemblyBars = 0 }.Validate().Should().NotBeEmpty();
+
+    [Fact]
+    public void A_killzone_entry_set_outside_the_frozen_contract_is_rejected()
+        => new KillzoneEntryOptions { ActiveKillzones = [Killzone.Pm] }.Validate().Should().NotBeEmpty();
+
+    [Fact]
+    public void A_negative_draw_stop_buffer_is_rejected()
+        => new DrawOnLiquidityOptions { StopBufferPips = -1m }.Validate().Should().NotBeEmpty();
 
     [Fact]
     public void An_out_of_range_alert_minimum_grade_is_rejected()

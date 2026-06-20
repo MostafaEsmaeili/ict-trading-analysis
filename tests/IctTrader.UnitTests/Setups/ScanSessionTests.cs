@@ -158,4 +158,54 @@ public class ScanSessionTests
         ctx.LastMss!.IsConfirmed.Should().BeTrue();
         ctx.LastMss.Direction.Should().Be(Direction.Bullish);
     }
+
+    [Fact]
+    public void The_real_confluence_detectors_confirm_a_graded_setup_end_to_end()
+    {
+        // The milestone: with all §2.5.2 RequiredConditions present, the real bias/PD/killzone/OTE/draw/calendar
+        // detectors + the FSM grade and confirm a setup under the DEFAULT weights. The structural events
+        // (sweep/MSS/FVG, tested in isolation) are seeded so this exercises the confluence-reading layer.
+        var ctx = NewContext();
+        var london = new DateTimeOffset(2024, 7, 1, 6, 30, 0, TimeSpan.Zero); // 02:30 NY London Open, discount close
+        var candle = new Candle(Eurusd, Timeframe.M5, london, 1.0830m, 1.0835m, 1.0825m, 1.0830m, 1m);
+
+        var seeder = new ScriptedDetector(condition: null, (c, _) =>
+        {
+            c.SetDailyRange(new DealingRange(new Price(1.0800m), new Price(1.0900m), london)); // EQ 1.0850 -> discount
+            c.SetDisplacement(new Displacement(Direction.Bullish, Timeframe.M5, new Price(1.0800m), new Price(1.0900m), london));
+            c.RegisterFvg(new FairValueGap(Direction.Bullish, Timeframe.M5, new Price(1.0828m), new Price(1.0836m), london)); // mid 1.0832 in OTE band
+            c.SetSweep(new SweepRecord(Direction.Bullish, 1.0810m, london, c.BarsProcessed));
+            c.SetMarketStructureShift(new MarketStructureShift(Direction.Bullish, Timeframe.M5, new Price(1.0810m), new Price(1.0850m), london));
+            c.RegisterLiquidityPool(new LiquidityPool(LiquiditySide.BuySide, new Price(1.0920m), 1, london)); // 2.75R draw
+            return DetectorResult.NoMatch;
+        });
+
+        var detectors = new ISetupDetector[]
+        {
+            seeder,
+            new ScriptedDetector(ConfluenceCondition.LiquiditySweep, (_, _) => Bullish("sweep")),
+            new ScriptedDetector(ConfluenceCondition.DisplacementMss, (_, _) => Bullish("mss")),
+            new ScriptedDetector(ConfluenceCondition.FvgPresent, (_, _) => Bullish("fvg")),
+            new KillzoneEntryDetector(new KillzoneEntryOptions()),
+            new DailyBiasDetector(new DailyBiasOptions()),
+            new PremiumDiscountGateDetector(new PremiumDiscountOptions()),
+            new OteFibDetector(new OteOptions()),
+            new DrawOnLiquidityDetector(new DrawOnLiquidityOptions(), new OteOptions(), new TradeStyleOptions()),
+            new CalendarGateDetector(new CalendarOptions()),
+        };
+        var confluence = new ConfluenceOptions();
+        var candidate = new SetupCandidate(confluence, new SetupCandidateOptions(), new SetupScorer(confluence));
+        var session = new ScanSession(ctx, detectors, candidate, new SetupCandidateOptions());
+
+        var confirmation = session.OnCandle(candle);
+
+        confirmation.Should().NotBeNull();
+        confirmation!.Direction.Should().Be(Direction.Bullish);
+        confirmation.Grade.Should().BeOneOf(SetupGrade.A, SetupGrade.B); // all 8 required + OTE -> >= B floor
+        confirmation.Confluences.Select(c => c.Condition).Should().Contain(
+        [
+            ConfluenceCondition.KillzoneEntry, ConfluenceCondition.DrawTargetRrMet,
+            ConfluenceCondition.BiasAligned, ConfluenceCondition.PremiumDiscountHalf, ConfluenceCondition.CalendarClear,
+        ]);
+    }
 }

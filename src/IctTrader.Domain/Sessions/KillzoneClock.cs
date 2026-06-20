@@ -10,6 +10,21 @@ namespace IctTrader.Domain.Sessions;
 public readonly record struct KillzoneClassification(Killzone Killzone, bool LunchBlocked, bool NoNewEntry)
 {
     public static KillzoneClassification None => new(Killzone.None, LunchBlocked: false, NoNewEntry: false);
+
+    /// <summary>
+    /// Whether this classification is a tradeable killzone ENTRY for the given active set: inside a killzone,
+    /// not lunch-blocked, not past the entry cutoff, and either the index morning (governed by instrument
+    /// class, not the FX-flavoured set) or a member of the operator-enabled set.
+    /// </summary>
+    public bool IsActiveEntryFor(InstrumentClass instrumentClass, IReadOnlyCollection<Killzone> activeKillzones)
+    {
+        ArgumentNullException.ThrowIfNull(activeKillzones);
+        var bypassActiveSet = instrumentClass == InstrumentClass.Index && Killzone == Killzone.Am;
+        return Killzone != Killzone.None
+            && !LunchBlocked
+            && !NoNewEntry
+            && (bypassActiveSet || activeKillzones.Contains(Killzone));
+    }
 }
 
 /// <summary>
@@ -61,17 +76,7 @@ public sealed class KillzoneClock
         IReadOnlyCollection<Killzone> activeKillzones)
     {
         ArgumentNullException.ThrowIfNull(activeKillzones);
-        var classification = Classify(openTimeUtc, instrumentClass);
-
-        // The index morning (AM) is THE index killzone and is governed by instrument class, not by the
-        // FX-flavoured operator-selectable set — so an Index AM entry is not gated on set membership.
-        var bypassActiveSet =
-            instrumentClass == InstrumentClass.Index && classification.Killzone == Killzone.Am;
-
-        return classification.Killzone != Killzone.None
-            && !classification.LunchBlocked
-            && !classification.NoNewEntry
-            && (bypassActiveSet || activeKillzones.Contains(classification.Killzone));
+        return Classify(openTimeUtc, instrumentClass).IsActiveEntryFor(instrumentClass, activeKillzones);
     }
 
     private KillzoneClassification ClassifyFx(TimeOnly nyTime)
