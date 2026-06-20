@@ -226,8 +226,9 @@ stream into a graded, **advisory-only** `SetupConfirmation`. ICT-faithful (ict-d
   all-required setup scores 63 < 65 by the §2.5.3 weights — confirm before the alerting WP).
 - **Deferred (follow-on):** the post-confirmation **Armed/Triggered** entry-arming + fill states + the priced
   `Setup` aggregate (entry/stop/targets/RR) belong with the paper-trade chain (WP4/WP5); the `KillzoneEntry` +
-  `DrawOnLiquidity`/`DrawTargetRrMet` emitters are still missing (so the *default* real pipeline cannot confirm
-  yet, by design); the distinct OTE-invalidation teardown awaits issue #6.
+  `DrawOnLiquidity`/`DrawTargetRrMet` emitters are still missing — two RequiredConditions have no detector — so
+  the *default* real pipeline cannot yet reach a confirmation (the FSM itself confirms; the live feeder set is
+  incomplete, by design); the distinct OTE-invalidation teardown awaits issue #6.
 
 **WP1 still to come (next slice):** the `KillzoneEntry` + `DrawOnLiquidity`/`DrawTargetRrMet` detectors (completing
 the live pipeline), then the priced `Setup` aggregate + entry-arming/fill chain; the extended/long-tail detectors

@@ -195,6 +195,28 @@ public class SetupCandidateTests
     }
 
     [Fact]
+    public void An_intraday_reversal_reseeds_and_confirms_the_new_direction_with_its_own_sweep()
+    {
+        var ctx = NewContext();
+        var candidate = NewCandidate();
+
+        // A bullish leg that locks but does not complete (no bias/PD yet).
+        Step(ctx, candidate, 0, null, Match(ConfluenceCondition.LiquiditySweep, Direction.Bullish));
+        Step(ctx, candidate, 1, Mss(Direction.Bullish), Match(ConfluenceCondition.DisplacementMss, Direction.Bullish));
+
+        // The market reverses: a bearish sweep, then a bearish shift. The reseed must KEEP the new bearish
+        // precedent sweep (it preceded the new shift) and drop the stale bullish structure, then confirm bearish.
+        Step(ctx, candidate, 2, null, Match(ConfluenceCondition.LiquiditySweep, Direction.Bearish));
+        var confirmation = Step(ctx, candidate, 3, Mss(Direction.Bearish),
+            Match(ConfluenceCondition.DisplacementMss, Direction.Bearish),
+            Match(ConfluenceCondition.BiasAligned, Direction.Bearish),
+            Match(ConfluenceCondition.PremiumDiscountHalf, Direction.Bearish));
+
+        confirmation.Should().NotBeNull();
+        confirmation!.Direction.Should().Be(Direction.Bearish);
+    }
+
+    [Fact]
     public void An_invalidated_anchoring_mss_tears_the_candidate_down()
     {
         var ctx = NewContext();

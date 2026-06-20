@@ -110,7 +110,15 @@ public sealed class SetupCandidate
         {
             if (match.Condition == ConfluenceCondition.DisplacementMss)
             {
-                // The MSS (re)sets the direction lock — a fresh opposing shift reseeds an intraday reversal.
+                // The MSS owns the direction lock. An OPPOSING shift is an intraday reversal = a new setup, so
+                // reseed: purge the prior direction's latched structure (FVG/OB/OTE that now contradict) while
+                // KEEPING any same-direction precedent — notably the new sweep, which fired before this shift —
+                // then (re)lock. A blind reset would drop that precedent sweep and the reversal could never form.
+                if (_lockedDirection is { } locked && match.Result.Direction is { } incoming && incoming != locked)
+                {
+                    PurgeContradicting(incoming);
+                }
+
                 _latched[match.Condition] = new Latched(barIndex, match.Result);
                 _lockedDirection = match.Result.Direction;
                 _mssBarIndex = barIndex;
@@ -194,6 +202,21 @@ public sealed class SetupCandidate
         _lockedDirection = null;
         _mssBarIndex = 0;
         _anchorMss = null;
+    }
+
+    // Drops latched events whose direction contradicts the given (new) lock, keeping same-direction and
+    // non-directional ones — the reseed step for an opposing intraday reversal.
+    private void PurgeContradicting(Direction direction)
+    {
+        var contradicting = _latched
+            .Where(kv => kv.Value.Result.Direction is { } latchedDirection && latchedDirection != direction)
+            .Select(kv => kv.Key)
+            .ToList();
+
+        foreach (var condition in contradicting)
+        {
+            _latched.Remove(condition);
+        }
     }
 
     private void ExpireStale(long barIndex)
