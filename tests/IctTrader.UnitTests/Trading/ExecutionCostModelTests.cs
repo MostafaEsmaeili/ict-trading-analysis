@@ -114,6 +114,16 @@ public class ExecutionCostModelTests
     }
 
     [Fact]
+    public void An_exit_leg_larger_than_the_trade_size_is_rejected()
+    {
+        var model = new ExecutionCostModel(new ExecutionCostOptions());
+
+        var act = () => model.ComputeExitLeg(Trade(0.30m), new PositionSize(0.31m));
+
+        act.Should().Throw<DomainException>(); // would overcharge and break the leg-sum invariant
+    }
+
+    [Fact]
     public void Split_exit_legs_sum_to_one_full_exit_for_an_awkward_lot_size()
     {
         // A 0.33-lot trade split 0.11 / 0.22 — the per-lot value-per-pip reconstruction must keep the partial +

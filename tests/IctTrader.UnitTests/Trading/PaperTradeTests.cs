@@ -265,6 +265,39 @@ public class PaperTradeTests
     }
 
     [Fact]
+    public void A_fill_leg_requires_a_utc_time()
+    {
+        var local = new DateTimeOffset(2024, 7, 1, 7, 0, 0, TimeSpan.FromHours(-4));
+
+        var act = () =>
+            new FillLeg(new PositionSize(0.1m), new Price(1.0832m), TradeCloseReason.TargetHit, TradeCosts.Zero, local);
+
+        act.Should().Throw<DomainException>(); // self-validates even outside the aggregate
+    }
+
+    [Fact]
+    public void Close_cannot_predate_the_partial_leg()
+    {
+        var trade = BullishTrade(0.30m);
+        trade.ScaleOut(new Price(1.0864m), new PositionSize(0.15m), TradeCosts.Zero, TradeCloseReason.TargetHit, Later);
+
+        // 07:30 is after the open (07:00) but before the partial leg (08:30) — the ledger timeline must be monotonic.
+        var act = () =>
+            trade.Close(new Price(1.0928m), TradeCloseReason.TargetHit, TradeCosts.Zero, Open.AddMinutes(30));
+
+        act.Should().Throw<DomainException>();
+    }
+
+    [Fact]
+    public void The_legs_view_cannot_be_mutated_by_a_downcast()
+    {
+        var trade = BullishTrade(0.30m);
+        trade.ScaleOut(new Price(1.0864m), new PositionSize(0.15m), TradeCosts.Zero, TradeCloseReason.TargetHit, Later);
+
+        (trade.Legs as List<FillLeg>).Should().BeNull(); // the exposed view is not the backing list
+    }
+
+    [Fact]
     public void Cannot_scale_out_a_closed_trade()
     {
         var trade = BullishTrade(0.30m);

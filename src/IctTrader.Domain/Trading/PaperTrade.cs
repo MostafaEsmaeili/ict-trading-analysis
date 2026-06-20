@@ -89,8 +89,9 @@ public sealed class PaperTrade : AggregateRoot<Guid>
     /// <summary>While open, the lots not yet scaled out; after close, the lots the final leg closed.</summary>
     public PositionSize RemainingSize { get; private set; }
 
-    /// <summary>The append-only exit ledger: the optional partial leg(s) plus the final leg.</summary>
-    public IReadOnlyList<FillLeg> Legs => _legs;
+    /// <summary>The append-only exit ledger: the optional partial leg(s) plus the final leg. A read-only view so a
+    /// caller cannot down-cast and mutate the ledger behind the aggregate's back.</summary>
+    public IReadOnlyList<FillLeg> Legs => _legs.AsReadOnly();
 
     /// <summary>True once a partial scale-out has booked a leg before the final close.</summary>
     public bool HasScaledOut { get; private set; }
@@ -191,6 +192,9 @@ public sealed class PaperTrade : AggregateRoot<Guid>
         Guard.Against(Status != TradeStatus.Open, "Only an open paper trade can be closed.");
         Guard.Against(closedAtUtc.Offset != TimeSpan.Zero, "PaperTrade.ClosedAtUtc must be UTC.");
         Guard.Against(closedAtUtc < OpenedAtUtc, "A paper trade cannot close before it opened.");
+        Guard.Against(
+            _legs.Count > 0 && closedAtUtc < _legs[^1].AtUtc,
+            "A paper trade cannot close before its last scale-out (the leg timeline must be monotonic).");
 
         _legs.Add(new FillLeg(RemainingSize, exitPrice, reason, costs, closedAtUtc));
 

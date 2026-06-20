@@ -1,3 +1,4 @@
+using IctTrader.Domain.Common;
 using IctTrader.Domain.Configuration;
 using IctTrader.Domain.ValueObjects;
 
@@ -44,6 +45,9 @@ public sealed class ExecutionCostModel : IExecutionCostModel
     public TradeCosts ComputeExitLeg(PaperTrade trade, PositionSize legSize)
     {
         ArgumentNullException.ThrowIfNull(trade);
+        Guard.Against(
+            legSize.Lots > trade.Size.Lots,
+            $"Exit leg lots {legSize.Lots} cannot exceed the trade size {trade.Size.Lots}.");
 
         // One spread crossing on THIS leg's lots + the round-turn commission for those lots. value-per-pip per lot
         // is the position value over the original size, so the exit legs sum back to exactly one full crossing.
