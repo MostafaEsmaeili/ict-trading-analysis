@@ -24,7 +24,8 @@ public sealed record SetupConfirmation(
     SetupGrade Grade,
     int Score,
     DateTimeOffset ConfirmedAtUtc,
-    IReadOnlyList<ConfluenceContribution> Confluences)
+    IReadOnlyList<ConfluenceContribution> Confluences,
+    PricedFrame? Frame)
 {
     /// <summary>Structural guardrail: a confirmed setup is analysis only; the system never routes an order (§6.3).</summary>
     public bool IsAdvisoryOnly => true;

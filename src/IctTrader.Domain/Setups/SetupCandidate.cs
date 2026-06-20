@@ -182,7 +182,8 @@ public sealed class SetupCandidate
             return null;
         }
 
-        // (6) Confirm and reset so the same setup is not re-emitted on the following candle.
+        // (6) Confirm and reset so the same setup is not re-emitted on the following candle. The priced frame is
+        // captured straight from the draw-target match so the Setup is later priced against the EXACT gated draw.
         var confirmation = new SetupConfirmation(
             context.Symbol,
             direction,
@@ -190,7 +191,8 @@ public sealed class SetupCandidate
             score.Grade,
             score.Score,
             current.OpenTimeUtc,
-            OrderContributions(contributions));
+            OrderContributions(contributions),
+            CapturePricedFrame(direction));
         Reset();
         return confirmation;
     }
@@ -239,6 +241,13 @@ public sealed class SetupCandidate
             _mssBarIndex = 0;
         }
     }
+
+    // The DrawTargetRrMet detector prices the entry/stop/target/RR; capture that frame so the Setup is built
+    // against the exact gated draw rather than re-deriving it later.
+    private PricedFrame? CapturePricedFrame(Direction direction)
+        => _latched.TryGetValue(ConfluenceCondition.DrawTargetRrMet, out var draw)
+            ? PricedFrame.TryFromEvidence(direction, draw.Result.Evidence)
+            : null;
 
     private static bool DirectionAllows(Direction? conditionDirection, Direction lockedDirection)
         => conditionDirection is null || conditionDirection == lockedDirection;
