@@ -210,8 +210,10 @@ public sealed class SetupCandidate
 
         if (!_latched.ContainsKey(ConfluenceCondition.DisplacementMss))
         {
+            // The lock outlived its shift — drop it whole (mirrors Reset) so no stale anchor/bar index lingers.
             _lockedDirection = null;
             _anchorMss = null;
+            _mssBarIndex = 0;
         }
     }
 
