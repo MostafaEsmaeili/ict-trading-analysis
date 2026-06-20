@@ -3,6 +3,7 @@ using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Sessions;
 using IctTrader.Domain.Setups;
 using IctTrader.Domain.Styles;
+using IctTrader.Domain.Trading;
 
 namespace IctTrader.UnitTests.Configuration;
 
@@ -27,7 +28,12 @@ public class OptionsValidationTests
         new DrawOnLiquidityOptions().Validate().Should().BeEmpty();
         new TargetLadderOptions().Validate().Should().BeEmpty();
         new RiskOptions().Validate().Should().BeEmpty();
+        new FillOptions().Validate().Should().BeEmpty();
     }
+
+    [Fact]
+    public void An_undefined_intrabar_fill_assumption_is_rejected()
+        => new FillOptions { StopVsTarget = (IntrabarFillAssumption)99 }.Validate().Should().NotBeEmpty();
 
     [Fact]
     public void Risk_percentages_outside_their_contract_are_rejected()
