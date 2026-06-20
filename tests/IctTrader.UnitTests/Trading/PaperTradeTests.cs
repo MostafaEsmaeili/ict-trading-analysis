@@ -155,8 +155,23 @@ public class PaperTradeTests
         trade.ScaleOut(new Price(1.0864m), new PositionSize(0.15m), TradeCosts.Zero, TradeCloseReason.TargetHit, Later);
         trade.Close(new Price(1.0928m), TradeCloseReason.TargetHit, TradeCosts.Zero, Later);
 
-        // GrossPnl and RealizedR are derived one-from-the-other, so they can never drift.
-        trade.GrossPnl!.Value.Amount.Should().Be(trade.RealizedR!.Value * trade.RiskBudget.Amount);
+        // RealizedR is DERIVED as gross / risk, so multiplying back recovers gross to within decimal rounding
+        // (an exact-equality assertion would crack on non-terminating ratios — see the regression below).
+        (trade.RealizedR!.Value * trade.RiskBudget.Amount).Should().BeApproximately(trade.GrossPnl!.Value.Amount, 1e-7m);
+    }
+
+    [Fact]
+    public void The_gross_to_r_identity_survives_a_non_terminating_blended_ratio()
+    {
+        // 0.07 flat partial + 0.24 runner of a 0.31-lot 32-pip trade → gross 2.40, RiskBudget 99.2, R = 2.40/99.2
+        // is non-terminating. The derive-one-from-the-other design keeps R and money consistent to rounding; an
+        // exact `gross == R * risk` assertion would fail here (2.40 vs 2.4000…0003).
+        var trade = BullishTrade(0.31m);
+        trade.ScaleOut(new Price(1.0832m), new PositionSize(0.07m), TradeCosts.Zero, TradeCloseReason.Manual, Later);
+        trade.Close(new Price(1.0833m), TradeCloseReason.TargetHit, TradeCosts.Zero, Later);
+
+        trade.GrossPnl!.Value.Amount.Should().Be(2.4m);
+        (trade.RealizedR!.Value * trade.RiskBudget.Amount).Should().BeApproximately(trade.GrossPnl!.Value.Amount, 1e-7m);
     }
 
     [Fact]

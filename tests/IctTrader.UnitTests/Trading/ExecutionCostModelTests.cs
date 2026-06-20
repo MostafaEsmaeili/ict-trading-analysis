@@ -112,4 +112,19 @@ public class ExecutionCostModelTests
         exit.SpreadCost.Amount.Should().Be(1.05m); // 0.7 * (3.0/0.30 per lot) * 0.15
         exit.Commission.Amount.Should().Be(0.9m);  // 6.0 per lot * 0.15
     }
+
+    [Fact]
+    public void Split_exit_legs_sum_to_one_full_exit_for_an_awkward_lot_size()
+    {
+        // A 0.33-lot trade split 0.11 / 0.22 — the per-lot value-per-pip reconstruction must keep the partial +
+        // runner exit costs equal to one full exit crossing, with no rounding double-count.
+        var model = new ExecutionCostModel(new ExecutionCostOptions());
+        var trade = Trade(0.33m);
+
+        var partial = model.ComputeExitLeg(trade, new PositionSize(0.11m));
+        var runner = model.ComputeExitLeg(trade, new PositionSize(0.22m));
+        var full = model.ComputeExitLeg(trade, trade.Size);
+
+        (partial.Total.Amount + runner.Total.Amount).Should().BeApproximately(full.Total.Amount, 1e-7m);
+    }
 }
