@@ -111,6 +111,11 @@ with Reqnroll (Gherkin) + Testcontainers for .NET + xUnit.
   warnings-as-errors — `dotnet format` clean, no code smells, DDD/module-boundaries/guardrail, tests pass),
   and the React/TypeScript code (typecheck + lint clean). Fix all **Critical** and **Should-fix** findings
   before opening the PR.
+- **Code-review resolution (mandatory):** after acting on any PR review (CodeRabbit's automated review **or**
+  a human one), verify each finding against current code, fix the still-valid ones (skip others with a
+  one-line reason), re-run the gates, then post **one** summary comment that ends by **tagging
+  `@coderabbitai`** with a per-finding (`file:line` Fixed/Deferred) resolution trail. See the `git-workflow`
+  skill §5. Never silently ignore a finding.
 - **Memory hygiene:** after each period of work / before stopping, run **`/update-memory`** to update this
   `CLAUDE.md` (## Status + any changed convention/command/config) and `docs/PLAN.md` so the next session
   resumes accurately. The Stop hook reminds you while code changes are pending.
