@@ -6,19 +6,26 @@ using IctTrader.Domain.ValueObjects;
 namespace IctTrader.Domain.Trading;
 
 /// <summary>
-/// A simulated, ADVISORY-sourced trade (plan §3.0/§5.1/§5.2) — the aggregate root that expresses one position's
-/// lifecycle independent of persistence and transport. Construction OPENS the trade at the plan's entry (the
-/// §5.1 immediate-open path; the realistic entry-touch fill is WP5). It freezes <see cref="InitialRiskPerUnit"/>
-/// at open so realized R is always measured against the original 1R even after a later stop move (§5.2), and it
-/// derives its own <see cref="RiskBudget"/> from the same money geometry it books P&amp;L with, so the risk it
-/// reserves on the account and its stop-out loss can never disagree. <see cref="Close"/> realizes the gross R
-/// and P&amp;L; costs (§5.4), partial scale-outs, breakeven arming and time-exit are WP5. Paper only: the trade
-/// writes to its own state, never routes an order (§6.3).
+/// A simulated, ADVISORY-sourced trade (plan §3.0/§5.1/§5.2/§2.5.9) — the aggregate root that expresses one
+/// position's lifecycle independent of persistence and transport. Construction OPENS the trade at the plan's entry
+/// (the §5.1 immediate-open path). It freezes <see cref="InitialRiskPerUnit"/> at open so realized R is always
+/// measured against the original 1R (§5.2), and derives its <see cref="RiskBudget"/> from the same money geometry
+/// it books P&amp;L with, so reserved risk and a stop-out loss can never disagree.
+/// <para>
+/// The position is closed through an append-only ledger of <see cref="FillLeg"/>s: an optional T1
+/// <see cref="ScaleOut"/> books one partial leg over part of the size, then <see cref="Close"/> books the final
+/// leg over the remainder. The trade's realized R and gross/net P&amp;L are DERIVED by folding the legs (one source
+/// of truth: gross is the additive money sum and R = gross / risk-budget, so they cannot drift). The no-partial
+/// path is identical to a single full-size close. Paper only — it writes to its own state, never routes an order
+/// (§6.3). The stop-trail and time-exit management are deferred follow-on slices.
+/// </para>
 /// </summary>
 public sealed class PaperTrade : AggregateRoot<Guid>
 {
     private readonly decimal _pipSize;
+    private readonly decimal _valuePerPip;
     private readonly decimal _valuePerPipForPosition;
+    private readonly List<FillLeg> _legs = [];
 
     public PaperTrade(
         Guid id,
@@ -49,11 +56,14 @@ public sealed class PaperTrade : AggregateRoot<Guid>
         Timeframe = timeframe;
         Plan = plan;
         Size = size;
+        RemainingSize = size;
         OpenedAtUtc = openedAtUtc;
         InitialRiskPerUnit = initialRiskPerUnit;
         Status = TradeStatus.Open;
+        Lifecycle = TradeLifecycle.Open;
 
         _pipSize = pipSize;
+        _valuePerPip = valuePerPip;
         _valuePerPipForPosition = valuePerPip * size.Lots;
 
         // The money at risk if the stop is hit, derived from the SAME geometry that books P&L, so the reserved
@@ -73,14 +83,24 @@ public sealed class PaperTrade : AggregateRoot<Guid>
 
     public TradePlan Plan { get; }
 
+    /// <summary>The original sized position — the immutable denominator for cost, commission, and size weighting.</summary>
     public PositionSize Size { get; }
+
+    /// <summary>While open, the lots not yet scaled out; after close, the lots the final leg closed.</summary>
+    public PositionSize RemainingSize { get; private set; }
+
+    /// <summary>The append-only exit ledger: the optional partial leg(s) plus the final leg.</summary>
+    public IReadOnlyList<FillLeg> Legs => _legs;
+
+    /// <summary>True once a partial scale-out has booked a leg before the final close.</summary>
+    public bool HasScaledOut { get; private set; }
 
     /// <summary>The money at risk if the stop is hit — the trade's reserved share of the portfolio cap.</summary>
     public Money RiskBudget { get; }
 
     /// <summary>
-    /// The value-per-pip for the WHOLE position (per-pip value × lots) — the money geometry the execution-cost
-    /// model and the P&amp;L booking share, so a computed cost can never disagree with the realized P&amp;L.
+    /// The value-per-pip for the WHOLE original position (per-pip value × original lots) — the money geometry the
+    /// execution-cost model and the P&amp;L booking share, so a computed cost can never disagree with realized P&amp;L.
     /// </summary>
     public decimal ValuePerPipForPosition => _valuePerPipForPosition;
 
@@ -91,20 +111,26 @@ public sealed class PaperTrade : AggregateRoot<Guid>
 
     public TradeStatus Status { get; private set; }
 
+    /// <summary>The richer §2.5.9 management state (Open → PartialTaken → Closed); Closed ⇔ Status is Closed.</summary>
+    public TradeLifecycle Lifecycle { get; private set; }
+
+    /// <summary>The final-leg exit price (back-compat for snapshot readers); set on close.</summary>
     public Price? ExitPrice { get; private set; }
 
     public DateTimeOffset? ClosedAtUtc { get; private set; }
 
+    /// <summary>The final-leg close reason; set on close.</summary>
     public TradeCloseReason? CloseReason { get; private set; }
 
-    /// <summary>The signed realized reward-to-risk in R, measured on PRICE vs the frozen 1R (−1 at a full stop-out,
-    /// the plan RR at the runner). It is the strategy's structural edge and is NOT reduced by costs (§5.2).</summary>
+    /// <summary>The signed realized reward-to-risk in R, blended size-weighted across legs and measured on PRICE vs
+    /// the frozen 1R. It is the strategy's structural edge and is NOT reduced by costs (§5.2); set on close.</summary>
     public decimal? RealizedR { get; private set; }
 
-    /// <summary>The signed GROSS realized P&amp;L in account currency (before costs), set on close.</summary>
+    /// <summary>The signed GROSS realized P&amp;L in account currency (before costs) — the additive sum of every
+    /// leg's money; set on close.</summary>
     public Money? GrossPnl { get; private set; }
 
-    /// <summary>The total execution costs deducted at close (§5.4 — round-trip spread + commission this slice).</summary>
+    /// <summary>The total §5.4 execution costs across every leg, deducted at close.</summary>
     public Money? Costs { get; private set; }
 
     /// <summary>The signed NET realized P&amp;L (gross − costs) — the figure booked to the account on settle.</summary>
@@ -113,8 +139,7 @@ public sealed class PaperTrade : AggregateRoot<Guid>
     /// <summary>Alias for the booked net P&amp;L — the after-cost money result (§5.4).</summary>
     public Money? NetPnl => RealizedPnl;
 
-    /// <summary>The after-cost reward-to-risk: net P&amp;L over the reserved risk budget (§5.4). A stop-out is worse
-    /// than −1R here because the round-trip costs come on top of the 1R price loss.</summary>
+    /// <summary>The after-cost reward-to-risk: net P&amp;L over the reserved risk budget (§5.4).</summary>
     public decimal? NetR => RealizedPnl is null ? null : RealizedPnl.Value.Amount / RiskBudget.Amount;
 
     public Direction Direction => Plan.Direction;
@@ -124,11 +149,42 @@ public sealed class PaperTrade : AggregateRoot<Guid>
     public Price Stop => Plan.Stop;
 
     /// <summary>
-    /// Closes the trade at <paramref name="exitPrice"/>, realizing the price-based R and the gross/net P&amp;L. Legal
-    /// only from <see cref="TradeStatus.Open"/>. <paramref name="costs"/> (the §5.4 execution costs, computed by an
-    /// <see cref="IExecutionCostModel"/>) are subtracted from the gross P&amp;L to book the net; <see cref="RealizedR"/>
-    /// stays the structural price R (a close at the stop is exactly −1R gross, at the runner the plan's RR), while
-    /// <see cref="NetR"/> reflects the after-cost money result.
+    /// Books a T1 partial scale-out (plan §2.5.9): closes <paramref name="legSize"/> lots at the resting
+    /// <paramref name="exitPrice"/> level, charging <paramref name="legCosts"/> on that leg, and reduces
+    /// <see cref="RemainingSize"/>. Legal only once and only from an open, not-yet-scaled trade; the leg must close
+    /// strictly fewer lots than remain (a full close is <see cref="Close"/>). It does NOT settle and does NOT touch
+    /// the account — the partial's money lands on equity in the single terminal close.
+    /// </summary>
+    public void ScaleOut(
+        Price exitPrice, PositionSize legSize, TradeCosts legCosts, TradeCloseReason reason, DateTimeOffset atUtc)
+    {
+        Guard.Against(Status != TradeStatus.Open, "Only an open paper trade can be scaled out.");
+        Guard.Against(
+            Lifecycle != TradeLifecycle.Open, "A paper trade can take only one partial scale-out in this model.");
+        Guard.Against(atUtc.Offset != TimeSpan.Zero, "PaperTrade scale-out time must be UTC.");
+        Guard.Against(atUtc < OpenedAtUtc, "A paper trade cannot scale out before it opened.");
+        Guard.Against(
+            legSize.Lots >= RemainingSize.Lots,
+            "A partial scale-out must close strictly fewer lots than remain (a full close is Close).");
+
+        var leg = new FillLeg(legSize, exitPrice, reason, legCosts, atUtc);
+        _legs.Add(leg);
+        RemainingSize = new PositionSize(Size.Lots - legSize.Lots);
+        HasScaledOut = true;
+        Lifecycle = TradeLifecycle.PartialTaken;
+
+        var legGross = LegGross(leg);
+        RaiseDomainEvent(new PaperTradePartialClosed(
+            Id, AccountId, LegPriceR(leg), legGross, legCosts.Total, legGross - legCosts.Total,
+            legSize.Lots / Size.Lots, legSize, RemainingSize, reason, atUtc));
+    }
+
+    /// <summary>
+    /// Closes the trade by booking the FINAL leg over <see cref="RemainingSize"/> at <paramref name="exitPrice"/>,
+    /// then folding the blended totals over every leg. Legal only from an open trade (with or without a prior
+    /// partial). <paramref name="costs"/> are this leg's §5.4 costs; <see cref="RealizedR"/> is the size-weighted
+    /// price R (a no-partial stop is exactly −1R gross, a runner the plan RR) while <see cref="NetR"/> reflects the
+    /// after-cost money result. The no-partial path reproduces a single full-size close exactly.
     /// </summary>
     public void Close(Price exitPrice, TradeCloseReason reason, TradeCosts costs, DateTimeOffset closedAtUtc)
     {
@@ -136,25 +192,53 @@ public sealed class PaperTrade : AggregateRoot<Guid>
         Guard.Against(closedAtUtc.Offset != TimeSpan.Zero, "PaperTrade.ClosedAtUtc must be UTC.");
         Guard.Against(closedAtUtc < OpenedAtUtc, "A paper trade cannot close before it opened.");
 
-        var signedMove = Direction == Direction.Bullish
-            ? exitPrice.Value - Entry.Value
-            : Entry.Value - exitPrice.Value;
+        _legs.Add(new FillLeg(RemainingSize, exitPrice, reason, costs, closedAtUtc));
 
-        var realizedR = signedMove / InitialRiskPerUnit;
-        var grossPnl = new Money(signedMove / _pipSize * _valuePerPipForPosition);
-        var netPnl = grossPnl - costs.Total;
+        // Fold the blended totals over ALL legs — ONE source of truth. Gross is the additive money sum; RealizedR is
+        // DERIVED from it (gross / risk-budget), so the price-R and the money can never drift apart.
+        var grossAmount = 0m;
+        var costAmount = 0m;
+        foreach (var leg in _legs)
+        {
+            grossAmount += LegGross(leg).Amount;
+            costAmount += leg.Costs.Total.Amount;
+        }
+
+        var grossPnl = new Money(grossAmount);
+        var totalCosts = new Money(costAmount);
+        var netPnl = grossPnl - totalCosts;
+        var realizedR = grossPnl.Amount / RiskBudget.Amount;
 
         ExitPrice = exitPrice;
         CloseReason = reason;
         ClosedAtUtc = closedAtUtc;
-        RealizedR = realizedR;
         GrossPnl = grossPnl;
-        Costs = costs.Total;
+        Costs = totalCosts;
         RealizedPnl = netPnl;
+        RealizedR = realizedR;
         Status = TradeStatus.Closed;
+        Lifecycle = TradeLifecycle.Closed;
 
         var netR = netPnl.Amount / RiskBudget.Amount;
         RaiseDomainEvent(new PaperTradeClosed(
-            Id, AccountId, realizedR, netR, grossPnl, costs.Total, netPnl, reason, closedAtUtc));
+            Id, AccountId, realizedR, netR, grossPnl, totalCosts, netPnl, reason, closedAtUtc));
+    }
+
+    /// <summary>The signed gross money of one leg: its price move over the frozen pip geometry, weighted by its lots.</summary>
+    private Money LegGross(FillLeg leg)
+    {
+        var signedMove = Direction == Direction.Bullish
+            ? leg.ExitPrice.Value - Entry.Value
+            : Entry.Value - leg.ExitPrice.Value;
+        return new Money(signedMove / _pipSize * _valuePerPip * leg.Lots.Lots);
+    }
+
+    /// <summary>The leg's full-size-equivalent price R (e.g. +1R at T1, +3R at the runner) for the partial event.</summary>
+    private decimal LegPriceR(FillLeg leg)
+    {
+        var signedMove = Direction == Direction.Bullish
+            ? leg.ExitPrice.Value - Entry.Value
+            : Entry.Value - leg.ExitPrice.Value;
+        return signedMove / InitialRiskPerUnit;
     }
 }

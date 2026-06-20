@@ -30,6 +30,14 @@ public class OptionsValidationTests
         new RiskOptions().Validate().Should().BeEmpty();
         new FillOptions().Validate().Should().BeEmpty();
         new ExecutionCostOptions().Validate().Should().BeEmpty();
+        new ExitManagementOptions().Validate().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void A_partial_fraction_outside_the_open_unit_interval_is_rejected()
+    {
+        new ExitManagementOptions { PartialFraction = 0m }.Validate().Should().NotBeEmpty();
+        new ExitManagementOptions { PartialFraction = 1m }.Validate().Should().NotBeEmpty();
     }
 
     [Fact]

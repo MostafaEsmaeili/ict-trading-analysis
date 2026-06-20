@@ -1,3 +1,5 @@
+using IctTrader.Domain.ValueObjects;
+
 namespace IctTrader.Domain.Trading;
 
 /// <summary>
@@ -8,5 +10,19 @@ namespace IctTrader.Domain.Trading;
 /// </summary>
 public interface IExecutionCostModel
 {
+    /// <summary>The full round-trip cost (one entry crossing + one full-size exit) — the no-partial path.</summary>
     TradeCosts Compute(PaperTrade trade);
+
+    /// <summary>
+    /// The ENTRY-leg cost: one spread crossing on the full position, NO commission (commission is a round-turn
+    /// charge levied across the exit leg(s)). Charged once per trade.
+    /// </summary>
+    TradeCosts ComputeEntryLeg(PaperTrade trade);
+
+    /// <summary>
+    /// The cost of ONE exit leg of <paramref name="legSize"/> lots: one spread crossing on those lots plus the
+    /// round-turn commission for those lots. The exit legs of a trade sum back to exactly one full crossing, so a
+    /// partial + a runner never double-count the round-trip spread the no-partial <see cref="Compute"/> charges.
+    /// </summary>
+    TradeCosts ComputeExitLeg(PaperTrade trade, PositionSize legSize);
 }

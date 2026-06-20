@@ -79,4 +79,37 @@ public class ExecutionCostModelTests
 
         act.Should().Throw<DomainException>();
     }
+
+    [Fact]
+    public void Entry_and_full_exit_legs_sum_to_the_round_trip()
+    {
+        var model = new ExecutionCostModel(new ExecutionCostOptions());
+        var trade = Trade(0.31m);
+
+        var entry = model.ComputeEntryLeg(trade);
+        var exit = model.ComputeExitLeg(trade, trade.Size);
+        var roundTrip = model.Compute(trade);
+
+        (entry.Total.Amount + exit.Total.Amount).Should().Be(roundTrip.Total.Amount); // no double-count
+        roundTrip.Total.Amount.Should().Be(6.2m);
+    }
+
+    [Fact]
+    public void The_entry_leg_is_spread_only_with_no_commission()
+    {
+        var entry = new ExecutionCostModel(new ExecutionCostOptions()).ComputeEntryLeg(Trade(0.31m));
+
+        entry.SpreadCost.Amount.Should().Be(2.17m); // 0.7 pips * 3.1 per pip, one crossing
+        entry.Commission.Amount.Should().Be(0m);    // commission rides on the exit leg(s)
+    }
+
+    [Fact]
+    public void An_exit_leg_scales_spread_and_commission_by_its_lots()
+    {
+        var exit = new ExecutionCostModel(new ExecutionCostOptions())
+            .ComputeExitLeg(Trade(0.30m), new PositionSize(0.15m));
+
+        exit.SpreadCost.Amount.Should().Be(1.05m); // 0.7 * (3.0/0.30 per lot) * 0.15
+        exit.Commission.Amount.Should().Be(0.9m);  // 6.0 per lot * 0.15
+    }
 }
