@@ -338,9 +338,35 @@ spec-reviewed, `pr-reviewer` APPROVE (no Critical/Should-fix), `defensive-guardr
   gap; partial fills/latency; dynamic account-currency conversion. `Ict:Execution` Host binding lands with the
   PaperTrading module.
 
-**WP5 still to come (next slice):** the **partial/breakeven/time-exit management** on `PaperTrade` (T1 scale-out + trail
-50%→25%/75%→BE + max-hold / no-overnight — needs partial-close + stop-move methods on the aggregate), then the
-post-confirmation **Armed/Triggered** (Pending→Open) entry-arming, the **slippage** + **session-stepped spread** + **swap**
-cost follow-ons, the adaptive **loss-ladder/`IRiskManager`** fast-follow, and the `Performance` calculator (WP6); the
-extended/long-tail detectors (SMT, Breaker, SD projection, session macros). Then WP2 (persistence) / WP8 (frontend) in
+**WP5 partial scale-out — `PaperTrade` runner + N-leg R/cost accounting (issue #22, branch `feature/#22-partial-scale-out`,
+PR #23) — DONE.** Slice A of the §2.5.9 management model (scope chosen by a **design judge-panel workflow** — `Explore`
+map + ict-domain-expert spec → 3 competing aggregate designs → adversarial judging → synthesis: ship the runner, defer the
+trail/time-exit). `pr-reviewer` APPROVE, `defensive-guardrail-auditor` 7/7 PASS, an **adversarial money-math verifier**
+caught a fragile exact-equality identity test (fixed), **293 tests** (270 unit + 23 arch), 0 warnings, format clean:
+- **`PaperTrade` closes through an append-only `FillLeg` ledger** — an optional `ScaleOut(exitPrice, legSize, legCosts,
+  reason, atUtc)` books ONE partial leg over part of the size and reduces `RemainingSize`; `Close` (same signature) books
+  the final leg. `RealizedR`/`GrossPnl`/`Costs`/`RealizedPnl`/`NetR` are **derived folds** over the legs (one source of
+  truth → illegal state unrepresentable). `FillLeg` (Lots/ExitPrice/Reason/Costs/AtUtc), `HasScaledOut`.
+- **R is blended size-weighted vs the FROZEN 1R** (0.5@+1R + 0.5@+3R = **+2.0R**). Anti-drift: `GrossPnl` is the additive
+  money fold, `RealizedR = GrossPnl / RiskBudget` is **derived from it** (never both independently). `RealizedR` stays the
+  structural gross edge; `NetR` carries costs. The no-partial path is byte-identical to a single full close.
+- **`TradeLifecycle { Open, PartialTaken, Closed }`** rides ALONGSIDE the unchanged `TradeStatus { Open, Closed }` ⇒
+  `PaperAccount.Settle` is **byte-unchanged** and still rejects a not-yet-final (`PartialTaken`) trade; the partial never
+  touches the account (money lands on equity in the single terminal settle, full `RiskBudget` reserved until then).
+  `PaperTradePartialClosed` event carries the derived per-leg figures.
+- **Cost-model split:** `ComputeEntryLeg` (one spread crossing, no commission) + `ComputeExitLeg(legSize)` (one crossing +
+  per-lot commission on that leg); `Compute` re-expressed as entry + full-exit. A regression test locks
+  `entry + exit(Size) == legacy round trip`, so a partial + runner **never double-count the spread**.
+- **`ExitManagementOptions`** (`Ict:Execution:Management` → `PartialFraction` 0.50, **flagged INVENTED** — transcripts say
+  take a partial at T1 but never the size), `Validate()`-gated. (Defined now; the orchestrator that consumes it is Slice C.)
+- **Deferred (spec §5 item 26):** **Slice B** = `MoveStop`/`CurrentStop` + the 50%→25%/75%→BE/BE-at-1R trail (FillEvaluator
+  re-pointed to read `CurrentStop`) + `PaperTradeStopMoved` + `BreakevenArmed`; **Slice C** = the pure `IExitManager`
+  orchestrator + max-hold/no-overnight time-exit (needs a caller-passed bar-close time — `Candle` has only `OpenTimeUtc`);
+  plus multiple partials / SD ladder, the §2.5.8 `level+spread` fill-price worsening, slippage/swap math.
+
+**WP5 still to come (next slice):** **Slice B** — the stop-trail (`MoveStop`/`CurrentStop` + 50%→25%/75%→BE/BE-at-1R,
+FillEvaluator reads the live stop) — then **Slice C** (the `IExitManager` orchestrator + max-hold/no-overnight time-exit),
+the post-confirmation **Armed/Triggered** (Pending→Open) entry-arming, the **slippage** + **session-stepped spread** +
+**swap** cost follow-ons, the adaptive **loss-ladder/`IRiskManager`** fast-follow, and the `Performance` calculator (WP6);
+the extended/long-tail detectors (SMT, Breaker, SD projection, session macros). Then WP2 (persistence) / WP8 (frontend) in
 parallel. Spec §5 item **20** (grading denominator / alert floor) still needs a call before alerting.
