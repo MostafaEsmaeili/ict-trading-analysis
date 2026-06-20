@@ -31,4 +31,16 @@ public static class ReasonFragments
 
     public static string OrderBlock(Direction direction, decimal openingPrice, Timeframe timeframe)
         => $"{direction} order block at {N(openingPrice)} on {timeframe}";
+
+    public static string DailyBias(Direction direction, decimal positionPercent)
+        => $"Daily bias {direction} at {N(positionPercent)}% of the dealing range";
+
+    public static string PremiumDiscountHalf(PremiumDiscount half)
+        => $"Price in the {half.ToString().ToLowerInvariant()} half of the dealing range";
+
+    public static string OteEntry(Direction direction, decimal sweetSpot, Timeframe timeframe)
+        => $"{direction} OTE entry, sweet spot {N(sweetSpot)} on {timeframe}";
+
+    public static string CalendarClear(DateOnly nyDate)
+        => $"Calendar clear for {nyDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}";
 }
