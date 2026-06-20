@@ -190,7 +190,7 @@ ordering race, and true bar-window leg-membership for the OB↔FVG link.
 **Convention added:** after acting on any code review (CodeRabbit or human), post one per-finding resolution
 summary that **tags `@coderabbitai`** (git-workflow skill §5 + the review-gate section above).
 
-**§2.5 RequiredCondition detectors (issue #3 → #5, PR #8 open) — DONE.** Every §2.5.2 RequiredCondition now has an
+**§2.5 RequiredCondition detectors (issue #3 → #5, PR #8 → merged) — DONE.** Every §2.5.2 RequiredCondition now has an
 emitting detector, so the confluence FSM has a complete feeder set. Added (TDD, **172 tests**, 0 warnings, format
 clean; `pr-reviewer` APPROVE + adversarial ICT-conformance SHIP 4/5 CONFORMANT):
 - **`DealingRangeContextDetector`** (non-scoring) — anchors `MarketContext.DailyRange` from active swing extremes,
@@ -208,8 +208,27 @@ clean; `pr-reviewer` APPROVE + adversarial ICT-conformance SHIP 4/5 CONFORMANT):
   `Ict:Detection:*` Options POCOs. **Two fast-follow issues open:** #6 (OTE distinct `OteVoidedOnFvgInvalidation`
   signal) · #7 (DealingRange broken-swing body-to-body anchoring). Spec §5 now lists **22** open items.
 
-**WP1 still to come (next slice / WP3):** the confluence FSM (`ScanSession`/`SetupCandidate`) that accumulates the
-matched conditions, applies the direction lock + the PremiumDiscount/Calendar vetoes, and assembles a graded,
-alertable `Setup` (and pins detector ordering so the MSS-vs-breach race above cannot bite); the `DrawOnLiquidity`
-+ `DrawTargetRrMet` detectors; and the extended/long-tail detectors (SMT, Breaker, SD projection, session macros).
-Then WP2 (persistence) / WP8 (frontend) in parallel.
+**Confluence FSM (issue #9, branch `feature/#9-confluence-fsm`, PR #9) — DONE.** The per-symbol
+`ScanSession`/`SetupCandidate` domain process (pure, `IctTrader.Domain/Setups/`) that folds the detector match
+stream into a graded, **advisory-only** `SetupConfirmation`. ICT-faithful (ict-domain-expert spec-reviewed,
+`pr-reviewer` APPROVE, **189 tests** = 166 unit + 23 arch, 0 warnings, format clean):
+- **MSS owns the direction lock** — the `DisplacementMss` direction locks the trade; an opposing shift *reseeds*
+  (intraday reversal = new setup). A condition whose emitted direction contradicts the lock is simply not counted
+  → this is how the **premium/discount entry-half veto** is realised (no separate veto flag).
+- **Standing vs event conditions** (`SetupCandidateOptions.StandingConditions`, `Ict:Scanning:Candidate`): bias /
+  PD / killzone / calendar re-evaluate every candle (so the half-veto withdraws its required match *live*); sweep /
+  MSS / FVG / OB / OTE **latch** and age out after `MaxAssemblyBars`. **Sweep must strictly precede the MSS.**
+- **Teardown** on anchoring-MSS invalidation (ITH/ITL breach), NY-day rollover, and killzone change; **reset on
+  confirm** (no duplicate alert). Grading via `SetupScorer` with `applicable` = the **constant weighted universe**.
+- **MSS-vs-swing breach ordering race RESOLVED** (spec §5 item 19, option c): `SwingPoint.Breach(utc)` stamps the
+  breaching candle + `WasBreachedOn`; MSS claims a swing breached by THIS candle; `ScanSession` pins
+  SwingPointDetector→MSS order. Spec §5 item **20** logs the open grading-denominator/alert-floor decision (a bare
+  all-required setup scores 63 < 65 by the §2.5.3 weights — confirm before the alerting WP).
+- **Deferred (follow-on):** the post-confirmation **Armed/Triggered** entry-arming + fill states + the priced
+  `Setup` aggregate (entry/stop/targets/RR) belong with the paper-trade chain (WP4/WP5); the `KillzoneEntry` +
+  `DrawOnLiquidity`/`DrawTargetRrMet` emitters are still missing (so the *default* real pipeline cannot confirm
+  yet, by design); the distinct OTE-invalidation teardown awaits issue #6.
+
+**WP1 still to come (next slice):** the `KillzoneEntry` + `DrawOnLiquidity`/`DrawTargetRrMet` detectors (completing
+the live pipeline), then the priced `Setup` aggregate + entry-arming/fill chain; the extended/long-tail detectors
+(SMT, Breaker, SD projection, session macros). Then WP2 (persistence) / WP8 (frontend) in parallel.
