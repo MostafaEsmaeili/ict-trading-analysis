@@ -51,4 +51,9 @@ public static class EvidenceKeys
 
     // Calendar
     public const string CalendarDate = "calendarDate";
+
+    // Draw on liquidity
+    public const string EntryPrice = "entryPrice";
+    public const string StopPrice = "stopPrice";
+    public const string TargetPrice = "targetPrice";
 }

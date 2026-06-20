@@ -1,5 +1,6 @@
 using System.Globalization;
 using IctTrader.Domain.MarketStructure;
+using IctTrader.Domain.Sessions;
 using IctTrader.Domain.ValueObjects;
 
 namespace IctTrader.Domain.Detection;
@@ -31,6 +32,12 @@ public static class ReasonFragments
 
     public static string OrderBlock(Direction direction, decimal openingPrice, Timeframe timeframe)
         => $"{direction} order block at {N(openingPrice)} on {timeframe}";
+
+    public static string KillzoneEntry(Killzone killzone)
+        => $"Inside the {killzone} killzone";
+
+    public static string DrawTarget(Direction direction, decimal targetLevel, decimal rewardRatio)
+        => $"{direction} draw on liquidity at {N(targetLevel)} ({N(rewardRatio)}R)";
 
     public static string DailyBias(Direction direction, decimal positionPercent)
         => $"Daily bias {direction} at {N(positionPercent)}% of the dealing range";
