@@ -116,7 +116,7 @@ public sealed class SwingPointDetector : ISetupDetector
             var brokenLow = swing.Kind == SwingKind.Low && current.Close < swing.Price.Value;
             if (brokenHigh || brokenLow)
             {
-                swing.Breach();
+                swing.Breach(current.OpenTimeUtc);
             }
         }
     }

@@ -57,7 +57,7 @@ public sealed class MarketStructureShiftDetector : ISetupDetector
             return DetectorResult.NoMatch; // weak / wick-only break
         }
 
-        brokenSwing.Breach();
+        brokenSwing.Breach(current.OpenTimeUtc);
         var shift = new MarketStructureShift(
             direction, current.Timeframe, brokenSwing.Price, new Price(current.Close), current.OpenTimeUtc);
         context.SetMarketStructureShift(shift);
@@ -88,9 +88,16 @@ public sealed class MarketStructureShiftDetector : ISetupDetector
 
         foreach (var swing in context.SwingPoints)
         {
-            // Only live structure can be broken: a consumed (swept) or already-breached swing is stale and
-            // must not produce a repeated MSS match.
-            if (!swing.IsActive || swing.Kind != kind)
+            if (swing.Kind != kind)
+            {
+                continue;
+            }
+
+            // The swing the displacement candle CLOSES THROUGH is the MSS reference. Accept a swing that is
+            // still live OR was breached by THIS candle (so the order in which SwingPointDetector and this
+            // detector run cannot drop a legitimate MSS — spec §5 item 19). A swing consumed by a sweep, or
+            // breached on an EARLIER bar, is stale structure and excluded.
+            if (!swing.IsActive && !swing.WasBreachedOn(current.OpenTimeUtc))
             {
                 continue;
             }

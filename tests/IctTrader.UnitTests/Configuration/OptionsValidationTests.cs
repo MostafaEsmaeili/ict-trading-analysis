@@ -22,7 +22,12 @@ public class OptionsValidationTests
         new FvgOptions().Validate().Should().BeEmpty();
         new MarketContextOptions().Validate().Should().BeEmpty();
         new TradeStyleOptions().Validate().Should().BeEmpty();
+        new SetupCandidateOptions().Validate().Should().BeEmpty();
     }
+
+    [Fact]
+    public void A_non_positive_assembly_window_is_rejected()
+        => new SetupCandidateOptions { MaxAssemblyBars = 0 }.Validate().Should().NotBeEmpty();
 
     [Fact]
     public void An_out_of_range_alert_minimum_grade_is_rejected()

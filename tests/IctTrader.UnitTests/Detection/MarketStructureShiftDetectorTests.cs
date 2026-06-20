@@ -111,4 +111,33 @@ public class MarketStructureShiftDetectorTests
 
         Detector.Detect(ctx, current).Should().Be(DetectorResult.NoMatch);
     }
+
+    [Fact]
+    public void An_mss_still_fires_when_the_swing_detector_already_breached_the_swing_this_candle()
+    {
+        // The breach-vs-MSS ordering race (spec §5 item 19): when SwingPointDetector runs first it breaches
+        // the very swing the displacement closes through. The MSS must still claim a swing breached by THIS
+        // same candle, so the pipeline order cannot drop a legitimate shift.
+        var ctx = NewContext();
+        var current = ArrangeBullish(ctx, closeAboveSwing: 1.0920m);
+
+        new SwingPointDetector(new SwingOptions()).Detect(ctx, current);
+        ctx.SwingPoints.Single().State.Should().Be(SwingState.Breached); // pre-breached by the swing detector
+
+        var result = Detector.Detect(ctx, current);
+
+        result.Matched.Should().BeTrue();
+        result.Direction.Should().Be(Direction.Bullish);
+        ctx.LastMss!.IsConfirmed.Should().BeTrue();
+    }
+
+    [Fact]
+    public void A_swing_breached_on_an_earlier_bar_stays_stale_structure()
+    {
+        var ctx = NewContext();
+        var current = ArrangeBullish(ctx, closeAboveSwing: 1.0920m);
+        ctx.SwingPoints.Single().Breach(Base.AddMinutes(-5)); // breached by a PRIOR candle, not this one
+
+        Detector.Detect(ctx, current).Should().Be(DetectorResult.NoMatch);
+    }
 }
