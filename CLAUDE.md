@@ -364,8 +364,29 @@ caught a fragile exact-equality identity test (fixed), **293 tests** (270 unit +
   orchestrator + max-hold/no-overnight time-exit (needs a caller-passed bar-close time — `Candle` has only `OpenTimeUtc`);
   plus multiple partials / SD ladder, the §2.5.8 `level+spread` fill-price worsening, slippage/swap math.
 
-**WP5 still to come (next slice):** **Slice B** — the stop-trail (`MoveStop`/`CurrentStop` + 50%→25%/75%→BE/BE-at-1R,
-FillEvaluator reads the live stop) — then **Slice C** (the `IExitManager` orchestrator + max-hold/no-overnight time-exit),
+**WP5 stop-trail mechanism — `PaperTrade.MoveStop`/`CurrentStop` (issue #24, branch `feature/#24-stop-trail-mechanism`,
+PR #25) — DONE.** Slice B of the §2.5.9 management (mechanism only; the candle-driven trail-ladder POLICY is Slice C).
+ict-domain-expert spec-reviewed, `pr-reviewer` APPROVE, `defensive-guardrail-auditor` 7/7 PASS, an **adversarial verifier**
+drove the built DLL with ~35 probes (all 6 invariants HOLD) and flagged a timeline gap + coverage gaps (both addressed),
+**314 tests** (291 unit + 23 arch), 0 warnings, format clean:
+- **`MoveStop(newStop, atUtc)` ratchet** — tightens toward profit ONLY (long up / short down, strict), may cross entry to
+  lock profit, may NOT reach the runner target. Mutates only `CurrentStop` (live stop, starts = `Plan.Stop`); the frozen
+  `Stop`/`InitialRiskPerUnit`/`RiskBudget`/`RealizedR`-denominator are untouched, so R is still vs the original 1R (§5.2):
+  a breakeven stop-out books **~0R** (not −1R), a profit-locked stop books **positive R** on a pullback.
+- **`FillEvaluator` now reads `CurrentStop`** (was `Plan.Stop`), so a trailed stop actually governs the exit fill.
+- **`IsBreakevenArmed`** is a DERIVED boolean (stop at/beyond entry in the profit direction) — orthogonal to the partial
+  state (a trade can be both `PartialTaken` and breakeven-armed), NOT a lifecycle enum value (corrected the panel here).
+  `MoveStop` raises `PaperTradeStopMoved` (prev/new stop + breakeven snapshot).
+- **Monotonic timeline:** a single `_lastActivityAtUtc` (open→scale-out→stop-move→close) guards every stamped op (closed
+  the adversarial-flagged gap where a stop move could predate a later scale-out; money was never at risk, P&L is
+  price-derived). Clock-free (caller passes the timestamp).
+- **Deferred (spec §5 item 27 / Slice C):** the pure `StopTrailPolicy`/`IExitManager` that DECIDES the new stop from
+  per-candle progress (the 50%→25%R / 75%→BE / BE-at-1R ladder, "tightest-wins", entry→T1 progress vs the 1R-reached
+  axis) + its `StopTrailOptions`; the max-hold/no-overnight time-exit (needs a caller-passed bar-close time); the
+  "don't trail past current price" cap (belongs in the candle-aware policy).
+
+**WP5 still to come (next slice):** **Slice C** — the candle-driven `StopTrailPolicy`/`IExitManager` orchestrator (applies
+the trail ladder via `MoveStop` + the stop→scale→time-exit precedence) and the **max-hold/no-overnight time-exit** — then
 the post-confirmation **Armed/Triggered** (Pending→Open) entry-arming, the **slippage** + **session-stepped spread** +
 **swap** cost follow-ons, the adaptive **loss-ladder/`IRiskManager`** fast-follow, and the `Performance` calculator (WP6);
 the extended/long-tail detectors (SMT, Breaker, SD projection, session macros). Then WP2 (persistence) / WP8 (frontend) in
