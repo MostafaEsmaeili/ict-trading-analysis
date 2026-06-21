@@ -411,9 +411,30 @@ warnings, format clean:
   (needs a caller-passed bar-close time + NY-date pair + `NoOvernightBoundary` enum); the `RequireStructureConfirmForTrail
   =true` behavior (needs `MarketContext`/MSS continuation); the SD-ladder rungs.
 
-**WP5 still to come (next slice):** the **`IExitManager` orchestrator** (applies `StopTrailPolicy` via `MoveStop`, decides
-the T1 scale-out, folds the stop→scale→time-exit precedence) + the **max-hold/no-overnight time-exit** — then the
-post-confirmation **Armed/Triggered** (Pending→Open) entry-arming, the **slippage** + **session-stepped spread** + **swap**
-cost follow-ons, the adaptive **loss-ladder/`IRiskManager`** fast-follow, and the `Performance` calculator (WP6); the
-extended/long-tail detectors (SMT, Breaker, SD projection, session macros). Then WP2 (persistence) / WP8 (frontend) in
-parallel. Spec §5 item **20** (grading denominator / alert floor) still needs a call before alerting.
+**WP5 exit orchestrator — `IExitManager` per-candle pass (issue #28, branch `feature/#28-exit-manager-orchestrator`,
+PR #29) — DONE.** Slice C cut 2a: the orchestrator that finally RUNS the exit machinery per candle (the max-hold/
+no-overnight time-exit is cut 2b). ict-domain-expert spec-reviewed, `pr-reviewer` APPROVE, `defensive-guardrail-auditor`
+7/7 PASS, an **adversarial verifier** drove **505k Decide-then-Apply cycles** (all 6 invariants HOLD, 0 throws),
+**341 tests** (318 unit + 23 arch), 0 warnings, format clean:
+- **`ExitManager.Decide(PaperTrade, Candle, ExitContext) → ExitPlan`** runs the §3.4 precedence **protective-fill →
+  scale → trail**: a stop/runner that hit closes the WHOLE remaining position and emits nothing else that bar
+  (delegates to `FillEvaluator` — never re-derives the fill); otherwise a surviving bar takes the **T1 partial ONCE**
+  (`Lifecycle==Open` guard, sized `PartialFraction × the ORIGINAL Size`, booked at the partial LEVEL via
+  `ComputeExitLeg`) and ratchets the stop if `StopTrailPolicy` earned a tighter level.
+- **DECIDE-only** (mirrors `FillEvaluator`/`StopTrailPolicy`): returns an immutable **apply-ordered** `ExitPlan` of
+  `ExitAction`s (scale BEFORE move-stop, both stamped at the caller-passed bar-close time so the aggregate's monotonic
+  timeline holds); the caller APPLIES it. Pure/clock-free — the bar-close time arrives via `ExitContext` (self-validating
+  UTC). `ExitPlan.NoOp`/`HasActions` (null-safe). An integration test drives a real trade scale→runner to **+1.875R**.
+- **Deferred (spec §5 item 29 / cut 2b+):** the **max-hold / no-overnight time-exit** — it alone pulls in `NyClock`,
+  a `NoOvernightBoundary` enum (NyMidnight default), `TimeframePolicy.MaxHold`, and the bar-close time already on
+  `ExitContext`; it inserts as **protective-fill → time-exit → scale → trail** (time-exit overrides a same-bar
+  scale/trail but never a real fill), closing at `candle.Close` with `TradeCloseReason.TimeExit`. Also deferred:
+  **lot-step flooring** of the partial leg (with the multi-partial/SD-ladder work); the `RequireStructureConfirmForTrail
+  =true` overlay; the Host `Ict:Execution:Management*` binding + `ValidateOnStart` (with the consuming host wiring).
+
+**WP5 still to come (next slice):** **cut 2b** — the max-hold/no-overnight **time-exit** woven into the `ExitManager`
+precedence — then the post-confirmation **Armed/Triggered** (Pending→Open) entry-arming, the **slippage** +
+**session-stepped spread** + **swap** cost follow-ons, the adaptive **loss-ladder/`IRiskManager`** fast-follow, and the
+`Performance` calculator (WP6); the extended/long-tail detectors (SMT, Breaker, SD projection, session macros). Then WP2
+(persistence) / WP8 (frontend) in parallel. Spec §5 item **20** (grading denominator / alert floor) still needs a call
+before alerting.
