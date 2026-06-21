@@ -112,7 +112,7 @@ public sealed class StyleSettings
         BiasTimeframe = Timeframe.D1,
         StructureTimeframe = Timeframe.M15,
         EntryTimeframe = Timeframe.M5,
-        MaxHoldMinutes = 120,
+        MaxHoldMinutes = 120, // Ep21 2-hour CEILING of the "90 min to 2h" max-hold band; tighten toward 90 per appetite
         AllowOvernight = false,
         MinRewardRatio = 2.5m,
         AllowDirectFvgEntry = false,

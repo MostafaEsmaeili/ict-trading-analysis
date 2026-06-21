@@ -50,6 +50,11 @@ public class OptionsValidationTests
     }
 
     [Fact]
+    public void The_deferred_fx_close_no_overnight_boundary_is_rejected()
+        => new ExitManagementOptions { NoOvernightBoundary = NoOvernightBoundary.NyFxClose1700 }
+            .Validate().Should().NotBeEmpty();
+
+    [Fact]
     public void An_undefined_intrabar_fill_assumption_is_rejected()
         => new FillOptions { StopVsTarget = (IntrabarFillAssumption)99 }.Validate().Should().NotBeEmpty();
 
