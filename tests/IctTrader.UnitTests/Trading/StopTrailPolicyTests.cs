@@ -135,6 +135,26 @@ public class StopTrailPolicyTests
     }
 
     [Fact]
+    public void A_short_earned_stop_inside_the_bars_pullback_holds()
+    {
+        // −42 pips earns breakeven, but the same bar pulled back UP through entry (high 1.0872 ≥ 1.0870).
+        var decision = Policy.Evaluate(BearishTrade(), Bar(1.0855m, 1.0872m, 1.0828m, 1.0866m));
+
+        decision.Outcome.Should().Be(StopTrailOutcome.Hold); // §2.5.8 cap, mirrored for a short
+    }
+
+    [Fact]
+    public void The_tightest_capped_rung_holds_without_falling_back_to_a_looser_rung()
+    {
+        // +32 pips fires BOTH the residual rung (1.0824, would clear the bar low) and breakeven via 1R (1.0832).
+        // Tightest-wins picks breakeven; the bar low 1.0830 caps it — the policy Holds rather than dropping back to
+        // the looser-but-fillable residual stop (a deliberate "wait for a clean bar" choice, not a fall-back).
+        var decision = Policy.Evaluate(BullishTrade(), Bar(1.0840m, 1.0864m, 1.0830m, 1.0834m));
+
+        decision.Outcome.Should().Be(StopTrailOutcome.Hold);
+    }
+
+    [Fact]
     public void A_closed_trade_cannot_be_trailed()
     {
         var trade = BullishTrade();
