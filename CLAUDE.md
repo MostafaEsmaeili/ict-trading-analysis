@@ -432,9 +432,36 @@ no-overnight time-exit is cut 2b). ict-domain-expert spec-reviewed, `pr-reviewer
   **lot-step flooring** of the partial leg (with the multi-partial/SD-ladder work); the `RequireStructureConfirmForTrail
   =true` overlay; the Host `Ict:Execution:Management*` binding + `ValidateOnStart` (with the consuming host wiring).
 
-**WP5 still to come (next slice):** **cut 2b** — the max-hold/no-overnight **time-exit** woven into the `ExitManager`
-precedence — then the post-confirmation **Armed/Triggered** (Pending→Open) entry-arming, the **slippage** +
-**session-stepped spread** + **swap** cost follow-ons, the adaptive **loss-ladder/`IRiskManager`** fast-follow, and the
-`Performance` calculator (WP6); the extended/long-tail detectors (SMT, Breaker, SD projection, session macros). Then WP2
-(persistence) / WP8 (frontend) in parallel. Spec §5 item **20** (grading denominator / alert floor) still needs a call
-before alerting.
+**WP5 exit time-exit — `ExitManager` max-hold / no-overnight (issue #31, branch `feature/#31-time-exit`, PR #32) —
+DONE.** Slice C cut 2b: the §2.5.1-step-9 *"max hold 90–120 min; no overnight"* rule woven into the orchestrator as the
+second precedence rung. ict-domain-expert spec-reviewed (Mentorship-verbatim — Ep21 "90 min to 2h maximum", Ep2 "00:00
+NY new day"); an **aggressive 4-lens verification workflow** all SHIP — strict ICT fidelity (12/12 checklist), an
+**adversarial driver over the compiled domain (~275k cases × 4 styles × both 2024 DST transitions × 5 process zones,
+ZERO invariant violations)**, `defensive-guardrail-auditor` 7/7, `pr-reviewer` APPROVE. **356 tests** (333 unit + 23
+arch), 0 warnings, format clean:
+- **Precedence is now `protective-fill → time-exit → scale → trail`.** A real stop/runner fill on the max-hold bar
+  ALWAYS wins (books the level −1R / plan RR, never a flattering bar-close `TimeExit`) — the safety-critical honesty
+  rule; the time-exit OVERRIDES a same-bar scale and trail (no remaining position to manage once flattening).
+- **`ExitManager.TimeExitFires`** = **max-hold** (`BarClose − Open ≥ StyleSettings.MaxHoldMinutes`, pure UTC, inclusive;
+  Intraday 120 — read from existing per-style config, NO new literal) **OR** **no-overnight** (`NyClock.NewYorkDate(open)
+  != NyClock.NewYorkDate(barClose)`, the only NY-date path, §2.1 00:00-NY boundary), gated on `StyleSettings.AllowOvernight
+  == false` so only intraday-class styles force out (Swing/Position don't). Both → ONE whole-`RemainingSize` `Close` at
+  `candle.Close` as `TimeExit`, costed via `ComputeExitLeg`; R still vs the frozen 1R. Pure/clock-free (NyClock date
+  conversion never reads `UtcNow` on this path).
+- **`NoOvernightBoundary { NyMidnight (default), NyFxClose1700 (deferred) }`** on `ExitManagementOptions`
+  (`Ict:Execution:Management`). The FX-close boundary is **double-blocked** — rejected by `Validate()` AND throws
+  `NotSupportedException` if ever reached — so an operator can't silently get unimplemented behavior. `ExitManager` ctor
+  now injects `NyClock` + `TradeStyleOptions` (only construction site is the test; Host DI wiring still deferred).
+
+**Concurrency note:** this session ran two parallel teams — the backend domain track above (cut 2b) and a **frontend
+team scaffolding WP8** (the ICT Pattern Chart + 3 panels + DTO types mirrored from the frozen contracts) in an isolated
+git worktree. ICT/domain correctness is the hard gate and was verified strictly (the user directive); the frontend is
+independent and cannot touch the domain.
+
+**WP5 still to come (next slice):** the post-confirmation **Armed/Triggered** (Pending→Open) entry-arming, the
+**slippage** + **session-stepped spread** + **swap** cost follow-ons (swap becomes mandatory only if Swing/Position are
+enabled — the no-overnight time-exit now structurally guarantees 0 nights for Intraday/Scalp), the adaptive
+**loss-ladder/`IRiskManager`** fast-follow, lot-step **flooring** of the partial leg, and the `Performance` calculator
+(WP6); the extended/long-tail detectors (SMT, Breaker, SD projection, session macros). Then WP2 (persistence) / **WP8
+(frontend — scaffold in progress, parallel team)** in parallel. Spec §5 item **20** (grading denominator / alert floor)
+still needs a call before alerting.
