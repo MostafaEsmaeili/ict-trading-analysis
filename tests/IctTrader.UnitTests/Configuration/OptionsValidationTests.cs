@@ -35,11 +35,11 @@ public class OptionsValidationTests
     }
 
     [Fact]
-    public void A_trail_ladder_whose_halfway_is_not_below_breakeven_is_rejected()
+    public void An_out_of_order_or_non_positive_trail_ladder_is_rejected()
     {
         new StopTrailOptions { TrailHalfwayFraction = 0.80m, TrailBreakevenFraction = 0.75m }
-            .Validate().Should().NotBeEmpty();
-        new StopTrailOptions { BreakEvenAtR = 0m }.Validate().Should().NotBeEmpty();
+            .Validate().Should().NotBeEmpty(); // halfway must sit below breakeven
+        new StopTrailOptions { BreakEvenAtR = 0m }.Validate().Should().NotBeEmpty(); // BreakEvenAtR must be positive
     }
 
     [Fact]

@@ -370,9 +370,9 @@ RequiredConditions set = `{BiasAligned, KillzoneEntry, LiquiditySweep, Displacem
 
 ---
 
-## (5) UNRESOLVED ICT issues needing a human/transcript decision
+## (5) UNRESOLVED ICT issues & per-slice deferral log
 
-These are **not** engineering tunables — they are genuine model ambiguities. Resolve against transcripts before the affected detector is treated as settled.
+Two kinds of entry live here. **Items 1–22 are genuine model ambiguities** — not engineering tunables; resolve them against the transcripts before the affected detector is treated as settled. **Items 23+ are per-slice deferral logs** — architectural cuts with the decision already made and shipped (each cites its issue/PR), recording what a slice deliberately left to a named follow-on so the next session resumes against the real boundary. The two are kept together because both answer "what is NOT yet done and why"; they are distinguished by whether a transcript decision is still owed (1–22) or the scope was already decided (23+).
 
 1. **Calendar gate as required vs weighted (§2.5.2 vs §2.5.3).** Plan resolves to a required hard `CalendarClear` gate. Confirm this is the intended reading and that low-weight `CalendarDriver` (0.35) remains a separate optional score contributor.
 2. **FVG two-touch "touch" semantics (Ep38).** Wick-into-gap vs close-into-gap vs full-mitigation step — drives `FvgPresent` withdrawal. Pin with an Ep38-referenced unit test before settling `VoidOnTouchCount=3`. Related: is formation "touch 0" or "touch 1"?
