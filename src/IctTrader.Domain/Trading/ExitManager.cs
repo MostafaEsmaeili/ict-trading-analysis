@@ -42,6 +42,11 @@ public sealed class ExitManager : IExitManager
         Guard.Against(trade.Status != TradeStatus.Open, "Only an open paper trade can be managed for an exit.");
         Guard.Against(candle.Symbol != trade.Symbol, "The candle must be for the trade's symbol.");
 
+        // The bar must close at or after the trade opened — this also fail-fasts a default(ExitContext) (its
+        // BarCloseUtc is MinValue), which bypasses the ctor's UTC guard, before any action is stamped.
+        Guard.Against(
+            context.BarCloseUtc < trade.OpenedAtUtc, "The bar-close time cannot precede the trade open.");
+
         var at = context.BarCloseUtc;
 
         // 1. Protective fill first (§2.5.8 worst-case). A stop/runner that hit closes the WHOLE remaining position;

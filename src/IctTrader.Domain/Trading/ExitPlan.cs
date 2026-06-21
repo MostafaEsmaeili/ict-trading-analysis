@@ -10,7 +10,8 @@ public readonly record struct ExitPlan
 {
     public ExitPlan(IReadOnlyList<ExitAction> actions)
     {
-        Actions = actions;
+        ArgumentNullException.ThrowIfNull(actions);
+        Actions = [.. actions]; // copy to an array so the plan is genuinely immutable after construction
     }
 
     /// <summary>A bar that decided nothing — the trade is unchanged.</summary>

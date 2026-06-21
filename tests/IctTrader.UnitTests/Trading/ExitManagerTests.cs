@@ -110,6 +110,9 @@ public class ExitManagerTests
 
         plan.Actions[1].Kind.Should().Be(ExitActionKind.MoveStop);
         plan.Actions[1].Price.Value.Should().Be(1.0832m); // breakeven
+
+        // Both actions are stamped at the caller-passed bar-close time.
+        plan.Actions.Should().OnlyContain(a => a.AtUtc == BarClose);
     }
 
     [Fact]
@@ -220,5 +223,25 @@ public class ExitManagerTests
         var act = () => new ExitContext(local);
 
         act.Should().Throw<DomainException>();
+    }
+
+    [Fact]
+    public void A_default_or_pre_open_context_is_rejected_before_stamping()
+    {
+        var preOpen = () => Manager.Decide(BullishTrade(), Bar(1.0850m, 1.0864m, 1.0840m, 1.0858m), default);
+
+        preOpen.Should().Throw<DomainException>(); // default(ExitContext).BarCloseUtc is MinValue < the open
+    }
+
+    [Fact]
+    public void A_plan_is_immutable_and_rejects_null_actions()
+    {
+        var source = new List<ExitAction> { ExitAction.MoveStop(new Price(1.0820m), BarClose) };
+        var plan = new ExitPlan(source);
+
+        source.Clear(); // mutating the source must not change the plan
+
+        plan.Actions.Should().ContainSingle();
+        ((Action)(() => _ = new ExitPlan(null!))).Should().Throw<ArgumentNullException>();
     }
 }
