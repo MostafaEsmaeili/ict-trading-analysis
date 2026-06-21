@@ -56,7 +56,9 @@ public sealed class ExitManager : IExitManager
         var actions = new List<ExitAction>();
 
         // 2. T1 scale-out — once, when a surviving bar reaches the partial target. Sized PartialFraction × the ORIGINAL
-        //    size (the §2.5.9 "take half of the position"), booked at the partial LEVEL.
+        //    size (the §2.5.9 "take half of the position"), booked at the partial LEVEL. Apply-safety relies on the
+        //    validated PartialFraction ∈ (0,1) (ExitManagementOptions.Validate + ValidateOnStart) so the leg stays
+        //    strictly below RemainingSize; lot-step flooring of the leg is deferred with the multi-partial work.
         if (trade.Lifecycle == TradeLifecycle.Open && ReachedPartial(trade, candle))
         {
             var legSize = new PositionSize(_options.PartialFraction * trade.Size.Lots);

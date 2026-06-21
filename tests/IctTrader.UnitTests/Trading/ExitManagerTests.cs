@@ -38,6 +38,17 @@ public class ExitManagerTests
             plan, new PositionSize(0.30m), pipSize: 0.0001m, valuePerPip: 10m, Open);
     }
 
+    // Short mirror: entry 1.0870, stop 1.0900 (30-pip 1R), T1 1.0840 (= 1R away), runner 1.0790.
+    private static PaperTrade BearishTrade()
+    {
+        var plan = new TradePlan(
+            Direction.Bearish, new Price(1.0870m), new Price(1.0900m),
+            new TargetLadder(Direction.Bearish, new Price(1.0840m), new Price(1.0790m)));
+        return new PaperTrade(
+            Guid.NewGuid(), Guid.NewGuid(), Eurusd, TradeStyle.Intraday, Timeframe.M5,
+            plan, new PositionSize(0.30m), pipSize: 0.0001m, valuePerPip: 10m, Open);
+    }
+
     private static Candle Bar(decimal open, decimal high, decimal low, decimal close)
         => new(Eurusd, Timeframe.M5, BarClose, open, high, low, close, 1_000m);
 
@@ -112,6 +123,19 @@ public class ExitManagerTests
         trade.RemainingSize.Lots.Should().Be(0.15m);
         trade.CurrentStop.Value.Should().Be(1.0832m);
         trade.IsBreakevenArmed.Should().BeTrue();
+    }
+
+    [Fact]
+    public void A_short_trade_at_t1_scales_out_then_trails_to_breakeven_mirrored()
+    {
+        var plan = Manager.Decide(BearishTrade(), Bar(1.0855m, 1.0860m, 1.0840m, 1.0850m), Context);
+
+        plan.Actions.Should().HaveCount(2);
+        plan.Actions[0].Kind.Should().Be(ExitActionKind.ScaleOut);
+        plan.Actions[0].Price.Value.Should().Be(1.0840m); // the T1 level
+        plan.Actions[0].LegSize!.Value.Lots.Should().Be(0.15m);
+        plan.Actions[1].Kind.Should().Be(ExitActionKind.MoveStop);
+        plan.Actions[1].Price.Value.Should().Be(1.0870m); // breakeven (entry), ratcheted DOWN from 1.0900
     }
 
     [Fact]
