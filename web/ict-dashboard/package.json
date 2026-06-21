@@ -1,0 +1,46 @@
+{
+  "name": "ict-dashboard",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Read-only ICT analysis + paper-trading dashboard (WP8). Defensive: no live-order controls exist.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "gen:api": "openapi-typescript ../../docs/openapi/ict-trader.json -o src/types/api.generated.ts"
+  },
+  "dependencies": {
+    "@microsoft/signalr": "10.0.0",
+    "@tanstack/react-query": "5.101.0",
+    "clsx": "2.1.1",
+    "date-fns": "4.4.0",
+    "date-fns-tz": "3.2.0",
+    "lightweight-charts": "5.2.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "recharts": "3.8.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.2",
+    "eslint": "10.5.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-react-refresh": "0.5.3",
+    "globals": "17.6.0",
+    "jsdom": "29.1.1",
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.61.1",
+    "vite": "8.0.16",
+    "vitest": "4.1.9"
+  }
+}
