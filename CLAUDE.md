@@ -385,9 +385,35 @@ drove the built DLL with ~35 probes (all 6 invariants HOLD) and flagged a timeli
   axis) + its `StopTrailOptions`; the max-hold/no-overnight time-exit (needs a caller-passed bar-close time); the
   "don't trail past current price" cap (belongs in the candle-aware policy).
 
-**WP5 still to come (next slice):** **Slice C** — the candle-driven `StopTrailPolicy`/`IExitManager` orchestrator (applies
-the trail ladder via `MoveStop` + the stop→scale→time-exit precedence) and the **max-hold/no-overnight time-exit** — then
-the post-confirmation **Armed/Triggered** (Pending→Open) entry-arming, the **slippage** + **session-stepped spread** +
-**swap** cost follow-ons, the adaptive **loss-ladder/`IRiskManager`** fast-follow, and the `Performance` calculator (WP6);
-the extended/long-tail detectors (SMT, Breaker, SD projection, session macros). Then WP2 (persistence) / WP8 (frontend) in
+**WP5 stop-trail policy — `StopTrailPolicy` candle-driven decision (issue #26, branch `feature/#26-stop-trail-policy`,
+PR #27) — DONE.** The first cut of §2.5.9 Slice C: the pure DECIDE half of the trail ladder (the orchestrator that
+applies it, the scale-out policy, and the time-exit stay deferred). ict-domain-expert spec-reviewed, `pr-reviewer`
+APPROVE, `defensive-guardrail-auditor` 7/7 PASS, an **adversarial verifier** drove the built DLL with **~36k emitted
+moves** (all 6 invariants HOLD, cross-checked vs `MoveStop` + `FillEvaluator`), **328 tests** (305 unit + 23 arch), 0
+warnings, format clean:
+- **`StopTrailPolicy.Evaluate(PaperTrade, Candle) → StopTrailDecision`** (pure, clock-free, reads candle High/Low only).
+  Two axes off the bar's favorable excursion: entry→T1 progress (≥50% → a **residual-risk** stop `Entry∓0.25×1R`; ≥75%
+  → breakeven) and **R-reached** vs the **FROZEN** 1R (`BreakEvenAtR` 1.0 → breakeven), composed **tightest-wins**. R
+  divides by `InitialRiskPerUnit`, NEVER the live `CurrentStop` (the §5.2 frozen-1R rule — a trailed stop never shrinks
+  the denominator).
+- **Strictly-tighter ratchet pre-filter** (never emits a move `MoveStop` would reject) + a belt-and-suspenders
+  not-past-runner guard (unreachable by today's rungs; protects a future SD-ladder rung). The **§2.5.8 cap** rejects any
+  candidate the bar already traded through (`< candle.Low` long / `> candle.High` short — consistent with the fill
+  evaluator's inclusive touch) and **Holds** (waits for a clean bar) rather than clamping/falling back to a looser rung.
+- **`StopTrailDecision`** mirrors `FillDecision` (`Hold` / `Move(newStop, trigger)`, `StopTrailTrigger`
+  {T1HalfResidualRisk, T1ThreeQuarterBreakeven, BreakevenAtOneR} — the 1R axis wins the BE tie-break label).
+- **`StopTrailOptions`** (`Ict:Execution:Management:Trail`): `TrailHalfwayFraction` 0.50 / `TrailHalfwayResidualRiskFraction`
+  0.25 / `TrailBreakevenFraction` 0.75 (§2.5.5 primary) + `BreakEvenAtR` 1.0 (§2.5.10 addition, provenance-flagged) +
+  `RequireStructureConfirmForTrail` (default off — the §2.5.1-step-8 "structure broken" overlay reserved as a seam),
+  `Validate()`-gated (`halfway < breakeven`) + wired into `OptionsValidationTests`.
+- **Deferred (spec §5 item 28):** the `IExitManager` orchestrator that APPLIES the decision via `MoveStop` + folds the
+  stop→scale→time-exit **precedence**; the scale-out policy (when to take T1); the **max-hold/no-overnight time-exit**
+  (needs a caller-passed bar-close time + NY-date pair + `NoOvernightBoundary` enum); the `RequireStructureConfirmForTrail
+  =true` behavior (needs `MarketContext`/MSS continuation); the SD-ladder rungs.
+
+**WP5 still to come (next slice):** the **`IExitManager` orchestrator** (applies `StopTrailPolicy` via `MoveStop`, decides
+the T1 scale-out, folds the stop→scale→time-exit precedence) + the **max-hold/no-overnight time-exit** — then the
+post-confirmation **Armed/Triggered** (Pending→Open) entry-arming, the **slippage** + **session-stepped spread** + **swap**
+cost follow-ons, the adaptive **loss-ladder/`IRiskManager`** fast-follow, and the `Performance` calculator (WP6); the
+extended/long-tail detectors (SMT, Breaker, SD projection, session macros). Then WP2 (persistence) / WP8 (frontend) in
 parallel. Spec §5 item **20** (grading denominator / alert floor) still needs a call before alerting.

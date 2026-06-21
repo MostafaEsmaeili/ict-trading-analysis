@@ -31,6 +31,15 @@ public class OptionsValidationTests
         new FillOptions().Validate().Should().BeEmpty();
         new ExecutionCostOptions().Validate().Should().BeEmpty();
         new ExitManagementOptions().Validate().Should().BeEmpty();
+        new StopTrailOptions().Validate().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void An_out_of_order_or_non_positive_trail_ladder_is_rejected()
+    {
+        new StopTrailOptions { TrailHalfwayFraction = 0.80m, TrailBreakevenFraction = 0.75m }
+            .Validate().Should().NotBeEmpty(); // halfway must sit below breakeven
+        new StopTrailOptions { BreakEvenAtR = 0m }.Validate().Should().NotBeEmpty(); // BreakEvenAtR must be positive
     }
 
     [Fact]
