@@ -458,10 +458,36 @@ team scaffolding WP8** (the ICT Pattern Chart + 3 panels + DTO types mirrored fr
 git worktree. ICT/domain correctness is the hard gate and was verified strictly (the user directive); the frontend is
 independent and cannot touch the domain.
 
-**WP5 still to come (next slice):** the post-confirmation **Armed/Triggered** (Pending→Open) entry-arming, the
-**slippage** + **session-stepped spread** + **swap** cost follow-ons (swap becomes mandatory only if Swing/Position are
-enabled — the no-overnight time-exit now structurally guarantees 0 nights for Intraday/Scalp), the adaptive
-**loss-ladder/`IRiskManager`** fast-follow, lot-step **flooring** of the partial leg, and the `Performance` calculator
-(WP6); the extended/long-tail detectors (SMT, Breaker, SD projection, session macros). Then WP2 (persistence) / **WP8
-(frontend — scaffold in progress, parallel team)** in parallel. Spec §5 item **20** (grading denominator / alert floor)
-still needs a call before alerting.
+**WP5 entry evaluator — `EntryFillEvaluator` (issue #33, branch `feature/#33-entry-fill-evaluator`, PR #35) — DONE.**
+Cut 1 of the post-confirmation **Armed/Triggered entry-arming**: the pure DECIDE half of the §2.5.1-step-7 limit-touch
+entry, mirroring how `FillEvaluator` (the exit touch) shipped before the `ExitManager` orchestrator. ict-domain-expert
+spec-reviewed (Mentorship FULL PLAYLIST:876-877 "limit order where FVG/OB coincides with OTE"; :933 "may not get
+filled"; :2817/:3097 "don't chase"), an **aggressive 4-lens verification** all SHIP — strict ICT fidelity, an
+**adversarial driver (310k cases, all 7 invariants HOLD, validated by a negative control that flagged 11,418 violations
+on a reversed operator)**, `defensive-guardrail-auditor` 7/7, `pr-reviewer` APPROVE. **367 tests** (344 unit + 23 arch),
+0 warnings, format clean:
+- **`EntryFillEvaluator.Evaluate(Setup, Candle) → EntryFillDecision`** (pure, clock-free). ICT enters on a resting
+  LIMIT at the OTE/FVG level — price must RETRACE in: long fills `candle.Low ≤ plan.Entry` (the **discount-side** touch
+  — looks like a long STOP operator but is the limit retrace, the verifier's load-bearing fidelity check), short fills
+  `candle.High ≥ plan.Entry` (premium); bar High/Low touch, inclusive (§2.5.8). A no-retrace setup is a no-fill.
+- **Fills at the LIMIT LEVEL** (`plan.Entry`), never the better gap price, so planned 1R (|entry−stop|) == booked 1R.
+  The buy@ask/sell@bid spread stays the §5.4 `ComputeEntryLeg` cost line — NOT a fill-price worsening here — so the same
+  dollars are never double-counted (mirrors the exit `FillEvaluator`). `EntryFillDecision { Hold, Filled }` (+
+  `FillPrice`/`IsFilled`) mirrors `FillDecision`. No aggregate/account changes; `Setup`/`PaperTrade` untouched.
+- **Deferred (spec §5 item 31):** the same-bar **entry-then-stop −1R straddle** (a fast bar fills the limit THEN runs to
+  the stop — the orchestrator MUST resolve it worst-case before the next-bar exit pass, else it books a phantom
+  favorable outcome — flagged by the verifier; a future `EntryFillDecision` may carry a stop-also-touched flag); the
+  `ArmedEntry` lifecycle + no-chase cancellation (killzone-end / setup-invalidation / no-overnight / assembly-ageout);
+  **risk reservation at arm time** (id-keyed on `PaperAccount`); `EntryMode { Armed (default), Immediate }`; the
+  orchestrator that APPLIES the fill. The ICT spec flagged **2 contested sub-decisions** for that cut (risk-reservation
+  wiring, straddle boundary) → resolve via a **design judge-panel**.
+
+**WP5 still to come (next slice):** **cut 2 of entry-arming** — the `ArmedEntry` lifecycle + no-chase cancellation +
+risk reservation + the same-bar straddle + `EntryMode` + the orchestrator that APPLIES the entry fill (design
+judge-panel for the 2 contested sub-decisions first) — then the **slippage** + **session-stepped spread** + **swap**
+cost follow-ons (swap becomes mandatory only if Swing/Position are enabled — the no-overnight time-exit guarantees 0
+nights for Intraday/Scalp), the adaptive **loss-ladder/`IRiskManager`** fast-follow, lot-step **flooring** of the
+partial leg, and the `Performance` calculator (WP6); the extended/long-tail detectors (SMT, Breaker, SD projection,
+session macros). Then WP2 (persistence) in parallel. **WP8 frontend scaffold is now PR #34** (issue #30 — reviewed
+APPROVE, guardrail PASS, ESLint gate green). Spec §5 item **20** (grading denominator / alert floor) still needs a call
+before alerting.
