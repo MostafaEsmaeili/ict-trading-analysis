@@ -4,8 +4,7 @@
 // itself is IctChart (lightweight-charts). Read-only: the header carries no order/execute control.
 // ---------------------------------------------------------------------------------------------------
 
-import type { TradeStyle } from '../types/api';
-import type { CandleDto } from '../types/api';
+import type { CandleDto, Killzone, TradeStyle } from '../types/api';
 import {
   ALL_OVERLAY_KINDS,
   OVERLAY_LABELS,
@@ -40,7 +39,7 @@ export interface ChartPanelProps {
   overlays: ChartOverlay[];
   visibility: OverlayVisibility;
   isLoading: boolean;
-  activeKillzone: string | null;
+  activeKillzone: Killzone | null;
   triggerTimeframe: string | null;
   onSymbolChange: (symbol: string) => void;
   onTimeframeChange: (timeframe: string) => void;

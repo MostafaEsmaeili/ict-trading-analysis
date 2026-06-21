@@ -14,6 +14,7 @@ curve, **React Query** for server state, and a **SignalR** client for live delta
 npm install
 npm run dev        # http://localhost:5173 (proxies /api + /hubs to the .NET host on :5080)
 npm run typecheck  # tsc --noEmit
+npm run lint       # eslint (flat config)
 npm run test       # vitest run
 npm run build      # tsc -b && vite build
 ```

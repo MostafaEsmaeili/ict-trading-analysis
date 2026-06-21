@@ -4,7 +4,7 @@
 // focus callback is wired by the dashboard). Read-only: there are no act/execute controls.
 // ---------------------------------------------------------------------------------------------------
 
-import type { AlertDto } from '../types/api';
+import type { AlertDto, Direction, Killzone, TradeStyle } from '../types/api';
 import { formatNyDateTime } from '../time';
 import { DirectionChip, KillzoneBadge, StyleChip } from './Badges';
 
@@ -37,9 +37,9 @@ export function AlertsFeed({ alerts, isLoading, onFocusSymbol }: AlertsFeedProps
             >
               <div className="alert__top">
                 <span className="alert__symbol">{a.symbol}</span>
-                <DirectionChip direction={a.direction} />
-                <KillzoneBadge killzone={a.killzone} />
-                <StyleChip style={a.style} />
+                <DirectionChip direction={a.direction as Direction | null} />
+                <KillzoneBadge killzone={a.killzone as Killzone | null} />
+                <StyleChip style={a.style as TradeStyle | null} />
                 <span className="alert__time num">{formatNyDateTime(a.atUtc)} NY</span>
               </div>
               <p className="alert__msg">{a.message}</p>

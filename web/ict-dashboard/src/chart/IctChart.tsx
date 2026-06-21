@@ -185,13 +185,18 @@ export function IctChart({ candles, overlays, visibility }: IctChartProps): Reac
         case 'drawOnLiquidity':
           line(o.targetPrice, palette.pending, 'Draw', LineStyle.Dashed);
           break;
-        case 'tradeLevels':
+        case 'tradeLevels': {
           line(o.entry, palette.entry, 'Entry', LineStyle.Solid, 2);
           line(o.stop, palette.short, 'Stop (1R)', LineStyle.Solid, 2);
-          o.targets.forEach((tp, i) =>
-            line(tp, palette.long, `T${i + 1} · ${o.rewardRatio.toFixed(1)}R`, LineStyle.Dashed, 2),
-          );
+          // Each target sits at its own distance from entry, so its R differs — compute per target
+          // (R = |target − entry| / |entry − stop|, the frozen 1R) instead of repeating the plan RR.
+          const riskPerUnit = Math.abs(o.entry - o.stop);
+          o.targets.forEach((tp, i) => {
+            const r = riskPerUnit > 0 ? Math.abs(tp - o.entry) / riskPerUnit : 0;
+            line(tp, palette.long, `T${i + 1} · ${r.toFixed(1)}R`, LineStyle.Dashed, 2);
+          });
           break;
+        }
         case 'killzone':
           // Vertical session band is a primitive follow-on; the killzone is conveyed via the chart
           // header badge + the legend for now (every overlay also appears as alert text — §9.1 a11y).

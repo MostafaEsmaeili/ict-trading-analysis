@@ -7,7 +7,7 @@
 // spacing pass is encoded here directly (the skill is not installed in this environment).
 // ---------------------------------------------------------------------------------------------------
 
-import type { Killzone } from './types/api';
+import type { Killzone, SetupGrade } from './types/api';
 
 export const palette = {
   // Surfaces — near-black desk with raised panels.
@@ -46,7 +46,7 @@ export const killzoneColors: Record<Killzone, { fg: string; bg: string; band: st
 };
 
 /** Setup-grade chip colours (A/B tradeable green-ish, C watchlist amber, Reject muted). */
-export const gradeColors: Record<string, { fg: string; bg: string }> = {
+export const gradeColors: Record<SetupGrade, { fg: string; bg: string }> = {
   A: { fg: '#26a69a', bg: 'rgba(38,166,154,0.16)' },
   B: { fg: '#7bc96f', bg: 'rgba(123,201,111,0.16)' },
   C: { fg: '#f5a623', bg: 'rgba(245,166,35,0.16)' },

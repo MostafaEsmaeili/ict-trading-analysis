@@ -4,7 +4,8 @@
 // ---------------------------------------------------------------------------------------------------
 
 export const queryKeys = {
-  candles: (symbol: string, timeframe: string) => ['candles', symbol, timeframe] as const,
+  candles: (symbol: string, timeframe: string, style: string) =>
+    ['candles', symbol, timeframe, style] as const,
   overlays: (symbol: string, timeframe: string) => ['overlays', symbol, timeframe] as const,
   activeTrades: () => ['trades', 'active'] as const,
   alerts: () => ['alerts'] as const,

@@ -18,7 +18,7 @@ const RECONCILE_MS = 30_000;
 
 export function useCandles(symbol: string, timeframe: string, style: string) {
   return useQuery({
-    queryKey: queryKeys.candles(symbol, timeframe),
+    queryKey: queryKeys.candles(symbol, timeframe, style),
     queryFn: async () => (await fetchChart(symbol, timeframe, style)).candles,
     refetchInterval: RECONCILE_MS,
   });

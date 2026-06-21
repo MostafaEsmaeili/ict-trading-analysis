@@ -10,6 +10,7 @@ import type {
   PerformanceSummaryDto,
   SetupDto,
   SetupGrade,
+  TradeStatus,
   TradeStyle,
 } from './api';
 import {
@@ -82,10 +83,13 @@ describe('api DTO contract', () => {
     const killzones: Killzone[] = ['None', 'Asian', 'LondonOpen', 'NewYorkOpen', 'LondonClose', 'Pm', 'Am'];
     const styles: TradeStyle[] = ['Scalp', 'Intraday', 'Swing', 'Position'];
     const grades: SetupGrade[] = ['Reject', 'C', 'B', 'A'];
+    // The PaperTrading ledger flag — Open until the final close (see TradeStatus in ./api).
+    const statuses: TradeStatus[] = ['Open', 'Closed'];
 
     expect(directions).toContain('Bullish');
     expect(killzones).toContain('LondonOpen');
     expect(styles).toEqual(['Scalp', 'Intraday', 'Swing', 'Position']);
     expect(grades).toContain('A');
+    expect(statuses).toEqual(['Open', 'Closed']);
   });
 });

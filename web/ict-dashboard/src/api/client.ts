@@ -1,8 +1,16 @@
 // ---------------------------------------------------------------------------------------------------
-// REST client for the frozen surface (plan §11.1 #6). Until WP7 the host returns typed-empty results,
-// so each call falls back to the deterministic mock fixture when the response is empty or unreachable.
-// This keeps the dashboard fully renderable on mocks (plan §11.3 Phase B) yet ready to flip to live
-// data with no shape changes. Set VITE_USE_MOCKS=false once WP7 lands.
+// REST client for the frozen surface (plan §11.1 #6). One clean switch, NO partial fallback:
+//
+//   VITE_USE_MOCKS=true  (default, until WP7) → ALWAYS serve the deterministic mock fixtures. The host
+//                          isn't wired yet, so this keeps the dashboard fully renderable on mocks
+//                          (plan §11.3 Phase B) with the real DTO shapes.
+//   VITE_USE_MOCKS=false (live, WP7+)         → hit the real API and FAIL HARD on any error. We do NOT
+//                          silently serve fake data in a live build — masking a down host with fixtures
+//                          would show fabricated setups/trades as if real, the opposite of the §6.3
+//                          defensive posture. A failed fetch surfaces as a query error in the UI.
+//
+// The earlier "empty successful response → fixtures" path is removed: it conflated "host returned no
+// data" (a legitimate empty state) with "use mocks", which is exactly the silent-fake-data trap above.
 // ---------------------------------------------------------------------------------------------------
 
 import type {
@@ -41,29 +49,30 @@ export async function fetchAlerts(): Promise<AlertDto[]> {
   if (USE_MOCKS) {
     return MOCK_ALERTS;
   }
-  const live = await getJson<AlertDto[]>('/api/alerts');
-  return live.length > 0 ? live : MOCK_ALERTS;
+  return getJson<AlertDto[]>('/api/alerts');
 }
 
 export async function fetchActiveTrades(): Promise<PaperTradeDto[]> {
   if (USE_MOCKS) {
     return MOCK_ACTIVE_TRADES;
   }
-  const live = await getJson<PaperTradeDto[]>('/api/trades/active');
-  return live.length > 0 ? live : MOCK_ACTIVE_TRADES;
+  return getJson<PaperTradeDto[]>('/api/trades/active');
 }
 
 export async function fetchPerformance(): Promise<PerformanceSummaryDto> {
   if (USE_MOCKS) {
     return MOCK_PERFORMANCE;
   }
-  const live = await getJson<PerformanceSummaryDto>('/api/performance');
-  return live.tradeCount > 0 ? live : MOCK_PERFORMANCE;
+  return getJson<PerformanceSummaryDto>('/api/performance');
 }
 
 export async function fetchEquityCurve(): Promise<EquityPointDto[]> {
-  // No dedicated endpoint in contracts-v1 yet (GetEquityCurveQuery is bus-only); mock for now.
-  return MOCK_EQUITY_CURVE;
+  if (USE_MOCKS) {
+    return MOCK_EQUITY_CURVE;
+  }
+  // No dedicated REST endpoint in contracts-v1 yet (GetEquityCurveQuery is bus-only); the host wires
+  // it in WP7. Until then a live build has nowhere to fetch it — surface that rather than fake it.
+  throw new Error('Equity-curve endpoint is not available until WP7 (GetEquityCurveQuery is bus-only).');
 }
 
 export async function fetchChart(
@@ -75,12 +84,15 @@ export async function fetchChart(
     return { symbol, timeframe, style, candles: MOCK_CANDLES, overlays: [] };
   }
   const params = new URLSearchParams({ tf: timeframe, style });
-  const live = await getJson<ChartResponse>(`/api/chart/${symbol}?${params}`);
-  return live.candles.length > 0 ? live : { symbol, timeframe, style, candles: MOCK_CANDLES, overlays: [] };
+  return getJson<ChartResponse>(`/api/chart/${symbol}?${params}`);
 }
 
 // Overlay geometry is derived from a Setup's Evidence by the host (plan §9.1). Until WP7 emits that,
 // the chart draws from the mock overlay fixture so every §9.1 primitive is exercised.
 export async function fetchOverlays(_symbol: string, _timeframe: string): Promise<ChartOverlay[]> {
-  return MOCK_OVERLAYS;
+  if (USE_MOCKS) {
+    return MOCK_OVERLAYS;
+  }
+  // No dedicated REST endpoint in contracts-v1 yet — overlays ride the ChartResponse + SignalR pushes.
+  throw new Error('Overlay endpoint is not available until WP7 (overlays ride ChartResponse / SignalR).');
 }

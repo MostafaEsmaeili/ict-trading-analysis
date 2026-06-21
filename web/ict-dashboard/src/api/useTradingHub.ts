@@ -22,11 +22,22 @@ export interface UseTradingHubArgs {
   hub?: TradingHubLike;
   symbol: string;
   timeframe: string;
+  /**
+   * The active trade style — part of the candles cache key (queryKeys.candles), so a live candle push
+   * reconciles onto the SAME entry useCandles reads. Defaults to the §2.5 model style.
+   */
+  style?: string;
   /** Optionally synthesize an alert from a detected setup (the host also emits AlertDto directly). */
   alertFromSetup?: (setup: SetupDto) => AlertDto;
 }
 
-export function useTradingHub({ hub, symbol, timeframe, alertFromSetup }: UseTradingHubArgs): void {
+export function useTradingHub({
+  hub,
+  symbol,
+  timeframe,
+  style = 'Intraday',
+  alertFromSetup,
+}: UseTradingHubArgs): void {
   const qc = useQueryClient();
 
   useEffect(() => {
@@ -37,7 +48,11 @@ export function useTradingHub({ hub, symbol, timeframe, alertFromSetup }: UseTra
     const dispose = bindTradingHub(hub, {
       onSetupDetected: (setup: SetupDto) => {
         qc.setQueryData<ChartOverlay[]>(queryKeys.overlays(symbol, timeframe), (prev) =>
-          setup.symbol === symbol ? mergeSetupOverlays(prev, setup) : (prev ?? []),
+          // Symbol AND timeframe must match the overlay cache key — a setup confirmed on another
+          // timeframe must never pollute this chart's overlays (the key is symbol+timeframe).
+          setup.symbol === symbol && setup.triggerTimeframe === timeframe
+            ? mergeSetupOverlays(prev, setup)
+            : (prev ?? []),
         );
         if (alertFromSetup) {
           const alert = alertFromSetup(setup);
@@ -54,12 +69,12 @@ export function useTradingHub({ hub, symbol, timeframe, alertFromSetup }: UseTra
         if (candle.symbol !== symbol || candle.timeframe !== timeframe) {
           return;
         }
-        qc.setQueryData<CandleDto[]>(queryKeys.candles(symbol, timeframe), (prev) =>
+        qc.setQueryData<CandleDto[]>(queryKeys.candles(symbol, timeframe, style), (prev) =>
           appendCandle(prev, candle),
         );
       },
     });
 
     return dispose;
-  }, [hub, qc, symbol, timeframe, alertFromSetup]);
+  }, [hub, qc, symbol, timeframe, style, alertFromSetup]);
 }

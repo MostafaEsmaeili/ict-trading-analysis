@@ -5,7 +5,7 @@
 // ---------------------------------------------------------------------------------------------------
 
 import { formatDistanceToNowStrict } from 'date-fns';
-import type { PaperTradeDto } from '../types/api';
+import type { Killzone, PaperTradeDto, TradeDirection, TradeStyle } from '../types/api';
 import { directionTone } from '../theme';
 import { DirectionChip, KillzoneBadge, StyleChip } from './Badges';
 
@@ -55,16 +55,34 @@ export function ActivePaperTrades({
               {trades.map((t) => {
                 const tone = directionTone(t.direction);
                 const target = t.targets.at(-1);
+                const focus = onFocusSymbol ? () => onFocusSymbol(t.symbol) : undefined;
                 return (
-                  <tr key={t.id} onClick={() => onFocusSymbol?.(t.symbol)} style={{ cursor: 'pointer' }}>
+                  <tr
+                    key={t.id}
+                    {...(focus
+                      ? {
+                          role: 'button',
+                          tabIndex: 0,
+                          'aria-label': `Focus chart on ${t.symbol}`,
+                          onClick: focus,
+                          onKeyDown: (e: React.KeyboardEvent<HTMLTableRowElement>) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              focus();
+                            }
+                          },
+                          style: { cursor: 'pointer' },
+                        }
+                      : {})}
+                  >
                     <td>
                       <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'wrap' }}>
                         <span className="num" style={{ fontWeight: 700 }}>
                           {t.symbol}
                         </span>
-                        <DirectionChip direction={t.direction} />
-                        <StyleChip style={t.style} />
-                        <KillzoneBadge killzone={t.killzone} />
+                        <DirectionChip direction={t.direction as TradeDirection} />
+                        <StyleChip style={t.style as TradeStyle} />
+                        <KillzoneBadge killzone={t.killzone as Killzone | null} />
                       </div>
                     </td>
                     <td className="num">{fmtPrice(t.entry)}</td>

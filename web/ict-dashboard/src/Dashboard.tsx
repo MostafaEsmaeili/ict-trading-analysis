@@ -1,63 +1,30 @@
 // ---------------------------------------------------------------------------------------------------
 // Dashboard — the three-panel ICT trading-desk shell (plan §9): center ICT Pattern Chart, left Alerts
-// Feed, right/bottom Active Paper Trades + Performance. React Query owns server state (hooks.ts);
-// SignalR deltas merge into the same keys via useTradingHub (inert until a hub is supplied — WP7).
+// Feed, right/bottom Active Paper Trades + Performance. This component is PRESENTATIONAL: all
+// orchestration lives in custom hooks (useMarketSelection / useOverlayVisibility / useNyClock /
+// useDashboardData per the repo guideline). React Query owns server state; SignalR deltas merge into
+// the same keys via useTradingHub (inert until a hub is supplied — WP7).
 //
 // DEFENSIVE: read-only analysis only. There is NO execute/go-live/order control anywhere — the header
 // carries an "Advisory / Paper" posture badge instead (plan §6.3).
 // ---------------------------------------------------------------------------------------------------
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useActiveTrades, useAlerts, useCandles, useEquityCurve, useOverlays, usePerformance } from './api/hooks';
-import { useTradingHub } from './api/useTradingHub';
 import { AlertsFeed } from './components/AlertsFeed';
 import { ActivePaperTrades } from './components/ActivePaperTrades';
-import { ChartPanel, STYLES } from './components/ChartPanel';
+import { ChartPanel } from './components/ChartPanel';
 import { PerformancePanel } from './components/PerformancePanel';
-import { defaultOverlayVisibility, type OverlayKind } from './types/overlays';
-import type { TradeStyle } from './types/api';
-import { nyClockLabel } from './time';
-import { MOCK_SYMBOL, MOCK_TIMEFRAME } from './mocks/fixtures';
+import { useMarketSelection } from './hooks/useMarketSelection';
+import { useOverlayVisibility } from './hooks/useOverlayVisibility';
+import { useNyClock } from './hooks/useNyClock';
+import { useDashboardData } from './hooks/useDashboardData';
 
 export function Dashboard(): React.JSX.Element {
-  const [symbol, setSymbol] = useState<string>(MOCK_SYMBOL);
-  const [timeframe, setTimeframe] = useState<string>(MOCK_TIMEFRAME);
-  const [style, setStyle] = useState<TradeStyle>('Intraday');
-  const [visibility, setVisibility] = useState(defaultOverlayVisibility);
-  const [clock, setClock] = useState(() => nyClockLabel(new Date()));
+  const { symbol, timeframe, style, setSymbol, setTimeframe, selectStyle } = useMarketSelection();
+  const { visibility, toggleOverlay } = useOverlayVisibility();
+  const clock = useNyClock();
 
-  // NY desk clock (plan §9 — times default to New York).
-  useEffect(() => {
-    const id = setInterval(() => setClock(nyClockLabel(new Date())), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const candlesQ = useCandles(symbol, timeframe, style);
-  const overlaysQ = useOverlays(symbol, timeframe);
-  const alertsQ = useAlerts();
-  const tradesQ = useActiveTrades();
-  const perfQ = usePerformance();
-  const equityQ = useEquityCurve();
-
-  // SignalR wiring — inert without a live hub; the host connection lands in WP7.
-  useTradingHub({ symbol, timeframe });
-
-  const toggleOverlay = useCallback((kind: OverlayKind) => {
-    setVisibility((v) => ({ ...v, [kind]: !v[kind] }));
-  }, []);
-
-  const toggleStyle = useCallback((next: TradeStyle) => {
-    // Guard against a stray non-frozen style string.
-    if (STYLES.includes(next)) {
-      setStyle(next);
-    }
-  }, []);
-
-  // Trigger TF for the header badge: the trigger timeframe of the latest alert on the focused symbol.
-  const triggerTimeframe = useMemo(() => {
-    const latest = (alertsQ.data ?? []).find((a) => a.symbol === symbol);
-    return latest ? timeframe : null;
-  }, [alertsQ.data, symbol, timeframe]);
+  const { candlesQ, overlaysQ, alertsQ, tradesQ, perfQ, equityQ, activeKillzone, triggerTimeframe } =
+    useDashboardData({ symbol, timeframe, style });
 
   return (
     <div className="app">
@@ -87,11 +54,11 @@ export function Dashboard(): React.JSX.Element {
           overlays={overlaysQ.data ?? []}
           visibility={visibility}
           isLoading={candlesQ.isLoading}
-          activeKillzone={(alertsQ.data ?? []).find((a) => a.symbol === symbol)?.killzone ?? null}
+          activeKillzone={activeKillzone}
           triggerTimeframe={triggerTimeframe}
           onSymbolChange={setSymbol}
           onTimeframeChange={setTimeframe}
-          onStyleChange={toggleStyle}
+          onStyleChange={selectStyle}
           onToggleOverlay={toggleOverlay}
         />
 
