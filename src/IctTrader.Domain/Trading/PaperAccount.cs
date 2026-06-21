@@ -62,6 +62,25 @@ public sealed class PaperAccount : AggregateRoot<Guid>
     }
 
     /// <summary>
+    /// Reserves a RESTING entry limit's risk against the portfolio cap BEFORE it becomes an open trade (plan §2.5.1
+    /// step 7 / §2.5.10). It extends the SAME open-risk ledger that <see cref="RegisterOpen"/> uses, keyed by the
+    /// armed entry's id (which becomes the trade id on trigger), so a resting limit competes for the SAME cap as an
+    /// open trade — a same-bar burst of armed limits cannot momentarily breach it. Throws WITHOUT mutating if the id
+    /// is empty, is already reserved, or the reservation would breach the cap, so arming is atomic. Equity is
+    /// untouched: a reservation books no money — only a <see cref="Settle"/> does. On trigger the trade opens under
+    /// this same id (via <see cref="PaperTradeFactory.OpenArmed"/>) so <see cref="Settle"/> releases it unchanged.
+    /// </summary>
+    public void Reserve(Guid reservationId, Money riskBudget)
+    {
+        Guard.Against(reservationId == Guid.Empty, "A reservation requires a non-empty id.");
+        Guard.Against(
+            _reservedRiskByTrade.ContainsKey(reservationId), "This id is already reserved on this account.");
+        Guard.Against(!CanOpen(riskBudget), "Arming this entry would exceed the portfolio open-risk cap.");
+
+        _reservedRiskByTrade[reservationId] = riskBudget;
+    }
+
+    /// <summary>
     /// Books a closed trade: releases its reserved risk and applies its NET realized P&amp;L to equity (the §5.4
     /// costs are already netted into <see cref="PaperTrade.RealizedPnl"/>). The released risk is the original
     /// price-based <see cref="PaperTrade.RiskBudget"/>, unchanged by costs. Throws if the trade is not this

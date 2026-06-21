@@ -64,3 +64,27 @@ public sealed record PaperTradeStopMoved(
     Price NewStop,
     bool BreakevenArmed,
     DateTimeOffset OccurredOnUtc) : IDomainEvent;
+
+/// <summary>
+/// Raised when a confirmed advisory setup is ARMED as a resting limit (plan §2.5.1 step 7): its risk is now reserved
+/// against the account's portfolio cap while it waits for the price retrace. The armed entry's id becomes the trade
+/// id if it triggers, so subscribers can correlate this with the eventual <see cref="PaperTradeOpened"/>.
+/// </summary>
+public sealed record EntryArmed(
+    Guid ArmedEntryId,
+    Guid AccountId,
+    Symbol Symbol,
+    Direction Direction,
+    PositionSize Size,
+    Money RiskBudget,
+    DateTimeOffset OccurredOnUtc) : IDomainEvent;
+
+/// <summary>
+/// Raised when a resting <see cref="ArmedEntry"/> is TRIGGERED by the entry touch (plan §2.5.1 step 7) — it opens the
+/// <see cref="PaperTrade"/> that carries the SAME id (a key re-label), so the reserved risk transfers to that trade
+/// without a second reservation. <see cref="PaperTradeOpened"/> follows on the trade itself.
+/// </summary>
+public sealed record EntryTriggered(
+    Guid ArmedEntryId,
+    Guid AccountId,
+    DateTimeOffset OccurredOnUtc) : IDomainEvent;
