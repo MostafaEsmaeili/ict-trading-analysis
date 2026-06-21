@@ -81,6 +81,23 @@ public sealed class PaperAccount : AggregateRoot<Guid>
     }
 
     /// <summary>
+    /// Confirms a resting reservation exists on THIS account for the given id and budget — the gate
+    /// <see cref="PaperTradeFactory.OpenArmed"/> checks before opening, so an armed trade can never open unbacked
+    /// (bypassing the cap). Throws if the id was never reserved here (e.g. a hand-built <see cref="ArmedEntry"/> that
+    /// did not go through <see cref="PaperTradeFactory.Arm"/>) or if the reserved risk does not match the entry's
+    /// budget. The reservation itself stays keyed (the opened trade carries the same id); only <see cref="Settle"/>
+    /// releases it.
+    /// </summary>
+    public void ConfirmArmedReservation(Guid reservationId, Money expectedBudget)
+    {
+        Guard.Against(
+            !_reservedRiskByTrade.TryGetValue(reservationId, out var reserved),
+            "No reservation exists on this account for this armed entry.");
+        Guard.Against(
+            reserved != expectedBudget, "The reserved risk does not match the armed entry's risk budget.");
+    }
+
+    /// <summary>
     /// Books a closed trade: releases its reserved risk and applies its NET realized P&amp;L to equity (the §5.4
     /// costs are already netted into <see cref="PaperTrade.RealizedPnl"/>). The released risk is the original
     /// price-based <see cref="PaperTrade.RiskBudget"/>, unchanged by costs. Throws if the trade is not this

@@ -1,3 +1,4 @@
+using IctTrader.Domain.Common;
 using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Setups;
 using IctTrader.Domain.ValueObjects;
@@ -110,13 +111,22 @@ public sealed class PaperTradeFactory
     /// </summary>
     public PaperTrade OpenArmed(
         ArmedEntry armedEntry,
+        PaperAccount account,
         SymbolSpec symbolSpec,
         ContractSpec contractSpec,
         DateTimeOffset openedAtUtc)
     {
         ArgumentNullException.ThrowIfNull(armedEntry);
+        ArgumentNullException.ThrowIfNull(account);
         ArgumentNullException.ThrowIfNull(symbolSpec);
         ArgumentNullException.ThrowIfNull(contractSpec);
+
+        // Bind the trade to its reservation BEFORE opening: the entry must belong to THIS account and its risk must
+        // already be reserved here (at arm time). This makes a cap-gate bypass structurally impossible — a hand-built
+        // ArmedEntry that never went through Arm has no reservation and is refused, rather than opening an unbacked
+        // trade that only fails later at settlement.
+        Guard.Against(armedEntry.AccountId != account.Id, "The armed entry belongs to a different account.");
+        account.ConfirmArmedReservation(armedEntry.Id, armedEntry.RiskBudget);
 
         // Fail-fast: reject a second trigger BEFORE constructing a PaperTrade (which would raise a discarded
         // PaperTradeOpened event). MarkTriggered guards the once-only Armed→Triggered transition and stamps
