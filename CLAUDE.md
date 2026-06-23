@@ -528,10 +528,39 @@ controls fired)**. **392 tests** (369 unit + 23 arch), 0 warnings, format clean:
   after `OpenArmed` so a same-bar runner that genuinely traded isn't missed (reviewer-flagged); plus promptly settling a
   straddle-closed trade so the cap isn't transiently over-counted.
 
-**WP5 still to come (next slice):** **cut 2b-ii of entry-arming** — the no-chase cancellation precedence + `Release` +
-`EntryMode` (+ the entry→exit same-bar re-feed obligation above) — then the **slippage** + **session-stepped spread** +
-**swap** cost follow-ons (swap becomes mandatory only if Swing/Position are enabled — the no-overnight time-exit
-guarantees 0 nights for Intraday/Scalp), the adaptive **loss-ladder/`IRiskManager`** fast-follow, lot-step **flooring**
-of the partial leg, and the `Performance` calculator (WP6); the extended/long-tail detectors (SMT, Breaker, SD
-projection, session macros). Then WP2 (persistence) in parallel. **WP8 frontend scaffold — MERGED (PR #34, issue #30).**
-Spec §5 item **20** (grading denominator / alert floor) still needs a call before alerting.
+**WP5 entry-arming cut 2b-ii — `EntryManager` no-chase cancellation (issue #41, branch
+`feature/#41-entry-no-chase-cancellation`, PR #42) — DONE.** Completes the entry orchestrator: the no-chase
+cancellation precedence in `Decide`, run BEFORE the fill. ict-domain-expert CONFORMANT (0 Critical/Should-fix),
+`defensive-guardrail-auditor` 7/7, `pr-reviewer` APPROVE. **405 tests** (382 unit + 23 arch), 0 warnings, format clean:
+- **`killzone-end > max-wait`** — killzone-end = `!KillzoneClock.IsActiveEntry(candle, instrumentClass, ActiveKillzones)`
+  (the bar left the active killzone — window over / lunch / index cutoff), reusing the same §4.6 hunt-set the entry
+  detector uses (arm + entry windows can't drift); max-wait = the INVENTED, provenance-flagged backstop (default 240,
+  generous so killzone-end normally fires first). Each emits an `EntryAction.Cancel` the caller applies as
+  `ArmedEntry.Cancel` + **`PaperAccount.Release`** (symmetric ledger removal — the cap **self-heals**, no leak).
+  Cancellation **outranks a would-be fill** (don't chase).
+- **No-overnight is NOT a separate rung:** no FX active killzone spans 00:00 NY (Asian ends at 00:00), so any midnight
+  cross already trips killzone-end — redundant for a PENDING limit (unlike the exit time-exit, load-bearing for a HELD
+  trade). Both reviewers verified the reasoning.
+- New: `EntryCancelReason`, `EntryAction.Cancel` (+ `CancelReason`), `ArmedEntry.Cancel`/`Cancelled` + `InstrumentClass`,
+  `PaperAccount.Release`, the `EntryCancelled` event, `EntryManagementOptions` (`Ict:Execution:Entry`) + `EntryMode
+  { Armed (default), Immediate }`. `EntryManager` now injects `KillzoneClock` + `KillzoneEntryOptions` + the options.
+- **Deferred (spec §5 item 34, tracked follow-ups — both reviewers non-blocking):** settle the killzone classification
+  AXIS (cancellation classifies from `candle.OpenTimeUtc` to match `MarketContext`/`KillzoneEntryDetector`; CURRENTLY it
+  classifies from the **bar-close** `context` — a 1-bar boundary-straddle latent edge to settle BEFORE host-wiring); a
+  structural guard that no selectable killzone spans 00:00 NY (makes the no-overnight drop provably safe vs a future
+  config); an index-class cancellation test; Cancel+Release atomicity at the module applier; the **entry→exit same-bar
+  re-feed** (a same-bar runner re-fed to the exit pass after `OpenArmed`).
+
+**Process cadence (per the operator):** keep the ICT gate strict (`ict-domain-expert` + guardrail + `pr-reviewer`,
+concurrent) but move faster — build directly from the locked design (skip the separate pre-spec when pinned), ship
+bigger complete slices, and reserve the heavy ~600k-case adversarial driver for numeric/money-math slices (it fuzzes
+numeric correctness, not ICT fidelity).
+
+**WP5 still to come (next slice):** the **module orchestrator that wires entry→exit** (selects `EntryMode`, runs
+`EntryManager`→`OpenArmed`, then the steady-state `ExitManager` per candle — must re-feed the same bar so a same-bar
+runner isn't missed; settle straddle-closed trades promptly) + the Host `Ict:Execution:Entry`/`Management*` bindings +
+`ValidateOnStart`; the **slippage** + **session-stepped spread** + **swap** cost follow-ons (swap needed only if
+Swing/Position are enabled), the adaptive **loss-ladder/`IRiskManager`** fast-follow, lot-step **flooring** of the
+partial leg, and the `Performance` calculator (WP6); the extended/long-tail detectors (SMT, Breaker, SD projection,
+session macros). Then WP2 (persistence) in parallel. **WP8 frontend scaffold — MERGED (PR #34, issue #30).** Spec §5
+item **20** (grading denominator / alert floor) still needs a call before alerting.
