@@ -93,7 +93,8 @@ public sealed class PaperTradeFactory
         // RegisterOpen): a bad entity ctor (e.g. a non-UTC time) throws before any reservation, and a cap-refused
         // Reserve discards the un-returned ArmedEntry — either path leaves the account untouched.
         var armedEntry = new ArmedEntry(
-            Guid.NewGuid(), account.Id, setup, sizing.Size, sizing.RiskBudget, armedAtUtc);
+            Guid.NewGuid(), account.Id, setup, sizing.Size, sizing.RiskBudget,
+            symbolSpec.PipSize, contractSpec.ValuePerPip, armedAtUtc);
         account.Reserve(armedEntry.Id, sizing.RiskBudget);
 
         return armedEntry;
@@ -109,17 +110,10 @@ public sealed class PaperTradeFactory
     /// the ledger and releases it exactly as for an immediately-opened trade — so the open-trade bookkeeping is
     /// byte-unchanged. The same-bar entry-then-stop straddle is resolved by the orchestrator (cut 2b), not here.
     /// </summary>
-    public PaperTrade OpenArmed(
-        ArmedEntry armedEntry,
-        PaperAccount account,
-        SymbolSpec symbolSpec,
-        ContractSpec contractSpec,
-        DateTimeOffset openedAtUtc)
+    public PaperTrade OpenArmed(ArmedEntry armedEntry, PaperAccount account, DateTimeOffset openedAtUtc)
     {
         ArgumentNullException.ThrowIfNull(armedEntry);
         ArgumentNullException.ThrowIfNull(account);
-        ArgumentNullException.ThrowIfNull(symbolSpec);
-        ArgumentNullException.ThrowIfNull(contractSpec);
 
         // Bind the trade to its reservation BEFORE opening: the entry must belong to THIS account and its risk must
         // already be reserved here (at arm time). This makes a cap-gate bypass structurally impossible — a hand-built
@@ -142,8 +136,8 @@ public sealed class PaperTradeFactory
             setup.Timeframe,
             setup.Plan,
             armedEntry.Size, // the frozen arm-time size, so the derived RiskBudget == the reserved budget (no drift)
-            symbolSpec.PipSize,
-            contractSpec.ValuePerPip,
+            armedEntry.PipSize, // the money geometry the entry was sized with — opens at the identical geometry
+            armedEntry.ValuePerPip,
             openedAtUtc);
     }
 }

@@ -33,6 +33,8 @@ public sealed class ArmedEntry : AggregateRoot<Guid>
         Setup setup,
         PositionSize size,
         Money riskBudget,
+        decimal pipSize,
+        decimal valuePerPip,
         DateTimeOffset armedAtUtc)
         : base(id)
     {
@@ -40,12 +42,16 @@ public sealed class ArmedEntry : AggregateRoot<Guid>
         Guard.Against(accountId == Guid.Empty, "ArmedEntry requires the owning account id.");
         ArgumentNullException.ThrowIfNull(setup);
         Guard.Against(!riskBudget.IsPositive, "ArmedEntry requires a positive reserved risk budget.");
+        Guard.Against(pipSize <= 0m, "ArmedEntry requires a positive pip size.");
+        Guard.Against(valuePerPip <= 0m, "ArmedEntry requires a positive value-per-pip.");
         Guard.Against(armedAtUtc.Offset != TimeSpan.Zero, "ArmedEntry.ArmedAtUtc must be UTC.");
 
         AccountId = accountId;
         Setup = setup;
         Size = size;
         RiskBudget = riskBudget;
+        PipSize = pipSize;
+        ValuePerPip = valuePerPip;
         ArmedAtUtc = armedAtUtc;
         Status = ArmedEntryStatus.Armed;
 
@@ -64,6 +70,13 @@ public sealed class ArmedEntry : AggregateRoot<Guid>
     /// <summary>The money reserved against the account's portfolio cap while the limit rests (== the eventual trade's
     /// <see cref="PaperTrade.RiskBudget"/>).</summary>
     public Money RiskBudget { get; }
+
+    /// <summary>The instrument's pip size — carried so the orchestrator can build the would-be trade and
+    /// <see cref="PaperTradeFactory.OpenArmed"/> opens at the same money geometry it was sized with.</summary>
+    public decimal PipSize { get; }
+
+    /// <summary>The instrument's value-per-pip per lot — carried for the same reason as <see cref="PipSize"/>.</summary>
+    public decimal ValuePerPip { get; }
 
     public DateTimeOffset ArmedAtUtc { get; }
 

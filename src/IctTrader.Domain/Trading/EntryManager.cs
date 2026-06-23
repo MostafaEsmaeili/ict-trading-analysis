@@ -1,0 +1,83 @@
+using IctTrader.Domain.Common;
+using IctTrader.Domain.ValueObjects;
+
+namespace IctTrader.Domain.Trading;
+
+/// <summary>
+/// The pure §2.5.1-step-7 entry orchestrator — the DECIDE half that drives a resting <see cref="ArmedEntry"/> for one
+/// candle. It delegates the limit touch to <see cref="IEntryFillEvaluator"/>; a no-touch bar is <see cref="EntryPlan.NoOp"/>
+/// (the limit keeps resting). On a fill it emits an <see cref="EntryActionKind.Open"/> at the bar-close, then resolves
+/// the <b>same-bar entry-then-stop straddle</b> by re-feeding the SAME candle to the exit <see cref="IFillEvaluator"/> —
+/// the ONE worst-case (StopFirst) authority — so a fast bar that fills the limit and then runs to the stop books a real
+/// −1R (an apply-ordered <see cref="EntryActionKind.Open"/> then <see cref="EntryActionKind.Close"/>, both stamped at the
+/// bar-close), never a phantom same-bar win. A same-bar runner is deliberately NOT credited here (the steady-state exit
+/// pass books it on its own bar); the entry path only owns the protective −1R. DECIDE-only: the caller applies the plan
+/// (<see cref="PaperTradeFactory.OpenArmed"/> for the open, <see cref="PaperTrade.Close"/> for the straddle); the
+/// no-chase cancellation is the next cut.
+/// </summary>
+public sealed class EntryManager : IEntryManager
+{
+    private readonly IEntryFillEvaluator _entryFillEvaluator;
+    private readonly IFillEvaluator _fillEvaluator;
+    private readonly IExecutionCostModel _costModel;
+
+    public EntryManager(
+        IEntryFillEvaluator entryFillEvaluator, IFillEvaluator fillEvaluator, IExecutionCostModel costModel)
+    {
+        ArgumentNullException.ThrowIfNull(entryFillEvaluator);
+        ArgumentNullException.ThrowIfNull(fillEvaluator);
+        ArgumentNullException.ThrowIfNull(costModel);
+        _entryFillEvaluator = entryFillEvaluator;
+        _fillEvaluator = fillEvaluator;
+        _costModel = costModel;
+    }
+
+    public EntryPlan Decide(ArmedEntry armedEntry, Candle candle, EntryContext context)
+    {
+        ArgumentNullException.ThrowIfNull(armedEntry);
+        Guard.Against(
+            armedEntry.Status != ArmedEntryStatus.Armed, "Only an armed (resting) entry can be evaluated for a fill.");
+        Guard.Against(candle.Symbol != armedEntry.Symbol, "The candle must be for the armed entry's symbol.");
+
+        // The fill bar must close at or after the arm — this also fail-fasts a default(EntryContext) (its BarCloseUtc
+        // is MinValue), which bypasses the ctor's UTC guard, before any action is stamped.
+        Guard.Against(
+            context.BarCloseUtc < armedEntry.ArmedAtUtc, "The bar-close time cannot precede the arm time.");
+
+        var fill = _entryFillEvaluator.Evaluate(armedEntry.Setup, candle);
+        if (!fill.IsFilled)
+        {
+            return EntryPlan.NoOp;
+        }
+
+        var at = context.BarCloseUtc;
+        var open = EntryAction.Open(fill.FillPrice!.Value, at);
+
+        // Same-bar straddle (§2.5.8 worst-case): build the would-be trade and re-feed the SAME candle to the exit
+        // FillEvaluator — the ONE StopFirst authority. Only a same-bar STOP closes here (−1R); a same-bar runner is
+        // left for the steady-state exit pass, so the entry path can never grant a free same-bar win. The would-be
+        // trade is a transient computation vehicle (its open event is cleared); the caller opens the REAL trade.
+        var wouldBe = BuildWouldBeTrade(armedEntry, at);
+        var sameBar = _fillEvaluator.Evaluate(wouldBe, candle);
+        if (sameBar.Outcome != FillOutcome.StopHit)
+        {
+            return new EntryPlan([open]);
+        }
+
+        // The straddle is a same-bar full round trip, so it books the costed entry crossing + exit (unlike a clean
+        // open, whose entry spread rides the deferred exit-leg cost line). RemainingSize == the full size here.
+        var costs = _costModel.Compute(wouldBe);
+        var close = EntryAction.Close(sameBar.ExitPrice!.Value, sameBar.CloseReason!.Value, costs, at);
+        return new EntryPlan([open, close]);
+    }
+
+    private static PaperTrade BuildWouldBeTrade(ArmedEntry armedEntry, DateTimeOffset openedAtUtc)
+    {
+        var setup = armedEntry.Setup;
+        var trade = new PaperTrade(
+            armedEntry.Id, armedEntry.AccountId, setup.Symbol, setup.Style, setup.Timeframe, setup.Plan,
+            armedEntry.Size, armedEntry.PipSize, armedEntry.ValuePerPip, openedAtUtc);
+        trade.ClearDomainEvents(); // transient — the REAL trade is opened by the caller via OpenArmed
+        return trade;
+    }
+}
