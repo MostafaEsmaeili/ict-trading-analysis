@@ -1,3 +1,4 @@
+using IctTrader.Domain.Common;
 using IctTrader.Domain.ValueObjects;
 
 namespace IctTrader.Domain.Trading;
@@ -24,6 +25,7 @@ public readonly record struct EntryAction
     private EntryAction(
         EntryActionKind kind, Price price, TradeCosts costs, TradeCloseReason? reason, DateTimeOffset atUtc)
     {
+        Guard.Against(atUtc.Offset != TimeSpan.Zero, "EntryAction timestamps must be UTC.");
         Kind = kind;
         Price = price;
         Costs = costs;

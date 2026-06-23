@@ -1,3 +1,4 @@
+using IctTrader.Domain.Common;
 using IctTrader.Domain.ValueObjects;
 
 namespace IctTrader.Domain.Trading;
@@ -31,6 +32,7 @@ public readonly record struct ExitAction
         TradeCloseReason? reason,
         DateTimeOffset atUtc)
     {
+        Guard.Against(atUtc.Offset != TimeSpan.Zero, "ExitAction timestamps must be UTC.");
         Kind = kind;
         Price = price;
         LegSize = legSize;

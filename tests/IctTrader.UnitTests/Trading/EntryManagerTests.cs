@@ -235,4 +235,14 @@ public class EntryManagerTests
         plan.Actions.Should().ContainSingle();
         ((Action)(() => _ = new EntryPlan(null!))).Should().Throw<ArgumentNullException>();
     }
+
+    [Fact]
+    public void An_entry_action_rejects_a_non_utc_timestamp()
+    {
+        var local = new DateTimeOffset(2024, 7, 1, 7, 5, 0, TimeSpan.FromHours(-4));
+
+        ((Action)(() => _ = EntryAction.Open(new Price(1.0832m), local))).Should().Throw<DomainException>();
+        ((Action)(() => _ = EntryAction.Close(new Price(1.0800m), TradeCloseReason.StopHit, TradeCosts.Zero, local)))
+            .Should().Throw<DomainException>();
+    }
 }
