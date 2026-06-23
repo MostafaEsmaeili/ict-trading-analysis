@@ -482,12 +482,35 @@ on a reversed operator)**, `defensive-guardrail-auditor` 7/7, `pr-reviewer` APPR
   orchestrator that APPLIES the fill. The ICT spec flagged **2 contested sub-decisions** for that cut (risk-reservation
   wiring, straddle boundary) → resolve via a **design judge-panel**.
 
-**WP5 still to come (next slice):** **cut 2 of entry-arming** — the `ArmedEntry` lifecycle + no-chase cancellation +
-risk reservation + the same-bar straddle + `EntryMode` + the orchestrator that APPLIES the entry fill (design
-judge-panel for the 2 contested sub-decisions first) — then the **slippage** + **session-stepped spread** + **swap**
-cost follow-ons (swap becomes mandatory only if Swing/Position are enabled — the no-overnight time-exit guarantees 0
-nights for Intraday/Scalp), the adaptive **loss-ladder/`IRiskManager`** fast-follow, lot-step **flooring** of the
-partial leg, and the `Performance` calculator (WP6); the extended/long-tail detectors (SMT, Breaker, SD projection,
-session macros). Then WP2 (persistence) in parallel. **WP8 frontend scaffold is now PR #34** (issue #30 — reviewed
-APPROVE, guardrail PASS, ESLint gate green). Spec §5 item **20** (grading denominator / alert floor) still needs a call
-before alerting.
+**WP5 entry-arming cut 2a — arm-time reservation + `ArmedEntry` + `OpenArmed` (issue #36, branch
+`feature/#36-armed-entry-reservation`, PR #37) — DONE.** Scoped by a **design judge-panel** (3 designs → 3 adversarial
+judges → synthesis; **Design 1 won unanimously 9/9/9**). The arm-time reservation MECHANISM (the per-candle orchestrator
++ no-chase cancellation + the same-bar straddle are cut 2b). ict-domain-expert + `defensive-guardrail-auditor` 7/7 +
+`pr-reviewer`; an **adversarial driver drove ~92k cases (all 6 invariants HOLD, 0 drift, negative-control-validated)**;
+all reviewer findings hardened. **378 tests** (355 unit + 23 arch), 0 warnings, format clean:
+- **`PaperAccount.Reserve(Guid, Money)`** — id-keyed, extends the **existing** `_reservedRiskByTrade` ledger, so a
+  resting limit is committed exposure competing for the SAME ~5% cap via the SAME `OpenRisk`/`CanOpen` gate (§2.5.10) —
+  **one cap owner** (reserve-at-trigger and a separate `ArmedBook` were rejected: cap-breach window / split invariant).
+  Throws-without-mutating on empty/duplicate id or cap breach; never touches `Equity`.
+- **`ArmedEntry`** resting-order aggregate (`ArmedEntryStatus { Armed, Triggered }`; id == the future trade id; carries
+  the Setup + arm-time `Size` + `RiskBudget`; raises `EntryArmed`/`EntryTriggered`).
+- **`PaperTradeFactory.Arm`** (sizes ONCE at arm time + reserves; **atomic** — builds the `ArmedEntry` BEFORE reserving,
+  mirroring `Open`+`RegisterOpen`) + **`OpenArmed`** (opens the trade under the reservation's Guid and does **NOT** call
+  `RegisterOpen` — the trigger is a **key re-label**, so the existing `Settle` releases it byte-unchanged; guards the
+  once-only trigger before constructing). **The reserved `Money` == the trade's derived `RiskBudget` by construction**
+  (`PriceToPips ≡ /PipSize`), byte-exact over 36k adversarial handoffs.
+- **Deferred (spec §5 item 32 / cut 2b):** `PaperAccount.Release` + the no-chase cancellation precedence (so a stale arm
+  that never triggers doesn't leak cap), the `EntryManager` orchestrator + `EntryContext`/`EntryPlan`/`EntryAction`, the
+  same-bar entry-then-stop **−1R straddle** (re-feed the exit `FillEvaluator` — the one worst-case authority), and
+  `EntryMode { Armed (default), Immediate }`. The read-side `OpenRisk` decimal-associativity tail (~1E-23, proven
+  cosmetic, far below cent) → round at a future reporting boundary.
+
+**WP5 still to come (next slice):** **cut 2b of entry-arming** — the `EntryManager` orchestrator (no-chase cancellation
+precedence + `PaperAccount.Release` + the same-bar −1R straddle via the exit `FillEvaluator` re-feed + `EntryMode`),
+straddle decision A locked (open-at-bar-close then re-feed; the equal-timestamp same-bar close is legal because
+`GuardActivityTime` allows it) — then the **slippage** + **session-stepped spread** + **swap** cost follow-ons (swap
+becomes mandatory only if Swing/Position are enabled — the no-overnight time-exit guarantees 0 nights for
+Intraday/Scalp), the adaptive **loss-ladder/`IRiskManager`** fast-follow, lot-step **flooring** of the partial leg, and
+the `Performance` calculator (WP6); the extended/long-tail detectors (SMT, Breaker, SD projection, session macros). Then
+WP2 (persistence) in parallel. **WP8 frontend scaffold — MERGED (PR #34, issue #30).** Spec §5 item **20** (grading
+denominator / alert floor) still needs a call before alerting.
