@@ -32,7 +32,12 @@ public class OptionsValidationTests
         new ExecutionCostOptions().Validate().Should().BeEmpty();
         new ExitManagementOptions().Validate().Should().BeEmpty();
         new StopTrailOptions().Validate().Should().BeEmpty();
+        new EntryManagementOptions().Validate().Should().BeEmpty();
     }
+
+    [Fact]
+    public void A_non_positive_entry_max_wait_is_rejected()
+        => new EntryManagementOptions { MaxWaitMinutes = 0 }.Validate().Should().NotBeEmpty();
 
     [Fact]
     public void An_out_of_order_or_non_positive_trail_ladder_is_rejected()

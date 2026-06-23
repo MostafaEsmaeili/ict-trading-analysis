@@ -1,4 +1,6 @@
 using IctTrader.Domain.Common;
+using IctTrader.Domain.Configuration;
+using IctTrader.Domain.Sessions;
 using IctTrader.Domain.ValueObjects;
 
 namespace IctTrader.Domain.Trading;
@@ -13,23 +15,38 @@ namespace IctTrader.Domain.Trading;
 /// bar-close), never a phantom same-bar win. A same-bar runner is deliberately NOT credited here (the steady-state exit
 /// pass books it on its own bar); the entry path only owns the protective −1R. DECIDE-only: the caller applies the plan
 /// (<see cref="PaperTradeFactory.OpenArmed"/> for the open, <see cref="PaperTrade.Close"/> for the straddle); the
-/// no-chase cancellation is the next cut.
+/// no-chase cancellation precedence (killzone-end &gt; max-wait) runs BEFORE the fill: an unfilled limit whose entry
+/// window has passed is cancelled (the caller releases its reservation so the cap self-heals), never chased.
 /// </summary>
 public sealed class EntryManager : IEntryManager
 {
     private readonly IEntryFillEvaluator _entryFillEvaluator;
     private readonly IFillEvaluator _fillEvaluator;
     private readonly IExecutionCostModel _costModel;
+    private readonly KillzoneClock _killzoneClock;
+    private readonly KillzoneEntryOptions _killzoneOptions;
+    private readonly EntryManagementOptions _options;
 
     public EntryManager(
-        IEntryFillEvaluator entryFillEvaluator, IFillEvaluator fillEvaluator, IExecutionCostModel costModel)
+        IEntryFillEvaluator entryFillEvaluator,
+        IFillEvaluator fillEvaluator,
+        IExecutionCostModel costModel,
+        KillzoneClock killzoneClock,
+        KillzoneEntryOptions killzoneOptions,
+        EntryManagementOptions options)
     {
         ArgumentNullException.ThrowIfNull(entryFillEvaluator);
         ArgumentNullException.ThrowIfNull(fillEvaluator);
         ArgumentNullException.ThrowIfNull(costModel);
+        ArgumentNullException.ThrowIfNull(killzoneClock);
+        ArgumentNullException.ThrowIfNull(killzoneOptions);
+        ArgumentNullException.ThrowIfNull(options);
         _entryFillEvaluator = entryFillEvaluator;
         _fillEvaluator = fillEvaluator;
         _costModel = costModel;
+        _killzoneClock = killzoneClock;
+        _killzoneOptions = killzoneOptions;
+        _options = options;
     }
 
     public EntryPlan Decide(ArmedEntry armedEntry, Candle candle, EntryContext context)
@@ -44,13 +61,22 @@ public sealed class EntryManager : IEntryManager
         Guard.Against(
             context.BarCloseUtc < armedEntry.ArmedAtUtc, "The bar-close time cannot precede the arm time.");
 
+        var at = context.BarCloseUtc;
+
+        // No-chase cancellation FIRST (§2.5.1 "don't chase"): an unfilled limit whose entry window has passed is
+        // cancelled before any fill is considered. The caller applies Cancel as ArmedEntry.Cancel + PaperAccount.Release.
+        var cancel = ResolveCancellation(armedEntry, at);
+        if (cancel is not null)
+        {
+            return new EntryPlan([EntryAction.Cancel(cancel.Value, armedEntry.Setup.Plan.Entry, at)]);
+        }
+
         var fill = _entryFillEvaluator.Evaluate(armedEntry.Setup, candle);
         if (!fill.IsFilled)
         {
             return EntryPlan.NoOp;
         }
 
-        var at = context.BarCloseUtc;
         var open = EntryAction.Open(fill.FillPrice!.Value, at);
 
         // Same-bar straddle (§2.5.8 worst-case): build the would-be trade and re-feed the SAME candle to the exit
@@ -69,6 +95,28 @@ public sealed class EntryManager : IEntryManager
         var costs = _costModel.Compute(wouldBe);
         var close = EntryAction.Close(sameBar.ExitPrice!.Value, sameBar.CloseReason!.Value, costs, at);
         return new EntryPlan([open, close]);
+    }
+
+    /// <summary>
+    /// The no-chase cancellation precedence (§2.5.1 "don't chase"): <b>killzone-end</b> (the bar is no longer a
+    /// tradeable killzone entry — window over, lunch, or the index cutoff) outranks the <b>max-wait</b> backstop. The
+    /// active hunt-set is the same §4.6 set the entry detector uses, so the arm and entry windows can't drift apart.
+    /// No-overnight is NOT a separate rung: no FX active killzone spans 00:00 NY, so a midnight cross already trips
+    /// killzone-end. Returns null when the limit may keep resting.
+    /// </summary>
+    private EntryCancelReason? ResolveCancellation(ArmedEntry armedEntry, DateTimeOffset at)
+    {
+        if (!_killzoneClock.IsActiveEntry(at, armedEntry.InstrumentClass, _killzoneOptions.ActiveKillzones))
+        {
+            return EntryCancelReason.KillzoneEnded;
+        }
+
+        if (at - armedEntry.ArmedAtUtc >= TimeSpan.FromMinutes(_options.MaxWaitMinutes))
+        {
+            return EntryCancelReason.MaxWaitElapsed;
+        }
+
+        return null;
     }
 
     private static PaperTrade BuildWouldBeTrade(ArmedEntry armedEntry, DateTimeOffset openedAtUtc)

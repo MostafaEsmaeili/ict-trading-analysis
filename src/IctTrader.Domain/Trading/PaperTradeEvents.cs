@@ -88,3 +88,14 @@ public sealed record EntryTriggered(
     Guid ArmedEntryId,
     Guid AccountId,
     DateTimeOffset OccurredOnUtc) : IDomainEvent;
+
+/// <summary>
+/// Raised when a resting <see cref="ArmedEntry"/> is CANCELLED unfilled (plan §2.5.1 "we don't chase it"): its reserved
+/// risk is released back to the portfolio cap. <see cref="Reason"/> says which no-chase rung fired (the entry window
+/// passed, or the max-wait backstop). No trade was produced, so no <see cref="PaperTradeOpened"/> follows.
+/// </summary>
+public sealed record EntryCancelled(
+    Guid ArmedEntryId,
+    Guid AccountId,
+    EntryCancelReason Reason,
+    DateTimeOffset OccurredOnUtc) : IDomainEvent;

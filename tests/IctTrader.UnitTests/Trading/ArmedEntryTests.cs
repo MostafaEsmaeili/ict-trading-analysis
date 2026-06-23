@@ -174,7 +174,7 @@ public class ArmedEntryTests
         var account = Account();
         var rogue = new ArmedEntry(
             Guid.NewGuid(), account.Id, BullishSetup(), new PositionSize(0.10m), new Money(50m),
-            Spec.PipSize, Contract.ValuePerPip, Utc);
+            Spec.PipSize, Contract.ValuePerPip, Spec.InstrumentClass, Utc);
 
         var act = () => Factory.OpenArmed(rogue, account, Utc.AddMinutes(5));
 
@@ -217,5 +217,73 @@ public class ArmedEntryTests
         armed.DomainEvents.OfType<EntryTriggered>().Should().ContainSingle()
             .Which.Should().Match<EntryTriggered>(e =>
                 e.ArmedEntryId == armed.Id && e.OccurredOnUtc == fillTime);
+    }
+
+    [Fact]
+    public void Releasing_a_reservation_frees_the_cap_without_touching_equity()
+    {
+        var account = Account();
+        var armed = Factory.Arm(BullishSetup(), account, Spec, Contract, Utc);
+        account.OpenRisk.Amount.Should().Be(99.2m);
+
+        account.Release(armed.Id);
+
+        account.OpenRisk.Amount.Should().Be(0m);
+        account.Equity.Amount.Should().Be(10_000m); // a cancelled arm books no money
+    }
+
+    [Fact]
+    public void Releasing_an_unreserved_or_already_released_id_throws()
+    {
+        var account = Account();
+        ((Action)(() => account.Release(Guid.NewGuid()))).Should().Throw<DomainException>();
+
+        var armed = Factory.Arm(BullishSetup(), account, Spec, Contract, Utc);
+        account.Release(armed.Id);
+        ((Action)(() => account.Release(armed.Id))).Should().Throw<DomainException>(); // already released
+    }
+
+    [Fact]
+    public void Cancelling_an_armed_entry_marks_it_cancelled_and_raises_the_event()
+    {
+        var account = Account();
+        var armed = Factory.Arm(BullishSetup(), account, Spec, Contract, Utc);
+
+        armed.Cancel(EntryCancelReason.KillzoneEnded, Utc.AddMinutes(90));
+
+        armed.Status.Should().Be(ArmedEntryStatus.Cancelled);
+        armed.DomainEvents.OfType<EntryCancelled>().Should().ContainSingle()
+            .Which.Reason.Should().Be(EntryCancelReason.KillzoneEnded);
+    }
+
+    [Fact]
+    public void A_cancelled_entry_cannot_be_triggered_or_cancelled_again()
+    {
+        var account = Account();
+        var armed = Factory.Arm(BullishSetup(), account, Spec, Contract, Utc);
+        armed.Cancel(EntryCancelReason.KillzoneEnded, Utc.AddMinutes(90));
+
+        ((Action)(() => armed.Cancel(EntryCancelReason.MaxWaitElapsed, Utc.AddMinutes(120))))
+            .Should().Throw<DomainException>();
+        ((Action)(() => Factory.OpenArmed(armed, account, Utc.AddMinutes(120)))).Should().Throw<DomainException>();
+    }
+
+    [Fact]
+    public void The_cancel_round_trip_frees_the_cap_for_a_new_arm()
+    {
+        // Five arms fill the ~5% cap (5 × 99.2 < 500); cancelling + releasing one frees room for a sixth.
+        var account = Account();
+        var armed = new List<ArmedEntry>();
+        for (var i = 0; i < 5; i++)
+        {
+            armed.Add(Factory.Arm(BullishSetup(), account, Spec, Contract, Utc));
+        }
+
+        ((Action)(() => Factory.Arm(BullishSetup(), account, Spec, Contract, Utc))).Should().Throw<DomainException>();
+
+        armed[0].Cancel(EntryCancelReason.KillzoneEnded, Utc.AddMinutes(90));
+        account.Release(armed[0].Id);
+
+        Factory.Arm(BullishSetup(), account, Spec, Contract, Utc); // now fits
     }
 }
