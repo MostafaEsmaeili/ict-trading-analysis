@@ -505,12 +505,33 @@ all reviewer findings hardened. **378 tests** (355 unit + 23 arch), 0 warnings, 
   `EntryMode { Armed (default), Immediate }`. The read-side `OpenRisk` decimal-associativity tail (~1E-23, proven
   cosmetic, far below cent) → round at a future reporting boundary.
 
-**WP5 still to come (next slice):** **cut 2b of entry-arming** — the `EntryManager` orchestrator (no-chase cancellation
-precedence + `PaperAccount.Release` + the same-bar −1R straddle via the exit `FillEvaluator` re-feed + `EntryMode`),
-straddle decision A locked (open-at-bar-close then re-feed; the equal-timestamp same-bar close is legal because
-`GuardActivityTime` allows it) — then the **slippage** + **session-stepped spread** + **swap** cost follow-ons (swap
-becomes mandatory only if Swing/Position are enabled — the no-overnight time-exit guarantees 0 nights for
-Intraday/Scalp), the adaptive **loss-ladder/`IRiskManager`** fast-follow, lot-step **flooring** of the partial leg, and
-the `Performance` calculator (WP6); the extended/long-tail detectors (SMT, Breaker, SD projection, session macros). Then
-WP2 (persistence) in parallel. **WP8 frontend scaffold — MERGED (PR #34, issue #30).** Spec §5 item **20** (grading
-denominator / alert floor) still needs a call before alerting.
+**WP5 entry-arming cut 2b-i — `EntryManager` fill + same-bar straddle (issue #39, branch `feature/#39-entry-manager-fill`,
+PR #40) — DONE.** The pure DECIDE half of the §2.5.1-step-7 entry orchestration, mirroring `ExitManager`/`ExitPlan`/
+`ExitAction`/`ExitContext`. ict-domain-expert CONFORMANT (0 Critical/Should-fix), `defensive-guardrail-auditor` 7/7,
+`pr-reviewer` APPROVE; an **adversarial driver drove 640k cases (all 7 invariants HOLD, 0 violations, two negative
+controls fired)**. **392 tests** (369 unit + 23 arch), 0 warnings, format clean:
+- **`EntryManager.Decide(ArmedEntry, Candle, EntryContext) → EntryPlan`** (pure, clock-free). Delegates the limit touch
+  to `EntryFillEvaluator`; a no-touch bar is **`NoOp`** (the limit keeps resting — don't chase). On `Filled` → an
+  `EntryAction.Open` at the bar-close, then the **same-bar straddle** is resolved by re-feeding the SAME candle to the
+  exit `FillEvaluator` (the ONE StopFirst worst-case authority) on a **would-be transient trade** (events cleared): a
+  same-bar STOP → apply-ordered **`[Open, Close]` = −1R**; a same-bar RUNNER is **NOT credited** (only `Open`, left for
+  the steady-state exit pass — the conservative no-free-win asymmetry). Opening at the **bar-close** time is load-bearing
+  (the equal-timestamp open→close passes `GuardActivityTime`). The straddle `Close` books the costed full round trip
+  (`Compute` = entry crossing + exit + commission); a clean open books no cost (entry spread rides the deferred
+  exit-leg line). `EntryContext`/`EntryAction`/`EntryPlan` mirror the exit-side VOs.
+- **`ArmedEntry` now carries its money geometry** (`PipSize`/`ValuePerPip`, set at `Arm`) so the orchestrator can build
+  the would-be trade and **`OpenArmed` opens at the identical geometry** — and `OpenArmed` no longer takes separate
+  `SymbolSpec`/`ContractSpec` (removes a drift class where the open specs could disagree with the arm-time sizing).
+- **Deferred (spec §5 item 33 / cut 2b-ii):** the **no-chase cancellation** precedence (killzone-end / no-overnight /
+  max-wait) + `PaperAccount.Release` + `ArmedEntry.Cancel`/`Cancelled` + `EntryCancelReason`; `EntryMode { Armed,
+  Immediate }`; and the **module orchestrator that wires entry→exit** — it MUST re-feed the SAME bar to the exit pass
+  after `OpenArmed` so a same-bar runner that genuinely traded isn't missed (reviewer-flagged); plus promptly settling a
+  straddle-closed trade so the cap isn't transiently over-counted.
+
+**WP5 still to come (next slice):** **cut 2b-ii of entry-arming** — the no-chase cancellation precedence + `Release` +
+`EntryMode` (+ the entry→exit same-bar re-feed obligation above) — then the **slippage** + **session-stepped spread** +
+**swap** cost follow-ons (swap becomes mandatory only if Swing/Position are enabled — the no-overnight time-exit
+guarantees 0 nights for Intraday/Scalp), the adaptive **loss-ladder/`IRiskManager`** fast-follow, lot-step **flooring**
+of the partial leg, and the `Performance` calculator (WP6); the extended/long-tail detectors (SMT, Breaker, SD
+projection, session macros). Then WP2 (persistence) in parallel. **WP8 frontend scaffold — MERGED (PR #34, issue #30).**
+Spec §5 item **20** (grading denominator / alert floor) still needs a call before alerting.

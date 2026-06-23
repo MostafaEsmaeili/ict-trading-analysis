@@ -88,7 +88,7 @@ public class ArmedEntryTests
         var account = Account();
         var armed = Factory.Arm(BullishSetup(), account, Spec, Contract, Utc);
 
-        var trade = Factory.OpenArmed(armed, account, Spec, Contract, Utc.AddMinutes(5));
+        var trade = Factory.OpenArmed(armed, account, Utc.AddMinutes(5));
 
         trade.Id.Should().Be(armed.Id);                       // a key re-label, not a new id
         trade.AccountId.Should().Be(account.Id);
@@ -105,7 +105,7 @@ public class ArmedEntryTests
         var account = Account();
         var armed = Factory.Arm(BullishSetup(), account, Spec, Contract, Utc);
 
-        var trade = Factory.OpenArmed(armed, account, Spec, Contract, Utc.AddMinutes(5));
+        var trade = Factory.OpenArmed(armed, account, Utc.AddMinutes(5));
 
         account.OpenRisk.Amount.Should().Be(99.2m);           // ONE reservation, not 198.4
         // The id is already keyed, so a RegisterOpen would be a (rejected) double-reserve — proving OpenArmed skips it.
@@ -117,7 +117,7 @@ public class ArmedEntryTests
     {
         var account = Account();
         var armed = Factory.Arm(BullishSetup(), account, Spec, Contract, Utc);
-        var trade = Factory.OpenArmed(armed, account, Spec, Contract, Utc.AddMinutes(5));
+        var trade = Factory.OpenArmed(armed, account, Utc.AddMinutes(5));
 
         trade.Close(trade.Plan.Targets.Runner, TradeCloseReason.TargetHit, TradeCosts.Zero, Utc.AddHours(1));
         account.Settle(trade);
@@ -131,9 +131,9 @@ public class ArmedEntryTests
     {
         var account = Account();
         var armed = Factory.Arm(BullishSetup(), account, Spec, Contract, Utc);
-        Factory.OpenArmed(armed, account, Spec, Contract, Utc.AddMinutes(5));
+        Factory.OpenArmed(armed, account, Utc.AddMinutes(5));
 
-        var act = () => Factory.OpenArmed(armed, account, Spec, Contract, Utc.AddMinutes(6));
+        var act = () => Factory.OpenArmed(armed, account, Utc.AddMinutes(6));
 
         act.Should().Throw<DomainException>();                // MarkTriggered rejects a second trigger
     }
@@ -173,9 +173,10 @@ public class ArmedEntryTests
         // cap-bypassing unbacked trade is structurally impossible, not convention-dependent.
         var account = Account();
         var rogue = new ArmedEntry(
-            Guid.NewGuid(), account.Id, BullishSetup(), new PositionSize(0.10m), new Money(50m), Utc);
+            Guid.NewGuid(), account.Id, BullishSetup(), new PositionSize(0.10m), new Money(50m),
+            Spec.PipSize, Contract.ValuePerPip, Utc);
 
-        var act = () => Factory.OpenArmed(rogue, account, Spec, Contract, Utc.AddMinutes(5));
+        var act = () => Factory.OpenArmed(rogue, account, Utc.AddMinutes(5));
 
         act.Should().Throw<DomainException>();
     }
@@ -187,7 +188,7 @@ public class ArmedEntryTests
         var foreign = Account();
         var armed = Factory.Arm(BullishSetup(), account, Spec, Contract, Utc);
 
-        var act = () => Factory.OpenArmed(armed, foreign, Spec, Contract, Utc.AddMinutes(5));
+        var act = () => Factory.OpenArmed(armed, foreign, Utc.AddMinutes(5));
 
         act.Should().Throw<DomainException>();
     }
@@ -211,7 +212,7 @@ public class ArmedEntryTests
         var armed = Factory.Arm(BullishSetup(), account, Spec, Contract, Utc);
         var fillTime = Utc.AddMinutes(5);
 
-        Factory.OpenArmed(armed, account, Spec, Contract, fillTime);
+        Factory.OpenArmed(armed, account, fillTime);
 
         armed.DomainEvents.OfType<EntryTriggered>().Should().ContainSingle()
             .Which.Should().Match<EntryTriggered>(e =>

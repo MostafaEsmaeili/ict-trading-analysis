@@ -259,6 +259,14 @@ public class ExitManagerTests
         ((Action)(() => _ = new ExitPlan(null!))).Should().Throw<ArgumentNullException>();
     }
 
+    [Fact]
+    public void An_exit_action_rejects_a_non_utc_timestamp()
+    {
+        var local = new DateTimeOffset(2024, 7, 1, 7, 5, 0, TimeSpan.FromHours(-4));
+
+        ((Action)(() => _ = ExitAction.MoveStop(new Price(1.0820m), local))).Should().Throw<DomainException>();
+    }
+
     // ---- Time-exit (§2.5.1 step 9: max hold 90–120 min; no overnight) ------------------------------------------
 
     [Fact]
