@@ -300,14 +300,16 @@ public class OrderBlockDetectorTests
     [Fact]
     public void The_correct_half_gate_keys_on_the_run_start_open_not_the_last_candle()
     {
-        // Two-candle run: run-START open 1.0860 sits in premium, the LATER open 1.0855 sits in discount.
-        // The gate must key on the run START (1.0860) -> NoMatch.
+        // Two-candle run. eq = (1.0840 + 1.0860)/2 = 1.0850. The run-START open (1.0860) sits in PREMIUM (the WRONG
+        // half for a bullish OB) while the later, displacement-adjacent open (1.0844) sits in DISCOUNT (the right
+        // half). The gate keys on the run START → it REJECTS (premium); had it keyed on the discount last candle it
+        // would have matched. So NoMatch proves the anchor is the run start, not the last candle.
         var ctx = NewContext();
         var current = ArrangeBullishRun(
             ctx,
-            terminus: 1.0856m, // eq ~1.0848 -> 1.0860 is premium, 1.0855 is premium too; tune below
-            Candle(0, 1.0860m, 1.0863m, 1.0856m, 1.0857m),
-            Candle(1, 1.0855m, 1.0857m, 1.0851m, 1.0852m));
+            terminus: 1.0860m,
+            Candle(0, 1.0860m, 1.0863m, 1.0856m, 1.0857m),  // run START (earliest) — open 1.0860 in premium
+            Candle(1, 1.0844m, 1.0846m, 1.0841m, 1.0842m)); // displacement-adjacent — open 1.0844 in discount
 
         Detector.Detect(ctx, current).Should().Be(DetectorResult.NoMatch);
     }
