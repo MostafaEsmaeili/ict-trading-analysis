@@ -16,6 +16,19 @@ public sealed class PaperAccount : AggregateRoot<Guid>
 {
     private readonly Dictionary<Guid, Money> _reservedRiskByTrade = [];
 
+    /// <summary>
+    /// EF Core materialization constructor — private so domain consumers cannot call it and bypass the
+    /// public constructor's invariant guards. EF sets <see cref="AggregateRoot{TId}.Id"/> and all mapped
+    /// fields via backing-field access after construction (plan §7 persistence conventions). No domain
+    /// invariants are weakened: this ctor is inaccessible outside the ORM and outside this assembly.
+    /// </summary>
+#pragma warning disable CS8618 // EF sets fields after construction via PropertyAccessMode.Field.
+    private PaperAccount()
+        : base(Guid.Empty)
+    {
+    }
+#pragma warning restore CS8618
+
     public PaperAccount(Guid id, Money startingEquity, decimal maxOpenPortfolioRiskPercent)
         : base(id)
     {
