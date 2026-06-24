@@ -19,10 +19,16 @@ public sealed class ConfluenceOptions
     /// <summary>Conditions that MUST be matched for an A/B grade; any missing required ⇒ Reject (§2.5.2/§2.5.4).</summary>
     public IReadOnlyList<ConfluenceCondition> RequiredConditions { get; init; } = DefaultRequiredConditions;
 
+    /// <summary>The score at or above which an all-required setup is promoted from B to A (§2.5.4 — the one
+    /// score-driven grading gate; an all-required setup below it is still a tradeable B, TGR-4).</summary>
     public int GradeAThreshold { get; init; } = 80;
 
+    /// <summary>A display-band label for the raw score (the §2.5.4 "65 B-floor"); since TGR-4 it no longer gates the
+    /// grade (all-required ⇒ at least B). Retained for the dashboard score bands + config back-compat.</summary>
     public int GradeBThreshold { get; init; } = 65;
 
+    /// <summary>A display-band label for the raw score (the §2.5.4 "50 C-floor"); since TGR-4 it no longer gates the
+    /// grade. Retained for the dashboard score bands + config back-compat.</summary>
     public int GradeCThreshold { get; init; } = 50;
 
     /// <summary>Only setups graded at or above this fire an alert (default B ⇒ floor 65).</summary>
