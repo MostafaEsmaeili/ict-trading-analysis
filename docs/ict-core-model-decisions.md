@@ -62,8 +62,9 @@ surface yet) · **DONE** (already implemented in a merged slice).
 - **OB-9a — OB anchor = cluster-start-open (REAL change).** The order block is the **consecutive
   opposite-close cluster**, anchored at the **opening price of the candle that STARTS the run** (not the
   single last candle). Mean-threshold = midpoint of that start candle's body. Add `MaxClusterCandles`
-  (default 3, raisable). Cite: Mentorship Ep3:130–133/208–221, Ep9. **CODE-READY** (replaces
-  `FindLastOppositeCloseCandle`).
+  (default 3, raisable). Cite: Mentorship Ep3:130–133/208–221, Ep9. **DONE** (issue #53 — replaced
+  `FindLastOppositeCloseCandle` with a consecutive-run finder; `OrderBlock` mean-threshold now BODY-based
+  via `BodyLow`/`BodyHigh`; zone High/Low span the cluster; `OrderBlockOptions.MaxClusterCandles` default 3).
 - **STRUCT-3 — Swing 3 / ITH-ITL = higher-tier fractal.** Short-term swing = 3 candles, strict inequality.
   Invalidation (ITH/ITL) = the intermediate high/low between two short-term highs/lows — a "higher-tier
   fractal proxy" (default width 5, prefer the registered ITH/ITL when available). Close-beyond invalidates,
@@ -119,7 +120,7 @@ surface yet) · **DONE** (already implemented in a merged slice).
 ## Recommended build order (X-IMMEDIATE-ACTIONS)
 
 1. **TGR-4** grading (DONE, this slice — unblocks the Alerting WP).
-2. **OB-9a** cluster-start-open anchor (CODE-READY, REAL change).
+2. **OB-9a** cluster-start-open anchor (DONE — issue #53; REAL change).
 3. **Additive flags** with no default-path change: EG-1 `AnchorMode`, FVG-SEM-1a `TouchSemantics`, FVG-SEM-3
    exclusions, FVG-SEM-2 `StrictFirstFvg`.
 4. **TIME-11-12** multi-candle MSS, **TIME-10** 08:30 reference (REAL changes — own tested slices).

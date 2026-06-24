@@ -108,11 +108,16 @@ public class MarketStructureValueObjectTests
     }
 
     [Fact]
-    public void Order_block_mean_threshold_and_inversion()
+    public void Order_block_mean_threshold_is_the_body_midpoint_and_inverts()
     {
-        var ob = new OrderBlock(Direction.Bullish, Timeframe.M5, new Price(1.0820m), new Price(1.0830m), new Price(1.0810m), Utc);
+        // Anchor open 1.0820 (body high), close 1.0814 (body low) -> body mid 1.0817, distinct from the zone
+        // range mid 1.0820 (Low 1.0810 + (High 1.0830 - Low) * 0.5) -> mean-threshold keys on the BODY.
+        var ob = new OrderBlock(
+            Direction.Bullish, Timeframe.M5, new Price(1.0820m), new Price(1.0830m), new Price(1.0810m),
+            new Price(1.0814m), new Price(1.0820m), Utc);
 
-        ob.MeanThreshold(0.50m).Should().Be(1.0820m);
+        ob.MeanThreshold(0.50m).Should().Be(1.0817m);
+        ob.MeanThreshold(0.50m).Should().NotBe(1.0820m); // a regression to range-based fails here
 
         ob.Invert();
         ob.State.Should().Be(OrderBlockState.Inverted);
@@ -129,7 +134,9 @@ public class MarketStructureValueObjectTests
     [Fact]
     public void Order_block_mean_threshold_rejects_a_fraction_outside_the_unit_interval()
     {
-        var ob = new OrderBlock(Direction.Bullish, Timeframe.M5, new Price(1.0820m), new Price(1.0830m), new Price(1.0810m), Utc);
+        var ob = new OrderBlock(
+            Direction.Bullish, Timeframe.M5, new Price(1.0820m), new Price(1.0830m), new Price(1.0810m),
+            new Price(1.0814m), new Price(1.0820m), Utc);
 
         var act = () => ob.MeanThreshold(1.5m);
 

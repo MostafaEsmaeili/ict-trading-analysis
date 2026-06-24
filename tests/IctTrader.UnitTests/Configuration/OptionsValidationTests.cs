@@ -21,6 +21,7 @@ public class OptionsValidationTests
         new ConfluenceOptions().Validate().Should().BeEmpty();
         new DisplacementOptions().Validate().Should().BeEmpty();
         new FvgOptions().Validate().Should().BeEmpty();
+        new OrderBlockOptions().Validate().Should().BeEmpty();
         new MarketContextOptions().Validate().Should().BeEmpty();
         new TradeStyleOptions().Validate().Should().BeEmpty();
         new SetupCandidateOptions().Validate().Should().BeEmpty();
@@ -135,6 +136,10 @@ public class OptionsValidationTests
     [Fact]
     public void Active_killzones_must_be_a_subset_of_the_frozen_contract()
         => new MarketContextOptions { ActiveKillzones = [Killzone.Pm] }.Validate().Should().NotBeEmpty();
+
+    [Fact]
+    public void A_non_positive_cluster_cap_is_rejected()
+        => new OrderBlockOptions { MaxClusterCandles = 0 }.Validate().Should().NotBeEmpty();
 
     [Fact]
     public void A_reward_floor_below_the_hard_two_to_one_is_rejected()
