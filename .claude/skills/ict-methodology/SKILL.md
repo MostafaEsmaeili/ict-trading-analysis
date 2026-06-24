@@ -46,7 +46,7 @@ Confirm a setup ONLY when ALL of these hold (RequiredConditions):
 8. **Stop** — beyond swept swing / FVG / OB (1–2 ticks, ~10 pips FX); clear the farther of two stacked FVGs.
 9. **Targets** — T1 nearest FVG/50%/short-term level (partial), T2 opposing liquidity / HTF draw; min RR ~2.5R (configurable). Trail 50%→25% risk, 75%→breakeven. Max hold 90–120 min, no overnight.
 
-**Grade/alert gate:** score = Σmatched weights / Σapplicable ×100. A ≥80, B 65–79 (both need all RequiredConditions), C 50–64 (watchlist), Reject <50. **Alert floor 65.** Weights & full detail in plan §2.5.
+**Grade/alert gate (TGR-4):** score = Σmatched weights / Σapplicable ×100. A ≥80 (all required); **all-required auto-clears to B** — the bare-required 63 is NOT suppressed to C; Reject if any required missing. The 0–100 score is the within-grade sorter (the B/C thresholds are display labels). Only A/B alert. Weights & full detail in plan §2.5 + `docs/ict-core-model-decisions.md`.
 
 **Caveats (verify medium-confidence, §2.5.7):** 70.5% sweet spot & Silver Bullet are Primer/canon, not grounded in these 2022 eps — keep configurable; FX vs index killzone windows are SEPARATE (instrument-class switch, default FX); ~2.5R is a default not a hard rule; quantify "displacement" with a body/ATR filter; detectors must emit FVG two-touch + ITH/ITL **invalidation**, not just formation.
 

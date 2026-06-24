@@ -550,16 +550,64 @@ cancellation precedence in `Decide`, run BEFORE the fill. ict-domain-expert CONF
   drop provably safe vs a future config); an index-class cancellation test; Cancel+Release atomicity at the module
   applier; the **entry→exit same-bar re-feed** (a same-bar runner re-fed to the exit pass after `OpenArmed`).
 
+**ICT-domain-completion audit (workflow `wf_25901e98-7f3`) — the backlog driving the current sequence.** A 5-agent
+audit mapped the remaining ICT domain into a prioritized, transcript-cited 14-item backlog (detectors §2.5.6, long-tail
+§2.5.8, money-management §2.4/§2.5.5, grading §2.5.3/§2.5.4, spec §5 items). The order-1/2 foundational items (settle
+contested decisions + grading) and the independent money slice (adaptive risk) were built first; the detector/target
+corrections follow. Backlog ids (EG-/FVG-/OB-/TIME-/TGR-) are the cited keys.
+
+**WP5 module orchestrator — `TradeOrchestrator` (issue #43, PR #45 → merged) — DONE.** The pure per-candle process
+(`IctTrader.Domain/Trading/`: `TradeOrchestrator`/`ManagedPosition`/`ITradeOrchestrator`) composing entry→exit into a
+runnable cycle. `OnSetupConfirmed` arms (`EntryMode.Armed` default) or opens (Immediate); `Advance` applies the
+`EntryManager` plan (open / same-bar −1R straddle / no-chase cancel + Release), **re-feeds the SAME bar to the
+`ExitManager` after a clean open** so a same-bar runner/T1/trail isn't missed, applies the exit plan, and **settles
+every terminal close promptly** (the ~5% cap is never transiently over-counted). ict-domain-expert CONFORMANT,
+guardrail 7/7, pr-reviewer APPROVE. CodeRabbit resolved.
+
+**WP2 persistence — PaperTrading EF Core (issue #44, PR #46 → merged) — DONE.** EF Core write-model persistence for
+`PaperTrade`/`PaperAccount`/`ArmedEntry` (`Modules/PaperTrading/Infrastructure/Persistence/`): per-aggregate
+`IEntityTypeConfiguration` (backing-field access, `xmin` concurrency, JSONB for the append-only fill-leg + reservation
+ledgers + the `TradePlan`/`Setup` snapshots, plan §7 numeric/timestamptz), `PaperTradingDbContext` + a design-time
+factory (env-var → appsettings, **fail-fast, no committed credentials**), an `InitialCreate` migration with FKs to
+`paper_accounts`, and 5 Testcontainers round-trip tests. Invariant-safe private parameterless EF ctors on the three
+aggregates. guardrail 7/7, pr-reviewer APPROVE; CodeRabbit (armed-entry FK, factory fallback, Docker probe) resolved.
+
+**WP4 adaptive `IRiskManager` — loss-ladder + win-cycle (issue #47, PR #48 → merged) — DONE.** Pulls sizing off flat
+base risk to the §2.4/§2.5.5 model. Pure `RiskManager.EffectiveRisk(RiskState, RiskOptions)`: win-cycle **milestone**
+override (every Nth consecutive win → lowest unit, a cycle not a latch) → base/restore → loss-ladder by consecutive
+losses (1% → 0.5% → 0.25%, Mentorship-verbatim). `PaperAccount` tracks the streaks + equity peak/drawdown-trough at
+`Settle`, **classified by the GROSS structural outcome** (a cost-only scratch is a breakeven, not a loss), and exposes
+a persisted `RiskState` (4 columns). `PaperTradeFactory` sizes Open/Arm from `EffectiveRisk` (arm-time effective-%
+**frozen**, so reserve == RiskBudget holds). **Restore is RECOVERY-GATED** — base returns only on a ≥50% dip recovery
+or a new equity high, never a single win (decisions register **TGR-5**; win-gated is a deferred non-default
+`RestoreMode`). `HardMaxRiskPercent` is capped at the §2.5.5 4.5% ceiling. ict-domain-expert SHIP (caught + drove the
+fix of a win-cycle **latch** bug), guardrail 7/7, pr-reviewer APPROVE, **money-math adversarial driver 680k cases / 0
+violations** (negative-control validated). CodeRabbit (hard-max ceiling, gross-vs-net) resolved.
+
+**Core-model decisions register + TGR-4 grading (issue #49, PR #50 → merged) — DONE.** The audit's foundational
+orders 1–2. The contested §2.5 decisions were resolved transcript-cited (`ict-core-model-decisions` workflow
+`wf_de67d483-8be`) into **`docs/ict-core-model-decisions.md`** — the cited SoT every detector/target slice now
+references by id (EG-1 OTE 0.62–0.79 + 70.5%-is-Primer-only; EG-2 the two-frame PD anchor keeping Σ=9.75; FVG
+semantics; OB-9a cluster-start-open; TIME-11-12 multi-candle MSS; TIME-10 08:30 reference; TGR-1/2 SD targets). **TGR-4
+grading**: `SetupScorer.GradeFor` now auto-clears an all-RequiredConditions setup to ≥**B** (A only at
+`GradeAThreshold`); the bare-required score (6.15/9.75 = **63**) is pinned by a regression test, and the 0–100 score
+becomes the within-grade sorter — retiring the C-suppression that made the canonical §2.5 model un-alertable.
+**Unblocks the Alerting WP.** Grade A is unreachable (~77) until the optional emitters ship. ict-domain-expert
+CONFORMANT, guardrail 7/7, pr-reviewer APPROVE.
+
 **Process cadence (per the operator):** keep the ICT gate strict (`ict-domain-expert` + guardrail + `pr-reviewer`,
 concurrent) but move faster — build directly from the locked design (skip the separate pre-spec when pinned), ship
 bigger complete slices, and reserve the heavy ~600k-case adversarial driver for numeric/money-math slices (it fuzzes
 numeric correctness, not ICT fidelity).
 
-**WP5 still to come (next slice):** the **module orchestrator that wires entry→exit** (selects `EntryMode`, runs
-`EntryManager`→`OpenArmed`, then the steady-state `ExitManager` per candle — must re-feed the same bar so a same-bar
-runner isn't missed; settle straddle-closed trades promptly) + the Host `Ict:Execution:Entry`/`Management*` bindings +
-`ValidateOnStart`; the **slippage** + **session-stepped spread** + **swap** cost follow-ons (swap needed only if
-Swing/Position are enabled), the adaptive **loss-ladder/`IRiskManager`** fast-follow, lot-step **flooring** of the
-partial leg, and the `Performance` calculator (WP6); the extended/long-tail detectors (SMT, Breaker, SD projection,
-session macros). Then WP2 (persistence) in parallel. **WP8 frontend scaffold — MERGED (PR #34, issue #30).** Spec §5
-item **20** (grading denominator / alert floor) still needs a call before alerting.
+**Still to come — the decisions-register build order (next slices):** the §2.5 detector/target corrections the register
+pins, in order: **OB-9a** (order block = cluster-start-open anchor + `MaxClusterCandles`, a real Ep3-grounded behavior
+change) → the **additive provenance flags** (EG-1 `AnchorMode`/`WickAnchorOnFomcNfp`; FVG `TouchSemantics`,
+validity-exclusions flag-only + Asian-as-selectable-killzone, `StrictFirstFvg` + the wrong-order nix) → **TIME-11-12**
+(multi-candle displacement-leg MSS) and **TIME-10** (08:30 instrument-class reference open) → **TGR-1/2** SD-projection
+targets (a new §2.5.6 detector + N-tier `TargetLadder`) and **EG-3** close-proximity (entry-orchestrator chain). Then
+the runnable backend: **WP7 host wiring** (bind `Ict:Execution:*`/`Ict:Risk`/`Ict:Confluence` Options + `ValidateOnStart`;
+DI the `PaperTradingDbContext` + aggregate-scoped repositories + `TradeOrchestrator`; a Replay feed → the
+Scanning/PaperTrading bus handlers → SignalR + REST) and the **Alerting** module (now unblocked by TGR-4); the
+**`Performance` calculator (WP6)**; the **slippage**/**session-stepped spread**/**swap** cost follow-ons; **SMT/Breaker**
+detectors; lot-step **flooring** of the partial leg. **WP8 frontend scaffold — MERGED (PR #34, issue #30).**
