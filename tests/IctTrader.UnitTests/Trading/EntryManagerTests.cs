@@ -69,6 +69,10 @@ public class EntryManagerTests
     private static Candle Bar(decimal open, decimal high, decimal low, decimal close)
         => new(Eurusd, Timeframe.M5, BarClose, open, high, low, close, 1_000m);
 
+    // The cancellation rung classifies the killzone from the candle's OPEN time, so these stamp the bar's open instant.
+    private static Candle BarAt(DateTimeOffset openTime, decimal open, decimal high, decimal low, decimal close)
+        => new(Eurusd, Timeframe.M5, openTime, open, high, low, close, 1_000m);
+
     private static ArmedEntry Arm(PaperAccount account, Setup setup) => Factory.Arm(setup, account, Spec, Contract, Utc);
 
     private static PaperTrade? Apply(PaperAccount account, ArmedEntry armed, EntryPlan plan)
@@ -253,7 +257,7 @@ public class EntryManagerTests
 
         // The bar WOULD fill (Low ≤ entry), but the entry window has passed (05:30 NY, no active killzone) —
         // cancellation outranks the fill, so the limit is cancelled, never chased.
-        var plan = Manager.Decide(armed, Bar(1.0835m, 1.0840m, 1.0825m, 1.0830m), new EntryContext(DeadTime));
+        var plan = Manager.Decide(armed, BarAt(DeadTime, 1.0835m, 1.0840m, 1.0825m, 1.0830m), new EntryContext(DeadTime.AddMinutes(5)));
 
         plan.Actions.Should().ContainSingle();
         plan.Actions[0].Kind.Should().Be(EntryActionKind.Cancel);
@@ -267,7 +271,8 @@ public class EntryManagerTests
         var armed = Arm(account, BullishSetup());
 
         // Still inside London Open (03:45 NY) but 45 min ≥ the 30-min backstop — the max-wait rung fires.
-        var plan = ShortWaitManager.Decide(armed, Bar(1.0840m, 1.0850m, 1.0835m, 1.0845m), new EntryContext(InKillzone));
+        var plan = ShortWaitManager.Decide(
+            armed, BarAt(InKillzone, 1.0840m, 1.0850m, 1.0835m, 1.0845m), new EntryContext(InKillzone.AddMinutes(5)));
 
         plan.Actions.Should().ContainSingle();
         plan.Actions[0].Kind.Should().Be(EntryActionKind.Cancel);
@@ -280,8 +285,9 @@ public class EntryManagerTests
         var account = Account();
         var armed = Arm(account, BullishSetup());
 
-        // Both fire (05:30 NY is dead AND 150 min ≥ 30), but killzone-end is the higher-precedence reason.
-        var plan = ShortWaitManager.Decide(armed, Bar(1.0840m, 1.0850m, 1.0835m, 1.0845m), new EntryContext(DeadTime));
+        // Both fire (05:30 NY is dead AND ≥ 30 min waited), but killzone-end is the higher-precedence reason.
+        var plan = ShortWaitManager.Decide(
+            armed, BarAt(DeadTime, 1.0840m, 1.0850m, 1.0835m, 1.0845m), new EntryContext(DeadTime.AddMinutes(5)));
 
         plan.Actions[0].CancelReason.Should().Be(EntryCancelReason.KillzoneEnded);
     }
@@ -293,7 +299,7 @@ public class EntryManagerTests
         var armed = Arm(account, BullishSetup());
         account.OpenRisk.Amount.Should().Be(99.2m); // reserved while the limit rests
 
-        Apply(account, armed, Manager.Decide(armed, Bar(1.0835m, 1.0840m, 1.0825m, 1.0830m), new EntryContext(DeadTime)));
+        Apply(account, armed, Manager.Decide(armed, BarAt(DeadTime, 1.0835m, 1.0840m, 1.0825m, 1.0830m), new EntryContext(DeadTime.AddMinutes(5))));
 
         armed.Status.Should().Be(ArmedEntryStatus.Cancelled);
         account.OpenRisk.Amount.Should().Be(0m);     // the cap self-heals

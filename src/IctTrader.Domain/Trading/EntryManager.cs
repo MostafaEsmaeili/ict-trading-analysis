@@ -65,7 +65,7 @@ public sealed class EntryManager : IEntryManager
 
         // No-chase cancellation FIRST (§2.5.1 "don't chase"): an unfilled limit whose entry window has passed is
         // cancelled before any fill is considered. The caller applies Cancel as ArmedEntry.Cancel + PaperAccount.Release.
-        var cancel = ResolveCancellation(armedEntry, at);
+        var cancel = ResolveCancellation(armedEntry, candle, at);
         if (cancel is not null)
         {
             return new EntryPlan([EntryAction.Cancel(cancel.Value, armedEntry.Setup.Plan.Entry, at)]);
@@ -101,12 +101,14 @@ public sealed class EntryManager : IEntryManager
     /// The no-chase cancellation precedence (§2.5.1 "don't chase"): <b>killzone-end</b> (the bar is no longer a
     /// tradeable killzone entry — window over, lunch, or the index cutoff) outranks the <b>max-wait</b> backstop. The
     /// active hunt-set is the same §4.6 set the entry detector uses, so the arm and entry windows can't drift apart.
-    /// No-overnight is NOT a separate rung: no FX active killzone spans 00:00 NY, so a midnight cross already trips
-    /// killzone-end. Returns null when the limit may keep resting.
+    /// The killzone is classified from the candle's OPEN time — the SAME axis <see cref="Detection.MarketContext"/> and
+    /// the <c>KillzoneEntryDetector</c> classify on (so a bar straddling a boundary is treated identically everywhere);
+    /// max-wait is measured to the bar close (<paramref name="at"/>). No-overnight is NOT a separate rung: no FX active
+    /// killzone spans 00:00 NY, so a midnight cross already trips killzone-end. Returns null when the limit may rest.
     /// </summary>
-    private EntryCancelReason? ResolveCancellation(ArmedEntry armedEntry, DateTimeOffset at)
+    private EntryCancelReason? ResolveCancellation(ArmedEntry armedEntry, Candle candle, DateTimeOffset at)
     {
-        if (!_killzoneClock.IsActiveEntry(at, armedEntry.InstrumentClass, _killzoneOptions.ActiveKillzones))
+        if (!_killzoneClock.IsActiveEntry(candle.OpenTimeUtc, armedEntry.InstrumentClass, _killzoneOptions.ActiveKillzones))
         {
             return EntryCancelReason.KillzoneEnded;
         }

@@ -532,7 +532,7 @@ controls fired)**. **392 tests** (369 unit + 23 arch), 0 warnings, format clean:
 `feature/#41-entry-no-chase-cancellation`, PR #42) — DONE.** Completes the entry orchestrator: the no-chase
 cancellation precedence in `Decide`, run BEFORE the fill. ict-domain-expert CONFORMANT (0 Critical/Should-fix),
 `defensive-guardrail-auditor` 7/7, `pr-reviewer` APPROVE. **405 tests** (382 unit + 23 arch), 0 warnings, format clean:
-- **`killzone-end > max-wait`** — killzone-end = `!KillzoneClock.IsActiveEntry(candle, instrumentClass, ActiveKillzones)`
+- **`killzone-end > max-wait`** — killzone-end = `!KillzoneClock.IsActiveEntry(candle.OpenTimeUtc, instrumentClass, ActiveKillzones)`
   (the bar left the active killzone — window over / lunch / index cutoff), reusing the same §4.6 hunt-set the entry
   detector uses (arm + entry windows can't drift); max-wait = the INVENTED, provenance-flagged backstop (default 240,
   generous so killzone-end normally fires first). Each emits an `EntryAction.Cancel` the caller applies as
@@ -544,12 +544,11 @@ cancellation precedence in `Decide`, run BEFORE the fill. ict-domain-expert CONF
 - New: `EntryCancelReason`, `EntryAction.Cancel` (+ `CancelReason`), `ArmedEntry.Cancel`/`Cancelled` + `InstrumentClass`,
   `PaperAccount.Release`, the `EntryCancelled` event, `EntryManagementOptions` (`Ict:Execution:Entry`) + `EntryMode
   { Armed (default), Immediate }`. `EntryManager` now injects `KillzoneClock` + `KillzoneEntryOptions` + the options.
-- **Deferred (spec §5 item 34, tracked follow-ups — both reviewers non-blocking):** settle the killzone classification
-  AXIS (cancellation classifies from `candle.OpenTimeUtc` to match `MarketContext`/`KillzoneEntryDetector`; CURRENTLY it
-  classifies from the **bar-close** `context` — a 1-bar boundary-straddle latent edge to settle BEFORE host-wiring); a
-  structural guard that no selectable killzone spans 00:00 NY (makes the no-overnight drop provably safe vs a future
-  config); an index-class cancellation test; Cancel+Release atomicity at the module applier; the **entry→exit same-bar
-  re-feed** (a same-bar runner re-fed to the exit pass after `OpenArmed`).
+- **Killzone classification AXIS — RESOLVED in the review pass:** cancellation now classifies from `candle.OpenTimeUtc`,
+  the SAME axis `MarketContext`/`KillzoneEntryDetector` use (no boundary-straddle drift). **Deferred (spec §5 item 34,
+  both reviewers non-blocking):** a structural guard that no selectable killzone spans 00:00 NY (makes the no-overnight
+  drop provably safe vs a future config); an index-class cancellation test; Cancel+Release atomicity at the module
+  applier; the **entry→exit same-bar re-feed** (a same-bar runner re-fed to the exit pass after `OpenArmed`).
 
 **Process cadence (per the operator):** keep the ICT gate strict (`ict-domain-expert` + guardrail + `pr-reviewer`,
 concurrent) but move faster — build directly from the locked design (skip the separate pre-spec when pinned), ship
