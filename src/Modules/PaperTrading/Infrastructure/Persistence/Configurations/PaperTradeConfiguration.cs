@@ -27,10 +27,15 @@ namespace IctTrader.PaperTrading.Infrastructure.Persistence.Configurations;
 /// </para>
 /// <para>
 /// The <c>_legs</c> fill-leg list is stored as <c>jsonb</c> (plan §7 "PaperTrade.Fills") via
-/// <see cref="JsonConverters.FillLegListConverter"/>.  Loading the ledger from a single JSONB column
-/// keeps the schema simple; derived figures (<see cref="PaperTrade.RealizedR"/>,
-/// <see cref="PaperTrade.GrossPnl"/>, etc.) are recomputed by the aggregate at runtime and are
-/// intentionally NOT persisted to avoid drift.
+/// <see cref="JsonConverters.FillLegListConverter"/>.  The blended close-side results
+/// (<see cref="PaperTrade.RealizedR"/>, <see cref="PaperTrade.GrossPnl"/>, <see cref="PaperTrade.Costs"/>,
+/// <see cref="PaperTrade.RealizedPnl"/>, plus <see cref="PaperTrade.ExitPrice"/> /
+/// <see cref="PaperTrade.CloseReason"/> / <see cref="PaperTrade.ClosedAtUtc"/>) ARE persisted to their own
+/// columns: the aggregate folds them once at close and does NOT recompute them on materialization, so a
+/// reloaded closed trade returns the booked figures directly.  Only the always-computed alias members
+/// (<see cref="PaperTrade.NetPnl"/>, <see cref="PaperTrade.NetR"/>, <see cref="PaperTrade.Direction"/>,
+/// <see cref="PaperTrade.Entry"/>, <see cref="PaperTrade.Stop"/>, <see cref="PaperTrade.IsBreakevenArmed"/>)
+/// are <c>Ignore</c>d.
 /// </para>
 /// </summary>
 internal sealed class PaperTradeConfiguration : IEntityTypeConfiguration<PaperTrade>
@@ -252,7 +257,9 @@ internal sealed class PaperTradeConfiguration : IEntityTypeConfiguration<PaperTr
             .HasColumnType("numeric(18,2)");
 
         // ── Fill-leg ledger: jsonb (plan §7) ──────────────────────────────────────────────────────────
-        // _legs is the append-only exit ledger; derived figures (RealizedR, GrossPnl) are NOT persisted.
+        // _legs is the append-only exit ledger. The blended close-side results (RealizedR, GrossPnl, Costs,
+        // RealizedPnl) are folded once at close and persisted to their own columns above — only the
+        // always-computed aliases (NetPnl, NetR, Direction, ...) are Ignore()d below.
         //
         // A custom ValueComparer is required because EF's change tracker uses reference equality for
         // collection values stored via value converters — it would miss in-place mutations (Add calls)
