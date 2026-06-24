@@ -163,26 +163,30 @@ public sealed class PaperAccount : AggregateRoot<Guid>
 
         _reservedRiskByTrade.Remove(trade.Id);
         Equity = newEquity;
-        UpdateRiskState(trade.RealizedPnl.Value, newEquity);
+        // Classify the streak by the GROSS (structural) outcome, not the net: a stop trailed to entry is a scratch
+        // (gross 0) even when costs make the net slightly negative — it must not advance the loss-ladder (§5.2).
+        UpdateRiskState(trade.GrossPnl!.Value, newEquity);
     }
 
     /// <summary>
-    /// Advances the adaptive-risk state at the single win/loss boundary (plan §2.4/§2.5.5). A loss extends the loss
-    /// streak and clears the win streak. A win extends the win streak but — per the §2.5.5 <b>recovery-gated</b>
-    /// restore ("restore after recovering 50% of the loss") — does NOT clear the loss-ladder: risk stays suppressed
-    /// through an unrecovered drawdown (a single win does not recover a multi-tier dip), the actual restore being the
-    /// 50%-dip recovery decided in <see cref="IRiskManager"/> or a new equity high below. A breakeven (~0R) ends the
-    /// win streak and touches nothing else. The peak is the high-watermark and the trough the lowest equity since it; a
-    /// new high resets BOTH the trough and the loss-ladder (the drawdown is fully recovered). The win-gated restore is
-    /// a non-default opt-in deferred per the core-model decisions register (TGR-5).
+    /// Advances the adaptive-risk state at the single win/loss boundary (plan §2.4/§2.5.5). The streak is classified by
+    /// the <paramref name="grossOutcome"/> (the structural edge, §5.2) while the drawdown peak/trough track NET
+    /// <paramref name="newEquity"/> (real money) — so a cost-only scratch (gross 0, net slightly negative) is a
+    /// breakeven, not a loss. A loss (negative gross) extends the loss streak and clears the win streak. A win
+    /// (positive gross) extends the win streak but — per the §2.5.5 <b>recovery-gated</b> restore ("restore after
+    /// recovering 50% of the loss") — does NOT clear the loss-ladder: risk stays suppressed through an unrecovered
+    /// drawdown (a single win does not recover a multi-tier dip), the actual restore being the 50%-dip recovery decided
+    /// in <see cref="IRiskManager"/> or a new equity high below. A breakeven (gross 0) ends the win streak and touches
+    /// nothing else. A new equity high resets BOTH the trough and the loss-ladder (the drawdown is fully recovered).
+    /// The win-gated restore is a non-default opt-in deferred per the core-model decisions register (TGR-5).
     /// </summary>
-    private void UpdateRiskState(Money realizedPnl, Money newEquity)
+    private void UpdateRiskState(Money grossOutcome, Money newEquity)
     {
-        if (realizedPnl.IsPositive)
+        if (grossOutcome.IsPositive)
         {
             _consecutiveWins++;
         }
-        else if (realizedPnl.IsNegative)
+        else if (grossOutcome.IsNegative)
         {
             _consecutiveLosses++;
             _consecutiveWins = 0;

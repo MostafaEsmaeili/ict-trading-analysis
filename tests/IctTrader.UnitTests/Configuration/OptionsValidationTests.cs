@@ -91,6 +91,7 @@ public class OptionsValidationTests
         new RiskOptions { DipRecoveryFraction = 1.5m }.Validate().Should().NotBeEmpty();
         new RiskOptions { ConsecutiveWinsForLowestUnit = 0 }.Validate().Should().NotBeEmpty();    // must be >= 1
         new RiskOptions { BaseRiskPercent = 5m, HardMaxRiskPercent = 4.5m }.Validate().Should().NotBeEmpty(); // max < base
+        new RiskOptions { HardMaxRiskPercent = 5m }.Validate().Should().NotBeEmpty();   // above the §2.5.5 4.5% hard ceiling
     }
 
     [Fact]

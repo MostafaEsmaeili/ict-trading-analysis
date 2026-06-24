@@ -171,6 +171,19 @@ public class RiskManagerTests
     }
 
     [Fact]
+    public void A_cost_bearing_scratch_is_a_breakeven_not_a_loss()
+    {
+        // A stop trailed to entry exits at gross 0 but pays spread + commission → net slightly negative. The streak is
+        // the STRUCTURAL (gross) outcome, so the loss-ladder does NOT advance — even though the costs dip equity.
+        var account = Account();
+        SettleScratchWithCosts(account);
+
+        account.RiskState.ConsecutiveLosses.Should().Be(0);  // a cost-only scratch is not a loss
+        account.RiskState.ConsecutiveWins.Should().Be(0);    // nor a win
+        account.Equity.Amount.Should().BeLessThan(10_000m);  // but the costs do dip equity (drawdown tracks net)
+    }
+
+    [Fact]
     public void A_breakeven_inside_a_drawdown_holds_the_ladder()
     {
         var account = Account();
@@ -236,4 +249,15 @@ public class RiskManagerTests
     private static void SettleMediumWin(PaperAccount account) => Settle(account, 1.0950m, TradeCloseReason.TargetHit);
 
     private static void SettleBreakeven(PaperAccount account) => Settle(account, 1.0900m, TradeCloseReason.TimeExit);
+
+    private static void SettleScratchWithCosts(PaperAccount account)
+    {
+        // Exits AT the entry (gross 0) but pays spread + commission, so the NET is slightly negative.
+        var trade = new PaperTrade(
+            Guid.NewGuid(), account.Id, Eurusd, TradeStyle.Intraday, Timeframe.M5,
+            BullishPlan(), new PositionSize(0.1m), pipSize: 0.0001m, valuePerPip: 1m, T0);
+        account.RegisterOpen(trade);
+        trade.Close(new Price(1.0900m), TradeCloseReason.TimeExit, new TradeCosts(new Money(0.5m), new Money(1m)), T0.AddMinutes(10));
+        account.Settle(trade);
+    }
 }

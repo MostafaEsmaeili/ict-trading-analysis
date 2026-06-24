@@ -11,6 +11,10 @@ public sealed class RiskOptions
 {
     public const string SectionName = "Ict:Risk";
 
+    /// <summary>The §2.5.5 methodology ceiling on per-trade risk — an operator may configure a lower hard max but
+    /// never one above this (mirrors the hard 2:1 reward floor pattern). Not a magic number: the §2.5.5 "hard max 4.5%".</summary>
+    private const decimal AbsoluteHardMaxRiskPercent = 4.5m;
+
     /// <summary>The risk taken per trade as a percent of equity with no active streak/drawdown (§2.5.5 default 1% with-bias).</summary>
     public decimal BaseRiskPercent { get; init; } = 1.0m;
 
@@ -101,9 +105,10 @@ public sealed class RiskOptions
             errors.Add($"DipRecoveryFraction must be within (0, 1] but was {DipRecoveryFraction}.");
         }
 
-        if (HardMaxRiskPercent is <= 0m or > 100m)
+        if (HardMaxRiskPercent is <= 0m || HardMaxRiskPercent > AbsoluteHardMaxRiskPercent)
         {
-            errors.Add($"HardMaxRiskPercent must be within (0, 100] but was {HardMaxRiskPercent}.");
+            errors.Add(
+                $"HardMaxRiskPercent must be within (0, {AbsoluteHardMaxRiskPercent}] (the §2.5.5 hard max) but was {HardMaxRiskPercent}.");
         }
 
         if (HardMaxRiskPercent < BaseRiskPercent)
