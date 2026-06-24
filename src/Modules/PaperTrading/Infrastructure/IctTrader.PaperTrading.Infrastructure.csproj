@@ -1,10 +1,27 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\SharedKernel\IctTrader.SharedKernel.csproj" />
     <ProjectReference Include="..\..\..\IctTrader.Domain\IctTrader.Domain.csproj" />
     <ProjectReference Include="..\Contracts\IctTrader.PaperTrading.Contracts.csproj" />
     <ProjectReference Include="..\Application\IctTrader.PaperTrading.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- EF Core + Npgsql provider (plan §7). Npgsql 10.0.2 requires EF Core >= 10.0.4. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.4" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
+    <!-- Design-time factory support (dotnet ef migrations). -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <!-- Configuration builder used by the design-time factory to read appsettings. -->
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" />
+    <!-- Override the transitive System.Security.Cryptography.Xml to a patched version (NU1903 guard). -->
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.6" />
   </ItemGroup>
 
   <PropertyGroup>
