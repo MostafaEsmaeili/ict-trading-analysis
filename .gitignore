@@ -1,3 +1,6 @@
+# ---- Claude Code (background-agent worktrees are transient, never committed) ----
+.claude/worktrees/
+
 # ---- .NET ----
 bin/
 obj/
