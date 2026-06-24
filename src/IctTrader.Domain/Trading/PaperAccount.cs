@@ -9,12 +9,20 @@ namespace IctTrader.Domain.Trading;
 /// by object): it admits a new trade only while the total reserved risk stays within the portfolio cap
 /// (§2.5.10 ≈5%), and on settlement it releases exactly that trade's reserved risk and applies its realized
 /// P&amp;L. Keying by trade id makes register/settle account-scoped and idempotent — a trade cannot be reserved
-/// twice nor settled twice. Paper only: it writes to its own in-memory state, never to a broker (§6.3). The
-/// adaptive loss-ladder / win-cycle that further throttles per-trade risk is a deferred fast-follow.
+/// twice nor settled twice. Paper only: it writes to its own in-memory state, never to a broker (§6.3). It also
+/// owns the adaptive-risk state (§2.4/§2.5.5) — the win/loss streaks and the equity peak/drawdown-trough — advanced
+/// at the single win/loss boundary (<see cref="Settle"/>) and exposed via <see cref="RiskState"/> for the
+/// <see cref="IRiskManager"/> to size the next trade.
 /// </summary>
 public sealed class PaperAccount : AggregateRoot<Guid>
 {
     private readonly Dictionary<Guid, Money> _reservedRiskByTrade = [];
+
+    // Adaptive-risk state (plan §2.4/§2.5.5), mutated only at the single win/loss boundary (Settle):
+    private int _consecutiveWins;
+    private int _consecutiveLosses;
+    private Money _peakEquity;
+    private Money _dipTrough;
 
     /// <summary>
     /// EF Core materialization constructor — private so domain consumers cannot call it and bypass the
@@ -40,11 +48,21 @@ public sealed class PaperAccount : AggregateRoot<Guid>
 
         Equity = startingEquity;
         MaxOpenPortfolioRiskPercent = maxOpenPortfolioRiskPercent;
+        _peakEquity = startingEquity;
+        _dipTrough = startingEquity;
     }
 
     public Money Equity { get; private set; }
 
     public decimal MaxOpenPortfolioRiskPercent { get; }
+
+    /// <summary>
+    /// A read-only snapshot of the adaptive-risk state (plan §2.4/§2.5.5) the <see cref="IRiskManager"/> reads to size
+    /// the next trade: the consecutive win/loss streaks and the equity peak/drawdown-trough. The account is the
+    /// authoritative owner; this exposes it without leaking the mutable fields. (Persisted via its backing fields; this
+    /// computed projection is mapping-ignored.)
+    /// </summary>
+    public RiskState RiskState => new(_consecutiveWins, _consecutiveLosses, Equity, _peakEquity, _dipTrough);
 
     /// <summary>The sum of the budgeted risk of every currently open trade.</summary>
     public Money OpenRisk => new(_reservedRiskByTrade.Values.Aggregate(0m, (sum, risk) => sum + risk.Amount));
@@ -145,5 +163,41 @@ public sealed class PaperAccount : AggregateRoot<Guid>
 
         _reservedRiskByTrade.Remove(trade.Id);
         Equity = newEquity;
+        UpdateRiskState(trade.RealizedPnl.Value, newEquity);
+    }
+
+    /// <summary>
+    /// Advances the adaptive-risk state at the single win/loss boundary (plan §2.4/§2.5.5). A win extends the win
+    /// streak and clears the loss streak; a loss the mirror; a breakeven (~0R, e.g. a stop trailed to entry) ends the
+    /// win streak but neither advances nor resets the loss-ladder — the drawdown, tracked by equity, is unchanged so
+    /// risk stays defensive until equity actually recovers. The peak is the high-watermark and the trough the lowest
+    /// equity since it; a new high resets the trough (no active drawdown).
+    /// </summary>
+    private void UpdateRiskState(Money realizedPnl, Money newEquity)
+    {
+        if (realizedPnl.IsPositive)
+        {
+            _consecutiveWins++;
+            _consecutiveLosses = 0;
+        }
+        else if (realizedPnl.IsNegative)
+        {
+            _consecutiveLosses++;
+            _consecutiveWins = 0;
+        }
+        else
+        {
+            _consecutiveWins = 0;
+        }
+
+        if (newEquity > _peakEquity)
+        {
+            _peakEquity = newEquity;
+            _dipTrough = newEquity;
+        }
+        else if (newEquity < _dipTrough)
+        {
+            _dipTrough = newEquity;
+        }
     }
 }

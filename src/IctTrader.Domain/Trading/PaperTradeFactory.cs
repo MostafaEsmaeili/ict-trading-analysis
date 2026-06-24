@@ -11,16 +11,21 @@ namespace IctTrader.Domain.Trading;
 /// confirms the account can reserve that risk within the portfolio cap, opens the trade at the plan's prices,
 /// and reserves the risk on the account — a single atomic step. The trade inherits the Setup's bias-aligned
 /// direction, so a counter-bias trade is structurally impossible (a counter-bias setup never becomes a Setup).
-/// This slice uses the flat <see cref="RiskOptions.BaseRiskPercent"/>; the adaptive loss-ladder is a fast-follow.
+/// It sizes from the adaptive <see cref="IRiskManager"/> (§2.4/§2.5.5 loss-ladder + win-cycle) read against the
+/// account's <see cref="PaperAccount.RiskState"/> at open/arm time — the arm-time effective % is frozen into the
+/// <see cref="ArmedEntry"/> size, so the reservation still equals the eventual trade's risk budget byte-for-byte.
 /// </summary>
 public sealed class PaperTradeFactory
 {
     private readonly RiskOptions _risk;
+    private readonly IRiskManager _riskManager;
 
-    public PaperTradeFactory(RiskOptions risk)
+    public PaperTradeFactory(RiskOptions risk, IRiskManager riskManager)
     {
         ArgumentNullException.ThrowIfNull(risk);
+        ArgumentNullException.ThrowIfNull(riskManager);
         _risk = risk;
+        _riskManager = riskManager;
     }
 
     public PaperTrade Open(
@@ -37,7 +42,7 @@ public sealed class PaperTradeFactory
 
         var sizing = PositionSizer.Size(
             account.Equity,
-            new RiskPercent(_risk.BaseRiskPercent),
+            _riskManager.EffectiveRisk(account.RiskState, _risk),
             setup.Plan,
             symbolSpec,
             contractSpec,
@@ -83,7 +88,7 @@ public sealed class PaperTradeFactory
 
         var sizing = PositionSizer.Size(
             account.Equity,
-            new RiskPercent(_risk.BaseRiskPercent),
+            _riskManager.EffectiveRisk(account.RiskState, _risk),
             setup.Plan,
             symbolSpec,
             contractSpec,

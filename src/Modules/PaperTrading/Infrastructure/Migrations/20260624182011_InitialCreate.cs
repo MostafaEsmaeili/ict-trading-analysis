@@ -18,6 +18,10 @@ public partial class InitialCreate : Migration
                 id = table.Column<Guid>(type: "uuid", nullable: false),
                 equity = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                 max_open_portfolio_risk_pct = table.Column<decimal>(type: "numeric(5,2)", nullable: false),
+                consecutive_losses = table.Column<int>(type: "integer", nullable: false),
+                consecutive_wins = table.Column<int>(type: "integer", nullable: false),
+                dip_trough = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                peak_equity = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                 reserved_risk_by_trade = table.Column<string>(type: "jsonb", nullable: false),
                 xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
             },

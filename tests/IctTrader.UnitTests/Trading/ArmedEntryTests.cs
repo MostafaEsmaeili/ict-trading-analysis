@@ -21,7 +21,7 @@ public class ArmedEntryTests
     private static readonly SymbolSpec Spec = SymbolSpec.FxMajor(Eurusd);
     private static readonly ContractSpec Contract = ContractSpec.FxMajor(Eurusd);
     private static readonly DateTimeOffset Utc = new(2024, 7, 1, 7, 0, 0, TimeSpan.Zero);
-    private static readonly PaperTradeFactory Factory = new(new RiskOptions());
+    private static readonly PaperTradeFactory Factory = new(new RiskOptions(), new RiskManager());
 
     private static Setup BullishSetup()
     {
@@ -71,7 +71,7 @@ public class ArmedEntryTests
     {
         // Two 3%-risk arms are individually within the 500 cap but together over it; the second is refused because the
         // first reservation already counts — proving reserve-at-ARM closes the same-bar-burst breach window.
-        var bigRisk = new PaperTradeFactory(new RiskOptions { BaseRiskPercent = 3m });
+        var bigRisk = new PaperTradeFactory(new RiskOptions { BaseRiskPercent = 3m }, new RiskManager());
         var account = Account();
 
         var first = bigRisk.Arm(BullishSetup(), account, Spec, Contract, Utc);

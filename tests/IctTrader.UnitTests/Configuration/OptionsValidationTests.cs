@@ -82,6 +82,18 @@ public class OptionsValidationTests
     }
 
     [Fact]
+    public void Adaptive_risk_ladder_settings_outside_their_contract_are_rejected()
+    {
+        new RiskOptions { LossLadderPercents = [0.5m, 0.6m] }.Validate().Should().NotBeEmpty();   // not descending
+        new RiskOptions { LossLadderPercents = [1.0m, 0.5m] }.Validate().Should().NotBeEmpty();   // first step not below base
+        new RiskOptions { LossLadderPercents = [] }.Validate().Should().NotBeEmpty();             // empty ladder
+        new RiskOptions { DipRecoveryFraction = 0m }.Validate().Should().NotBeEmpty();            // out of (0, 1]
+        new RiskOptions { DipRecoveryFraction = 1.5m }.Validate().Should().NotBeEmpty();
+        new RiskOptions { ConsecutiveWinsForLowestUnit = 0 }.Validate().Should().NotBeEmpty();    // must be >= 1
+        new RiskOptions { BaseRiskPercent = 5m, HardMaxRiskPercent = 4.5m }.Validate().Should().NotBeEmpty(); // max < base
+    }
+
+    [Fact]
     public void A_target_equilibrium_fraction_outside_the_open_unit_interval_is_rejected()
     {
         new TargetLadderOptions { T1EquilibriumFraction = 0m }.Validate().Should().NotBeEmpty();
