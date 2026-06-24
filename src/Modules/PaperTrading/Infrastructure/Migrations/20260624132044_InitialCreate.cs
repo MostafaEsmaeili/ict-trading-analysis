@@ -12,6 +12,21 @@ public partial class InitialCreate : Migration
     protected override void Up(MigrationBuilder migrationBuilder)
     {
         migrationBuilder.CreateTable(
+            name: "paper_accounts",
+            columns: table => new
+            {
+                id = table.Column<Guid>(type: "uuid", nullable: false),
+                equity = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                max_open_portfolio_risk_pct = table.Column<decimal>(type: "numeric(5,2)", nullable: false),
+                reserved_risk_by_trade = table.Column<string>(type: "jsonb", nullable: false),
+                xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
+            },
+            constraints: table =>
+            {
+                table.PrimaryKey("PK_paper_accounts", x => x.id);
+            });
+
+        migrationBuilder.CreateTable(
             name: "armed_entries",
             columns: table => new
             {
@@ -30,21 +45,12 @@ public partial class InitialCreate : Migration
             constraints: table =>
             {
                 table.PrimaryKey("PK_armed_entries", x => x.id);
-            });
-
-        migrationBuilder.CreateTable(
-            name: "paper_accounts",
-            columns: table => new
-            {
-                id = table.Column<Guid>(type: "uuid", nullable: false),
-                equity = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                max_open_portfolio_risk_pct = table.Column<decimal>(type: "numeric(5,2)", nullable: false),
-                reserved_risk_by_trade = table.Column<string>(type: "jsonb", nullable: false),
-                xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
-            },
-            constraints: table =>
-            {
-                table.PrimaryKey("PK_paper_accounts", x => x.id);
+                table.ForeignKey(
+                    name: "FK_armed_entries_paper_accounts_account_id",
+                    column: x => x.account_id,
+                    principalTable: "paper_accounts",
+                    principalColumn: "id",
+                    onDelete: ReferentialAction.Restrict);
             });
 
         migrationBuilder.CreateTable(

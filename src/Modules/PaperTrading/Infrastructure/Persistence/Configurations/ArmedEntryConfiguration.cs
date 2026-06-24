@@ -125,5 +125,13 @@ internal sealed class ArmedEntryConfiguration : IEntityTypeConfiguration<ArmedEn
 
         builder.HasIndex(e => new { e.AccountId, e.Status })
             .HasDatabaseName("ix_armed_entries_account_id_status");
+
+        // ── Relationship: an armed entry belongs to one account ───────────────────────────────────────
+        // Mirrors paper_trades — a resting limit's reserved risk lives on its PaperAccount, so the
+        // account_id is a foreign key (Restrict) to paper_accounts.id; an orphan armed entry cannot persist.
+        builder.HasOne<PaperAccount>()
+            .WithMany()
+            .HasForeignKey(e => e.AccountId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

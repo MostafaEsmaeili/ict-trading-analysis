@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IctTrader.PaperTrading.Infrastructure.Migrations
 {
     [DbContext(typeof(PaperTradingDbContext))]
-    [Migration("20260624105749_InitialCreate")]
+    [Migration("20260624132044_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -260,6 +260,15 @@ namespace IctTrader.PaperTrading.Infrastructure.Migrations
                         .HasDatabaseName("ix_paper_trades_symbol_status");
 
                     b.ToTable("paper_trades", (string)null);
+                });
+
+            modelBuilder.Entity("IctTrader.Domain.Trading.ArmedEntry", b =>
+                {
+                    b.HasOne("IctTrader.Domain.Trading.PaperAccount", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("IctTrader.Domain.Trading.PaperTrade", b =>

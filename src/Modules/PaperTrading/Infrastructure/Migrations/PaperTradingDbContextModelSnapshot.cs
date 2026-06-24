@@ -259,6 +259,15 @@ namespace IctTrader.PaperTrading.Infrastructure.Migrations
                     b.ToTable("paper_trades", (string)null);
                 });
 
+            modelBuilder.Entity("IctTrader.Domain.Trading.ArmedEntry", b =>
+                {
+                    b.HasOne("IctTrader.Domain.Trading.PaperAccount", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("IctTrader.Domain.Trading.PaperTrade", b =>
                 {
                     b.HasOne("IctTrader.Domain.Trading.PaperAccount", null)

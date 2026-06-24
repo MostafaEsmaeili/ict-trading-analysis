@@ -291,6 +291,7 @@ public sealed class PaperTradingPersistenceTests : IAsyncLifetime
         var entryId = Guid.NewGuid();
         var accountId = Guid.NewGuid();
         var setup = BuildSetup();
+        await SeedAccountAsync(accountId); // the account FK requires a real PaperAccount to exist first
 
         await using (var ctx = CreateContext())
         {
@@ -349,6 +350,7 @@ public sealed class PaperTradingPersistenceTests : IAsyncLifetime
         var entryId = Guid.NewGuid();
         var accountId = Guid.NewGuid();
         var setup = BuildSetup();
+        await SeedAccountAsync(accountId); // the account FK requires a real PaperAccount to exist first
 
         await using (var ctx = CreateContext())
         {
@@ -453,15 +455,43 @@ public sealed class DockerRequiredFactAttribute : FactAttribute
 
     private static bool IsDockerAvailable()
     {
+        if (Environment.GetEnvironmentVariable("SKIP_DOCKER_TESTS") == "true")
+            return false;
+
         try
         {
-            // Testcontainers probes Docker on first use; we do a lightweight pre-flight here.
-            var socket = Environment.GetEnvironmentVariable("DOCKER_HOST")
-                ?? "/var/run/docker.sock";
-            return Environment.GetEnvironmentVariable("SKIP_DOCKER_TESTS") != "true"
-                && (socket.StartsWith("tcp://", StringComparison.OrdinalIgnoreCase)
-                    || File.Exists(socket)
-                    || OperatingSystem.IsWindows());
+            var dockerHost = Environment.GetEnvironmentVariable("DOCKER_HOST");
+
+            // An explicit tcp:// endpoint (typical in CI) — assume reachable; a wrong one fails the test
+            // loudly, which is the correct signal, rather than being silently skipped.
+            if (dockerHost?.StartsWith("tcp://", StringComparison.OrdinalIgnoreCase) == true)
+                return true;
+
+            // Otherwise PROBE the actual daemon endpoint rather than assuming it exists on this OS: the
+            // named pipe on Windows, the unix socket elsewhere (honouring a unix:// DOCKER_HOST override).
+            return OperatingSystem.IsWindows()
+                ? WindowsDockerPipeExists()
+                : File.Exists(UnixSocketPath(dockerHost));
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static string UnixSocketPath(string? dockerHost) =>
+        dockerHost?.StartsWith("unix://", StringComparison.OrdinalIgnoreCase) == true
+            ? dockerHost["unix://".Length..]
+            : "/var/run/docker.sock";
+
+    private static bool WindowsDockerPipeExists()
+    {
+        try
+        {
+            // The Docker Desktop engine listens on the named pipe \\.\pipe\docker_engine; enumerate the pipe
+            // namespace and look for it, so a Windows host WITHOUT Docker running is correctly detected.
+            return Directory.EnumerateFiles(@"\\.\pipe\")
+                .Any(name => name.EndsWith("docker_engine", StringComparison.OrdinalIgnoreCase));
         }
         catch
         {

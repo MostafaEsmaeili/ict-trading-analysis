@@ -59,7 +59,9 @@ public sealed class PaperTradingDbContextFactory : IDesignTimeDbContextFactory<P
                 var config = new ConfigurationBuilder()
                     .AddJsonFile(candidate, optional: true)
                     .Build();
-                return config[AppSettingsKey];
+                var value = config[AppSettingsKey];
+                if (!string.IsNullOrEmpty(value))
+                    return value;     // an empty Development value falls through to appsettings.json, not an early return
             }
 
             candidate = Path.Combine(dir.FullName, "appsettings.json");
