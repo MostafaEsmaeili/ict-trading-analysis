@@ -98,6 +98,20 @@ public sealed class PaperAccount : AggregateRoot<Guid>
     }
 
     /// <summary>
+    /// Releases a resting reservation whose armed entry was cancelled unfilled (no-chase) — frees its risk back to the
+    /// portfolio cap so a stale arm cannot leak it. Symmetric with <see cref="Reserve"/> (and distinct from
+    /// <see cref="Settle"/>, which releases a reservation that BECAME a trade and books its P&amp;L). Throws if the id was
+    /// never reserved here or was already released/settled; never touches <see cref="Equity"/> (a cancelled arm books
+    /// no money).
+    /// </summary>
+    public void Release(Guid reservationId)
+    {
+        Guard.Against(
+            !_reservedRiskByTrade.Remove(reservationId),
+            "No reservation exists on this account to release.");
+    }
+
+    /// <summary>
     /// Books a closed trade: releases its reserved risk and applies its NET realized P&amp;L to equity (the §5.4
     /// costs are already netted into <see cref="PaperTrade.RealizedPnl"/>). The released risk is the original
     /// price-based <see cref="PaperTrade.RiskBudget"/>, unchanged by costs. Throws if the trade is not this

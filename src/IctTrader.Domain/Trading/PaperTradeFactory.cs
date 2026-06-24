@@ -94,7 +94,7 @@ public sealed class PaperTradeFactory
         // Reserve discards the un-returned ArmedEntry — either path leaves the account untouched.
         var armedEntry = new ArmedEntry(
             Guid.NewGuid(), account.Id, setup, sizing.Size, sizing.RiskBudget,
-            symbolSpec.PipSize, contractSpec.ValuePerPip, armedAtUtc);
+            symbolSpec.PipSize, contractSpec.ValuePerPip, symbolSpec.InstrumentClass, armedAtUtc);
         account.Reserve(armedEntry.Id, sizing.RiskBudget);
 
         return armedEntry;

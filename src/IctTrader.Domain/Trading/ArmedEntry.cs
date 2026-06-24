@@ -4,8 +4,7 @@ using IctTrader.Domain.ValueObjects;
 
 namespace IctTrader.Domain.Trading;
 
-/// <summary>The lifecycle of a resting entry limit (plan §2.5.1 step 7). The per-candle no-chase cancellation that
-/// adds a <c>Cancelled</c> state is the orchestrator cut (2b).</summary>
+/// <summary>The lifecycle of a resting entry limit (plan §2.5.1 step 7).</summary>
 public enum ArmedEntryStatus
 {
     /// <summary>The limit is resting — its risk reserved against the portfolio cap — waiting for the price retrace.</summary>
@@ -13,6 +12,9 @@ public enum ArmedEntryStatus
 
     /// <summary>The limit filled and produced an open <see cref="PaperTrade"/> under the same id (a key re-label).</summary>
     Triggered,
+
+    /// <summary>The limit was cancelled unfilled (no-chase) — its reservation released back to the portfolio cap.</summary>
+    Cancelled,
 }
 
 /// <summary>
@@ -35,6 +37,7 @@ public sealed class ArmedEntry : AggregateRoot<Guid>
         Money riskBudget,
         decimal pipSize,
         decimal valuePerPip,
+        InstrumentClass instrumentClass,
         DateTimeOffset armedAtUtc)
         : base(id)
     {
@@ -52,6 +55,7 @@ public sealed class ArmedEntry : AggregateRoot<Guid>
         RiskBudget = riskBudget;
         PipSize = pipSize;
         ValuePerPip = valuePerPip;
+        InstrumentClass = instrumentClass;
         ArmedAtUtc = armedAtUtc;
         Status = ArmedEntryStatus.Armed;
 
@@ -78,6 +82,9 @@ public sealed class ArmedEntry : AggregateRoot<Guid>
     /// <summary>The instrument's value-per-pip per lot — carried for the same reason as <see cref="PipSize"/>.</summary>
     public decimal ValuePerPip { get; }
 
+    /// <summary>The instrument class — carried so the orchestrator can classify the killzone for the no-chase rung.</summary>
+    public InstrumentClass InstrumentClass { get; }
+
     public DateTimeOffset ArmedAtUtc { get; }
 
     public ArmedEntryStatus Status { get; private set; }
@@ -97,5 +104,19 @@ public sealed class ArmedEntry : AggregateRoot<Guid>
 
         Status = ArmedEntryStatus.Triggered;
         RaiseDomainEvent(new EntryTriggered(Id, AccountId, triggeredAtUtc));
+    }
+
+    /// <summary>Cancels the resting limit unfilled at <paramref name="atUtc"/> for the no-chase
+    /// <paramref name="reason"/> (plan §2.5.1 "don't chase"). Legal only once from <see cref="ArmedEntryStatus.Armed"/>,
+    /// and not before the arm time. The caller releases the reservation on the account (<see cref="PaperAccount.Release"/>)
+    /// so the cap self-heals. Clock-free: the caller passes the bar-close time.</summary>
+    public void Cancel(EntryCancelReason reason, DateTimeOffset atUtc)
+    {
+        Guard.Against(Status != ArmedEntryStatus.Armed, "Only an armed entry can be cancelled.");
+        Guard.Against(atUtc.Offset != TimeSpan.Zero, "ArmedEntry cancel time must be UTC.");
+        Guard.Against(atUtc < ArmedAtUtc, "An armed entry cannot be cancelled before it was armed.");
+
+        Status = ArmedEntryStatus.Cancelled;
+        RaiseDomainEvent(new EntryCancelled(Id, AccountId, reason, atUtc));
     }
 }

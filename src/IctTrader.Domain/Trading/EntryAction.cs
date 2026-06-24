@@ -11,6 +11,9 @@ public enum EntryActionKind
 
     /// <summary>Close the just-opened trade (the same-bar entry-then-stop −1R straddle) — <see cref="PaperTrade.Close"/>.</summary>
     Close,
+
+    /// <summary>Cancel the unfilled resting limit (no-chase) — <see cref="ArmedEntry.Cancel"/> + <see cref="PaperAccount.Release"/>.</summary>
+    Cancel,
 }
 
 /// <summary>
@@ -23,25 +26,36 @@ public enum EntryActionKind
 public readonly record struct EntryAction
 {
     private EntryAction(
-        EntryActionKind kind, Price price, TradeCosts costs, TradeCloseReason? reason, DateTimeOffset atUtc)
+        EntryActionKind kind,
+        Price price,
+        TradeCosts costs,
+        TradeCloseReason? reason,
+        EntryCancelReason? cancelReason,
+        DateTimeOffset atUtc)
     {
         Guard.Against(atUtc.Offset != TimeSpan.Zero, "EntryAction timestamps must be UTC.");
         Kind = kind;
         Price = price;
         Costs = costs;
         Reason = reason;
+        CancelReason = cancelReason;
         AtUtc = atUtc;
     }
 
     /// <summary>Open the trade at the <paramref name="fillLevel"/> (the limit level). The caller applies it via
     /// <see cref="PaperTradeFactory.OpenArmed"/>; the entry spread is the deferred §5.4 cost line.</summary>
     public static EntryAction Open(Price fillLevel, DateTimeOffset atUtc)
-        => new(EntryActionKind.Open, fillLevel, TradeCosts.Zero, null, atUtc);
+        => new(EntryActionKind.Open, fillLevel, TradeCosts.Zero, null, null, atUtc);
 
     /// <summary>Close the just-opened trade at the <paramref name="level"/> (the same-bar straddle), costing the full
     /// round trip <paramref name="costs"/>.</summary>
     public static EntryAction Close(Price level, TradeCloseReason reason, TradeCosts costs, DateTimeOffset atUtc)
-        => new(EntryActionKind.Close, level, costs, reason, atUtc);
+        => new(EntryActionKind.Close, level, costs, reason, null, atUtc);
+
+    /// <summary>Cancel the unfilled limit (no-chase) for <paramref name="reason"/>. <paramref name="unfilledLevel"/> is
+    /// the resting limit level (informational — the caller cancels the entry + releases the reservation, no price).</summary>
+    public static EntryAction Cancel(EntryCancelReason reason, Price unfilledLevel, DateTimeOffset atUtc)
+        => new(EntryActionKind.Cancel, unfilledLevel, TradeCosts.Zero, null, reason, atUtc);
 
     public EntryActionKind Kind { get; }
 
@@ -50,8 +64,11 @@ public readonly record struct EntryAction
     /// <summary>The §5.4 costs — the full round trip on a straddle <see cref="EntryActionKind.Close"/>, zero on an open.</summary>
     public TradeCosts Costs { get; }
 
-    /// <summary>The close reason — set on a straddle <see cref="EntryActionKind.Close"/>; null on an open.</summary>
+    /// <summary>The close reason — set on a straddle <see cref="EntryActionKind.Close"/>; null otherwise.</summary>
     public TradeCloseReason? Reason { get; }
+
+    /// <summary>The no-chase reason — set on a <see cref="EntryActionKind.Cancel"/>; null otherwise.</summary>
+    public EntryCancelReason? CancelReason { get; }
 
     /// <summary>The bar-close time the action is stamped at.</summary>
     public DateTimeOffset AtUtc { get; }
