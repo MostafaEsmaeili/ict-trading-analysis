@@ -12,10 +12,13 @@ public readonly record struct ConfluenceScore(int Score, SetupGrade Grade, bool 
 }
 
 /// <summary>
-/// Pure domain service that turns matched confluences into a 0–100 score and an A/B/C/Reject grade
-/// (plan §2.5.4): <c>score = Σ(matched weights)/Σ(applicable weights) ×100</c>; any missing
-/// RequiredCondition ⇒ Reject regardless of score. All thresholds/weights come from
-/// <see cref="ConfluenceOptions"/> — no magic numbers, fully operator-tunable.
+/// Pure domain service that turns matched confluences into a 0–100 score and a grade (plan §2.5.4 / core-model
+/// decisions register TGR-4): <c>score = Σ(matched weights)/Σ(applicable weights) ×100</c>. Any missing
+/// RequiredCondition ⇒ Reject. An all-RequiredConditions-clean setup IS the tradeable §2.5 model, so it grades at
+/// LEAST B; the weighted score is the within-grade sorter that promotes it to A at
+/// <see cref="ConfluenceOptions.GradeAThreshold"/> — it is NOT a floor that can demote a complete setup to C/Reject.
+/// (Consequence: A needs optional confluences, so it is unreachable until the optional emitters ship.) All
+/// thresholds/weights come from <see cref="ConfluenceOptions"/> — no magic numbers, fully operator-tunable.
 /// </summary>
 public sealed class SetupScorer
 {
@@ -64,21 +67,15 @@ public sealed class SetupScorer
 
     private SetupGrade GradeFor(int score, bool allRequiredMatched)
     {
+        // A missing RequiredCondition is never tradeable (§2.5.2).
         if (!allRequiredMatched)
         {
             return SetupGrade.Reject;
         }
 
-        if (score >= _options.GradeAThreshold)
-        {
-            return SetupGrade.A;
-        }
-
-        if (score >= _options.GradeBThreshold)
-        {
-            return SetupGrade.B;
-        }
-
-        return score >= _options.GradeCThreshold ? SetupGrade.C : SetupGrade.Reject;
+        // All RequiredConditions hold ⇒ this is the tradeable §2.5 model, so it grades at least B (TGR-4). The score
+        // only promotes B → A at the A threshold; it can no longer demote a complete setup below B. The lower
+        // (B/C) thresholds remain display-band labels for the raw score, not grading gates.
+        return score >= _options.GradeAThreshold ? SetupGrade.A : SetupGrade.B;
     }
 }
