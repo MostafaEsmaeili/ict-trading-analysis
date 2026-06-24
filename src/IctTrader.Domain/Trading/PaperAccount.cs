@@ -9,12 +9,20 @@ namespace IctTrader.Domain.Trading;
 /// by object): it admits a new trade only while the total reserved risk stays within the portfolio cap
 /// (§2.5.10 ≈5%), and on settlement it releases exactly that trade's reserved risk and applies its realized
 /// P&amp;L. Keying by trade id makes register/settle account-scoped and idempotent — a trade cannot be reserved
-/// twice nor settled twice. Paper only: it writes to its own in-memory state, never to a broker (§6.3). The
-/// adaptive loss-ladder / win-cycle that further throttles per-trade risk is a deferred fast-follow.
+/// twice nor settled twice. Paper only: it writes to its own in-memory state, never to a broker (§6.3). It also
+/// owns the adaptive-risk state (§2.4/§2.5.5) — the win/loss streaks and the equity peak/drawdown-trough — advanced
+/// at the single win/loss boundary (<see cref="Settle"/>) and exposed via <see cref="RiskState"/> for the
+/// <see cref="IRiskManager"/> to size the next trade.
 /// </summary>
 public sealed class PaperAccount : AggregateRoot<Guid>
 {
     private readonly Dictionary<Guid, Money> _reservedRiskByTrade = [];
+
+    // Adaptive-risk state (plan §2.4/§2.5.5), mutated only at the single win/loss boundary (Settle):
+    private int _consecutiveWins;
+    private int _consecutiveLosses;
+    private Money _peakEquity;
+    private Money _dipTrough;
 
     /// <summary>
     /// EF Core materialization constructor — private so domain consumers cannot call it and bypass the
@@ -40,11 +48,21 @@ public sealed class PaperAccount : AggregateRoot<Guid>
 
         Equity = startingEquity;
         MaxOpenPortfolioRiskPercent = maxOpenPortfolioRiskPercent;
+        _peakEquity = startingEquity;
+        _dipTrough = startingEquity;
     }
 
     public Money Equity { get; private set; }
 
     public decimal MaxOpenPortfolioRiskPercent { get; }
+
+    /// <summary>
+    /// A read-only snapshot of the adaptive-risk state (plan §2.4/§2.5.5) the <see cref="IRiskManager"/> reads to size
+    /// the next trade: the consecutive win/loss streaks and the equity peak/drawdown-trough. The account is the
+    /// authoritative owner; this exposes it without leaking the mutable fields. (Persisted via its backing fields; this
+    /// computed projection is mapping-ignored.)
+    /// </summary>
+    public RiskState RiskState => new(_consecutiveWins, _consecutiveLosses, Equity, _peakEquity, _dipTrough);
 
     /// <summary>The sum of the budgeted risk of every currently open trade.</summary>
     public Money OpenRisk => new(_reservedRiskByTrade.Values.Aggregate(0m, (sum, risk) => sum + risk.Amount));
@@ -145,5 +163,48 @@ public sealed class PaperAccount : AggregateRoot<Guid>
 
         _reservedRiskByTrade.Remove(trade.Id);
         Equity = newEquity;
+        // Classify the streak by the GROSS (structural) outcome, not the net: a stop trailed to entry is a scratch
+        // (gross 0) even when costs make the net slightly negative — it must not advance the loss-ladder (§5.2).
+        UpdateRiskState(trade.GrossPnl!.Value, newEquity);
+    }
+
+    /// <summary>
+    /// Advances the adaptive-risk state at the single win/loss boundary (plan §2.4/§2.5.5). The streak is classified by
+    /// the <paramref name="grossOutcome"/> (the structural edge, §5.2) while the drawdown peak/trough track NET
+    /// <paramref name="newEquity"/> (real money) — so a cost-only scratch (gross 0, net slightly negative) is a
+    /// breakeven, not a loss. A loss (negative gross) extends the loss streak and clears the win streak. A win
+    /// (positive gross) extends the win streak but — per the §2.5.5 <b>recovery-gated</b> restore ("restore after
+    /// recovering 50% of the loss") — does NOT clear the loss-ladder: risk stays suppressed through an unrecovered
+    /// drawdown (a single win does not recover a multi-tier dip), the actual restore being the 50%-dip recovery decided
+    /// in <see cref="IRiskManager"/> or a new equity high below. A breakeven (gross 0) ends the win streak and touches
+    /// nothing else. A new equity high resets BOTH the trough and the loss-ladder (the drawdown is fully recovered).
+    /// The win-gated restore is a non-default opt-in deferred per the core-model decisions register (TGR-5).
+    /// </summary>
+    private void UpdateRiskState(Money grossOutcome, Money newEquity)
+    {
+        if (grossOutcome.IsPositive)
+        {
+            _consecutiveWins++;
+        }
+        else if (grossOutcome.IsNegative)
+        {
+            _consecutiveLosses++;
+            _consecutiveWins = 0;
+        }
+        else
+        {
+            _consecutiveWins = 0;
+        }
+
+        if (newEquity > _peakEquity)
+        {
+            _peakEquity = newEquity;
+            _dipTrough = newEquity;
+            _consecutiveLosses = 0; // a new equity high = full recovery — the drawdown is over
+        }
+        else if (newEquity < _dipTrough)
+        {
+            _dipTrough = newEquity;
+        }
     }
 }

@@ -20,7 +20,7 @@ public class PaperTradeFactoryTests
     private static readonly SymbolSpec Spec = SymbolSpec.FxMajor(Eurusd);
     private static readonly ContractSpec Contract = ContractSpec.FxMajor(Eurusd);
     private static readonly DateTimeOffset Utc = new(2024, 7, 1, 7, 0, 0, TimeSpan.Zero);
-    private static readonly PaperTradeFactory Factory = new(new RiskOptions());
+    private static readonly PaperTradeFactory Factory = new(new RiskOptions(), new RiskManager());
 
     private static Setup BullishSetup()
     {

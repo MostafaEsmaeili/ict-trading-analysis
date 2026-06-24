@@ -76,6 +76,39 @@ internal sealed class PaperAccountConfiguration : IEntityTypeConfiguration<Paper
             .HasConversion(JsonConverters.ReservationLedgerConverter, ledgerComparer)
             .HasColumnType("jsonb")
             .IsRequired();
+
+        // Adaptive-risk state (plan §2.4/§2.5.5) — private backing fields mapped by name so the loss-ladder /
+        // win-cycle / drawdown context survives a restart instead of resetting to base risk on every reload.
+        builder.Property<int>("_consecutiveWins")
+            .UsePropertyAccessMode(PropertyAccessMode.Field)
+            .HasColumnName("consecutive_wins")
+            .IsRequired();
+
+        builder.Property<int>("_consecutiveLosses")
+            .UsePropertyAccessMode(PropertyAccessMode.Field)
+            .HasColumnName("consecutive_losses")
+            .IsRequired();
+
+        builder.Property<Money>("_peakEquity")
+            .UsePropertyAccessMode(PropertyAccessMode.Field)
+            .HasColumnName("peak_equity")
+            .HasConversion(
+                money => money.Amount,
+                amount => new Money(amount))
+            .HasColumnType("numeric(18,2)")
+            .IsRequired();
+
+        builder.Property<Money>("_dipTrough")
+            .UsePropertyAccessMode(PropertyAccessMode.Field)
+            .HasColumnName("dip_trough")
+            .HasConversion(
+                money => money.Amount,
+                amount => new Money(amount))
+            .HasColumnType("numeric(18,2)")
+            .IsRequired();
+
+        // The RiskState snapshot is a computed projection over the fields above — never its own column.
+        builder.Ignore(a => a.RiskState);
     }
 
     private static bool LedgerEqual(Dictionary<Guid, Money>? a, Dictionary<Guid, Money>? b)

@@ -111,6 +111,43 @@ public sealed class PaperTradingPersistenceTests : IAsyncLifetime
         loaded.CanOpen(new Money(400m)).Should().BeFalse("400 + 300 = 700 > 500 cap");
     }
 
+    // ── PaperAccount adaptive-risk state round-trip ──────────────────────────────────────────────────
+
+    [DockerRequiredFact]
+    public async Task PaperAccount_persists_and_reloads_adaptive_risk_state()
+    {
+        // Arrange: settle one losing trade so the account carries a non-trivial risk-state (1 loss + a drawdown).
+        var accountId = Guid.NewGuid();
+        await using (var ctx = CreateContext())
+        {
+            var account = new PaperAccount(accountId, new Money(10_000m), 5m);
+            var trade = new PaperTrade(
+                Guid.NewGuid(), accountId, new Symbol("EURUSD"), TradeStyle.Intraday, Timeframe.M5,
+                BuildSetup().Plan, new PositionSize(0.1m), pipSize: 0.0001m, valuePerPip: 1m, Epoch);
+            account.RegisterOpen(trade);
+            trade.Close(new Price(1.0850m), TradeCloseReason.StopHit, TradeCosts.Zero, Epoch.AddMinutes(10));
+            account.Settle(trade);
+
+            ctx.PaperAccounts.Add(account);
+            await ctx.SaveChangesAsync();
+        }
+
+        // Act: reload in a fresh context.
+        PaperAccount loaded;
+        await using (var ctx = CreateContext())
+        {
+            loaded = await ctx.PaperAccounts.SingleAsync(a => a.Id == accountId);
+        }
+
+        // Assert: the adaptive-risk state survives the round-trip (it would reset to base risk if not persisted).
+        var state = loaded.RiskState;
+        state.ConsecutiveLosses.Should().Be(1);
+        state.ConsecutiveWins.Should().Be(0);
+        state.PeakEquity.Amount.Should().Be(10_000m);
+        state.DipTrough.Amount.Should().BeLessThan(10_000m, "the loss recorded a drawdown trough");
+        state.CurrentEquity.Amount.Should().Be(loaded.Equity.Amount);
+    }
+
     // ── PaperTrade round-trip (open only) ────────────────────────────────────────────────────────────
 
     [DockerRequiredFact]

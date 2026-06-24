@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IctTrader.PaperTrading.Infrastructure.Migrations
 {
     [DbContext(typeof(PaperTradingDbContext))]
-    [Migration("20260624132044_InitialCreate")]
+    [Migration("20260624182011_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -101,6 +101,22 @@ namespace IctTrader.PaperTrading.Infrastructure.Migrations
                     b.Property<decimal>("MaxOpenPortfolioRiskPercent")
                         .HasColumnType("numeric(5,2)")
                         .HasColumnName("max_open_portfolio_risk_pct");
+
+                    b.Property<int>("_consecutiveLosses")
+                        .HasColumnType("integer")
+                        .HasColumnName("consecutive_losses");
+
+                    b.Property<int>("_consecutiveWins")
+                        .HasColumnType("integer")
+                        .HasColumnName("consecutive_wins");
+
+                    b.Property<decimal>("_dipTrough")
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("dip_trough");
+
+                    b.Property<decimal>("_peakEquity")
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("peak_equity");
 
                     b.Property<string>("_reservedRiskByTrade")
                         .IsRequired()

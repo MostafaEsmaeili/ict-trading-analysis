@@ -28,7 +28,7 @@ public class EntryManagerTests
     private static readonly DateTimeOffset BarClose = Utc.AddMinutes(5);
     private static readonly EntryContext Context = new(BarClose);
 
-    private static readonly PaperTradeFactory Factory = new(new RiskOptions());
+    private static readonly PaperTradeFactory Factory = new(new RiskOptions(), new RiskManager());
     private static readonly EntryManager Manager = new(
         new EntryFillEvaluator(), new FillEvaluator(new FillOptions()), new ExecutionCostModel(new ExecutionCostOptions()),
         new KillzoneClock(new NyClock(new FakeTimeProvider()), KillzoneSchedule.CreateDefault()),

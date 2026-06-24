@@ -29,7 +29,7 @@ public class TradeOrchestratorTests
     private static readonly DateTimeOffset ArmedAt = new(2024, 7, 1, 7, 0, 0, TimeSpan.Zero);
     private static readonly DateTimeOffset DeadTime = new(2024, 7, 1, 9, 30, 0, TimeSpan.Zero); // 05:30 NY — no killzone
 
-    private static readonly PaperTradeFactory Factory = new(new RiskOptions());
+    private static readonly PaperTradeFactory Factory = new(new RiskOptions(), new RiskManager());
 
     private static readonly TradeOrchestrator Armed = BuildOrchestrator(new EntryManagementOptions());
     private static readonly TradeOrchestrator Immediate =
