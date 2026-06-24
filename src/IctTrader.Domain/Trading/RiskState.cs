@@ -34,7 +34,8 @@ public readonly record struct RiskState
     /// <summary>Consecutive winning settlements (resets to 0 on a loss or breakeven) — the 5-win-cycle driver.</summary>
     public int ConsecutiveWins { get; }
 
-    /// <summary>Consecutive losing settlements (resets to 0 on a win) — the loss-ladder step driver.</summary>
+    /// <summary>Losses since the last drawdown recovery — the loss-ladder step driver. Per the §2.5.5 recovery-gated
+    /// restore it PERSISTS through intervening wins, resetting only on a new equity high or a 50%-dip recovery.</summary>
     public int ConsecutiveLosses { get; }
 
     /// <summary>The account's current equity.</summary>

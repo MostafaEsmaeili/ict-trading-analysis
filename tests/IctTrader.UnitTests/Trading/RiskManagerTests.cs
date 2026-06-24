@@ -106,11 +106,12 @@ public class RiskManagerTests
     }
 
     [Fact]
-    public void A_win_clears_the_loss_streak_and_restores_base_risk()
+    public void A_new_equity_high_clears_the_loss_streak_and_restores_base_risk()
     {
+        // A win that prints a new equity high is a FULL recovery — the drawdown is over, so the ladder clears.
         var account = Account();
         SettleLoss(account);
-        SettleWin(account);
+        SettleWin(account); // runner win → above the prior peak
 
         account.RiskState.ConsecutiveLosses.Should().Be(0);
         account.RiskState.ConsecutiveWins.Should().Be(1);
@@ -129,19 +130,33 @@ public class RiskManagerTests
     }
 
     [Fact]
-    public void A_win_inside_an_unrecovered_drawdown_restores_base_risk()
+    public void A_win_inside_an_unrecovered_drawdown_does_not_restore_base_risk()
     {
-        // The consecutive-loss ladder restores on a win (the streak is broken) even though equity has not yet recovered
-        // 50% of the dip — the §2.4 "consecutive losses" framing. The recovery-gated DrawdownRecovered restore is the
-        // secondary trigger; the win-vs-recovery restore is a contested sub-decision tracked for the core-model pass.
+        // Recovery-gated (§2.5.5, decisions register TGR-5): a small win that does not recover 50% of the dip keeps
+        // risk suppressed — the loss-ladder PERSISTS through the win, unlike a naive consecutive-loss-streak clear.
         var account = Account();
         SettleLoss(account);
         SettleLoss(account);        // 0.25% tier, deep in the drawdown
-        SettleSmallWin(account);    // a small win — equity climbs but stays below the peak
+        SettleSmallWin(account);    // a small win — equity climbs but well under the 50% recovery threshold
 
-        account.RiskState.ConsecutiveLosses.Should().Be(0);
+        account.RiskState.ConsecutiveLosses.Should().Be(2);   // the ladder is NOT cleared by a single win
         account.RiskState.CurrentEquity.Amount.Should().BeLessThan(account.RiskState.PeakEquity.Amount);
-        Manager.EffectiveRisk(account.RiskState, Options).Value.Should().Be(1.0m);
+        Manager.EffectiveRisk(account.RiskState, Options).Value.Should().Be(0.25m);
+    }
+
+    [Fact]
+    public void A_partial_recovery_to_the_threshold_restores_base_risk()
+    {
+        // Once equity claws back >= 50% of the dip, base risk is restored — even though the loss count still persists
+        // (it clears fully only on a new high). This is the recovery that the win-gated reading skipped.
+        var account = Account();
+        SettleLoss(account);
+        SettleLoss(account);        // a ~10 dip from the 10,000 peak (two -5 losses)
+        SettleMediumWin(account);   // +5 → exactly 50% of the dip recovered, still below the peak
+
+        account.RiskState.ConsecutiveLosses.Should().Be(2);   // count persists (no new high yet)
+        account.RiskState.CurrentEquity.Amount.Should().BeLessThan(account.RiskState.PeakEquity.Amount);
+        Manager.EffectiveRisk(account.RiskState, Options).Value.Should().Be(1.0m); // recovery-gated restore fired
     }
 
     [Fact]
@@ -217,6 +232,8 @@ public class RiskManagerTests
     private static void SettleLoss(PaperAccount account) => Settle(account, 1.0850m, TradeCloseReason.StopHit);
 
     private static void SettleSmallWin(PaperAccount account) => Settle(account, 1.0920m, TradeCloseReason.TargetHit);
+
+    private static void SettleMediumWin(PaperAccount account) => Settle(account, 1.0950m, TradeCloseReason.TargetHit);
 
     private static void SettleBreakeven(PaperAccount account) => Settle(account, 1.0900m, TradeCloseReason.TimeExit);
 }
