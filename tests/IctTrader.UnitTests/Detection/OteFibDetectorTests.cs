@@ -79,6 +79,44 @@ public class OteFibDetectorTests
         Detector.Detect(ctx, Candle()).Should().Be(DetectorResult.NoMatch);
     }
 
+    [Theory]
+    [InlineData(1.0836, 1.0840, 1.0838)] // midpoint 1.0838 == the 62% retrace (band edge) -> inclusive, in-zone
+    [InlineData(1.0819, 1.0823, 1.0821)] // midpoint 1.0821 == the 79% retrace (band edge) -> inclusive, in-zone
+    public void A_level_exactly_on_a_band_edge_is_in_zone(decimal bottom, decimal top, decimal expected)
+    {
+        // EG-1: the 62-79% band edges are inclusive (OteZone.Contains is >=/<=).
+        var ctx = NewContext();
+        ctx.SetDisplacement(BullishLeg()); // band [1.0821 (79%), 1.0838 (62%)]
+        ctx.RegisterFvg(new FairValueGap(Direction.Bullish, Timeframe.M5, new Price(bottom), new Price(top), Base));
+
+        var result = Detector.Detect(ctx, Candle());
+
+        result.Matched.Should().BeTrue();
+        result.KeyLevel.Should().Be(expected);
+    }
+
+    [Fact]
+    public void A_level_a_tick_beyond_the_band_edge_is_skipped()
+    {
+        var ctx = NewContext();
+        ctx.SetDisplacement(BullishLeg());
+        ctx.RegisterFvg(new FairValueGap(Direction.Bullish, Timeframe.M5, new Price(1.0837m), new Price(1.0841m), Base)); // midpoint 1.0839 > 1.0838
+
+        Detector.Detect(ctx, Candle()).Should().Be(DetectorResult.NoMatch);
+    }
+
+    [Fact]
+    public void The_array_nearest_the_seventy_point_five_sweet_spot_is_chosen()
+    {
+        // 0.705 is a nearest-level PREFERENCE, not a gate: both arrays are eligible (in 62-79%), the nearer wins.
+        var ctx = NewContext();
+        ctx.SetDisplacement(BullishLeg()); // sweet spot 70.5% retrace == 1.08295
+        ctx.RegisterFvg(new FairValueGap(Direction.Bullish, Timeframe.M5, new Price(1.0823m), new Price(1.0827m), Base)); // mid 1.0825, far
+        ctx.RegisterFvg(new FairValueGap(Direction.Bullish, Timeframe.M5, new Price(1.0828m), new Price(1.0832m), Base)); // mid 1.0830, near
+
+        Detector.Detect(ctx, Candle()).KeyLevel.Should().Be(1.0830m);
+    }
+
     [Fact]
     public void Default_configuration_validates_clean()
         => new OteOptions().Validate().Should().BeEmpty();

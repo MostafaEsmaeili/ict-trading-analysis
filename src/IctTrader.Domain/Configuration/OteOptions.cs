@@ -4,8 +4,8 @@ namespace IctTrader.Domain.Configuration;
 /// Tunable Optimal-Trade-Entry fib band (plan §2.4/§2.5.1 step 7, §2.5.10). The canonical band is 62–79% of the
 /// displacement leg with a 70.5% sweet spot (Primer-sourced/provenance-flagged); the Ep41 variant narrows the
 /// upper edge to 70%. The OTE is anchored on the pre-validated displacement leg the detector consumes — it does
-/// NOT re-quantify displacement; body-vs-wick anchoring follows the leg's construction (spec §5 open item 4).
-/// Bound from <c>Ict:Detection:Ote</c>.
+/// NOT re-quantify displacement; body-vs-wick anchoring is the leg's own choice (<c>DisplacementOptions.AnchorMode</c>,
+/// EG-1: body-to-body by default, wick on FOMC/NFP), inherited here. Bound from <c>Ict:Detection:Ote</c>.
 /// </summary>
 public sealed class OteOptions
 {

@@ -1,5 +1,6 @@
 using IctTrader.Domain.Configuration;
 using IctTrader.Domain.MarketStructure;
+using IctTrader.Domain.Sessions;
 using IctTrader.Domain.ValueObjects;
 
 namespace IctTrader.Domain.Detection.Detectors;
@@ -57,9 +58,13 @@ public sealed class DisplacementDetector : ISetupDetector
         }
 
         var direction = current.Close > current.Open ? Direction.Bullish : Direction.Bearish;
-        var (origin, terminus) = direction == Direction.Bullish
-            ? (current.Low, current.High)
-            : (current.High, current.Low);
+
+        // EG-1: anchor the leg body-to-body by default (origin = Open, terminus = Close — the favorable close is
+        // the reach, the sign of Open-Close encodes direction); wick-to-wick on the FOMC/NFP exception or operator
+        // override. The OTE band, the leg equilibrium, and SD targets all inherit this one anchor.
+        var (origin, terminus) = ResolveAnchor(context) == LegAnchorMode.WickToWick
+            ? direction == Direction.Bullish ? (current.Low, current.High) : (current.High, current.Low)
+            : (current.Open, current.Close);
 
         var leg = new Displacement(direction, current.Timeframe, new Price(origin), new Price(terminus), current.OpenTimeUtc);
         context.SetDisplacement(leg);
@@ -92,6 +97,41 @@ public sealed class DisplacementDetector : ISetupDetector
         {
             leg.MarkRetraced();
         }
+    }
+
+    private LegAnchorMode ResolveAnchor(MarketContext context)
+    {
+        if (_options.AnchorMode == LegAnchorMode.WickToWick)
+        {
+            return LegAnchorMode.WickToWick; // operator override
+        }
+
+        if (_options.WickAnchorOnFomcNfp && IsFomcOrNfpDay(context))
+        {
+            return LegAnchorMode.WickToWick; // ICT FOMC/NFP exception — use the extremes on high-volatility days
+        }
+
+        return LegAnchorMode.BodyToBody; // the §2.5.10 faithful default (also the fail-open path)
+    }
+
+    private static bool IsFomcOrNfpDay(MarketContext context)
+    {
+        // Fail-open to body when there is no NY date yet or no calendar loaded (mirrors CalendarGateDetector).
+        if (context.CurrentNewYorkDate is not { } date || !context.IsCalendarLoaded)
+        {
+            return false;
+        }
+
+        foreach (var economicEvent in context.EconomicEvents)
+        {
+            if (economicEvent.NyDate == date
+                && economicEvent.Type is CalendarEventType.Fomc or CalendarEventType.Nfp)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static decimal AverageTrueRange(IReadOnlyList<Candle> window, int period)

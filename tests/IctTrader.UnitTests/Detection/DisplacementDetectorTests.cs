@@ -92,10 +92,124 @@ public class DisplacementDetectorTests
         var ctx = NewContext();
         var detector = new DisplacementDetector(new DisplacementOptions());
         Warmup(ctx, detector, 14);
-        Feed(ctx, detector, Candle(14, 1.0801m, 1.0826m, 1.0800m, 1.0824m)); // bullish leg, origin (low) 1.0800
+        Feed(ctx, detector, Candle(14, 1.0801m, 1.0826m, 1.0800m, 1.0824m)); // bullish leg, body origin (open) 1.0801
 
         Feed(ctx, detector, Candle(15, 1.0805m, 1.0806m, 1.0795m, 1.0797m)); // closes below the origin
 
         ctx.LastDisplacement!.Retraced.Should().BeTrue();
+    }
+
+    // EG-1: the leg is anchored body-to-body by default (origin = Open, terminus = Close); the candle below is a
+    // bullish displacement whose body leg is 1.0800 -> 1.0810 and whose wick leg is 1.0796 -> 1.0812.
+    private static readonly DateOnly NyDate = new(2024, 7, 1); // every fixture candle (07:00 UTC = 03:00 NY EDT) is this NY date.
+
+    private static MarketContext FeedLeg(
+        DisplacementOptions options, decimal open, decimal high, decimal low, decimal close, EconomicEvent? calendar = null)
+    {
+        var ctx = NewContext();
+        var detector = new DisplacementDetector(options);
+        if (calendar is { } e)
+        {
+            ctx.LoadCalendar([e]);
+        }
+
+        Warmup(ctx, detector, 14);
+        Feed(ctx, detector, Candle(14, open, high, low, close));
+        return ctx;
+    }
+
+    private static MarketContext FeedBullishLeg(DisplacementOptions options, EconomicEvent? calendar = null)
+        => FeedLeg(options, 1.0800m, 1.0812m, 1.0796m, 1.0810m, calendar);
+
+    [Fact]
+    public void Body_to_body_is_the_default_anchor_open_to_close()
+    {
+        var leg = FeedBullishLeg(new DisplacementOptions()).LastDisplacement!;
+
+        leg.Origin.Value.Should().Be(1.0800m);   // Open
+        leg.Terminus.Value.Should().Be(1.0810m); // Close (not the 1.0812 high)
+    }
+
+    [Fact]
+    public void A_bearish_body_leg_anchors_open_to_close()
+    {
+        // Bearish: Close 1.0800 < Open 1.0810, so the body leg runs down 1.0810 -> 1.0800.
+        var leg = FeedLeg(new DisplacementOptions(), 1.0810m, 1.0812m, 1.0798m, 1.0800m).LastDisplacement!;
+
+        leg.Direction.Should().Be(Direction.Bearish);
+        leg.Origin.Value.Should().Be(1.0810m);   // Open
+        leg.Terminus.Value.Should().Be(1.0800m); // Close (not the 1.0798 low)
+    }
+
+    [Fact]
+    public void A_wick_to_wick_override_anchors_low_to_high()
+    {
+        var leg = FeedBullishLeg(new DisplacementOptions { AnchorMode = LegAnchorMode.WickToWick }).LastDisplacement!;
+
+        leg.Origin.Value.Should().Be(1.0796m);   // Low
+        leg.Terminus.Value.Should().Be(1.0812m); // High
+    }
+
+    [Fact]
+    public void An_fomc_day_flips_the_leg_back_to_wick()
+    {
+        var leg = FeedBullishLeg(new DisplacementOptions(), new EconomicEvent(NyDate, CalendarEventType.Fomc)).LastDisplacement!;
+
+        leg.Origin.Value.Should().Be(1.0796m);   // wick origin, even though AnchorMode defaults to BodyToBody
+        leg.Terminus.Value.Should().Be(1.0812m);
+    }
+
+    [Fact]
+    public void An_nfp_day_flips_the_leg_back_to_wick()
+    {
+        var leg = FeedBullishLeg(new DisplacementOptions(), new EconomicEvent(NyDate, CalendarEventType.Nfp)).LastDisplacement!;
+
+        leg.Origin.Value.Should().Be(1.0796m);
+        leg.Terminus.Value.Should().Be(1.0812m);
+    }
+
+    [Fact]
+    public void An_fomc_event_on_another_day_does_not_flip_the_anchor()
+    {
+        var leg = FeedBullishLeg(new DisplacementOptions(), new EconomicEvent(NyDate.AddDays(1), CalendarEventType.Fomc)).LastDisplacement!;
+
+        leg.Origin.Value.Should().Be(1.0800m); // stays body — the FOMC is tomorrow
+    }
+
+    [Fact]
+    public void A_cpi_event_does_not_flip_the_anchor_only_fomc_and_nfp_do()
+    {
+        var leg = FeedBullishLeg(new DisplacementOptions(), new EconomicEvent(NyDate, CalendarEventType.Cpi)).LastDisplacement!;
+
+        leg.Origin.Value.Should().Be(1.0800m); // stays body — CPI is not the §2.5.1-step-7 wick exception
+    }
+
+    [Fact]
+    public void Without_a_loaded_calendar_the_anchor_fails_open_to_body()
+    {
+        // WickAnchorOnFomcNfp is on by default, but with no calendar the exception cannot fire -> body.
+        var leg = FeedBullishLeg(new DisplacementOptions()).LastDisplacement!;
+
+        leg.Origin.Value.Should().Be(1.0800m);
+    }
+
+    [Fact]
+    public void The_fomc_wick_exception_can_be_disabled()
+    {
+        var leg = FeedBullishLeg(
+            new DisplacementOptions { WickAnchorOnFomcNfp = false },
+            new EconomicEvent(NyDate, CalendarEventType.Fomc)).LastDisplacement!;
+
+        leg.Origin.Value.Should().Be(1.0800m); // operator opted out -> stays body even on the FOMC day
+    }
+
+    [Fact]
+    public void The_leg_equilibrium_moves_with_the_anchor()
+    {
+        // Option (b): the FVG/OB correct-half equilibrium reads the same anchored leg as the OTE entry.
+        FeedBullishLeg(new DisplacementOptions()).LastDisplacement!
+            .EquilibriumPrice.Should().Be(1.0805m); // (1.0800 + 1.0810) / 2 — the body midpoint
+        FeedBullishLeg(new DisplacementOptions { AnchorMode = LegAnchorMode.WickToWick }).LastDisplacement!
+            .EquilibriumPrice.Should().Be(1.0804m); // (1.0796 + 1.0812) / 2 — the wick midpoint
     }
 }
