@@ -152,6 +152,26 @@ public class OptionsValidationTests
         => new MarketContextOptions { ActiveKillzones = [Killzone.Pm] }.Validate().Should().NotBeEmpty();
 
     [Fact]
+    public void Asian_is_a_selectable_low_priority_entry_killzone()
+    {
+        // FVG-SEM-3 (Ep10): Asian is selectable (in the frozen subset) but deprioritized = NOT in the default
+        // ActiveKillzones. Enabling [Asian] validates clean on BOTH the scanning and the entry-detector sets.
+        MarketContextOptions.SelectableKillzones.Should().Contain(Killzone.Asian);
+        new MarketContextOptions().ActiveKillzones.Should().NotContain(Killzone.Asian); // deprioritized by default
+        new MarketContextOptions { ActiveKillzones = [Killzone.Asian] }.Validate().Should().BeEmpty();
+        new KillzoneEntryOptions { ActiveKillzones = [Killzone.Asian] }.Validate().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void The_fvg_validity_exclusions_flag_defaults_off_and_validates_clean()
+    {
+        // FVG-SEM-3: the validity-exclusion veto is an additive flag (a bool needs no Validate rule); the
+        // default OFF keeps the gap selection byte-identical, so the default set must stay clean.
+        new FvgOptions().ApplyValidityExclusions.Should().BeFalse();
+        new FvgOptions { ApplyValidityExclusions = true }.Validate().Should().BeEmpty();
+    }
+
+    [Fact]
     public void A_macro_reference_open_time_outside_the_pre_lunch_band_is_rejected()
     {
         // 00:00 collides with the midnight open; >= noon is past the macro window (TIME-10).

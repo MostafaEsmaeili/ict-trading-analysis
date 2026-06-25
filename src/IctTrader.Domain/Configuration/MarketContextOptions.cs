@@ -44,6 +44,10 @@ public sealed class MarketContextOptions
     /// subset (plan §11.1). <see cref="Killzone.Pm"/>/<see cref="Killzone.Am"/> are internal classification
     /// outcomes (FX afternoon / index morning) governed by instrument class, not operator-selectable here;
     /// <see cref="Killzone.None"/> is not a killzone.
+    /// <para>FVG-SEM-3 (Ep10): <see cref="Killzone.Asian"/> is the LOW-PRIORITY opt-in — selectable here, but
+    /// deliberately excluded from the default <see cref="ActiveKillzones"/> ("deprioritized" = off by default,
+    /// NOT a lower confluence weight, which would change Σ(applicable) and break grading). Enable it explicitly
+    /// to hunt the Asian window.</para>
     /// </summary>
     public static IReadOnlyList<Killzone> SelectableKillzones { get; } =
         [Killzone.Asian, Killzone.LondonOpen, Killzone.NewYorkOpen, Killzone.LondonClose];

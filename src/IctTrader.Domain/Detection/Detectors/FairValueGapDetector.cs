@@ -1,5 +1,6 @@
 using IctTrader.Domain.Configuration;
 using IctTrader.Domain.MarketStructure;
+using IctTrader.Domain.Sessions;
 using IctTrader.Domain.ValueObjects;
 
 namespace IctTrader.Domain.Detection.Detectors;
@@ -101,6 +102,24 @@ public sealed class FairValueGapDetector : ISetupDetector
             return DetectorResult.NoMatch;
         }
 
+        // FVG-SEM-3: compute the five validity-exclusion predicates (§2.5.10). They are attached as flag-only
+        // evidence UNCONDITIONALLY below; only Asian-range / overlapping-wicks veto, and only when the flag is on.
+        var excludeNoSweep = ComputeExcludeNoSweep(context, direction, gap.FormedAtUtc);
+        var excludeAsianRange = context.Session.Killzone == Killzone.Asian;
+        var excludeCounterBias = context.Bias is not { } bias || bias != direction;
+        var excludeNoChoch = context.LastMss is not { } mss || mss.Direction != direction || !mss.IsConfirmed;
+        var excludeOverlappingWicks = direction == Direction.Bullish ? c1.High >= c3.Low : c1.Low <= c3.High;
+        var anyExclusion =
+            excludeNoSweep || excludeAsianRange || excludeCounterBias || excludeNoChoch || excludeOverlappingWicks;
+
+        // The veto (FVG-SEM-3 ON) fires ONLY on the two FSM-unowned exclusions, inserted AFTER the correct-half
+        // early-return so the OFF path is byte-unchanged. No-sweep/counter-bias/no-CHoCH are already FSM
+        // RequiredConditions, so vetoing them here would double-enforce/desync — they annotate but never veto.
+        if (_options.ApplyValidityExclusions && (excludeAsianRange || excludeOverlappingWicks))
+        {
+            return DetectorResult.NoMatch;
+        }
+
         var keyLevel = direction == Direction.Bullish ? top : bottom;
         var evidence = new Dictionary<string, object>
         {
@@ -109,11 +128,23 @@ public sealed class FairValueGapDetector : ISetupDetector
             [EvidenceKeys.Timeframe] = current.Timeframe.ToString(),
             [EvidenceKeys.Direction] = direction.ToString(),
             [EvidenceKeys.InCorrectHalf] = inCorrectHalf,
+            [EvidenceKeys.ExcludedNoSweep] = excludeNoSweep,
+            [EvidenceKeys.ExcludedAsianRange] = excludeAsianRange,
+            [EvidenceKeys.ExcludedCounterBias] = excludeCounterBias,
+            [EvidenceKeys.ExcludedNoChoch] = excludeNoChoch,
+            [EvidenceKeys.ExcludedOverlappingWicks] = excludeOverlappingWicks,
+            [EvidenceKeys.AnyValidityExclusion] = anyExclusion,
         };
 
         return DetectorResult.Match(
             direction, keyLevel, ReasonFragments.FvgFormed(direction, bottom, top, current.Timeframe), evidence);
     }
+
+    // FVG-SEM-3 (a): EXCLUDED when there is no precedent sweep in the gap's direction strictly before it formed.
+    // SweepRecord.Direction is already the enabled trade direction; the strict precede mirrors the FSM
+    // sweep-must-precede rule (a sweep landing at/after the gap's formation is a future event, not its premise).
+    private static bool ComputeExcludeNoSweep(MarketContext context, Direction direction, DateTimeOffset formedAtUtc)
+        => context.LastSweep is not { } sweep || sweep.Direction != direction || sweep.AtUtc >= formedAtUtc;
 
     private bool EvaluateCorrectHalf(MarketContext context, Direction direction, FairValueGap gap)
     {

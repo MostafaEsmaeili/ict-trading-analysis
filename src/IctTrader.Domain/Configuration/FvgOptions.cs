@@ -41,6 +41,16 @@ public sealed class FvgOptions
     /// </summary>
     public bool StrictFirstFvg { get; init; }
 
+    /// <summary>
+    /// FVG-SEM-3 (§2.5.10): when on, VETO a freshly-formed FVG that falls in the Asian session window or has
+    /// overlapping c1/c3 wicks — the two validity exclusions the confluence FSM does NOT already own (no-sweep,
+    /// counter-bias, and no-CHoCH are already RequiredConditions, so they are annotated as evidence but never
+    /// vetoed here). The five exclusion predicates are ALWAYS computed and attached as evidence regardless of
+    /// this flag (so the dashboard has the diagnostic). Default OFF keeps the gap match byte-identical. No
+    /// <c>Validate()</c> rule (a bool is always in contract).
+    /// </summary>
+    public bool ApplyValidityExclusions { get; init; }
+
     public IReadOnlyList<string> Validate()
     {
         var errors = new List<string>();

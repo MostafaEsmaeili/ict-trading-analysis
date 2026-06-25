@@ -79,12 +79,21 @@ surface yet) · **DONE** (already implemented in a merged slice).
     pass):** 2a ranks "deeper" by `Midpoint` but measures proximity edge-to-edge, so an overlapping or unequal-size
     farther gap could have a shallower near edge — when 2b consumes `fartherBound` as a hard nix level, add an
     explicit overlapping-gap test.
-- **FVG-SEM-3 — Validity exclusions = FLAG-ONLY.** The five web exclusions (no-sweep / Asian-range /
-  counter-bias / no-CHoCH / overlapping-wicks) are §2.5.10 secondary additions: emit the FVG with exclusion
-  evidence (`ApplyValidityExclusions=false`); the genuine vetoes are ALREADY RequiredConditions. The
-  **Asian-range exclusion is dropped** as a default; **Asian becomes a selectable, deprioritized entry
-  killzone** (Mentorship Ep10 trades it; Ep18 says ignore the Asian-*range* sub-model, not exclude FVGs by
-  time). **ADDITIVE-FLAG**.
+- **FVG-SEM-3 — Validity exclusions = FLAG-ONLY. DONE (issue #65).** The five web exclusions (no-sweep /
+  Asian-range / counter-bias / no-CHoCH / overlapping-wicks) are §2.5.10 secondary additions. `FairValueGapDetector`
+  now computes all five at formation and attaches them as **evidence** (6 new `EvidenceKeys`, incl. the OR), proven
+  **scoring-inert** (the FSM reads only Condition/Direction/KeyLevel/ReasonFragment; the only evidence reader is
+  `PricedFrame` on `DrawTargetRrMet`) — so `FvgOptions.ApplyValidityExclusions=false` (default) is byte-identical.
+  When **ON** it vetoes ONLY **Asian-range + overlapping-wicks**: the other three (no-sweep / counter-bias / no-CHoCH)
+  are ALREADY FSM RequiredConditions (sweep-must-precede / bias direction-lock / `DisplacementMss` lock), so vetoing
+  them in the detector would double-enforce a one-place rule (verify gate **ratified** the two-new-only scope; a
+  five-OR veto, if ever wanted, rides a future `ExclusionsVetoAll`, default off). `overlapping-wicks` is
+  tautologically false for any gap this detector forms (kept for completeness / a future looser gap definition).
+  **Asian killzone = STATUS-QUO:** `SelectableKillzones` already contains `Asian` and both validators accept it, so
+  "selectable" needed only a lock test + an Ep10 low-priority XML-doc note; **"deprioritized" = off-by-default**
+  (NOT a lower confluence weight — that is FORBIDDEN, it would break Σ(applicable)=9.75 / EG-2 / TGR-4). The
+  Asian-*range* sub-model stays ignored (Ep18): predicate (b) reads the session classification, no Asian-range price
+  band is built. Cite: Ep10:249-251 / Ep18:60-62. **ADDITIVE-FLAG.**
 - **FVG-SEM-4 — Mitigation = FULL-FILL.** The array dies on complete rebalance; do NOT default a 50%
   consequent-encroachment mitigation. The OB/OTE 50% mean-threshold is a SEPARATE construct. Cite:
   Mentorship Ep41:100. **STATUS-QUO** (already full-fill).
