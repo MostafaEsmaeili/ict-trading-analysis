@@ -151,6 +151,36 @@ public class DisplacementDetectorTests
     }
 
     [Fact]
+    public void A_bearish_wick_to_wick_override_anchors_high_to_low()
+    {
+        var leg = FeedLeg(new DisplacementOptions { AnchorMode = LegAnchorMode.WickToWick }, 1.0810m, 1.0812m, 1.0798m, 1.0800m).LastDisplacement!;
+
+        leg.Direction.Should().Be(Direction.Bearish);
+        leg.Origin.Value.Should().Be(1.0812m);   // High
+        leg.Terminus.Value.Should().Be(1.0798m); // Low
+    }
+
+    [Fact]
+    public void The_retrace_invalidation_threshold_moves_with_the_anchor()
+    {
+        // InvalidateRetracedLeg keys on Origin — the body Open (1.0800) by default, the wick Low (1.0796) under
+        // WickToWick. A follow-up close at 1.0798 (below the Open but above the Low) invalidates the body leg but
+        // not the wick leg, so the retrace reference tracks the anchor like the OTE band and the leg equilibrium do.
+        static bool RetracesAfterACloseBetweenOpenAndLow(DisplacementOptions options)
+        {
+            var ctx = NewContext();
+            var detector = new DisplacementDetector(options);
+            Warmup(ctx, detector, 14);
+            Feed(ctx, detector, Candle(14, 1.0800m, 1.0812m, 1.0796m, 1.0810m)); // body origin 1.0800, wick origin 1.0796
+            Feed(ctx, detector, Candle(15, 1.0799m, 1.0800m, 1.0797m, 1.0798m)); // small bar, closes 1.0798
+            return ctx.LastDisplacement!.Retraced;
+        }
+
+        RetracesAfterACloseBetweenOpenAndLow(new DisplacementOptions()).Should().BeTrue();                                       // body leg invalidated
+        RetracesAfterACloseBetweenOpenAndLow(new DisplacementOptions { AnchorMode = LegAnchorMode.WickToWick }).Should().BeFalse(); // wick leg survives
+    }
+
+    [Fact]
     public void An_fomc_day_flips_the_leg_back_to_wick()
     {
         var leg = FeedBullishLeg(new DisplacementOptions(), new EconomicEvent(NyDate, CalendarEventType.Fomc)).LastDisplacement!;

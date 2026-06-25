@@ -29,8 +29,12 @@ surface yet) · **DONE** (already implemented in a merged slice).
   `DisplacementDetector` and the OTE/equilibrium/SD targets all inherit the one anchor; `OteEntryResolver` is
   anchor-agnostic and unchanged). Default flips wick→**body** (`origin=Open`, `terminus=Close`, both directions),
   so the OTE entry AND `Displacement.EquilibriumPrice` (the FVG/OB correct-half, **option b**) move together; the
-  daily-range **veto** frame (EG-2) reads `DailyRange`, not the leg, so it is structurally untouched. Edge-
-  inclusivity + 0.705-preference locked.
+  daily-range **veto** frame (EG-2) reads `DailyRange`, not the leg, so it is structurally untouched. The
+  leg-retrace **invalidation** reference also moves with the anchor (a close back through `leg.Origin` = the body
+  Open by default, the wick Low under `WickToWick`) — coherent with the body leg, locked by a discriminating test.
+  Edge-inclusivity + 0.705-preference locked. **Deferred:** the body anchor is exact only for today's single-candle
+  leg; TIME-11-12 (multi-candle leg) must select `max(Open,Close)` of the terminus candle / `min(Open,Close)` of the
+  origin candle across the leg — not the literal first-Open/last-Close — to stay faithful.
 - **EG-2 — Premium/discount anchor (load-bearing).** Step-1 (daily dealing-range 50%, the bias + entry-half
   **veto**) and step-6 (displacement-leg 50%, **which FVG is eligible**) are **two distinct reference
   frames** and must never be conflated. The daily-range frame stays the **single `PremiumDiscountHalf`
