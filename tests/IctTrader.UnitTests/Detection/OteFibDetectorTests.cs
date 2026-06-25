@@ -28,7 +28,7 @@ public class OteFibDetectorTests
     private static Candle Candle()
         => new(Eurusd, Timeframe.M5, Base, 1.0850m, 1.0855m, 1.0845m, 1.0850m, 1m);
 
-    private static readonly OteFibDetector Detector = new(new OteOptions());
+    private static readonly OteFibDetector Detector = new(new OteOptions(), new FvgOptions());
 
     // A bullish leg 1.0800 -> 1.0900: OTE band is ~[1.0821 (79%), 1.0838 (62%)], sweet spot ~1.08295.
     private static Displacement BullishLeg() =>
