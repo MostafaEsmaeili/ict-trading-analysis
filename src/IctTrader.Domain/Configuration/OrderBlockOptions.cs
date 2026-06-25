@@ -26,6 +26,17 @@ public sealed class OrderBlockOptions
 
     public bool RequireInCorrectHalf { get; init; } = true;
 
+    /// <summary>
+    /// Caps the consecutive opposite-close OB cluster at the last N candles counted back from the
+    /// displacement (OB-9a). Default 3 per the core-model register; Ep9 shows a real 4-candle cluster, so
+    /// this is a CAP not a hard rule and is raisable. A longer run keeps only the last N (the anchor becomes
+    /// the Nth-from-the-displacement candle); 1 reduces the OB to the single bar immediately before the
+    /// displacement (the legacy behaviour). PROVENANCE: the numeric default 3 is INVENTED/operator-tunable —
+    /// the transcripts state no cap (set 4 to admit the Ep9 example whole); the consecutive-run RULE itself
+    /// is Mentorship-verbatim (Ep3/Ep9), only this number is not.
+    /// </summary>
+    public int MaxClusterCandles { get; init; } = 3;
+
     public IReadOnlyList<string> Validate()
     {
         var errors = new List<string>();
@@ -38,6 +49,11 @@ public sealed class OrderBlockOptions
         if (EntryOffsetPipsFx < 0m)
         {
             errors.Add($"EntryOffsetPipsFx cannot be negative but was {EntryOffsetPipsFx}.");
+        }
+
+        if (MaxClusterCandles < 1)
+        {
+            errors.Add($"MaxClusterCandles must be >= 1 but was {MaxClusterCandles}.");
         }
 
         return errors;
