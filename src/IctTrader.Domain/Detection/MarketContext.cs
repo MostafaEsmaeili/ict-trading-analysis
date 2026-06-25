@@ -79,6 +79,13 @@ public sealed class MarketContext
     /// <summary>The open of the first candle of the current New-York day (00:00 NY reference for the Judas read).</summary>
     public decimal? MidnightOpen { get; private set; }
 
+    /// <summary>
+    /// The open of the first candle at/after the configured macro reference time (08:30 NY by default) of the
+    /// current New-York day — the secondary Judas reference for FX New-York-session trades (TIME-10 / Ep17
+    /// L154-159). Null before the macro time, and all day if no candle reaches it; reset on the NY-day rollover.
+    /// </summary>
+    public decimal? MacroOpen { get; private set; }
+
     /// <summary>The New-York calendar date of the most recently appended candle (the financial day, 00:00 NY).</summary>
     public DateOnly? CurrentNewYorkDate => _lastNyDate;
 
@@ -114,6 +121,7 @@ public sealed class MarketContext
 
         BarsProcessed++;
         TrackNewYorkDay(candle);
+        CaptureMacroOpen(candle);
         Session = _killzoneClock.Classify(candle.OpenTimeUtc, InstrumentClass);
         PruneDeadArrays();
     }
@@ -157,6 +165,52 @@ public sealed class MarketContext
         IsCalendarLoaded = true;
     }
 
+    /// <summary>
+    /// Resolves the reference open the Judas read tests the swept wick against (TIME-10). FX default
+    /// (<see cref="MarketContextOptions.UseMacroOpenReference"/> off) is the midnight open — byte-identical to
+    /// the prior behaviour. With the flag on, once BOTH opens exist (after the macro time) a BEARISH read
+    /// (premium) takes the LOWER open and a BULLISH read the HIGHER (Ep17 L154-159); before the macro time
+    /// only the midnight open exists, so it falls back to whichever single open is available.
+    /// </summary>
+    public decimal? ReferenceOpen(bool premium)
+    {
+        if (!_options.UseMacroOpenReference)
+        {
+            return MidnightOpen;
+        }
+
+        if (MidnightOpen is not { } midnight)
+        {
+            return MacroOpen;
+        }
+
+        if (MacroOpen is not { } macro)
+        {
+            return midnight;
+        }
+
+        // BEARISH (premium) wants the lowest "minimum threshold" above which a rally is the Judas to the
+        // upside; BULLISH is the literal reverse (Ep17 "everything reverse").
+        return premium ? Math.Min(midnight, macro) : Math.Max(midnight, macro);
+    }
+
+    private void CaptureMacroOpen(Candle candle)
+    {
+        // Capture once per NY day on the first candle whose NY open time is at/after the macro reference time
+        // (inclusive at 08:30, consistent with the inclusive-start session windows). NY math via the killzone
+        // clock only — never the host zone / DateTime.Now.
+        if (MacroOpen is not null)
+        {
+            return;
+        }
+
+        var nyTime = _killzoneClock.NewYorkTimeOfDay(candle.OpenTimeUtc);
+        if (nyTime >= _options.MacroReferenceOpenTime)
+        {
+            MacroOpen = candle.Open;
+        }
+    }
+
     private void TrackNewYorkDay(Candle candle)
     {
         var nyDate = _killzoneClock.NewYorkDate(candle.OpenTimeUtc);
@@ -169,6 +223,11 @@ public sealed class MarketContext
         var crossedNyMidnight = _lastNyDate is not null;
         _lastNyDate = nyDate;
         MidnightOpen = candle.Open;
+
+        // The macro open is per-NY-day: clear it on both the first-candle init and a genuine rollover so a
+        // new day starts looking for its own 08:30 capture (CaptureMacroOpen re-sets it on this very candle
+        // when it already sits at/after the macro time — the first-candle-08:30 case).
+        MacroOpen = null;
 
         // 00:00 NY is the financial-day boundary (plan §2.1/§4.8): intraday session-scoped state must not
         // bleed across days when the operator enables the reset.

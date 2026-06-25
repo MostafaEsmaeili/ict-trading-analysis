@@ -132,12 +132,14 @@ public sealed class LiquiditySweepDetector : ISetupDetector
 
     private static bool IsJudas(MarketContext context, Candle current, bool premium)
     {
-        if (context.MidnightOpen is not { } open)
+        // The reference open is midnight by default; with the macro-open reference enabled it is the
+        // lower/higher of midnight and the 08:30 macro open per the bearish/bullish read (TIME-10).
+        if (context.ReferenceOpen(premium) is not { } open)
         {
             return true; // no reference open available yet
         }
 
-        // Judas iff the swept wick traded on the correct side of the midnight open.
+        // Judas iff the swept wick traded on the correct side of the reference open.
         return premium ? current.High > open : current.Low < open;
     }
 }

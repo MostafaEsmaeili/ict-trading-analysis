@@ -103,10 +103,21 @@ surface yet) · **DONE** (already implemented in a merged slice).
   - **Deferred:** a startup cross-option guard (`MarketContextOptions.WindowCapacity ≥ DisplacementLegMaxBars` and
     `≥ AtrPeriod+1`) so an under-sized window fails fast instead of silently turning every multi-candle MSS into a
     NoMatch — lands with the Host `ValidateOnStart` wiring (unreachable at defaults + same-bar-safe today).
-- **TIME-10 — Reference open = instrument-class split (REAL change).** FX / daily Power-Three reference =
-  **00:00 NY**; index-futures macro = **08:30 NY**. `UseMacroOpenReference=false` (default FX = midnight).
-  When bearish and both exist, use the **lower** open. Cite: Mentorship Ep10/Ep2 (midnight) + Ep4/5/7/10
-  (08:30 index). **CODE-READY** (add an 08:30 `MarketContext` anchor).
+- **TIME-10 — Reference open = 08:30 macro + lower-when-bearish (REAL change). DONE (issue #61).** The decisive
+  transcript is **Ep17 L154-159** (FULL PLAYLIST L5572-5577): for **FX New-York-session** trades use the **08:30 open
+  AND refer to the 00:00 midnight open** — "if the opening price is lower at the 8:30 than at midnight, use the lower
+  one ... reverse if you're bullish." **Register correction:** the dual-reference + lower-when-bearish is an **FX**
+  rule consulting BOTH opens (not index-only), and the bullish branch is the literal reverse (use the **higher** open).
+  Implemented: `MarketContext.MacroOpen` (the open of the first candle at/after 08:30 NY, captured DST-aware via
+  `KillzoneClock.NewYorkTimeOfDay`, reset per NY day alongside `MidnightOpen`) + the pure `ReferenceOpen(premium)`
+  resolver — FX-default midnight, else `min(midnight,macro)` when bearish / `max` when bullish, with single-null
+  fallbacks (`min`/`max` faithfully subsume Ep17's `if 08:30 < midnight` conditional). `LiquiditySweepDetector.IsJudas`
+  reads it. `MarketContextOptions.UseMacroOpenReference` (default **false** → FX midnight-only, byte-identical) +
+  `MacroReferenceOpenTime` (08:30, `Validate()`-bounded). The rule fires only when both opens exist (after 08:30); a
+  pre-08:30 sweep falls back to midnight, so an early FX sweep is unchanged. Cite: Ep17 L154-159; Ep2 L170 / Ep10
+  L289-290 (midnight); Ep4/5/7/10 (08:30 macro). **Deferred (CONTESTED ~80%):** auto-enabling the macro reference for
+  `InstrumentClass==Index` (kept an explicit opt-in flag, no silent FX change); the at/after-open vs candle-containing
+  -08:30 capture nuance (~85%, only matters on non-aligned feeds).
 
 ## Targets · grading · risk
 

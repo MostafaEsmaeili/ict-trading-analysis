@@ -128,4 +128,102 @@ public class MarketContextTests
         ctx.Bias.Should().Be(Direction.Bullish); // initialisation is NOT a rollover, so it must not reset
         ctx.MidnightOpen.Should().Be(1.0840m);
     }
+
+    // --- TIME-10: 08:30 NY macro reference-open capture (Ep17 L154-159) ------------------------
+
+    // 2024-07-01 is EDT (UTC-4): NY 00:00 = UTC 04:00, NY 08:30 = UTC 12:30.
+    private static readonly DateTimeOffset NyMidnightUtc = new(2024, 7, 1, 4, 0, 0, TimeSpan.Zero);
+    private static readonly DateTimeOffset NyMacro0830Utc = new(2024, 7, 1, 12, 30, 0, TimeSpan.Zero);
+
+    // A candle whose Open is explicit (the 08:30 macro reference is the bar's OPEN), respecting the OHLC invariants.
+    private static Candle OpenAt(DateTimeOffset openUtc, decimal open)
+        => new(Eurusd, Timeframe.M5, openUtc, open, open + 0.0010m, open - 0.0010m, open, 1m);
+
+    [Fact]
+    public void Macro_open_is_captured_inclusively_at_eight_thirty_ny()
+    {
+        var ctx = NewContext();
+        ctx.Append(OpenAt(NyMidnightUtc, 1.0800m));               // NY 00:00 -> seeds the midnight open, macro still null
+        ctx.MacroOpen.Should().BeNull();
+
+        ctx.Append(OpenAt(NyMacro0830Utc, 1.0875m));              // NY 08:30 exactly -> inclusive capture
+        ctx.MacroOpen.Should().Be(1.0875m);
+        ctx.MidnightOpen.Should().Be(1.0800m);                   // midnight reference is untouched
+    }
+
+    [Fact]
+    public void Macro_open_stays_null_before_eight_thirty_ny()
+    {
+        var ctx = NewContext();
+        ctx.Append(OpenAt(NyMidnightUtc, 1.0800m));                              // NY 00:00
+        ctx.Append(OpenAt(NyMacro0830Utc.AddMinutes(-5), 1.0860m));             // NY 08:25 -> before macro
+
+        ctx.MacroOpen.Should().BeNull();
+        ctx.MidnightOpen.Should().Be(1.0800m);
+    }
+
+    [Fact]
+    public void Macro_open_is_captured_once_per_day_and_later_candles_do_not_re_capture()
+    {
+        var ctx = NewContext();
+        ctx.Append(OpenAt(NyMidnightUtc, 1.0800m));
+        ctx.Append(OpenAt(NyMacro0830Utc, 1.0875m));                            // capture at 08:30
+        ctx.Append(OpenAt(NyMacro0830Utc.AddMinutes(30), 1.0890m));            // NY 09:00 -> no re-capture
+        ctx.Append(OpenAt(NyMacro0830Utc.AddMinutes(90), 1.0895m));           // NY 10:00 -> no re-capture
+
+        ctx.MacroOpen.Should().Be(1.0875m);
+    }
+
+    [Fact]
+    public void Macro_open_resets_each_new_york_day()
+    {
+        var ctx = NewContext();
+        ctx.Append(OpenAt(NyMidnightUtc, 1.0800m));
+        ctx.Append(OpenAt(NyMacro0830Utc, 1.0875m));                            // day 1 capture
+        ctx.MacroOpen.Should().Be(1.0875m);
+
+        // Day 2 first candle crosses 00:00 NY -> macro clears until day 2 reaches 08:30.
+        ctx.Append(OpenAt(NyMidnightUtc.AddDays(1), 1.0920m));                  // NY 00:00 on 2024-07-02
+        ctx.MacroOpen.Should().BeNull();
+
+        ctx.Append(OpenAt(NyMacro0830Utc.AddDays(1), 1.0930m));                 // NY 08:30 on 2024-07-02
+        ctx.MacroOpen.Should().Be(1.0930m);
+    }
+
+    [Fact]
+    public void The_first_candle_does_not_spuriously_reset_a_warm_macro_open()
+    {
+        // Parity with MidnightOpen: a first candle that already sits at/after 08:30 captures macro and does
+        // not throw or reset session-scoped state on its own initialising append.
+        var ctx = NewContext();
+
+        ctx.Append(OpenAt(NyMacro0830Utc, 1.0875m));
+
+        ctx.MacroOpen.Should().Be(1.0875m);   // captured on the very first candle (it is >= 08:30)
+        ctx.MidnightOpen.Should().Be(1.0875m); // first candle also seeds the midnight reference
+    }
+
+    [Fact]
+    public void Macro_open_is_captured_on_dst_spring_forward_at_the_edt_correct_instant()
+    {
+        // 2024-03-10: clocks jump 02:00 -> 03:00; the rest of the day is EDT (UTC-4), so 08:30 EDT = UTC 12:30.
+        var ctx = NewContext();
+        ctx.Append(OpenAt(new DateTimeOffset(2024, 3, 10, 12, 25, 0, TimeSpan.Zero), 1.0800m)); // NY 08:25
+        ctx.MacroOpen.Should().BeNull();
+
+        ctx.Append(OpenAt(new DateTimeOffset(2024, 3, 10, 12, 30, 0, TimeSpan.Zero), 1.0875m)); // NY 08:30 EDT
+        ctx.MacroOpen.Should().Be(1.0875m);
+    }
+
+    [Fact]
+    public void Macro_open_is_captured_on_dst_fall_back_at_the_est_correct_instant()
+    {
+        // 2024-11-03: clocks fall 02:00 -> 01:00; the rest of the day is EST (UTC-5), so 08:30 EST = UTC 13:30.
+        var ctx = NewContext();
+        ctx.Append(OpenAt(new DateTimeOffset(2024, 11, 3, 13, 25, 0, TimeSpan.Zero), 1.0800m)); // NY 08:25 EST
+        ctx.MacroOpen.Should().BeNull();
+
+        ctx.Append(OpenAt(new DateTimeOffset(2024, 11, 3, 13, 30, 0, TimeSpan.Zero), 1.0875m)); // NY 08:30 EST
+        ctx.MacroOpen.Should().Be(1.0875m);
+    }
 }
