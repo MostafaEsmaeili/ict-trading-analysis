@@ -17,6 +17,12 @@ public readonly record struct DetectorResult(
     /// <summary>The canonical empty result: nothing formed this candle.</summary>
     public static DetectorResult NoMatch { get; } = new(false, null, null, string.Empty, null);
 
+    /// <summary>A non-match that still carries diagnostic evidence — e.g. an FVG suppressed by a validity-exclusion
+    /// veto whose exclusion flags should still surface to the dashboard. <see cref="Matched"/> is false, so it never
+    /// contributes to the confluence; only the evidence rides along.</summary>
+    public static DetectorResult NoMatchWith(IReadOnlyDictionary<string, object> evidence)
+        => new(false, null, null, string.Empty, evidence);
+
     /// <summary>Builds a positive match. <paramref name="reasonFragment"/> is rendered from a resource template.</summary>
     public static DetectorResult Match(
         Direction? direction,

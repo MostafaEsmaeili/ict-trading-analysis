@@ -29,6 +29,15 @@ public static class EvidenceKeys
     public const string Stacked = "stacked";
     public const string TouchCount = "touchCount";
 
+    // FVG-SEM-3 validity exclusions (§2.5.10) — flag-only diagnostic evidence attached to every FVG match,
+    // independent of FvgOptions.ApplyValidityExclusions (so the dashboard always has the read). TRUE = excluded.
+    public const string ExcludedNoSweep = "excludedNoSweep";
+    public const string ExcludedAsianRange = "excludedAsianRange";
+    public const string ExcludedCounterBias = "excludedCounterBias";
+    public const string ExcludedNoChoch = "excludedNoChoch";
+    public const string ExcludedOverlappingWicks = "excludedOverlappingWicks";
+    public const string AnyValidityExclusion = "anyValidityExclusion";
+
     // Order block
     public const string OpeningPrice = "openingPrice";
     public const string MeanThreshold = "meanThreshold";

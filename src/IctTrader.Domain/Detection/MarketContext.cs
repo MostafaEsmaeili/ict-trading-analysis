@@ -59,6 +59,10 @@ public sealed class MarketContext
     /// <summary>The killzone classification of the most recently appended candle.</summary>
     public KillzoneClassification Session { get; private set; } = KillzoneClassification.None;
 
+    /// <summary>The killzone at a specific UTC (e.g. an array's formation candle), independent of the current ambient
+    /// <see cref="Session"/> — so an exclusion can classify from the FVG's own formation time, not the latest candle.</summary>
+    public Killzone KillzoneAt(DateTimeOffset utc) => _killzoneClock.Classify(utc, InstrumentClass).Killzone;
+
     /// <summary>The current daily bias; null means NEUTRAL (no trade).</summary>
     public Direction? Bias { get; private set; }
 
