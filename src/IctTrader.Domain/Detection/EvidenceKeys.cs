@@ -42,6 +42,7 @@ public static class EvidenceKeys
     public const string SwingPrice = "swingPrice";
     public const string BrokenSwingPrice = "brokenSwingPrice";
     public const string DisplacementPips = "displacementPips";
+    public const string DisplacementLegBars = "displacementLegBars";
 
     // Bias / PD / OTE
     public const string EquilibriumPrice = "equilibriumPrice";

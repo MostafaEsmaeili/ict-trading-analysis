@@ -141,7 +141,8 @@ public class ScanSessionTests
             }
 
             c.SetDisplacement(new Displacement(Direction.Bullish, candle.Timeframe, new Price(1.0890m), new Price(candle.High), candle.OpenTimeUtc));
-            c.SetSweep(new SweepRecord(Direction.Bullish, 1.0850m, candle.OpenTimeUtc, c.BarsProcessed));
+            // The sweep must STRICTLY precede the breaking member (TIME-11-12) — one bar before this displacement bar.
+            c.SetSweep(new SweepRecord(Direction.Bullish, 1.0850m, candle.OpenTimeUtc, c.BarsProcessed - 1));
             return DetectorResult.NoMatch;
         });
         var detectors = new ISetupDetector[]
