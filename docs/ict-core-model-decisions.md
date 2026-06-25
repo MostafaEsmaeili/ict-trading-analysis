@@ -93,8 +93,16 @@ surface yet) · **DONE** (already implemented in a merged slice).
   **sweep strictly precedes the MSS** — is enforced to the *breaking member* (strict `<`, within `SweepToMssMaxBars`).
   `SweepToMssMaxBars` is **5** (already the live key; the stray spec-doc '20' removed). The single-candle case is
   byte-identical (ctor overload → `OriginAtUtc=AtUtc`, `LegBars=1`); the OTE/equilibrium/SD consumers inherit the
-  wider leg with zero change. Design judge-panel (3 angles → synthesis, `wf_a355c351-56d`). Cite: Mentorship
-  Ep25 L320-330 / Ep5 L160-191.
+  wider leg with zero change. Design judge-panel (3 angles → synthesis, `wf_a355c351-56d`); adversarial 4-lens verify
+  (`wf_5d3750e4-e97`) SHIP. Cite: Mentorship Ep25 L320-330 / Ep5 L160-191.
+  - **Provenance flag:** `DisplacementLegMaxBars`=3 is a fidelity-narrowing **cap** — Ep25's "several short-term lows"
+    run is unbounded, so a long ICT-shaded run is truncated to the last 3 candles, anchoring the OTE leg / 62–79% band /
+    50% PD split / SD targets *inward* of the hand-drawn run. A design choice (operator-tunable), not an ICT rule.
+  - **Note:** the sweep-precede window anchors to the **breaking member**, so for an interior break the effective
+    sweep→terminus reach is `SweepToMssMaxBars + (LegBars-1)`.
+  - **Deferred:** a startup cross-option guard (`MarketContextOptions.WindowCapacity ≥ DisplacementLegMaxBars` and
+    `≥ AtrPeriod+1`) so an under-sized window fails fast instead of silently turning every multi-candle MSS into a
+    NoMatch — lands with the Host `ValidateOnStart` wiring (unreachable at defaults + same-bar-safe today).
 - **TIME-10 — Reference open = instrument-class split (REAL change).** FX / daily Power-Three reference =
   **00:00 NY**; index-futures macro = **08:30 NY**. `UseMacroOpenReference=false` (default FX = midnight).
   When bearish and both exist, use the **lower** open. Cite: Mentorship Ep10/Ep2 (midnight) + Ep4/5/7/10

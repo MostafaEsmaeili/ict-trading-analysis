@@ -95,6 +95,7 @@ public sealed class MarketStructureShiftDetector : ISetupDetector
 
         // The breaking member's bar index — the terminus is at BarsProcessed, each earlier member one less. The
         // sweep must STRICTLY precede THIS member (the break can be up to LegBars-1 bars before the terminus).
+        // e.g. a 3-bar leg whose interior bar2 breaks, at BarsProcessed=3: memberWindowIdx=1, breakingMemberBarIndex=2.
         var memberWindowIdx = lastMemberIdx - (members.Count - 1 - breakingMemberIdx);
         var breakingMemberBarIndex = context.BarsProcessed - (lastMemberIdx - memberWindowIdx);
         if (_options.RequirePrecedentSweep && !HasPrecedentSweep(context, direction, breakingMemberBarIndex))
