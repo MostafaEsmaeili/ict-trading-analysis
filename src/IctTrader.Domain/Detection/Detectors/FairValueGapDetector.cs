@@ -104,22 +104,18 @@ public sealed class FairValueGapDetector : ISetupDetector
 
         // FVG-SEM-3: compute the five validity-exclusion predicates (§2.5.10). They are attached as flag-only
         // evidence UNCONDITIONALLY below; only Asian-range / overlapping-wicks veto, and only when the flag is on.
+        // Asian-range is classified from the gap's OWN formation time (the middle candle), not the ambient session
+        // of the latest candle, so a killzone-boundary-straddling FVG is not misclassified.
         var excludeNoSweep = ComputeExcludeNoSweep(context, direction, gap.FormedAtUtc);
-        var excludeAsianRange = context.Session.Killzone == Killzone.Asian;
+        var excludeAsianRange = context.KillzoneAt(gap.FormedAtUtc) == Killzone.Asian;
         var excludeCounterBias = context.Bias is not { } bias || bias != direction;
         var excludeNoChoch = context.LastMss is not { } mss || mss.Direction != direction || !mss.IsConfirmed;
         var excludeOverlappingWicks = direction == Direction.Bullish ? c1.High >= c3.Low : c1.Low <= c3.High;
         var anyExclusion =
             excludeNoSweep || excludeAsianRange || excludeCounterBias || excludeNoChoch || excludeOverlappingWicks;
 
-        // The veto (FVG-SEM-3 ON) fires ONLY on the two FSM-unowned exclusions, inserted AFTER the correct-half
-        // early-return so the OFF path is byte-unchanged. No-sweep/counter-bias/no-CHoCH are already FSM
-        // RequiredConditions, so vetoing them here would double-enforce/desync — they annotate but never veto.
-        if (_options.ApplyValidityExclusions && (excludeAsianRange || excludeOverlappingWicks))
-        {
-            return DetectorResult.NoMatch;
-        }
-
+        // The six exclusion keys are built UNCONDITIONALLY so the diagnostic survives a veto (a vetoed FVG returns a
+        // non-match that STILL carries the evidence — the operator can see WHY it was suppressed).
         var keyLevel = direction == Direction.Bullish ? top : bottom;
         var evidence = new Dictionary<string, object>
         {
@@ -135,6 +131,13 @@ public sealed class FairValueGapDetector : ISetupDetector
             [EvidenceKeys.ExcludedOverlappingWicks] = excludeOverlappingWicks,
             [EvidenceKeys.AnyValidityExclusion] = anyExclusion,
         };
+
+        // The veto (FVG-SEM-3 ON) fires ONLY on the two FSM-unowned exclusions. No-sweep/counter-bias/no-CHoCH are
+        // already FSM RequiredConditions, so vetoing them here would double-enforce/desync — they annotate but never veto.
+        if (_options.ApplyValidityExclusions && (excludeAsianRange || excludeOverlappingWicks))
+        {
+            return DetectorResult.NoMatchWith(evidence);
+        }
 
         return DetectorResult.Match(
             direction, keyLevel, ReasonFragments.FvgFormed(direction, bottom, top, current.Timeframe), evidence);

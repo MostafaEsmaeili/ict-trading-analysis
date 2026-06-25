@@ -229,9 +229,10 @@ public class FairValueGapValidityExclusionTests
         Excluded(result, EvidenceKeys.ExcludedOverlappingWicks).Should().BeFalse();
     }
 
-    // 7. Asian-session FVG, ON -> NoMatch (vetoed).
+    // 7. Asian-session FVG, ON -> vetoed (no match), but the veto STILL carries the diagnostic evidence so the
+    // operator can see WHY the FVG was suppressed.
     [Fact]
-    public void Asian_session_on_vetoes_the_fvg()
+    public void Asian_session_on_vetoes_the_fvg_but_keeps_the_diagnostic()
     {
         var ctx = NewContext();
         SeedDiscountDisplacement(ctx);
@@ -242,9 +243,33 @@ public class FairValueGapValidityExclusionTests
         var result = FeedBullishGap(
             ctx, new FairValueGapDetector(new FvgOptions { ApplyValidityExclusions = true }), AsianBase);
 
-        ctx.Session.Killzone.Should().Be(Killzone.Asian);
-        result.Should().Be(DetectorResult.NoMatch);
+        result.Matched.Should().BeFalse();                                       // vetoed -> FvgPresent not counted
+        result.Evidence.Should().NotBeNull();                                    // but the diagnostic survives the veto
+        Excluded(result, EvidenceKeys.ExcludedAsianRange).Should().BeTrue();
+        Excluded(result, EvidenceKeys.AnyValidityExclusion).Should().BeTrue();
         ctx.OpenFvgs.Should().ContainSingle(); // still registered as an array
+    }
+
+    // FVG-SEM-3 (CodeRabbit #66): Asian-range is classified from the gap's OWN formation candle (the middle), not the
+    // ambient session of the latest candle. A gap that FORMS pre-Asian but whose c3 ticks into the Asian window is NOT
+    // an Asian-range exclusion.
+    [Fact]
+    public void Asian_range_is_classified_from_the_formation_candle_not_the_latest()
+    {
+        var ctx = NewContext();
+        SeedDiscountDisplacement(ctx);
+        ctx.SetBias(Direction.Bullish);
+        SeedConfirmedBullishMss(ctx);
+        // c1 18:50 NY, middle 18:55 NY (both pre-Asian "None"), c3 19:00 NY (Asian start). 18:50 NY = 22:50 UTC (EDT).
+        var start = new DateTimeOffset(2024, 7, 1, 22, 50, 0, TimeSpan.Zero);
+        SeedPrecedentBullishSweep(ctx, start);
+
+        var result = FeedBullishGap(ctx, new FairValueGapDetector(new FvgOptions()), start);
+
+        ctx.Session.Killzone.Should().Be(Killzone.Asian);                          // the LATEST candle (c3) is Asian
+        ctx.KillzoneAt(start.AddMinutes(5)).Should().NotBe(Killzone.Asian);        // but the formation candle is not
+        result.Matched.Should().BeTrue();
+        Excluded(result, EvidenceKeys.ExcludedAsianRange).Should().BeFalse();      // classified by formation, not c3
     }
 
     // 8. No-sweep / counter-bias / no-CHoCH FVG, FX session, ON -> match (NOT vetoed — the FSM owns these).
