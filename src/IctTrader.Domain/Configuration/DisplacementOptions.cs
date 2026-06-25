@@ -21,6 +21,14 @@ public sealed class DisplacementOptions
 
     public int DisplacementLegMaxBars { get; init; } = 3;
 
+    /// <summary>How the leg is anchored (EG-1) — body-to-body (the §2.5.10 default) vs wick-to-wick. The OTE band,
+    /// the leg equilibrium (FVG/OB correct-half), and SD targets all read this one anchor.</summary>
+    public LegAnchorMode AnchorMode { get; init; } = LegAnchorMode.BodyToBody;
+
+    /// <summary>Flip the leg back to wick-anchoring on an FOMC/NFP New-York date (EG-1; Ep41 exception). ON by
+    /// default but only changes behaviour on an actual FOMC/NFP day; fails open to body when no calendar is loaded.</summary>
+    public bool WickAnchorOnFomcNfp { get; init; } = true;
+
     public IReadOnlyList<string> Validate()
     {
         var errors = new List<string>();
@@ -48,6 +56,11 @@ public sealed class DisplacementOptions
         if (DisplacementLegMaxBars < 1)
         {
             errors.Add($"DisplacementLegMaxBars must be at least 1 but was {DisplacementLegMaxBars}.");
+        }
+
+        if (!Enum.IsDefined(AnchorMode))
+        {
+            errors.Add($"AnchorMode must be a valid {nameof(LegAnchorMode)} value but was {(int)AnchorMode}.");
         }
 
         return errors;

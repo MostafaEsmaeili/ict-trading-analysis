@@ -20,8 +20,21 @@ surface yet) · **DONE** (already implemented in a merged slice).
   anchored **body-to-body** (wicks only on FOMC/NFP). `0.705` is a **Primer-sourced** preferred-depth
   tie-break ONLY (it appears in **zero** 2022 Mentorship episodes — grep-confirmed; only in Primer Ep18),
   flagged `isPrimerSourcedDefault`, never a hard gate or the sole entry. The Ep41 62–70 narrowing stays an
-  opt-in `UseEp41Variant=false`. Cite: Mentorship Ep19/22/38; Primer Ep18. **ADDITIVE-FLAG** (`OteOptions`
-  already ships the band; add `AnchorMode` + `WickAnchorOnFomcNfp` + an edge-inclusivity test).
+  opt-in `UseEp41Variant=false`. Cite: Mentorship Ep19/22/38, **Ep41 L8249** ("for optimal trade entry I like to
+  use the bodies, lowest open or close in the swings") + **L8375-8380** (FOMC → "use the wick"); Primer Ep18.
+  **DONE (issue #57).** The leg was wick-anchored (`current.Low/High`) — a real fidelity gap. Fixed:
+  `LegAnchorMode {BodyToBody(default),WickToWick}` + `WickAnchorOnFomcNfp` (default on, NY-date-keyed, fail-open
+  to body, fires only on a `CalendarEventType.Fomc|Nfp` day) live on **`DisplacementOptions`** (the leg owns its
+  anchor — **deviation from the register's original `OteOptions` placement**, because the leg is built in
+  `DisplacementDetector` and the OTE/equilibrium/SD targets all inherit the one anchor; `OteEntryResolver` is
+  anchor-agnostic and unchanged). Default flips wick→**body** (`origin=Open`, `terminus=Close`, both directions),
+  so the OTE entry AND `Displacement.EquilibriumPrice` (the FVG/OB correct-half, **option b**) move together; the
+  daily-range **veto** frame (EG-2) reads `DailyRange`, not the leg, so it is structurally untouched. The
+  leg-retrace **invalidation** reference also moves with the anchor (a close back through `leg.Origin` = the body
+  Open by default, the wick Low under `WickToWick`) — coherent with the body leg, locked by a discriminating test.
+  Edge-inclusivity + 0.705-preference locked. **Deferred:** the body anchor is exact only for today's single-candle
+  leg; TIME-11-12 (multi-candle leg) must select `max(Open,Close)` of the terminus candle / `min(Open,Close)` of the
+  origin candle across the leg — not the literal first-Open/last-Close — to stay faithful.
 - **EG-2 — Premium/discount anchor (load-bearing).** Step-1 (daily dealing-range 50%, the bias + entry-half
   **veto**) and step-6 (displacement-leg 50%, **which FVG is eligible**) are **two distinct reference
   frames** and must never be conflated. The daily-range frame stays the **single `PremiumDiscountHalf`

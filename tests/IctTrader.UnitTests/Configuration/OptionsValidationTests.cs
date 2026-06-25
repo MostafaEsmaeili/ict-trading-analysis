@@ -126,6 +126,10 @@ public class OptionsValidationTests
             .Validate().Should().NotBeEmpty();
 
     [Fact]
+    public void An_undefined_leg_anchor_mode_is_rejected()
+        => new DisplacementOptions { AnchorMode = (LegAnchorMode)99 }.Validate().Should().NotBeEmpty();
+
+    [Fact]
     public void Fvg_atr_and_proximity_settings_must_be_in_range()
     {
         new FvgOptions { AtrPeriod = 0 }.Validate().Should().NotBeEmpty();
