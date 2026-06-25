@@ -60,7 +60,7 @@ public static class OteEntryResolver
         }
 
         var stackedFartherBound = chosen.Fvg is { } selectedFvg
-            ? StackedFartherBound(context, leg.Direction, eligibleFvgs, selectedFvg, policy.StackProximityPips)
+            ? StackedFartherBound(context, leg.Direction, selectedFvg, policy.StackProximityPips)
             : null;
 
         return new OteEntry(
@@ -203,13 +203,14 @@ public static class OteEntryResolver
         }
     }
 
-    // FVG-SEM-2a stacked DETECTION: among the OTHER eligible same-dir same-tf open FVGs, the "farther" gap is the
-    // next-deeper one (next-larger depth) whose NEAR edge is within StackProximityPips of the selected gap. If one
-    // exists, return its FAR edge (bullish: Bottom; bearish: Top) — carried for FVG-SEM-2b; null otherwise.
+    // FVG-SEM-2a stacked DETECTION: the "farther" gap is the next-deeper same-dir same-tf OPEN FVG whose NEAR edge
+    // is within StackProximityPips of the selected gap. If one exists, return its FAR edge (bullish: Bottom; bearish:
+    // Top) — carried for FVG-SEM-2b; null otherwise. It deliberately scans the BROADER open set, NOT the band-filtered
+    // eligible subset: the deeper stacked gap sits below a bullish entry (above a bearish one) and so its MIDPOINT is
+    // usually OUTSIDE the 62–79% OTE band even when its near edge is within proximity (CodeRabbit #64).
     private static decimal? StackedFartherBound(
         MarketContext context,
         Direction direction,
-        List<FairValueGap> eligibleFvgs,
         FairValueGap selected,
         decimal stackProximityPips)
     {
@@ -217,9 +218,10 @@ public static class OteEntryResolver
         var selectedDepthRef = direction == Direction.Bullish ? selected.Bottom.Value : selected.Top.Value;
 
         FairValueGap? farther = null;
-        foreach (var fvg in eligibleFvgs)
+        foreach (var fvg in context.OpenFvgs)
         {
-            if (ReferenceEquals(fvg, selected))
+            if (!fvg.IsOpen || fvg.Direction != direction || fvg.Timeframe != selected.Timeframe
+                || ReferenceEquals(fvg, selected))
             {
                 continue;
             }

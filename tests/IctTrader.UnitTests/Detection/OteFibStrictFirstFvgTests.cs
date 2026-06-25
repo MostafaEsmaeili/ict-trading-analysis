@@ -265,4 +265,27 @@ public class OteFibStrictFirstFvgTests
         closer.Stacked.Should().BeTrue();
         ote!.Value.StackedFartherBound.Should().Be(farther.Top.Value); // 1.0873, the FAR (upper) edge
     }
+
+    [Fact]
+    public void A_deeper_farther_gap_outside_the_ote_band_is_still_detected_as_stacked()
+    {
+        // CodeRabbit #64: the farther (deeper) stacked gap sits BELOW a bullish entry, so its midpoint is usually
+        // OUTSIDE the 62-79% OTE band even when its near edge is within proximity. It must still be found — the
+        // stacked search scans the BROADER open set, not the band-filtered eligible subset. Band [1.0821, 1.0838].
+        var ctx = NewContext();
+        ctx.SetDisplacement(BullishLeg());
+        var closer = BullishFvg(1.0823m);   // bottom 1.0821 (on the band edge) — the only in-band selectable gap
+        var farther = BullishFvg(1.0818m);  // bottom 1.0816, top 1.0820 — midpoint 1.0818 BELOW the band
+        ctx.RegisterFvg(closer);
+        ctx.RegisterFvg(farther);
+
+        farther.Midpoint.Should().BeLessThan(1.0821m); // genuinely out of the OTE band by midpoint
+
+        var ote = OteEntryResolver.Resolve(ctx, new OteOptions(), new OteEntryResolver.OteSelectionPolicy(true, new FvgOptions().StackProximityPips));
+
+        StrictDetector().Detect(ctx, Candle());
+        closer.IsSelectedEntry.Should().BeTrue();
+        closer.Stacked.Should().BeTrue();                                   // would be FALSE under the band-filtered search
+        ote!.Value.StackedFartherBound.Should().Be(farther.Bottom.Value);  // 1.0816, the FAR edge of the out-of-band gap
+    }
 }
