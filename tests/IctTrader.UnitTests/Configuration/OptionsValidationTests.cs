@@ -139,6 +139,15 @@ public class OptionsValidationTests
     }
 
     [Fact]
+    public void The_strict_first_fvg_flag_defaults_off_and_validates_clean()
+    {
+        // FVG-SEM-2a: the strict-first-FVG selection is an additive flag (a bool needs no Validate rule); the
+        // default OFF keeps the nearest-sweet-spot path, so the default set must stay clean.
+        new FvgOptions().StrictFirstFvg.Should().BeFalse();
+        new FvgOptions { StrictFirstFvg = true }.Validate().Should().BeEmpty();
+    }
+
+    [Fact]
     public void Active_killzones_must_be_a_subset_of_the_frozen_contract()
         => new MarketContextOptions { ActiveKillzones = [Killzone.Pm] }.Validate().Should().NotBeEmpty();
 

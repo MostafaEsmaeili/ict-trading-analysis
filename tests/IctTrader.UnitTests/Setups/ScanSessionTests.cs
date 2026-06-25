@@ -191,8 +191,8 @@ public class ScanSessionTests
             new KillzoneEntryDetector(new KillzoneEntryOptions()),
             new DailyBiasDetector(new DailyBiasOptions()),
             new PremiumDiscountGateDetector(new PremiumDiscountOptions()),
-            new OteFibDetector(new OteOptions()),
-            new DrawOnLiquidityDetector(new DrawOnLiquidityOptions(), new OteOptions(), new TradeStyleOptions()),
+            new OteFibDetector(new OteOptions(), new FvgOptions()),
+            new DrawOnLiquidityDetector(new DrawOnLiquidityOptions(), new OteOptions(), new TradeStyleOptions(), new FvgOptions()),
             new CalendarGateDetector(new CalendarOptions()),
         };
         var confluence = new ConfluenceOptions();

@@ -57,9 +57,28 @@ surface yet) · **DONE** (already implemented in a merged slice).
   counting starts at the FIRST retrace-in (the §2.5.1-step-7 entry retrace = touch 1). **STATUS-QUO + test**
   (code already seeds 0 on formation).
 - **FVG-SEM-2 — Strict-first-FVG.** Step timeframes high→low and select the **FIRST** 3-candle gap in the
-  leg; exactly one `IsSelectedEntryFvg`. "Stacked" = arm at the closer gap, size the stop to survive a stab
-  into the farther, and **NIX the trade if the farther gap is hit first** (a `EntryCancelReason`). Cite:
-  Mentorship Ep3:376–394. **CODE-READY** (add `StrictFirstFvg`, `IsSelectedEntryFvg`, the wrong-order nix).
+  leg; exactly one `IsSelectedEntry`. "Stacked" = arm at the closer gap, size the stop to survive a stab
+  into the farther, and **NIX the trade if the farther gap is hit first**. Cite: Mentorship Ep3:376–394
+  (the green box is the higher/closer gap; "i'll enter [there] ... expect the lower one won't be retraded";
+  "if it runs to the [farther] first ... then i would nix the trade").
+  - **FVG-SEM-2a — DONE (issue #63).** The pure-detection half: `FvgOptions.StrictFirstFvg` (default **OFF** →
+    nearest-sweet-spot byte-identical) selects the **shallowest** in-band gap (Argmin OTE depth = the first price
+    reaches on the retrace = Ep3's "first higher fvg"; tie-break sweet-spot→earliest `FormedAtUtc`) over the SAME
+    eligible FVG+OB set the resolver already used — an OB may still win the level (then no FVG is marked). The
+    pre-stubbed `FairValueGap.IsSelectedEntry`/`Stacked` markers are activated: `OteEntryResolver` stays **pure**
+    (now returns `SelectedFvg` + `StackedFartherBound`); `OteFibDetector` is the **single writer** (clean-then-set,
+    exactly one marked); `MarketContext.SetDisplacement` clears stale marks on a leg change. Stacked **detection**
+    only (`MarkStacked` when a deeper FVG sits within `StackProximityPips`; the farther gap's far edge is carried for
+    2b, not yet consumed).
+  - **FVG-SEM-2b — DEFERRED (entry-orchestrator chain, with EG-3).** The stacked **stop-sizing** (widen
+    `DrawOnLiquidityDetector`'s stop to clear the farther gap — `min(sweep-buffer, fartherBottom-buffer)` bullish /
+    mirror; can drop a setup below the RR floor, so gate behind `StrictFirstFvg`) and the **wrong-order nix**
+    (`EntryManager` rung, precedence killzone-end > max-wait > nix > fill; trigger `bullish: Low ≤ fartherBound` /
+    `bearish: High ≥ fartherBound` before fill; new `EntryCancelReason.StackedFartherGapHitFirst`; needs
+    `ArmedEntry.StackedFartherBound` carried frozen `Setup`→`PricedFrame`→`ArmedEntry`). **2b caveat (verify
+    pass):** 2a ranks "deeper" by `Midpoint` but measures proximity edge-to-edge, so an overlapping or unequal-size
+    farther gap could have a shallower near edge — when 2b consumes `fartherBound` as a hard nix level, add an
+    explicit overlapping-gap test.
 - **FVG-SEM-3 — Validity exclusions = FLAG-ONLY.** The five web exclusions (no-sweep / Asian-range /
   counter-bias / no-CHoCH / overlapping-wicks) are §2.5.10 secondary additions: emit the FVG with exclusion
   evidence (`ApplyValidityExclusions=false`); the genuine vetoes are ALREADY RequiredConditions. The

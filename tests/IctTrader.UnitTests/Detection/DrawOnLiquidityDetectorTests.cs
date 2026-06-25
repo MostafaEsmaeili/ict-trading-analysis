@@ -23,7 +23,7 @@ public class DrawOnLiquidityDetectorTests
     private static readonly FakeTimeProvider Time = new(Base);
 
     private static readonly DrawOnLiquidityDetector Detector =
-        new(new DrawOnLiquidityOptions(), new OteOptions(), new TradeStyleOptions());
+        new(new DrawOnLiquidityOptions(), new OteOptions(), new TradeStyleOptions(), new FvgOptions());
 
     private static readonly Candle Current = new(Eurusd, Timeframe.M5, Base, 1.0830m, 1.0835m, 1.0825m, 1.0830m, 1m);
 

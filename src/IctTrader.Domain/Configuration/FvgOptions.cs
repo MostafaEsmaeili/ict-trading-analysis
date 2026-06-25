@@ -33,6 +33,14 @@ public sealed class FvgOptions
 
     public decimal StackProximityPips { get; init; } = 5m;
 
+    /// <summary>
+    /// FVG-SEM-2a (Ep3 L376-394): select the entry FVG by Ep3's "first higher fair value gap" — the SHALLOWEST
+    /// in-band gap on the displacement-leg timeframe (closest to the terminus) — instead of the nearest-sweet-spot
+    /// array level. Default OFF keeps the existing selection byte-identical; pairs with <see cref="StackProximityPips"/>
+    /// for stacked detection. No <c>Validate()</c> rule (a bool is always in contract).
+    /// </summary>
+    public bool StrictFirstFvg { get; init; }
+
     public IReadOnlyList<string> Validate()
     {
         var errors = new List<string>();

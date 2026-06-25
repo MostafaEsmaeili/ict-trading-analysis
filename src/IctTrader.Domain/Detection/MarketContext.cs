@@ -146,6 +146,13 @@ public sealed class MarketContext
     {
         ArgumentNullException.ThrowIfNull(displacement);
         LastDisplacement = displacement;
+
+        // FVG-SEM-2a stale-mark teardown: the entry FVG is selected per displacement leg, so a mark from the
+        // PRIOR leg must not survive into the new one (the OTE detector re-marks on the next resolution).
+        foreach (var fvg in _openFvgs)
+        {
+            fvg.ClearEntrySelection();
+        }
     }
 
     public void SetSweep(SweepRecord sweep) => LastSweep = sweep;

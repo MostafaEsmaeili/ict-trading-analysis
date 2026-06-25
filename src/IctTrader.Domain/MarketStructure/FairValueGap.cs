@@ -78,7 +78,20 @@ public sealed class FairValueGap
         }
     }
 
+    /// <summary>FVG-SEM-2a stacked DETECTION: a deeper same-direction gap sits within the stack proximity (Ep3).</summary>
     public void MarkStacked() => Stacked = true;
 
+    /// <summary>FVG-SEM-2a: marks this gap as the resolved §2.5.1-step-7 entry FVG (single writer = the OTE detector).</summary>
     public void SelectAsEntry() => IsSelectedEntry = true;
+
+    /// <summary>
+    /// FVG-SEM-2a stale-mark teardown: clears the entry selection + stacked flags so a mark from a prior
+    /// displacement leg never survives into the next (the clean half of the detector's clean-then-set marking,
+    /// and the per-leg reset in <c>MarketContext.SetDisplacement</c>).
+    /// </summary>
+    public void ClearEntrySelection()
+    {
+        IsSelectedEntry = false;
+        Stacked = false;
+    }
 }

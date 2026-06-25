@@ -21,16 +21,19 @@ public sealed class DrawOnLiquidityDetector : ISetupDetector
     private readonly DrawOnLiquidityOptions _options;
     private readonly OteOptions _oteOptions;
     private readonly TradeStyleOptions _styleOptions;
+    private readonly FvgOptions _fvgOptions;
 
     public DrawOnLiquidityDetector(
-        DrawOnLiquidityOptions options, OteOptions oteOptions, TradeStyleOptions styleOptions)
+        DrawOnLiquidityOptions options, OteOptions oteOptions, TradeStyleOptions styleOptions, FvgOptions fvgOptions)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(oteOptions);
         ArgumentNullException.ThrowIfNull(styleOptions);
+        ArgumentNullException.ThrowIfNull(fvgOptions);
         _options = options;
         _oteOptions = oteOptions;
         _styleOptions = styleOptions;
+        _fvgOptions = fvgOptions;
     }
 
     public ConfluenceCondition? Condition => ConfluenceCondition.DrawTargetRrMet;
@@ -59,7 +62,10 @@ public sealed class DrawOnLiquidityDetector : ISetupDetector
         }
 
         // Entry = the shared OTE array level (no current-price fallback — without an array there is no entry).
-        if (OteEntryResolver.Resolve(context, _oteOptions) is not { } ote || ote.Direction != direction)
+        // READ-ONLY use of the shared selection (FVG-SEM-2a); the single writer of the entry marker is the
+        // OteFibDetector — this detector never marks.
+        var policy = new OteEntryResolver.OteSelectionPolicy(_fvgOptions.StrictFirstFvg, _fvgOptions.StackProximityPips);
+        if (OteEntryResolver.Resolve(context, _oteOptions, policy) is not { } ote || ote.Direction != direction)
         {
             return DetectorResult.NoMatch;
         }
