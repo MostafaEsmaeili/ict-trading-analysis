@@ -75,7 +75,10 @@ surface yet) · **DONE** (already implemented in a merged slice).
     mirror; can drop a setup below the RR floor, so gate behind `StrictFirstFvg`) and the **wrong-order nix**
     (`EntryManager` rung, precedence killzone-end > max-wait > nix > fill; trigger `bullish: Low ≤ fartherBound` /
     `bearish: High ≥ fartherBound` before fill; new `EntryCancelReason.StackedFartherGapHitFirst`; needs
-    `ArmedEntry.StackedFartherBound` carried frozen `Setup`→`PricedFrame`→`ArmedEntry`).
+    `ArmedEntry.StackedFartherBound` carried frozen `Setup`→`PricedFrame`→`ArmedEntry`). **2b caveat (verify
+    pass):** 2a ranks "deeper" by `Midpoint` but measures proximity edge-to-edge, so an overlapping or unequal-size
+    farther gap could have a shallower near edge — when 2b consumes `fartherBound` as a hard nix level, add an
+    explicit overlapping-gap test.
 - **FVG-SEM-3 — Validity exclusions = FLAG-ONLY.** The five web exclusions (no-sweep / Asian-range /
   counter-bias / no-CHoCH / overlapping-wicks) are §2.5.10 secondary additions: emit the FVG with exclusion
   evidence (`ApplyValidityExclusions=false`); the genuine vetoes are ALREADY RequiredConditions. The
