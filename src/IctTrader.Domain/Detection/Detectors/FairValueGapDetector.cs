@@ -51,8 +51,12 @@ public sealed class FairValueGapDetector : ISetupDetector
                 continue;
             }
 
-            var overlapsGap = current.Low <= gap.Top.Value && current.High >= gap.Bottom.Value;
-            if (overlapsGap)
+            // FVG-SEM-1a: a return into the void counts as a touch by the configured semantics — wick-into (any bar
+            // whose range trades into the gap, the Ep38 default) or close-into (only a bar that closes inside it).
+            var touched = _options.TouchSemantics == FvgTouchSemantics.CloseInto
+                ? current.Close >= gap.Bottom.Value && current.Close <= gap.Top.Value
+                : current.Low <= gap.Top.Value && current.High >= gap.Bottom.Value;
+            if (touched)
             {
                 gap.RegisterTouch(_options.VoidOnTouchCount);
             }

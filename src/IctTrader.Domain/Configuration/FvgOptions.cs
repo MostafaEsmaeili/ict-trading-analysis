@@ -17,8 +17,12 @@ public sealed class FvgOptions
 
     public int AtrPeriod { get; init; } = 14;
 
-    /// <summary>The retrace count that voids the gap — the 3rd tap voids (Ep38).</summary>
+    /// <summary>The retrace count that voids the gap — the 3rd tap voids (Ep38). FVG formation is touch 0; the first
+    /// retrace into the void is touch 1 (FVG-SEM-1b).</summary>
     public int VoidOnTouchCount { get; init; } = 3;
+
+    /// <summary>How a return into the gap counts toward the void (FVG-SEM-1a) — wick-into (Ep38 default) vs close-into.</summary>
+    public FvgTouchSemantics TouchSemantics { get; init; } = FvgTouchSemantics.WickInto;
 
     public bool MitigateOnFullFill { get; init; } = true;
 
@@ -61,6 +65,11 @@ public sealed class FvgOptions
         if (StackProximityPips < 0m)
         {
             errors.Add($"StackProximityPips cannot be negative but was {StackProximityPips}.");
+        }
+
+        if (!Enum.IsDefined(TouchSemantics))
+        {
+            errors.Add($"TouchSemantics must be a valid {nameof(FvgTouchSemantics)} value but was {(int)TouchSemantics}.");
         }
 
         return errors;

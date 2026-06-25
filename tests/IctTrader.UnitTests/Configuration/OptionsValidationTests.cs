@@ -131,6 +131,7 @@ public class OptionsValidationTests
         new FvgOptions { AtrPeriod = 0 }.Validate().Should().NotBeEmpty();
         new FvgOptions { AtrMultiple = -1m }.Validate().Should().NotBeEmpty();
         new FvgOptions { StackProximityPips = -1m }.Validate().Should().NotBeEmpty();
+        new FvgOptions { TouchSemantics = (FvgTouchSemantics)99 }.Validate().Should().NotBeEmpty();
     }
 
     [Fact]
