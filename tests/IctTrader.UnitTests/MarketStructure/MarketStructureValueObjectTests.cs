@@ -144,6 +144,18 @@ public class MarketStructureValueObjectTests
     }
 
     [Fact]
+    public void Order_block_rejects_an_open_that_is_not_a_body_extreme()
+    {
+        // open 1.0817 sits strictly INSIDE the body [1.0814, 1.0820] — it is not the anchor candle's open/close
+        // edge, so it cannot be a real anchor open. The within-range check alone would have let it through.
+        var act = () => new OrderBlock(
+            Direction.Bullish, Timeframe.M5, new Price(1.0817m), new Price(1.0830m), new Price(1.0810m),
+            new Price(1.0814m), new Price(1.0820m), Utc);
+
+        act.Should().Throw<DomainException>();
+    }
+
+    [Fact]
     public void Dealing_range_equilibrium_rejects_a_fib_outside_the_unit_interval()
     {
         var range = new DealingRange(new Price(1.0800m), new Price(1.0900m), Utc);

@@ -20,6 +20,9 @@ public sealed class OrderBlockDetector : ISetupDetector
     public OrderBlockDetector(OrderBlockOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
+        // Fail fast on an invalid cluster cap: it is an index-arithmetic bound, so a value < 1 would push the run
+        // start past the displacement candle (wrong anchor / out-of-range). Host ValidateOnStart also rejects it.
+        ArgumentOutOfRangeException.ThrowIfLessThan(options.MaxClusterCandles, 1);
         _options = options;
     }
 

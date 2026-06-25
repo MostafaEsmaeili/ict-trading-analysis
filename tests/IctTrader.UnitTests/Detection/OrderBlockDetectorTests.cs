@@ -315,6 +315,14 @@ public class OrderBlockDetectorTests
     }
 
     [Fact]
+    public void A_non_positive_cluster_cap_is_rejected_at_construction()
+    {
+        var act = () => new OrderBlockDetector(new OrderBlockOptions { MaxClusterCandles = 0 });
+
+        act.Should().Throw<ArgumentOutOfRangeException>(); // the index-cap can't reach the run-finder invalid
+    }
+
+    [Fact]
     public void No_opposite_close_candle_means_no_order_block()
     {
         var ctx = NewContext();

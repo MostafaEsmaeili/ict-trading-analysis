@@ -34,7 +34,9 @@ public sealed class OrderBlock
         Guard.Against(open.Value < low.Value || open.Value > high.Value, "OrderBlock open must lie within its range.");
         Guard.Against(bodyHigh.Value < bodyLow.Value, "OrderBlock bodyHigh must be >= bodyLow.");
         Guard.Against(bodyLow.Value < low.Value || bodyHigh.Value > high.Value, "OrderBlock body must lie within its range.");
-        Guard.Against(open.Value < bodyLow.Value || open.Value > bodyHigh.Value, "OrderBlock open must be a body extreme.");
+        Guard.Against(
+            open.Value != bodyLow.Value && open.Value != bodyHigh.Value,
+            "OrderBlock open must be a body extreme (equal to bodyLow or bodyHigh — it is the anchor candle's open).");
         Guard.Against(formedAtUtc.Offset != TimeSpan.Zero, "OrderBlock.FormedAtUtc must be UTC.");
         Direction = direction;
         Timeframe = timeframe;
