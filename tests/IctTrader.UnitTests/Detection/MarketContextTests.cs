@@ -163,6 +163,21 @@ public class MarketContextTests
     }
 
     [Fact]
+    public void Macro_open_captures_the_first_bar_opening_at_or_after_eight_thirty_not_one_straddling_it()
+    {
+        // Deferred semantics (register TIME-10): on a non-aligned feed the macro open is the OPEN of the first bar
+        // opening AT/AFTER 08:30 NY (only OHLC is available, not the intrabar 08:30 print). A bar opening 08:28 that
+        // trades through 08:30 does NOT capture; a later bar that gaps over 08:30 captures its own open.
+        var ctx = NewContext();
+        ctx.Append(OpenAt(NyMidnightUtc, 1.0800m));                             // NY 00:00
+        ctx.Append(OpenAt(NyMacro0830Utc.AddMinutes(-2), 1.0860m));             // opens NY 08:28 (straddles 08:30) -> no capture
+        ctx.MacroOpen.Should().BeNull();
+
+        ctx.Append(OpenAt(NyMacro0830Utc.AddMinutes(10), 1.0880m));             // opens NY 08:40 (gaps over 08:30) -> captures
+        ctx.MacroOpen.Should().Be(1.0880m);
+    }
+
+    [Fact]
     public void Macro_open_is_captured_once_per_day_and_later_candles_do_not_re_capture()
     {
         var ctx = NewContext();
