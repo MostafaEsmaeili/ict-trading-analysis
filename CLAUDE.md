@@ -595,19 +595,49 @@ becomes the within-grade sorter — retiring the C-suppression that made the can
 **Unblocks the Alerting WP.** Grade A is unreachable (~77) until the optional emitters ship. ict-domain-expert
 CONFORMANT, guardrail 7/7, pr-reviewer APPROVE.
 
+**Register-correction slices (the §2.5 fidelity backlog) — 6 MERGED.** Built strict-gated (ict-domain-expert, guardrail,
+pr-reviewer; meatier slices via a design judge-panel + a 4-lens adversarial-verify workflow). Unit tests **431 → 499**:
+
+- **OB-9a** (issue #53, PR #54) — order block = consecutive opposite-close **cluster**, anchored at the run-start
+  candle's open; `OrderBlock` body-based mean-threshold (`BodyLow`/`BodyHigh`); `OrderBlockOptions.MaxClusterCandles`=3.
+- **FVG-SEM-1a** (issue #55, PR #56) — `FvgOptions.TouchSemantics {WickInto(default), CloseInto}`; formation = touch 0.
+- **EG-1** (issue #57, PR #58) — the displacement leg was **wick-anchored** (a real fidelity gap); now **body-to-body**
+  by default (`DisplacementOptions.AnchorMode {BodyToBody,WickToWick}` + `WickAnchorOnFomcNfp`, NY-date-keyed, fail-open
+  to body). The OTE entry AND `Displacement.EquilibriumPrice` move together; the daily-range PD veto is untouched.
+- **TIME-11-12** (issue #59, PR #60) — displacement is a multi-candle **leg** (`DisplacementDetector` grows a backward
+  strictly-monotonic run, hard-capped at `DisplacementLegMaxBars`=3, net-thrust energy); MSS confirms on the **earliest**
+  leg member that closes beyond the swing (member-scan, `FormedAtUtc` guard, sweep-strict-precede to the breaking member).
+  `Displacement` gained `OriginAtUtc`/`LegBars` via a ctor overload (single-candle path byte-identical).
+- **TIME-10** (issue #61, PR #62) — `MarketContext.MacroOpen` (08:30 NY, DST-aware, per-day reset) + `ReferenceOpen(premium)`
+  (FX-default midnight; else `min`/`max` of {midnight, macro} bearish/bullish — Ep17 dual-reference); behind
+  `MarketContextOptions.UseMacroOpenReference` (default false → FX byte-identical). `LiquiditySweepDetector.IsJudas` reads it.
+- **FVG-SEM-2a** (issue #63, PR #64) — `FvgOptions.StrictFirstFvg` (default off) selects the **shallowest** in-band gap
+  (Ep3 "first higher fvg") over the same FVG+OB set; activates the `FairValueGap.IsSelectedEntry`/`Stacked` markers
+  (resolver pure, `OteFibDetector` single writer); stacked **detection** carries the farther-gap far edge for 2b
+  (CodeRabbit fix: the farther-gap scan uses the broader open set, not the band-filtered subset).
+
 **Process cadence (per the operator):** keep the ICT gate strict (`ict-domain-expert` + guardrail + `pr-reviewer`,
 concurrent) but move faster — build directly from the locked design (skip the separate pre-spec when pinned), ship
 bigger complete slices, and reserve the heavy ~600k-case adversarial driver for numeric/money-math slices (it fuzzes
-numeric correctness, not ICT fidelity).
+numeric correctness, not ICT fidelity). Under Ultracode: settle subtle ICT calls with a single ict-domain-expert spec
+(or a design judge-panel for wide design spaces), implement via `ict-detector-engineer`, then adversarially verify.
 
-**Still to come — the decisions-register build order (next slices):** the §2.5 detector/target corrections the register
-pins, in order: **OB-9a** (order block = cluster-start-open anchor + `MaxClusterCandles`, a real Ep3-grounded behavior
-change) → the **additive provenance flags** (EG-1 `AnchorMode`/`WickAnchorOnFomcNfp`; FVG `TouchSemantics`,
-validity-exclusions flag-only + Asian-as-selectable-killzone, `StrictFirstFvg` + the wrong-order nix) → **TIME-11-12**
-(multi-candle displacement-leg MSS) and **TIME-10** (08:30 instrument-class reference open) → **TGR-1/2** SD-projection
-targets (a new §2.5.6 detector + N-tier `TargetLadder`) and **EG-3** close-proximity (entry-orchestrator chain). Then
-the runnable backend: **WP7 host wiring** (bind `Ict:Execution:*`/`Ict:Risk`/`Ict:Confluence` Options + `ValidateOnStart`;
-DI the `PaperTradingDbContext` + aggregate-scoped repositories + `TradeOrchestrator`; a Replay feed → the
-Scanning/PaperTrading bus handlers → SignalR + REST) and the **Alerting** module (now unblocked by TGR-4); the
-**`Performance` calculator (WP6)**; the **slippage**/**session-stepped spread**/**swap** cost follow-ons; **SMT/Breaker**
-detectors; lot-step **flooring** of the partial leg. **WP8 frontend scaffold — MERGED (PR #34, issue #30).**
+**Still to come — the decisions-register build order (next slices):** the §2.5 detector/target corrections are mostly
+landed (OB-9a, FVG-SEM-1a, EG-1, TIME-11-12, TIME-10, FVG-SEM-2a — all MERGED above). The remaining required-core slices,
+in order:
+
+1. **FVG-SEM-3 (NEXT)** — validity exclusions as **flag-only** evidence (`ApplyValidityExclusions=false`; the genuine
+   vetoes are already RequiredConditions) + **Asian as a selectable, deprioritized entry killzone** (drop the
+   Asian-*range* exclusion; Ep10 trades it). Mostly additive-flag.
+2. **FVG-SEM-2b + EG-3 (entry-orchestrator chain)** — the stacked **stop-sizing** + the **wrong-order nix** (new
+   `EntryCancelReason`, `ArmedEntry.StackedFartherBound`, an `EntryManager` rung; FVG-SEM-2a already carries the farther
+   bound) and **EG-3** close-proximity entry (fill at the touched price within a tolerance, OFF by default).
+3. **TGR-1/2** — standard-deviation projection **targets** (a new §2.5.6 detector + an N-tier `TargetLadder`).
+
+Then the runnable backend: **WP7 host wiring** (bind `Ict:Execution:*`/`Ict:Risk`/`Ict:Confluence`/`Ict:Detection:*` Options
++ `ValidateOnStart` — incl. the deferred `WindowCapacity ≥ DisplacementLegMaxBars` cross-check and the `Ict:Detection:Fvg`
+binding into the OTE/draw detectors; DI the `PaperTradingDbContext` + aggregate-scoped repositories + `TradeOrchestrator`;
+a Replay feed → the Scanning/PaperTrading bus handlers → SignalR + REST) and the **Alerting** module (unblocked by TGR-4);
+the **`Performance` calculator (WP6)**. Optional long-tail (§2.5.8, additive): **SMT/Breaker** detectors, session macros,
+weekly bias, HRLR/`NeutralCondition`, Power-of-Three/AMD, Sunday-gap; the **slippage**/**session-stepped spread**/**swap**
+cost follow-ons; lot-step **flooring** of the partial leg. **WP8 frontend scaffold — MERGED (PR #34, issue #30).**
