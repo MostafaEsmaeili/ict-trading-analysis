@@ -143,6 +143,15 @@ public class OptionsValidationTests
         => new MarketContextOptions { ActiveKillzones = [Killzone.Pm] }.Validate().Should().NotBeEmpty();
 
     [Fact]
+    public void A_macro_reference_open_time_outside_the_pre_lunch_band_is_rejected()
+    {
+        // 00:00 collides with the midnight open; >= noon is past the macro window (TIME-10).
+        new MarketContextOptions { MacroReferenceOpenTime = TimeOnly.MinValue }.Validate().Should().NotBeEmpty();
+        new MarketContextOptions { MacroReferenceOpenTime = new TimeOnly(12, 0) }.Validate().Should().NotBeEmpty();
+        new MarketContextOptions { MacroReferenceOpenTime = new TimeOnly(13, 0) }.Validate().Should().NotBeEmpty();
+    }
+
+    [Fact]
     public void A_non_positive_cluster_cap_is_rejected()
         => new OrderBlockOptions { MaxClusterCandles = 0 }.Validate().Should().NotBeEmpty();
 

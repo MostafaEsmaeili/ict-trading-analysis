@@ -49,6 +49,13 @@ public sealed class KillzoneClock
     /// <summary>The New-York calendar date of an instant — the financial day boundary (00:00 NY).</summary>
     public DateOnly NewYorkDate(DateTimeOffset instant) => _nyClock.NewYorkDate(instant);
 
+    /// <summary>
+    /// The New-York wall-clock time-of-day of an instant (DST-aware). A thin pass-through so callers that
+    /// hold the <see cref="KillzoneClock"/> (e.g. <c>MarketContext</c> for the TIME-10 macro-open capture)
+    /// never need a direct <see cref="NyClock"/> reference and all NY math stays on one path.
+    /// </summary>
+    public TimeOnly NewYorkTimeOfDay(DateTimeOffset instant) => _nyClock.NewYorkTimeOfDay(instant);
+
     /// <summary>Classifies an instant for the given instrument class.</summary>
     public KillzoneClassification Classify(DateTimeOffset openTimeUtc, InstrumentClass instrumentClass)
     {

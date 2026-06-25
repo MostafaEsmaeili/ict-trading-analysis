@@ -18,6 +18,22 @@ public sealed class MarketContextOptions
 
     public bool ResetSessionStateAtNyMidnight { get; init; } = true;
 
+    /// <summary>
+    /// Whether the Judas reference open consults the 08:30 NY macro open alongside the midnight open
+    /// (TIME-10 / Ep17 L154-159 — an FX New-York-session rule: when bearish use the LOWER of the two opens,
+    /// when bullish the higher). Default <c>false</c> keeps the FX behaviour midnight-only and byte-identical;
+    /// it is an EXPLICIT operator flag, never auto-derived from <see cref="InstrumentClass"/> (the index
+    /// auto-switch is deliberately deferred). The macro open is still CAPTURED when off (dashboard-useful);
+    /// only the reference resolution ignores it.
+    /// </summary>
+    public bool UseMacroOpenReference { get; init; }
+
+    /// <summary>
+    /// The New-York wall-clock time of the macro reference open (TIME-10). Defaults to the 08:30 NY macro
+    /// (Ep4/Ep5/Ep7/Ep10), captured on the first candle of the day whose NY open time is at/after this.
+    /// </summary>
+    public TimeOnly MacroReferenceOpenTime { get; init; } = new(8, 30);
+
     public IReadOnlyList<Killzone> ActiveKillzones { get; init; } =
         [Killzone.LondonOpen, Killzone.NewYorkOpen];
 
@@ -61,6 +77,14 @@ public sealed class MarketContextOptions
         if (ActiveStyles is null || ActiveStyles.Count == 0)
         {
             errors.Add("At least one active trade style must be configured.");
+        }
+
+        // The macro reference must be a sane pre-lunch morning time (TIME-10): 00:00 would collide with the
+        // midnight open, and a >= noon value is past the macro window (and into the hard lunch block).
+        if (MacroReferenceOpenTime <= TimeOnly.MinValue || MacroReferenceOpenTime >= new TimeOnly(12, 0))
+        {
+            errors.Add(
+                $"MacroReferenceOpenTime must be after 00:00 and before 12:00 but was {MacroReferenceOpenTime:HH\\:mm}.");
         }
 
         return errors;
