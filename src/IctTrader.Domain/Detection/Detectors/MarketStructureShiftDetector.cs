@@ -29,37 +29,82 @@ public sealed class MarketStructureShiftDetector : ISetupDetector
 
         InvalidateBrokenMss(context, current);
 
-        // The current candle must be the energetic displacement (consumed from the displacement detector).
-        if (context.LastDisplacement is not { } displacement || displacement.AtUtc != current.OpenTimeUtc)
+        // The leg must be published on THIS (its terminus/birth) bar — consume it the same bar (the detector
+        // run-order pins SwingPointDetector → DisplacementDetector → this).
+        if (context.LastDisplacement is not { } leg || leg.Retraced || leg.AtUtc != current.OpenTimeUtc)
         {
             return DetectorResult.NoMatch;
         }
 
-        var direction = displacement.Direction;
+        var direction = leg.Direction;
 
-        if (_options.RequirePrecedentSweep && !HasPrecedentSweep(context, direction))
+        // Reconstruct the leg members from the window + the VO span (no shared mutable state). A window pruned
+        // below the span is a fail-safe NoMatch.
+        var window = context.Window(leg.Timeframe);
+        var members = new List<Candle>(leg.LegBars);
+        foreach (var candle in window)
+        {
+            if (candle.OpenTimeUtc >= leg.OriginAtUtc && candle.OpenTimeUtc <= leg.AtUtc)
+            {
+                members.Add(candle);
+            }
+        }
+
+        if (members.Count != leg.LegBars)
+        {
+            return DetectorResult.NoMatch;
+        }
+
+        // Member-scan at leg-birth (TIME-11-12): the EARLIEST member that closes beyond a prior swing by at least
+        // the minimum is the shift (Ep25:327 — the first break IS the shift). Selection stops at that member; the
+        // precedent-sweep is then measured ONCE to it (it does NOT fall through to a later breaking member).
+        var lastMemberIdx = window.Count - 1; // terminus == current
+        var kind = direction == Direction.Bullish ? SwingKind.High : SwingKind.Low;
+
+        Candle? breakingMember = null;
+        SwingPoint? brokenSwing = null;
+        var breakingMemberIdx = 0;
+        for (var m = 0; m < members.Count; m++)
+        {
+            var member = members[m];
+            var swing = FindBrokenSwing(context, kind, direction, member);
+            if (swing is null)
+            {
+                continue;
+            }
+
+            var beyondPips = direction == Direction.Bullish
+                ? context.SymbolSpec.PriceToPips(member.Close - swing.Price.Value)
+                : context.SymbolSpec.PriceToPips(swing.Price.Value - member.Close);
+
+            if (beyondPips.Value < _options.CloseBeyondMinPips)
+            {
+                continue; // weak / wick-only break
+            }
+
+            breakingMember = member;
+            brokenSwing = swing;
+            breakingMemberIdx = m;
+            break; // the EARLIEST member that breaks
+        }
+
+        if (breakingMember is not { } breaking || brokenSwing is null)
+        {
+            return DetectorResult.NoMatch;
+        }
+
+        // The breaking member's bar index — the terminus is at BarsProcessed, each earlier member one less. The
+        // sweep must STRICTLY precede THIS member (the break can be up to LegBars-1 bars before the terminus).
+        var memberWindowIdx = lastMemberIdx - (members.Count - 1 - breakingMemberIdx);
+        var breakingMemberBarIndex = context.BarsProcessed - (lastMemberIdx - memberWindowIdx);
+        if (_options.RequirePrecedentSweep && !HasPrecedentSweep(context, direction, breakingMemberBarIndex))
         {
             return DetectorResult.NoMatch; // sweep must precede the shift
         }
 
-        var brokenSwing = FindBrokenSwing(context, direction, current);
-        if (brokenSwing is null)
-        {
-            return DetectorResult.NoMatch;
-        }
-
-        var beyondPips = direction == Direction.Bullish
-            ? context.SymbolSpec.PriceToPips(current.Close - brokenSwing.Price.Value)
-            : context.SymbolSpec.PriceToPips(brokenSwing.Price.Value - current.Close);
-
-        if (beyondPips.Value < _options.CloseBeyondMinPips)
-        {
-            return DetectorResult.NoMatch; // weak / wick-only break
-        }
-
-        brokenSwing.Breach(current.OpenTimeUtc);
+        brokenSwing.Breach(breaking.OpenTimeUtc);
         var shift = new MarketStructureShift(
-            direction, current.Timeframe, brokenSwing.Price, new Price(current.Close), current.OpenTimeUtc);
+            direction, current.Timeframe, brokenSwing.Price, new Price(breaking.Close), breaking.OpenTimeUtc);
         context.SetMarketStructureShift(shift);
 
         var evidence = new Dictionary<string, object>
@@ -71,19 +116,19 @@ public sealed class MarketStructureShiftDetector : ISetupDetector
 
         return DetectorResult.Match(
             direction,
-            current.Close,
+            breaking.Close,
             ReasonFragments.MarketStructureShift(direction, brokenSwing.Price.Value, current.Timeframe),
             evidence);
     }
 
-    private bool HasPrecedentSweep(MarketContext context, Direction direction)
+    private bool HasPrecedentSweep(MarketContext context, Direction direction, long breakingMemberBarIndex)
         => context.LastSweep is { } sweep
             && sweep.Direction == direction
-            && context.BarsProcessed - sweep.BarIndex <= _options.SweepToMssMaxBars;
+            && sweep.BarIndex < breakingMemberBarIndex
+            && breakingMemberBarIndex - sweep.BarIndex <= _options.SweepToMssMaxBars;
 
-    private static SwingPoint? FindBrokenSwing(MarketContext context, Direction direction, Candle current)
+    private static SwingPoint? FindBrokenSwing(MarketContext context, SwingKind kind, Direction direction, Candle member)
     {
-        var kind = direction == Direction.Bullish ? SwingKind.High : SwingKind.Low;
         SwingPoint? nearest = null;
 
         foreach (var swing in context.SwingPoints)
@@ -93,18 +138,24 @@ public sealed class MarketStructureShiftDetector : ISetupDetector
                 continue;
             }
 
-            // The swing the displacement candle CLOSES THROUGH is the MSS reference. Accept a swing that is
-            // still live OR was breached by THIS candle (so the order in which SwingPointDetector and this
-            // detector run cannot drop a legitimate MSS — spec §5 item 19). A swing consumed by a sweep, or
-            // breached on an EARLIER bar, is stale structure and excluded.
-            if (!swing.IsActive && !swing.WasBreachedOn(current.OpenTimeUtc))
+            // The swing the member candle CLOSES THROUGH is the MSS reference. Accept a swing that is still live
+            // OR was breached by THIS member (so the order in which SwingPointDetector and this detector run cannot
+            // drop a legitimate MSS — spec §5 item 19). A swing consumed by a sweep, or breached on an EARLIER bar,
+            // is stale structure and excluded.
+            if (!swing.IsActive && !swing.WasBreachedOn(member.OpenTimeUtc))
+            {
+                continue;
+            }
+
+            // Causality: a swing cannot be broken by a member that closed before it formed (no-op at length 1).
+            if (swing.FormedAtUtc > member.OpenTimeUtc)
             {
                 continue;
             }
 
             var broken = direction == Direction.Bullish
-                ? current.Close > swing.Price.Value
-                : current.Close < swing.Price.Value;
+                ? member.Close > swing.Price.Value
+                : member.Close < swing.Price.Value;
             if (!broken)
             {
                 continue;

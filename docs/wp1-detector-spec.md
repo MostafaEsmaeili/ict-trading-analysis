@@ -276,7 +276,7 @@ Strictly bottom-up; each tier compiles and unit-tests green before the next.
 | **Detection: MSS** |  |  |
 | `Ict:MarketStructureShift:CloseBeyondMinPips` | `1.0` | FX / 1 tick (**I**) |
 | `Ict:MarketStructureShift:SwingFractalWidth` | `3` |  |
-| `Ict:MarketStructureShift:SweepToMssMaxBars` | `5` | (**I**; foundation uses 20 — reconcile) |
+| `Ict:MarketStructureShift:SweepToMssMaxBars` | `5` | (**I**; locked at 5 — TIME-11-12, strict-precede to the breaking member) |
 | `Ict:MarketStructureShift:RequirePrecedentSweep` | `true` |  |
 | `Ict:MarketStructureShift:InvalidationFractalWidth` | `5` | **UNCONFIRMED** (Ep12) |
 | **Liquidity / Sweep / Draw** |  |  |
@@ -340,7 +340,7 @@ Strictly bottom-up; each tier compiles and unit-tests green before the next.
 | `Ict:TradeStyles:Classification:TargetDistanceTieEnabled` | `false` |  |
 | `Ict:Execution:Swap:CutoffEt` | `17:00` | NY rollover (§5.4) |
 
-Reconcile-before-coding duplicates: `WarmupBars` (200 vs 50), `Fvg:AtrMultiple` (1.5 vs 0.0), `SweepToMssMaxBars` (5 vs 20).
+Reconcile-before-coding duplicates: `WarmupBars` (200 vs 50), `Fvg:AtrMultiple` (1.5 vs 0.0), `SweepToMssMaxBars` (locked at 5 — TIME-11-12).
 
 ---
 
@@ -385,7 +385,7 @@ Two kinds of entry live here. **Items 1–22 are genuine model ambiguities** —
 9. **OB candidate: single last opposite-close vs whole down/up-close cluster** (and whether the mean-threshold body spans the cluster). Confirm vs Eps 06/25/26/33.
 10. **Reference-open selection (00:00 NY vs 08:30 NY) scope.** 08:30 for Index only, or also FX NY-AM Judas? "Use lower open when bearish" applicability. Confirm Eps 02/03/39.
 11. **Multi-candle displacement satisfying MSS.** Single closing-break candle (current spec) vs accumulated multi-candle leg. Confirm Ep05/Ep25.
-12. **Sweep→MSS window length** (`SweepToMssMaxBars`) — not in transcripts; reconcile the 5 vs 20 split and confirm a value.
+12. **Sweep→MSS window length** (`SweepToMssMaxBars`) — RESOLVED (TIME-11-12): locked at 5, strict-precede to the breaking member.
 13. **Scalp `AllowDirectFvgEntry` (Silver-Bullet, skip OTE).** Plan defaults FALSE to preserve the §2.5 OTE RequiredCondition. Product/transcript sign-off needed to ever default it true.
 14. **DetectedSetupStyleClassifier overrides.** (a) May it relabel a Setup away from the single running `ActiveStyle`? (b) M1 Scalp-vs-Intraday tie-break precedence (`Timeframe` vs `Hold`). Both are interpretations needing sign-off.
 15. **Swing/Position hold caps** (10d/30d) and **Scalp ~30m** — transcripts say only "days/weeks/~30m". Keep operator-tunable; no ICT-derived number exists.

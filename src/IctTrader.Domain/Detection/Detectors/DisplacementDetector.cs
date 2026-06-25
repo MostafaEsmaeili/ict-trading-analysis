@@ -43,42 +43,127 @@ public sealed class DisplacementDetector : ISetupDetector
             return DetectorResult.NoMatch;
         }
 
-        var body = Math.Abs(current.Close - current.Open);
-        var atr = AverageTrueRange(window, _options.AtrPeriod);
-
-        var energetic = body / range >= _options.MinBodyToRangeRatio && body >= _options.AtrMultiple * atr;
-        if (_options.MinDisplacementPips > 0m)
+        // Direction seed: an inside/doji candle is never a leg terminus (the per-candle terminus precondition).
+        if (current.Close == current.Open)
         {
-            energetic &= context.SymbolSpec.PriceToPips(body).Value >= _options.MinDisplacementPips;
-        }
-
-        if (!energetic || current.Close == current.Open)
-        {
-            return DetectorResult.NoMatch; // weak / wick-only expansion
+            return DetectorResult.NoMatch;
         }
 
         var direction = current.Close > current.Open ? Direction.Bullish : Direction.Bearish;
 
-        // EG-1: anchor the leg body-to-body by default (origin = Open, terminus = Close — the favorable close is
-        // the reach, the sign of Open-Close encodes direction); wick-to-wick on the FOMC/NFP exception or operator
-        // override. The OTE band, the leg equilibrium, and SD targets all inherit this one anchor.
-        var (origin, terminus) = ResolveAnchor(context) == LegAnchorMode.WickToWick
-            ? direction == Direction.Bullish ? (current.Low, current.High) : (current.High, current.Low)
-            : (current.Open, current.Close);
+        // EG-1: resolve the anchor mode ONCE, leg-wide, BEFORE growing — so the extension metric and the boundary
+        // anchor never disagree. Wick-to-wick on the FOMC/NFP exception or operator override.
+        var anchor = ResolveAnchor(context);
 
-        var leg = new Displacement(direction, current.Timeframe, new Price(origin), new Price(terminus), current.OpenTimeUtc);
+        // Grow the run backward from the terminus (TIME-11-12): absorb each older same-direction candle whose
+        // anchored extreme strictly extends the run, capped to the last DisplacementLegMaxBars candles.
+        var lastIdx = window.Count - 1;
+        var startIdx = lastIdx;
+        var runExtreme = Extreme(window[lastIdx], direction, anchor);
+        var floor = Math.Max(0, lastIdx - (_options.DisplacementLegMaxBars - 1));
+        for (var i = lastIdx - 1; i >= floor; i--)
+        {
+            var c = window[i];
+            var sameDir = direction == Direction.Bullish ? c.Close > c.Open : c.Close < c.Open;
+            if (!sameDir)
+            {
+                break; // a counter / doji candle ends the run
+            }
+
+            var cExtreme = Extreme(c, direction, anchor);
+            var extends = direction == Direction.Bullish ? cExtreme < runExtreme : cExtreme > runExtreme;
+            if (!extends)
+            {
+                break; // a stall / overlap ends the run (strict so an equal-extreme never glues a candle on)
+            }
+
+            startIdx = i;
+            runExtreme = cExtreme;
+        }
+
+        var legBars = lastIdx - startIdx + 1;
+        var originCandle = window[startIdx];
+        var terminusCandle = current; // window[lastIdx] == current
+
+        // EG-1 boundary-candle anchors: min/max(Open,Close) of the BOUNDARY candles (NOT literal first-Open/last-Close).
+        var (origin, terminus) = anchor == LegAnchorMode.WickToWick
+            ? direction == Direction.Bullish
+                ? (originCandle.Low, terminusCandle.High)
+                : (originCandle.High, terminusCandle.Low)
+            : direction == Direction.Bullish
+                ? (Math.Min(originCandle.Open, originCandle.Close), Math.Max(terminusCandle.Open, terminusCandle.Close))
+                : (Math.Max(originCandle.Open, originCandle.Close), Math.Min(terminusCandle.Open, terminusCandle.Close));
+
+        // Aggregate energy gate over the assembled run (reduces to the per-candle gate at length 1): the net
+        // directional thrust must dominate the leg range AND clear ATR×multiple.
+        var legRange = MaxHigh(window, startIdx, lastIdx) - MinLow(window, startIdx, lastIdx);
+        if (legRange <= 0m)
+        {
+            return DetectorResult.NoMatch;
+        }
+
+        var legBody = Math.Abs(terminus - origin);
+        var atr = AverageTrueRange(window, _options.AtrPeriod);
+        var energetic = legBody / legRange >= _options.MinBodyToRangeRatio && legBody >= _options.AtrMultiple * atr;
+        if (_options.MinDisplacementPips > 0m)
+        {
+            energetic &= context.SymbolSpec.PriceToPips(legBody).Value >= _options.MinDisplacementPips;
+        }
+
+        if (!energetic)
+        {
+            return DetectorResult.NoMatch; // weak / anemic expansion
+        }
+
+        var leg = new Displacement(
+            direction,
+            current.Timeframe,
+            new Price(origin),
+            new Price(terminus),
+            current.OpenTimeUtc,
+            originCandle.OpenTimeUtc,
+            legBars);
         context.SetDisplacement(leg);
 
-        var pips = context.SymbolSpec.PriceToPips(body).Value;
+        var pips = context.SymbolSpec.PriceToPips(legBody).Value;
         var evidence = new Dictionary<string, object>
         {
             [EvidenceKeys.Direction] = direction.ToString(),
             [EvidenceKeys.DisplacementPips] = pips,
+            [EvidenceKeys.DisplacementLegBars] = legBars,
             [EvidenceKeys.Timeframe] = current.Timeframe.ToString(),
         };
 
         return DetectorResult.Match(
             direction, terminus, ReasonFragments.Displacement(direction, pips, current.Timeframe), evidence);
+    }
+
+    // The anchored extreme used both to grow the run and to compute the boundary anchors.
+    private static decimal Extreme(Candle candle, Direction direction, LegAnchorMode anchor)
+        => anchor == LegAnchorMode.WickToWick
+            ? direction == Direction.Bullish ? candle.High : candle.Low
+            : direction == Direction.Bullish ? Math.Max(candle.Open, candle.Close) : Math.Min(candle.Open, candle.Close);
+
+    private static decimal MaxHigh(IReadOnlyList<Candle> window, int startIdx, int lastIdx)
+    {
+        var max = window[startIdx].High;
+        for (var i = startIdx + 1; i <= lastIdx; i++)
+        {
+            max = Math.Max(max, window[i].High);
+        }
+
+        return max;
+    }
+
+    private static decimal MinLow(IReadOnlyList<Candle> window, int startIdx, int lastIdx)
+    {
+        var min = window[startIdx].Low;
+        for (var i = startIdx + 1; i <= lastIdx; i++)
+        {
+            min = Math.Min(min, window[i].Low);
+        }
+
+        return min;
     }
 
     private static void InvalidateRetracedLeg(MarketContext context, Candle current)

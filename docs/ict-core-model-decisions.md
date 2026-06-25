@@ -32,9 +32,9 @@ surface yet) · **DONE** (already implemented in a merged slice).
   daily-range **veto** frame (EG-2) reads `DailyRange`, not the leg, so it is structurally untouched. The
   leg-retrace **invalidation** reference also moves with the anchor (a close back through `leg.Origin` = the body
   Open by default, the wick Low under `WickToWick`) — coherent with the body leg, locked by a discriminating test.
-  Edge-inclusivity + 0.705-preference locked. **Deferred:** the body anchor is exact only for today's single-candle
-  leg; TIME-11-12 (multi-candle leg) must select `max(Open,Close)` of the terminus candle / `min(Open,Close)` of the
-  origin candle across the leg — not the literal first-Open/last-Close — to stay faithful.
+  Edge-inclusivity + 0.705-preference locked. The multi-candle generalization (TIME-11-12, DONE) honors this: the
+  body anchor selects `max(Open,Close)` of the terminus candle / `min(Open,Close)` of the origin candle across the
+  leg — not the literal first-Open/last-Close.
 - **EG-2 — Premium/discount anchor (load-bearing).** Step-1 (daily dealing-range 50%, the bias + entry-half
   **veto**) and step-6 (displacement-leg 50%, **which FVG is eligible**) are **two distinct reference
   frames** and must never be conflated. The daily-range frame stays the **single `PremiumDiscountHalf`
@@ -83,11 +83,18 @@ surface yet) · **DONE** (already implemented in a merged slice).
   fractal proxy" (default width 5, prefer the registered ITH/ITL when available). Close-beyond invalidates,
   never wick. Cite: Mentorship Ep10/Ep12 (confirms the 5 as a proxy, not unconfirmed). **DOC/ANALYSIS**
   (relabel + prefer-actual-ITH follow-on).
-- **TIME-11-12 — Multi-candle MSS (REAL change) + sweep→MSS = 5 bars.** Displacement is a price **leg**, not
-  one candle; MSS is confirmed when any candle of the energetic leg (`DisplacementLegMaxBars`, default 3)
-  **closes beyond** the broken short-term swing in-direction. Reconcile `SweepToMssMaxBars` to **5** (the
-  '20' was spec-doc prose only — no live key; remove it). The only hard rule stays sweep-strictly-precedes-MSS.
-  Cite: Mentorship Ep25/Ep5. **CODE-READY** (multi-candle leg) + **DOC** (remove '20').
+- **TIME-11-12 — Multi-candle MSS (REAL change) + sweep→MSS = 5 bars. DONE (issue #59).** Displacement is now a
+  price **leg**, not one candle: `DisplacementDetector` grows a backward run (consecutive same-direction,
+  strictly-monotonic-extending candles, hard-capped at `DisplacementLegMaxBars`=3) and gates its **net-thrust**
+  energy; the body anchor (EG-1) selects `max/min(Open,Close)` of the boundary candles leg-wide (wick on FOMC/NFP).
+  `MarketStructureShiftDetector` reconstructs the leg's members from the window∩`[OriginAtUtc,AtUtc]` span and
+  confirms on the **earliest** member that **closes beyond** the broken swing by `CloseBeyondMinPips` (a `FormedAtUtc`
+  causality guard stops a later swing being retro-broken; a `members.Count != LegBars` fail-safe). The ONE hard rule —
+  **sweep strictly precedes the MSS** — is enforced to the *breaking member* (strict `<`, within `SweepToMssMaxBars`).
+  `SweepToMssMaxBars` is **5** (already the live key; the stray spec-doc '20' removed). The single-candle case is
+  byte-identical (ctor overload → `OriginAtUtc=AtUtc`, `LegBars=1`); the OTE/equilibrium/SD consumers inherit the
+  wider leg with zero change. Design judge-panel (3 angles → synthesis, `wf_a355c351-56d`). Cite: Mentorship
+  Ep25 L320-330 / Ep5 L160-191.
 - **TIME-10 — Reference open = instrument-class split (REAL change).** FX / daily Power-Three reference =
   **00:00 NY**; index-futures macro = **08:30 NY**. `UseMacroOpenReference=false` (default FX = midnight).
   When bearish and both exist, use the **lower** open. Cite: Mentorship Ep10/Ep2 (midnight) + Ep4/5/7/10
