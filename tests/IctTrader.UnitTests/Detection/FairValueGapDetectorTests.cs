@@ -126,4 +126,53 @@ public class FairValueGapDetectorTests
 
         gap.State.Should().Be(FvgState.Mitigated);
     }
+
+    [Fact]
+    public void Fvg_formation_is_touch_zero_and_the_first_retrace_is_touch_one()
+    {
+        // FVG-SEM-1b: the 3-candle formation is touch 0 (it trades AWAY from the gap), so counting starts at the
+        // first RETURN into the void — the gap registers open with TouchCount 0.
+        var ctx = NewContext();
+        ctx.SetDisplacement(new Displacement(Direction.Bullish, Timeframe.M5, new Price(1.0810m), new Price(1.0860m), Base));
+        var detector = new FairValueGapDetector(new FvgOptions());
+        FeedBullishGap(ctx, detector, out _);
+        var gap = ctx.OpenFvgs.Single();
+
+        gap.TouchCount.Should().Be(0);
+
+        Feed(ctx, detector, Candle(3, 1.0826m, 1.0828m, 1.0822m, 1.0824m)); // first retrace into the gap
+        gap.TouchCount.Should().Be(1);
+        gap.IsOpen.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Wick_into_semantics_counts_a_bar_that_only_wicks_into_the_gap()
+    {
+        // FVG-SEM-1a default: a bar that trades into the gap but closes above it still counts (Ep38 "trade back in").
+        var ctx = NewContext();
+        ctx.SetDisplacement(new Displacement(Direction.Bullish, Timeframe.M5, new Price(1.0810m), new Price(1.0860m), Base));
+        var detector = new FairValueGapDetector(new FvgOptions()); // default WickInto
+        FeedBullishGap(ctx, detector, out _);                       // gap [1.0820, 1.0830]
+        var gap = ctx.OpenFvgs.Single();
+
+        Feed(ctx, detector, Candle(3, 1.0835m, 1.0838m, 1.0822m, 1.0834m)); // wicks to 1.0822, closes 1.0834 (above)
+        gap.TouchCount.Should().Be(1);
+    }
+
+    [Fact]
+    public void Close_into_semantics_counts_only_a_bar_that_closes_inside_the_gap()
+    {
+        // FVG-SEM-1a alternative: the same wick-only bar does NOT count under CloseInto; only a close inside does.
+        var ctx = NewContext();
+        ctx.SetDisplacement(new Displacement(Direction.Bullish, Timeframe.M5, new Price(1.0810m), new Price(1.0860m), Base));
+        var detector = new FairValueGapDetector(new FvgOptions { TouchSemantics = FvgTouchSemantics.CloseInto });
+        FeedBullishGap(ctx, detector, out _);                       // gap [1.0820, 1.0830]
+        var gap = ctx.OpenFvgs.Single();
+
+        Feed(ctx, detector, Candle(3, 1.0835m, 1.0838m, 1.0822m, 1.0834m)); // wicks in but closes above → no touch
+        gap.TouchCount.Should().Be(0);
+
+        Feed(ctx, detector, Candle(4, 1.0826m, 1.0828m, 1.0823m, 1.0825m)); // closes 1.0825 inside [1.0820,1.0830]
+        gap.TouchCount.Should().Be(1);
+    }
 }
