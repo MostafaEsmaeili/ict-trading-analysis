@@ -48,9 +48,11 @@ surface yet) · **DONE** (already implemented in a merged slice).
   (INVENTED, flagged, default 2) of the array level on the correct side. **v1 changes the recorded FillPrice ONLY —
   `OpenArmed` still opens at `Plan.Entry`, so `InitialRiskPerUnit`/`RiskBudget` are preserved (frozen-1R invariant
   safe; a stop-out still books exactly −1R, locked by a test).** Cite: Mentorship Ep10/29/07/22/35 (taught) + Ep09
-  (don't-chase). **Deferred:** the "open at the touched price" real-economics variant (would break reserve==RiskBudget),
-  and the band-edge clamp. **WP7 note:** EG-3's pip→price tolerance defaults to FX-major; the host must inject the
-  instrument's `SymbolSpec` into `EntryFillEvaluator` for non-FX (JPY/index) when EG-3 is enabled.
+  (don't-chase). The v1 clamp is **entry-anchored** (`clamp(touched, entry∓tolerance)`) — shipped. **Deferred:** the
+  "open at the touched price" real-economics variant (would break reserve==RiskBudget), and re-deriving the clamp to the
+  actual OTE 62–79% band far-edge (v1 uses the entry-anchored tolerance instead). **WP7 note:** `EntryFillEvaluator` now
+  REQUIRES a `SymbolSpec` (no FX-major default) — the host must inject the trade's instrument so the pip→price tolerance
+  can never mis-scale for non-FX (JPY/index).
 
 ## Fair Value Gap semantics (four distinct constructs — never conflate)
 

@@ -22,9 +22,9 @@ public class EntryFillEvaluatorCloseProximityTests
     private static readonly ContractSpec Contract = ContractSpec.FxMajor(Eurusd);
     private static readonly DateTimeOffset Utc = new(2024, 7, 1, 7, 0, 0, TimeSpan.Zero);
 
-    private static EntryFillEvaluator Off() => new(new EntryManagementOptions());
+    private static EntryFillEvaluator Off() => new(new EntryManagementOptions(), Spec);
     private static EntryFillEvaluator On(decimal tolPips = 2m) =>
-        new(new EntryManagementOptions { UseCloseProximityEntry = true, CloseProximityTolerancePips = tolPips });
+        new(new EntryManagementOptions { UseCloseProximityEntry = true, CloseProximityTolerancePips = tolPips }, Spec);
 
     // Long: entry 1.0832 (the OTE/FVG limit, in discount), stop 1.0800 (32-pip 1R), T1 1.0876, runner 1.0920.
     private static Setup BullishSetup()

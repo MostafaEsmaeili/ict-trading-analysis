@@ -28,15 +28,16 @@ public sealed class EntryFillEvaluator : IEntryFillEvaluator
 
     /// <param name="options">The §2.5.1-step-7 entry policy — its EG-3 close-proximity flag governs the recorded fill price.</param>
     /// <param name="symbolSpec">
-    /// The instrument spec the EG-3 pip→price tolerance converts against (so the band is no-magic-number). Optional —
-    /// defaulting to the FX-major spec for the candle's symbol keeps the evaluator usable without explicit wiring while
-    /// the close-proximity flag is OFF (the default), where the spec is never read.
+    /// The instrument spec the EG-3 pip→price tolerance converts against (so the band is no-magic-number). REQUIRED — it
+    /// must be the trade's own instrument so the tolerance can never silently mis-scale (e.g. an FX-major default applied
+    /// to a JPY pair or an index would be ~100× off); the host injects the real spec at the DI seam.
     /// </param>
-    public EntryFillEvaluator(EntryManagementOptions options, SymbolSpec? symbolSpec = null)
+    public EntryFillEvaluator(EntryManagementOptions options, SymbolSpec symbolSpec)
     {
         ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(symbolSpec);
         _options = options;
-        _symbolSpec = symbolSpec ?? SymbolSpec.FxMajor(new Symbol("EURUSD"));
+        _symbolSpec = symbolSpec;
     }
 
     public EntryFillDecision Evaluate(Setup setup, Candle candle)

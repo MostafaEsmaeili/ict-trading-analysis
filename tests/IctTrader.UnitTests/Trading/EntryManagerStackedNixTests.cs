@@ -28,7 +28,7 @@ public class EntryManagerStackedNixTests
     private static readonly PaperTradeFactory Factory = new(new RiskOptions(), new RiskManager());
 
     private static EntryManager NewManager(int maxWaitMinutes = 240) => new(
-        new EntryFillEvaluator(new EntryManagementOptions()),
+        new EntryFillEvaluator(new EntryManagementOptions(), Spec),
         new FillEvaluator(new FillOptions()),
         new ExecutionCostModel(new ExecutionCostOptions()),
         new KillzoneClock(new NyClock(new FakeTimeProvider()), KillzoneSchedule.CreateDefault()),
