@@ -6,4 +6,12 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- The in-memory IMessageBus (plan §3.0a) resolves handlers from the DI container and Scrutor
+         assembly-scans each module's Application handlers. Scrutor is OSS (arch-test-safe; only
+         MediatR/FluentAssertions/Moq/SpecFlow are banned in production). -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.9" />
+    <PackageReference Include="Scrutor" Version="7.0.0" />
+  </ItemGroup>
+
 </Project>

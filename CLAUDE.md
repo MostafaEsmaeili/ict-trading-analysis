@@ -661,6 +661,35 @@ startup, so a mis-configured host fails fast with the section-qualified reason i
   `<Using Include="Xunit"/>` + `<Using Include="FluentAssertions"/>`, tests pass green; skipped with reason (adding
   redundant file usings would trip IDE0005 under warnings-as-errors). guardrail 7/7, pr-reviewer APPROVE.
 
+**WP7 slice 2a — the in-memory message bus (issue #78, branch `feature/#78-in-memory-message-bus`, PR #79) — DONE.**
+The modular monolith's only inter-module seam (plan §3.0a) finally has an implementation — the keystone the
+whole scan loop rides on. A 5-reader **understand workflow** (`wf_7471efe4-8a1`) first mapped the messaging/DI
+seam, the frozen contracts, and the scanning + paper-trading composition recipes (read from the integration
+tests). pr-reviewer APPROVE (3 nits applied), guardrail 7/7, **569 unit (+9) + 23 arch**, 0 warnings, format clean:
+
+- **`InMemoryMessageBus : IMessageBus`** (`src/SharedKernel/Messaging/`) — a stateless singleton that opens a
+  **fresh DI scope per dispatch** via `IServiceScopeFactory` (clean per-dispatch unit-of-work, no captive
+  dependency). `SendAsync`/`QueryAsync` route to **exactly one** handler (fail-fast on 0 or >1); `PublishAsync`
+  fans out to **0..N** handlers awaited **sequentially in registration order** — NO Channels/concurrent fan-out
+  (the scan path is deterministic + order-dependent: a stop-out must settle before the next bar). A published
+  event's handlers share the one dispatch scope. `QueryAsync` reconstructs the closed `IQueryHandler<,>` from
+  the query's **concrete runtime type** (the param is `IQuery<TResult>`) and invokes via reflection; handler
+  exceptions propagate (fail-fast).
+- **`MessagingRegistration.AddMessaging(params Assembly[])`** — `TryAddSingleton` the bus + **Scrutor**-scans the
+  given module `*.Application` assemblies for the three handler interfaces (Scoped lifetime), registering each
+  **only under its matched closed handler interface** (predicate-filtered `AsImplementedInterfaces`, so an
+  incidental `IDisposable`/second role can't pollute resolution).
+- **Packages:** `Scrutor 7.0.0` + `Microsoft.Extensions.DependencyInjection.Abstractions 10.0.9` added to
+  `SharedKernel` — **arch-test-safe** (neither internal `IctTrader.*` nor on the
+  MediatR/FluentAssertions/Moq/SpecFlow denylist; 23 arch tests still green). Host `Program.cs` calls
+  `AddMessaging()` (bus-only for now).
+- **Deferred (2c+):** passing the module `*.Application` assemblies to `AddMessaging` lands with the first real
+  handlers; cross-cutting **decorators** (logging/validation/idempotency) deferred. **Roadmap:** 2b
+  `ReplayMarketDataFeed` → `CandleIngested`; 2c Scanning handler + per-symbol scanner registry → `SetupConfirmed`
+  (**settle the scan→trade seam** — `SetupConfirmed` carries a lossy `SetupDto`, no money geometry); 2d
+  PaperTrading handler + the (not-yet-existing) aggregate repositories + `TradeOrchestrator` drive; 2e Host
+  `ScannerHostedService` + SignalR push + bus-backed REST.
+
 **Process cadence (per the operator):** keep the ICT gate strict (`ict-domain-expert` + guardrail + `pr-reviewer`,
 concurrent) but move faster — build directly from the locked design (skip the separate pre-spec when pinned), ship
 bigger complete slices, and reserve the heavy ~600k-case adversarial driver for numeric/money-math slices (it fuzzes
