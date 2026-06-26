@@ -56,4 +56,39 @@ public class HostOptionsValidationTests
 
         act.Should().Throw<OptionsValidationException>().WithMessage("*Ict:Displacement*");
     }
+
+    [Fact]
+    public void Configured_active_styles_replace_the_default_and_are_not_duplicated()
+    {
+        // REGRESSION: the .NET configuration binder APPENDS bound array items onto a pre-populated collection
+        // initializer. A non-empty ActiveStyles default therefore turned `["Intraday"]` into `[Intraday, Intraday]`,
+        // so the candle handler fed every candle to the same scanner twice and no setup ever confirmed. The fix
+        // defaults the list to empty (so the binder replaces) and resolves the ICT default via ResolvedActiveStyles.
+        var provider = Build(("Ict:Scanning:ActiveStyles:0", "Intraday"));
+
+        var resolved = provider.GetRequiredService<IOptions<MarketContextOptions>>().Value.ResolvedActiveStyles;
+
+        resolved.Should().ContainSingle().Which.Should().Be(IctTrader.Domain.Styles.TradeStyle.Intraday);
+    }
+
+    [Fact]
+    public void A_non_default_active_style_does_not_silently_re_add_the_default()
+    {
+        // The default must never be PREPENDED to an operator's selection — choosing Scalp must run ONLY Scalp.
+        var provider = Build(("Ict:Scanning:ActiveStyles:0", "Scalp"));
+
+        var resolved = provider.GetRequiredService<IOptions<MarketContextOptions>>().Value.ResolvedActiveStyles;
+
+        resolved.Should().ContainSingle().Which.Should().Be(IctTrader.Domain.Styles.TradeStyle.Scalp);
+    }
+
+    [Fact]
+    public void Unconfigured_active_styles_fall_back_to_the_ict_intraday_default()
+    {
+        var provider = Build(); // no Ict:Scanning:ActiveStyles configured
+
+        var resolved = provider.GetRequiredService<IOptions<MarketContextOptions>>().Value.ResolvedActiveStyles;
+
+        resolved.Should().ContainSingle().Which.Should().Be(IctTrader.Domain.Styles.TradeStyle.Intraday);
+    }
 }

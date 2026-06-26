@@ -226,4 +226,27 @@ public class OptionsValidationTests
         new DailyBiasOptions { EquilibriumPercent = 0.40m }.Validate().Should().NotBeEmpty();
         new PremiumDiscountOptions { EquilibriumPercent = 0.55m }.Validate().Should().NotBeEmpty();
     }
+
+    [Fact]
+    public void Resolved_active_styles_defaults_to_intraday_when_unconfigured()
+    {
+        new MarketContextOptions().ResolvedActiveStyles.Should().Equal(TradeStyle.Intraday);
+    }
+
+    [Fact]
+    public void Resolved_active_styles_deduplicates_to_avoid_double_feeding_a_scanner()
+    {
+        // A duplicate style (e.g. from the config binder appending onto the default) must collapse to one — else
+        // the candle handler would feed every candle to the same per-(symbol, style) scanner more than once.
+        var options = new MarketContextOptions { ActiveStyles = [TradeStyle.Intraday, TradeStyle.Intraday] };
+
+        options.ResolvedActiveStyles.Should().Equal(TradeStyle.Intraday);
+    }
+
+    [Fact]
+    public void Resolved_active_killzones_defaults_to_london_and_new_york_when_unconfigured()
+    {
+        new MarketContextOptions().ResolvedActiveKillzones
+            .Should().Equal(Killzone.LondonOpen, Killzone.NewYorkOpen);
+    }
 }

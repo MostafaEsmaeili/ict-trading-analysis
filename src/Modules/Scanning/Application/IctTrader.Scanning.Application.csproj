@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <!-- IOptions<T> for the host's validated Ict:* options + the module's DI registration extension. -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.9" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.9" />
   </ItemGroup>
 
