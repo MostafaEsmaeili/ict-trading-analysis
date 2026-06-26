@@ -17,6 +17,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <!-- DI abstractions for the AddPaperTradingPersistence extension method. -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.9" />
     <!-- Configuration builder used by the design-time factory to read appsettings. -->
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" />
@@ -29,5 +31,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Integration tests exercise the concrete EF repositories directly to verify DB round-trips. -->
+    <InternalsVisibleTo Include="IctTrader.IntegrationTests" />
+  </ItemGroup>
 
 </Project>
