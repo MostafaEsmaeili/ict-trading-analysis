@@ -709,11 +709,46 @@ pr-reviewer APPROVE (no Critical/Should-fix), guardrail 7/7, **579 unit (+10) + 
   blank-line-ignoring, **invariant-culture** CSV (`Symbol,Timeframe,OpenTimeUtc,O,H,L,C,V`); `OpenTimeUtc` read
   as **UTC** (`AssumeUniversal|AdjustToUniversal`, offsets normalised); a malformed row throws `FormatException`
   **with its line number**. `UnitTests` now references MarketData.Application+Infrastructure (arch governs
-  production only); 9 tests (4 ingestion incl. a real-bus capture + the read-only refusal, 5 CSV).
+  production only); 10 tests (3 ingestion incl. a real-bus capture, 7 CSV incl. header-shape validation).
 - **Deferred (2e):** the hosted `BackgroundService` driving `IngestAsync` + Host DI/fixture-path wiring
   (`ReplayFeedOptions`, `Ict:MarketData:Replay`); the resilient-feed decorator + OANDA/Finnhub/TraderMade/MT5
   read-only adapters (§6.1) + a `ReadOnlyFeedGuard` decorator; the `TickIngested` path. **No subscriber yet —
   2c (Scanning) consumes `CandleIngested`.**
+
+**WP7 slice 2c — the Scanning scan loop (issue #82, branch `feature/#82-scanning-scan-loop`, PR #83) — DONE.**
+The HEART of the loop: `CandleIngested` → a per-(symbol,style) `SymbolScanner` (the pure-domain `MarketContext` +
+the 14-detector **pinned** pipeline + the `ScanSession` FSM + `SetupFactory`) → a confirmed advisory `Setup` →
+`SetupConfirmed(SetupDto)`. Built by the `vsa-slice-builder` agent from the understand-workflow recipe, then
+strict-gated (ict-domain-expert **CONFORMANT 4/4**, guardrail 7/7, pr-reviewer APPROVE — its one Should-fix
+applied). **No Domain/Contracts changes.** 581 unit (+2) + 23 arch, 0 warnings, format clean:
+
+- **`SymbolScanner`** (`Scanning/Application/Scanning/`) — stateful per (symbol,style); builds the exact
+  `ScanSessionTests` recipe (SwingPoint→…→MSS pinned; shared `Fvg`/`Ote`/`PremiumDiscount`/`Liquidity`/`TradeStyle`
+  Options instances so the §2.5 chain can't drift); `Setup? OnCandle(Candle)`. Single-symbol mutable state → one
+  instance per symbol, chronological feed. A documented **test-only `prependDetectors` seam** (production passes
+  null → byte-identical) lets the test seed structural state the way `ScanSessionTests` does.
+- **`SymbolScannerFactory`/`Registry`** — singleton get-or-create per (symbol,style) (`ConcurrentDictionary`);
+  `ScannerOptions` snapshots the 18 validated `Ict:*` POCOs once. **`CandleIngestedHandler`** (`IEventHandler`,
+  bus-scoped) maps `CandleDto`→domain `Candle`, scans each `MarketContextOptions.ActiveStyles` (= `Ict:Scanning`,
+  default `[Intraday]`), and publishes `SetupConfirmed`. `AddScanningModule` registers the factory+registry
+  singletons (the handler is `AddMessaging`-scanned).
+- **Scan→trade seam — DECIDED (Architecture A):** the bus carries the lossy-but-sufficient `SetupDto`; the
+  PaperTrading consumer rebuilds a domain Setup from it in 2d. **Canonical wire target ordering:** `Targets[0]`=T1
+  partial (entry→runner equilibrium, §2.5.5), `[1]`=runner (the gated-draw RR tier), `[2..]`=advisory SD —
+  exactly `TradePlan.TargetLadder.Targets`. `SetupDtoMapper` projects entry/stop/targets/RR straight off the plan
+  (no recompute → frozen-1R/RR preserved); enum fields carry the **member names**; `Killzone` from
+  `scanner.CurrentKillzone` (the confirming candle's session — `Setup` carries none).
+- **`SetupDto.Id` is DETERMINISTIC** (SHA-256 of symbol|style|tf|direction|entry|stop|detectedAt → GUID) — the
+  pr-reviewer Should-fix: a fresh `Guid.NewGuid()` would let a replayed/redelivered candle emit a different id
+  for the same setup → a duplicate paper trade once 2d subscribes; a deterministic id is a free idempotency key
+  (the whole DTO now replays byte-identically; the determinism test asserts it incl. the id).
+- **Deferred:** **2d** = the PaperTrading `SetupConfirmedHandler` rebuilds a domain `Setup` from `SetupDto` (needs
+  a domain `Setup`/`TradePlan` **rehydrate-from-priced** factory) + per-symbol `SymbolSpec`/`ContractSpec` + the
+  aggregate **repositories** (none exist) + `TradeOrchestrator` drive + settle. **2e** = the Host
+  `ScannerHostedService` (DI, SignalR, REST). Flagged for later: `SymbolScanner` hardcodes `SymbolSpec.FxMajor`
+  (**FX-only** classification
+  — a per-instrument `SymbolSpec` lookup must precede any index symbol or the §2.5.7 index killzone never applies);
+  a real organic multi-bar fixture (vs the seeded seam) would close the last detector-pipeline coverage gap.
 
 **Process cadence (per the operator):** keep the ICT gate strict (`ict-domain-expert` + guardrail + `pr-reviewer`,
 concurrent) but move faster — build directly from the locked design (skip the separate pre-spec when pinned), ship
