@@ -690,6 +690,31 @@ tests). pr-reviewer APPROVE (3 nits applied), guardrail 7/7, **569 unit (+9) + 2
   PaperTrading handler + the (not-yet-existing) aggregate repositories + `TradeOrchestrator` drive; 2e Host
   `ScannerHostedService` + SignalR push + bus-backed REST.
 
+**WP7 slice 2b — read-only Replay feed + ingestion (issue #80, branch `feature/#80-replay-feed-ingestion`,
+PR #81) — DONE.** The MarketData "left half" of the scan loop — the candle SOURCE (plan §4.1/§6.1/§6.3).
+pr-reviewer APPROVE (no Critical/Should-fix), guardrail 7/7, **579 unit (+10) + 23 arch**, 0 warnings, format clean:
+
+- **`IMarketDataFeed`** (`MarketData/Application/Abstractions/`) — a **read-only-by-SHAPE** candle source:
+  `Provider` + `IAsyncEnumerable<CandleDto> StreamCandlesAsync(ct)`, and **no write/order method** — so a feed
+  is structurally read-only, not flag-gated (CodeRabbit-hardened: the impl-varying `IsReadOnly` bool was
+  removed — a bool an impl controls is "flag-disabled", the opposite of the §6.3 philosophy; the read-only
+  *status* is reported on the frozen `FeedStatusDto.IsReadOnly`).
+- **`MarketDataIngestor`** (`MarketData/Application/Ingestion/`) — `IngestAsync(ct)` `await foreach`es the feed
+  and publishes one `CandleIngested(CandleDto)` per candle on the `IMessageBus`, in candle order (the feed has
+  no write path, so no runtime read-only check is needed).
+- **`ReplayMarketDataFeed`** (`MarketData/Infrastructure/Feeds/`) — `IsReadOnly => true`, `Provider => "Replay"`;
+  ctor **stable-sorts the supplied candles by `OpenTimeUtc`** so chronological delivery is structural (a replay
+  reproduces a live run bit-for-bit); cancellation-honoring async iterator.
+- **`CsvCandleSource`** (`MarketData/Infrastructure/Feeds/`) — `Parse(TextReader)`/`Load(path)`: header-skipping,
+  blank-line-ignoring, **invariant-culture** CSV (`Symbol,Timeframe,OpenTimeUtc,O,H,L,C,V`); `OpenTimeUtc` read
+  as **UTC** (`AssumeUniversal|AdjustToUniversal`, offsets normalised); a malformed row throws `FormatException`
+  **with its line number**. `UnitTests` now references MarketData.Application+Infrastructure (arch governs
+  production only); 9 tests (4 ingestion incl. a real-bus capture + the read-only refusal, 5 CSV).
+- **Deferred (2e):** the hosted `BackgroundService` driving `IngestAsync` + Host DI/fixture-path wiring
+  (`ReplayFeedOptions`, `Ict:MarketData:Replay`); the resilient-feed decorator + OANDA/Finnhub/TraderMade/MT5
+  read-only adapters (§6.1) + a `ReadOnlyFeedGuard` decorator; the `TickIngested` path. **No subscriber yet —
+  2c (Scanning) consumes `CandleIngested`.**
+
 **Process cadence (per the operator):** keep the ICT gate strict (`ict-domain-expert` + guardrail + `pr-reviewer`,
 concurrent) but move faster — build directly from the locked design (skip the separate pre-spec when pinned), ship
 bigger complete slices, and reserve the heavy ~600k-case adversarial driver for numeric/money-math slices (it fuzzes
