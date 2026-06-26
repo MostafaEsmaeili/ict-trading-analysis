@@ -21,6 +21,10 @@ builder.Services
     .ValidateOnStart();
 builder.Services.AddSingleton<IValidateOptions<DefensiveOptions>, DefensiveOptionsValidator>();
 
+// Every Ict:* options POCO is bound to its config section and self-validated at startup (plan §4.6, WP7) — a
+// mis-configured host fails fast with the section-qualified reason rather than silently mis-running the model.
+builder.Services.AddIctOptions(builder.Configuration);
+
 builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
 
