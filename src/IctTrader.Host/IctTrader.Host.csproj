@@ -33,4 +33,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- The integration suite drives the internal bus -> SignalR bridge handlers (Realtime/*Broadcaster) directly. -->
+    <InternalsVisibleTo Include="IctTrader.IntegrationTests" />
+  </ItemGroup>
+
 </Project>
