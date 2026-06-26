@@ -35,6 +35,10 @@ var fetchHistoryMode = builder.Configuration.GetValue<bool>("Ict:MarketData:Oand
 
 if (fetchHistoryMode)
 {
+    // Register the bus singleton (no module handlers) so the bus-typed API endpoints still BIND at startup — the
+    // fetch tool stops the app after writing the CSV, so they are never actually served. AddScanLoop wires only the
+    // OANDA fetcher + its one-shot hosted service in this mode.
+    builder.Services.AddMessaging();
     builder.Services.AddScanLoop(builder.Configuration);
 }
 else
