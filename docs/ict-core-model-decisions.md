@@ -42,10 +42,14 @@ surface yet) · **DONE** (already implemented in a merged slice).
   weight. **Σ(applicable) stays 9.75** — which TGR-4's grading arithmetic depends on. If the leg-half is
   ever promoted to its own scored confluence it MUST be a new `ConfluenceCondition` (re-tune the
   denominator). Cite: Mentorship Ep41/06/19. **STATUS-QUO** (already correct in code).
-- **EG-3 — Close-proximity entry.** A real, named, configurable entry rule, **OFF by default** (faithful
-  baseline = a resting limit at the level). When on, fill at the **actual touched price** within a
-  tolerance (INVENTED, flagged) of the array boundary on the correct PD side, still inside 62–79. Cite:
-  Mentorship Ep10/29/07/22/35 (taught) + Ep09 (don't-chase). **DEFERRED** (rides the entry-orchestrator chain).
+- **EG-3 — Close-proximity entry. DONE v1 (issue #72).** A configurable entry rule, **OFF by default** (faithful
+  baseline = a resting limit at the level). When on (`EntryManagementOptions.UseCloseProximityEntry`),
+  `EntryFillEvaluator` records the fill at the **actual touched price** clamped within `CloseProximityTolerancePips`
+  (INVENTED, flagged, default 2) of the array level on the correct side. **v1 changes the recorded FillPrice ONLY —
+  `OpenArmed` still opens at `Plan.Entry`, so `InitialRiskPerUnit`/`RiskBudget` are preserved (frozen-1R invariant
+  safe; a stop-out still books exactly −1R, locked by a test).** Cite: Mentorship Ep10/29/07/22/35 (taught) + Ep09
+  (don't-chase). **Deferred:** the "open at the touched price" real-economics variant (would break reserve==RiskBudget),
+  and the band-edge clamp.
 
 ## Fair Value Gap semantics (four distinct constructs — never conflate)
 
@@ -70,15 +74,19 @@ surface yet) · **DONE** (already implemented in a merged slice).
     exactly one marked); `MarketContext.SetDisplacement` clears stale marks on a leg change. Stacked **detection**
     only (`MarkStacked` when a deeper FVG sits within `StackProximityPips`; the farther gap's far edge is carried for
     2b, not yet consumed).
-  - **FVG-SEM-2b — DEFERRED (entry-orchestrator chain, with EG-3).** The stacked **stop-sizing** (widen
-    `DrawOnLiquidityDetector`'s stop to clear the farther gap — `min(sweep-buffer, fartherBottom-buffer)` bullish /
-    mirror; can drop a setup below the RR floor, so gate behind `StrictFirstFvg`) and the **wrong-order nix**
-    (`EntryManager` rung, precedence killzone-end > max-wait > nix > fill; trigger `bullish: Low ≤ fartherBound` /
-    `bearish: High ≥ fartherBound` before fill; new `EntryCancelReason.StackedFartherGapHitFirst`; needs
-    `ArmedEntry.StackedFartherBound` carried frozen `Setup`→`PricedFrame`→`ArmedEntry`). **2b caveat (verify
-    pass):** 2a ranks "deeper" by `Midpoint` but measures proximity edge-to-edge, so an overlapping or unequal-size
-    farther gap could have a shallower near edge — when 2b consumes `fartherBound` as a hard nix level, add an
-    explicit overlapping-gap test.
+  - **FVG-SEM-2b — DONE (issue #72).** The stacked **stop-sizing**: `DrawOnLiquidityDetector` widens the stop to clear
+    the farther gap (`stop = min(sweep−buffer, fartherBound−buffer)` bullish / mirror, symmetric `StopBufferPips` — a
+    faithful inference, flagged), computed BEFORE the RR floor so a stacked setup that drops below the floor is a
+    faithful NoMatch; gated behind `StrictFirstFvg`. The **wrong-order nix**: a new `EntryManager.ResolveCancellation`
+    rung (precedence killzone-end > max-wait > **nix** > fill; trigger `bullish: Low ≤ fartherBound` /
+    `bearish: High ≥ fartherBound`, pre-fill, only when `ArmedEntry.IsStacked`; new
+    `EntryCancelReason.StackedFartherGapHitFirst`, reusing the existing Cancel+`Release` apply path — cap self-heals).
+    The farther bound threads `EvidenceKeys.StackedFartherBound` (written gated + only when **beyond the entry on the
+    stop side** — the §3.5 overlapping-gap guard) → `PricedFrame` → `Setup` (NOT `TradePlan`, keeping the order
+    invariant) → `ArmedEntry` (frozen at `Arm`). Default OFF (`StrictFirstFvg=false`) byte-identical. EF migration
+    `AddArmedEntryStackedFartherBound` (one nullable column). The overlapping-gap test the 2a verify pass flagged is
+    locked (the guard's drop-branch is defensively unreachable via today's resolver geometry — both observable outcomes
+    tested).
 - **FVG-SEM-3 — Validity exclusions = FLAG-ONLY. DONE (issue #65).** The five web exclusions (no-sweep /
   Asian-range / counter-bias / no-CHoCH / overlapping-wicks) are §2.5.10 secondary additions. `FairValueGapDetector`
   now computes all five at formation and attaches them as **evidence** (6 new `EvidenceKeys`, incl. the OR), proven

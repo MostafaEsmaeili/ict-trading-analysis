@@ -21,6 +21,22 @@ public sealed class EntryManagementOptions
     /// </summary>
     public int MaxWaitMinutes { get; init; } = 240;
 
+    /// <summary>
+    /// EG-3 v1 (Ep10/29/07/22/35): record the resting-limit fill at the touched price clamped to a small entry-anchored
+    /// band, rather than exactly at the plan entry. Default OFF (the byte-identical limit-level fill). This is a
+    /// DIAGNOSTIC nicety only — <see cref="Trading.PaperTradeFactory.OpenArmed"/> still opens the trade at the plan
+    /// entry, so the frozen-1R invariant is preserved (the open price never moves). The "open at the touched price"
+    /// real-economics variant is deferred (it would break reserve == RiskBudget).
+    /// </summary>
+    public bool UseCloseProximityEntry { get; init; }
+
+    /// <summary>
+    /// The half-width (in pips) of the EG-3 close-proximity fill band around the entry. INVENTED — the transcripts say
+    /// enter "close to" the level but give no tolerance, so this is an operator-tunable, provenance-flagged guard, kept
+    /// small. Read only when <see cref="UseCloseProximityEntry"/> is on; must be non-negative.
+    /// </summary>
+    public decimal CloseProximityTolerancePips { get; init; } = 2m;
+
     public IReadOnlyList<string> Validate()
     {
         var errors = new List<string>();
@@ -28,6 +44,11 @@ public sealed class EntryManagementOptions
         if (MaxWaitMinutes <= 0)
         {
             errors.Add($"MaxWaitMinutes must be positive but was {MaxWaitMinutes}.");
+        }
+
+        if (CloseProximityTolerancePips < 0m)
+        {
+            errors.Add($"CloseProximityTolerancePips cannot be negative but was {CloseProximityTolerancePips}.");
         }
 
         return errors;

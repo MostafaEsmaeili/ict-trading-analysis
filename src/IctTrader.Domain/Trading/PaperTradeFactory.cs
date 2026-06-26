@@ -99,7 +99,8 @@ public sealed class PaperTradeFactory
         // Reserve discards the un-returned ArmedEntry — either path leaves the account untouched.
         var armedEntry = new ArmedEntry(
             Guid.NewGuid(), account.Id, setup, sizing.Size, sizing.RiskBudget,
-            symbolSpec.PipSize, contractSpec.ValuePerPip, symbolSpec.InstrumentClass, armedAtUtc);
+            symbolSpec.PipSize, contractSpec.ValuePerPip, symbolSpec.InstrumentClass, armedAtUtc,
+            setup.StackedFartherBound); // FVG-SEM-2b: carry the stacked farther bound onto the resting limit for the NIX
         account.Reserve(armedEntry.Id, sizing.RiskBudget);
 
         return armedEntry;

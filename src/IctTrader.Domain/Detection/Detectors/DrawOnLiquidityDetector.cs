@@ -90,6 +90,15 @@ public sealed class DrawOnLiquidityDetector : ISetupDetector
             }
 
             stop = sweep.Level - buffer;
+
+            // FVG-SEM-2b §1 (Ep3 L376-413): when the first-FVG selection is stacked, the stop must clear the FARTHER
+            // gap so a stab into it does not stop us out. The same symmetric StopBufferPips beyond its far-edge (a
+            // faithful inference — Ep3 does not give the index/pip buffer); Math.Min only WIDENS (never tightens), so
+            // the stop moves only when the farther edge sits below the swept extreme. Gated on StrictFirstFvg.
+            if (_fvgOptions.StrictFirstFvg && ote.StackedFartherBound is { } fartherLow)
+            {
+                stop = Math.Min(stop, fartherLow - buffer);
+            }
         }
         else
         {
@@ -99,8 +108,14 @@ public sealed class DrawOnLiquidityDetector : ISetupDetector
             }
 
             stop = sweep.Level + buffer;
+
+            if (_fvgOptions.StrictFirstFvg && ote.StackedFartherBound is { } fartherHigh)
+            {
+                stop = Math.Max(stop, fartherHigh + buffer); // mirror: widen ABOVE the farther gap, never tighten
+            }
         }
 
+        // Computed BEFORE risk so a wider stacked stop lowers RR and can drop below the floor (a faithful NoMatch).
         var risk = Math.Abs(entry - stop);
         if (risk <= 0m)
         {
@@ -122,6 +137,15 @@ public sealed class DrawOnLiquidityDetector : ISetupDetector
             [EvidenceKeys.TargetPrice] = draw,
             [EvidenceKeys.RewardRatio] = rewardRatio.Value,
         };
+
+        // FVG-SEM-2b §2/§3.5 (gated): carry the stacked farther bound so the ArmedEntry's wrong-order NIX can fire,
+        // but ONLY when it sits BEYOND the entry on the stop side (bullish below / bearish above). The overlapping-gap
+        // guard drops a farther edge not genuinely deeper than the entry — no stacking carried, no spurious nix.
+        if (_fvgOptions.StrictFirstFvg && ote.StackedFartherBound is { } farther
+            && (direction == Direction.Bullish ? farther < entry : farther > entry))
+        {
+            evidence[EvidenceKeys.StackedFartherBound] = farther;
+        }
 
         // TGR-1/2 (additive, gated): carry the SD projection tier prices so the priced frame / SetupFactory can append
         // the deeper SD targets to the ladder. This does NOT change the gating draw or the RR floor — pure evidence.

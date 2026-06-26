@@ -99,12 +99,15 @@ public sealed class EntryManager : IEntryManager
 
     /// <summary>
     /// The no-chase cancellation precedence (§2.5.1 "don't chase"): <b>killzone-end</b> (the bar is no longer a
-    /// tradeable killzone entry — window over, lunch, or the index cutoff) outranks the <b>max-wait</b> backstop. The
-    /// active hunt-set is the same §4.6 set the entry detector uses, so the arm and entry windows can't drift apart.
-    /// The killzone is classified from the candle's OPEN time — the SAME axis <see cref="Detection.MarketContext"/> and
-    /// the <c>KillzoneEntryDetector</c> classify on (so a bar straddling a boundary is treated identically everywhere);
-    /// max-wait is measured to the bar close (<paramref name="at"/>). No-overnight is NOT a separate rung: no FX active
-    /// killzone spans 00:00 NY, so a midnight cross already trips killzone-end. Returns null when the limit may rest.
+    /// tradeable killzone entry — window over, lunch, or the index cutoff) outranks the <b>max-wait</b> backstop, which
+    /// outranks the <b>wrong-order NIX</b> (FVG-SEM-2b, Ep3 L376-413: a retrace that reaches the FARTHER stacked gap
+    /// before the limit fills). The active hunt-set is the same §4.6 set the entry detector uses, so the arm and entry
+    /// windows can't drift apart. The killzone is classified from the candle's OPEN time — the SAME axis
+    /// <see cref="Detection.MarketContext"/> and the <c>KillzoneEntryDetector</c> classify on (so a bar straddling a
+    /// boundary is treated identically everywhere); max-wait is measured to the bar close (<paramref name="at"/>). The
+    /// NIX reads the candle High/Low (inclusive, mirroring the fill touch), so a same-bar entry+farther touch lets the
+    /// NIX win (no-trade beats trade). No-overnight is NOT a separate rung: no FX active killzone spans 00:00 NY, so a
+    /// midnight cross already trips killzone-end. Returns null when the limit may rest.
     /// </summary>
     private EntryCancelReason? ResolveCancellation(ArmedEntry armedEntry, Candle candle, DateTimeOffset at)
     {
@@ -116,6 +119,14 @@ public sealed class EntryManager : IEntryManager
         if (at - armedEntry.ArmedAtUtc >= TimeSpan.FromMinutes(_options.MaxWaitMinutes))
         {
             return EntryCancelReason.MaxWaitElapsed;
+        }
+
+        // FVG-SEM-2b §3: the wrong-order NIX (pre-fill only — ResolveCancellation runs while Status == Armed; a
+        // post-fill farther-gap touch is the §1 widened stop's job, not a nix). Inclusive boundary.
+        if (armedEntry.StackedFartherBound is { } farther
+            && (armedEntry.Direction == Direction.Bullish ? candle.Low <= farther : candle.High >= farther))
+        {
+            return EntryCancelReason.StackedFartherGapHitFirst;
         }
 
         return null;

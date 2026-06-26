@@ -90,6 +90,14 @@ internal sealed class ArmedEntryConfiguration : IEntityTypeConfiguration<ArmedEn
             .HasColumnType("numeric(18,8)")
             .IsRequired();
 
+        // ── FVG-SEM-2b stacked farther bound (nullable) ───────────────────────────────────────────────
+        // The far-edge of the deeper stacked FVG the wrong-order NIX watches; null when the entry was not stacked.
+
+        builder.Property(e => e.StackedFartherBound)
+            .UsePropertyAccessMode(PropertyAccessMode.Field)
+            .HasColumnName("stacked_farther_bound")
+            .HasColumnType("numeric(18,8)");
+
         // ── Instrument class ──────────────────────────────────────────────────────────────────────────
 
         builder.Property(e => e.InstrumentClass)

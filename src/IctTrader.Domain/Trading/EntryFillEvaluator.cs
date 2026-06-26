@@ -1,4 +1,5 @@
 using IctTrader.Domain.Common;
+using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Setups;
 using IctTrader.Domain.ValueObjects;
 
@@ -22,6 +23,22 @@ namespace IctTrader.Domain.Trading;
 /// </summary>
 public sealed class EntryFillEvaluator : IEntryFillEvaluator
 {
+    private readonly EntryManagementOptions _options;
+    private readonly SymbolSpec _symbolSpec;
+
+    /// <param name="options">The §2.5.1-step-7 entry policy — its EG-3 close-proximity flag governs the recorded fill price.</param>
+    /// <param name="symbolSpec">
+    /// The instrument spec the EG-3 pip→price tolerance converts against (so the band is no-magic-number). Optional —
+    /// defaulting to the FX-major spec for the candle's symbol keeps the evaluator usable without explicit wiring while
+    /// the close-proximity flag is OFF (the default), where the spec is never read.
+    /// </param>
+    public EntryFillEvaluator(EntryManagementOptions options, SymbolSpec? symbolSpec = null)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        _options = options;
+        _symbolSpec = symbolSpec ?? SymbolSpec.FxMajor(new Symbol("EURUSD"));
+    }
+
     public EntryFillDecision Evaluate(Setup setup, Candle candle)
     {
         ArgumentNullException.ThrowIfNull(setup);
@@ -41,6 +58,30 @@ public sealed class EntryFillEvaluator : IEntryFillEvaluator
             ? candle.Low <= entry
             : candle.High >= entry;
 
-        return touched ? EntryFillDecision.Filled(setup.Plan.Entry) : EntryFillDecision.Hold;
+        if (!touched)
+        {
+            return EntryFillDecision.Hold;
+        }
+
+        return EntryFillDecision.Filled(new Price(ResolveFillPrice(setup.Direction, entry, candle)));
+    }
+
+    // EG-3 v1 close-proximity (Ep10/29/07/22/35) — a DIAGNOSTIC fill price only. With UseCloseProximityEntry OFF
+    // (default) the resting limit fills at its LEVEL (the plan entry), byte-identical to before. ON, the recorded fill
+    // is the touched price clamped to a small entry-anchored band [entry-tol, entry] (long) / [entry, entry+tol]
+    // (short). CRITICAL: PaperTradeFactory.OpenArmed opens the trade at Plan.Entry regardless, so this NEVER moves the
+    // open — InitialRiskPerUnit/RiskBudget stay vs the original 1R (frozen-1R invariant). The buy@ask/sell@bid spread
+    // remains the §5.4 ComputeEntryLeg cost line, not a fill-price worsening here, so no dollars are double-counted.
+    private decimal ResolveFillPrice(Direction direction, decimal entry, Candle candle)
+    {
+        if (!_options.UseCloseProximityEntry)
+        {
+            return entry;
+        }
+
+        var tol = _symbolSpec.PipsToPrice(new Pips(_options.CloseProximityTolerancePips));
+        return direction == Direction.Bullish
+            ? Math.Clamp(candle.Low, entry - tol, entry)   // band [entry - tol, entry]
+            : Math.Clamp(candle.High, entry, entry + tol); // band [entry, entry + tol]
     }
 }
