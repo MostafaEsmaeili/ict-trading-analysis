@@ -2,6 +2,7 @@ using IctTrader.Alerting.Application;
 using IctTrader.Alerting.Contracts;
 using IctTrader.Host;
 using IctTrader.Host.Hubs;
+using IctTrader.MarketData.Application.Chart;
 using IctTrader.MarketData.Contracts;
 using IctTrader.PaperTrading.Contracts;
 using IctTrader.Performance.Application;
@@ -45,11 +46,13 @@ if (fetchHistoryMode)
 else
 {
     // In-memory message bus (plan §3.0a) — the only inter-module seam. The bus singleton is registered with the
-    // module Application assemblies so their handlers are Scrutor-scanned in: Scanning's CandleIngestedHandler,
-    // PaperTrading's SetupConfirmedHandler + candle handler, Performance's PaperTradeClosedHandler + query
+    // module Application assemblies so their handlers are Scrutor-scanned in: MarketData's chart-candle projection
+    // + chart-candles query, Scanning's CandleIngestedHandler + recent-setup chart projection + recent-setups
+    // query, PaperTrading's SetupConfirmedHandler + candle handler, Performance's PaperTradeClosedHandler + query
     // handlers, and Alerting's setup/trade alert handlers + recent-alerts query — closing the
-    // candle→scan→paper-trade→performance chain and feeding the dashboard's Alerts feed.
+    // candle→scan→paper-trade→performance chain and feeding the dashboard's Alerts feed + ICT Pattern Chart.
     builder.Services.AddMessaging(
+        typeof(IctTrader.MarketData.Application.Chart.ChartCandleProjectionHandler).Assembly,
         typeof(IctTrader.Scanning.Application.Scanning.CandleIngestedHandler).Assembly,
         typeof(IctTrader.PaperTrading.Application.Trading.SetupConfirmedHandler).Assembly,
         typeof(IctTrader.Performance.Application.PaperTradeClosedHandler).Assembly,
@@ -58,6 +61,12 @@ else
     // The runnable scan loop (WP7 slice 2e): the PaperTrading DbContext + persistence, the Scanning + PaperTrading
     // modules, and the configured read-only market-data feed driven by a background hosted service.
     builder.Services.AddScanLoop(builder.Configuration);
+
+    // MarketData chart read-model (plan §9.1): the singleton ChartCandleStore the candle projection handler appends
+    // to and the chart-candles query handler reads. Read-only projection of CandleIngested — it feeds the
+    // dashboard's ICT Pattern Chart with real bars and routes nowhere near an order path (§6.3). (The Scanning
+    // recent-setup overlay store is registered inside AddScanLoop → AddScanningModule.)
+    builder.Services.AddMarketDataReadModels();
 
     // Performance module (WP6 / plan §5.3): the singleton PerformanceState the closed-trade handler appends to and
     // the summary + equity-curve query handlers read. Read-only R-based analytics — it consumes PaperTradeClosed.
@@ -113,13 +122,19 @@ api.MapGet("/equity", async (IMessageBus bus) =>
         TypedResults.Ok(await bus.QueryAsync(new GetEquityCurveQuery())))
     .WithName("GetEquityCurve");
 
-api.MapGet("/chart/{symbol}", (string symbol, string? tf, string? style) =>
-        TypedResults.Ok(new ChartResponse(
-            symbol,
-            tf ?? "M5",
-            style ?? "Intraday",
-            Array.Empty<CandleDto>(),
-            Array.Empty<SetupDto>())))
+// Real ICT Pattern Chart read-side (plan §9.1): REST → bus QueryAsync → the MarketData module's
+// GetChartCandlesQueryHandler (the bounded per-series candle window, chronological) AND the Scanning module's
+// GetRecentSetupsQueryHandler (the recent confirmed setups to overlay, newest-first). Both are read-only
+// projections of read-only candle/setup events — serving a chart routes nowhere near an order path (§6.3).
+api.MapGet("/chart/{symbol}", async (string symbol, string? tf, string? style, IMessageBus bus) =>
+    {
+        var timeframe = tf ?? ChartDefaults.Timeframe;
+        var candles = await bus.QueryAsync(
+            new GetChartCandlesQuery(symbol, timeframe, ChartDefaults.MaxCandles));
+        var overlays = await bus.QueryAsync(
+            new GetRecentSetupsQuery(symbol, ChartDefaults.MaxOverlays));
+        return TypedResults.Ok(new ChartResponse(symbol, timeframe, style ?? ChartDefaults.Style, candles, overlays));
+    })
     .WithName("GetChart");
 
 // Advisory only — this NEVER routes to a broker (plan §6.3); the simulator is wired in WP4.

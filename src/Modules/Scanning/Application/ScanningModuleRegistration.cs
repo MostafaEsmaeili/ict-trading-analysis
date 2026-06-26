@@ -7,10 +7,12 @@ namespace IctTrader.Scanning.Application;
 /// Composition-root wiring for the Scanning module (plan §3.0a). Registers the stateful scan machinery: the
 /// <see cref="ISymbolScannerFactory"/> (builds a scanner from the validated <c>Ict:*</c> options) and the
 /// <see cref="ISymbolScannerRegistry"/> (the live per-(symbol, style) cache) as SINGLETONS — the scan FSM state
-/// must persist across candles. The bus handler (<see cref="CandleIngestedHandler"/>) is NOT registered here:
-/// it is auto-discovered by <c>AddMessaging</c>'s assembly scan as a scoped <c>IEventHandler</c>. The host calls
-/// <c>AddIctOptions</c> (the <c>IOptions&lt;T&gt;</c> set the factory depends on) and <c>AddMessaging</c>
-/// separately.
+/// must persist across candles — plus the <see cref="RecentSetupStore"/> SINGLETON: the bounded recent-setup
+/// read-model the chart-overlay query handler reads (the §9.1 ICT Pattern Chart overlays). The bus handlers
+/// (<see cref="CandleIngestedHandler"/>, <see cref="SetupConfirmedChartProjectionHandler"/>,
+/// <see cref="GetRecentSetupsQueryHandler"/>) are NOT registered here: they are auto-discovered by
+/// <c>AddMessaging</c>'s assembly scan. The host calls <c>AddIctOptions</c> (the <c>IOptions&lt;T&gt;</c> set the
+/// factory depends on) and <c>AddMessaging</c> separately.
 /// </summary>
 public static class ScanningModuleRegistration
 {
@@ -18,6 +20,7 @@ public static class ScanningModuleRegistration
     {
         services.AddSingleton<ISymbolScannerFactory, SymbolScannerFactory>();
         services.AddSingleton<ISymbolScannerRegistry, SymbolScannerRegistry>();
+        services.AddSingleton<RecentSetupStore>();
         return services;
     }
 }

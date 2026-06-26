@@ -119,6 +119,11 @@ public class ScanLoopTests
         services.AddSingleton<ISymbolScannerFactory>(new SeededScannerFactory(new FakeTimeProvider(London)));
         services.AddSingleton<ISymbolScannerRegistry, SymbolScannerRegistry>();
 
+        // The recent-setup chart read-model: the Scanning.Application assembly also carries the
+        // SetupConfirmedChartProjectionHandler (it subscribes to the SetupConfirmed this loop publishes), so the
+        // bus fans the confirmed setup out to it too — it needs the store the production AddScanningModule registers.
+        services.AddSingleton<RecentSetupStore>();
+
         // Scan ONLY the Scanning.Application assembly for the production CandleIngestedHandler; the SetupConfirmed
         // sink is registered explicitly above (scanning the whole test assembly would pull in unrelated handlers).
         services.AddMessaging(typeof(CandleIngestedHandler).Assembly);
