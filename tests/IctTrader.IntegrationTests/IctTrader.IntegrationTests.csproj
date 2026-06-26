@@ -30,6 +30,7 @@
     <ProjectReference Include="..\..\src\SharedKernel\IctTrader.SharedKernel.csproj" />
     <ProjectReference Include="..\..\src\IctTrader.Domain\IctTrader.Domain.csproj" />
     <ProjectReference Include="..\..\src\Modules\PaperTrading\Infrastructure\IctTrader.PaperTrading.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\IctTrader.Host\IctTrader.Host.csproj" />
   </ItemGroup>
 
 </Project>
