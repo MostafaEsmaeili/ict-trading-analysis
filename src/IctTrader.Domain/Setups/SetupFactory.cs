@@ -71,6 +71,7 @@ public sealed class SetupFactory
             confirmation.Score,
             plan,
             reason,
-            confirmation.ConfirmedAtUtc);
+            confirmation.ConfirmedAtUtc,
+            frame.StackedFartherBound); // FVG-SEM-2b: carried for the wrong-order NIX, never a TradePlan tier
     }
 }

@@ -22,7 +22,8 @@ public sealed class Setup
         int score,
         TradePlan plan,
         SetupReason reason,
-        DateTimeOffset confirmedAtUtc)
+        DateTimeOffset confirmedAtUtc,
+        decimal? stackedFartherBound = null)
     {
         ArgumentNullException.ThrowIfNull(symbol);
         Guard.Against(
@@ -39,6 +40,7 @@ public sealed class Setup
         Plan = plan;
         Reason = reason;
         ConfirmedAtUtc = confirmedAtUtc;
+        StackedFartherBound = stackedFartherBound;
     }
 
     public Symbol Symbol { get; }
@@ -56,6 +58,14 @@ public sealed class Setup
     public SetupReason Reason { get; }
 
     public DateTimeOffset ConfirmedAtUtc { get; }
+
+    /// <summary>
+    /// FVG-SEM-2b: the far-edge of the deeper stacked FVG the stop already clears (Ep3 L376-413), or null when the
+    /// entry was not a stacked first-FVG selection. It is NOT a <see cref="TradePlan"/> tier (it never enters the
+    /// stop &lt; entry &lt; T1 &lt; T2 order invariant) — the ARMED entry carries it so the wrong-order NIX can fire
+    /// (a retrace that hits the farther gap before the limit fills is no-trade).
+    /// </summary>
+    public decimal? StackedFartherBound { get; }
 
     public Direction Direction => Plan.Direction;
 

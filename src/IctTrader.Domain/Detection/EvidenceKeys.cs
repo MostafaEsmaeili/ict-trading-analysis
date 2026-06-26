@@ -67,6 +67,11 @@ public static class EvidenceKeys
     public const string StopPrice = "stopPrice";
     public const string TargetPrice = "targetPrice";
 
+    // FVG-SEM-2b stacked stop-sizing — the far-edge of the deeper stacked FVG the stop must clear (Ep3 L376-413),
+    // present only when StrictFirstFvg is on, a stacked farther gap was resolved, and it sits beyond the entry on the
+    // stop side (§3.5 overlapping-gap guard). Threads to the ArmedEntry's wrong-order NIX.
+    public const string StackedFartherBound = "stackedFartherBound";
+
     // Standard-deviation projection targets (TGR-1/2) — the −1/−1.5/−2 SD tier prices, present only when enabled.
     public const string SdTargetPrices = "sdTargetPrices";
 }

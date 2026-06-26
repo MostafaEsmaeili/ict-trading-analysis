@@ -16,7 +16,8 @@ public readonly record struct PricedFrame(
     decimal Stop,
     decimal Target,
     decimal RewardRatio,
-    IReadOnlyList<decimal> SdTargets)
+    IReadOnlyList<decimal> SdTargets,
+    decimal? StackedFartherBound = null)
 {
     /// <summary>Reconstructs the frame from a draw-on-liquidity detector result's evidence, or null if incomplete. The
     /// optional standard-deviation projection tiers (TGR-1/2) ride the same evidence when SD targets are enabled.</summary>
@@ -32,7 +33,15 @@ public readonly record struct PricedFrame(
                 && sd is IReadOnlyList<decimal> tiers
                 ? tiers
                 : [];
-            return new PricedFrame(direction, entryPrice, stopPrice, targetPrice, rewardRatio, sdTargets);
+
+            // FVG-SEM-2b §2: the stacked farther bound rides the same evidence when StrictFirstFvg stacked the entry
+            // (null when absent — the default path carries no stacking).
+            var stackedFartherBound = evidence.TryGetValue(EvidenceKeys.StackedFartherBound, out var farther)
+                && farther is decimal fartherBound
+                ? fartherBound
+                : (decimal?)null;
+            return new PricedFrame(
+                direction, entryPrice, stopPrice, targetPrice, rewardRatio, sdTargets, stackedFartherBound);
         }
 
         return null;

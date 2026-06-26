@@ -1,5 +1,6 @@
 using FluentAssertions;
 using IctTrader.Domain.Common;
+using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Setups;
 using IctTrader.Domain.Styles;
 using IctTrader.Domain.Trading;
@@ -18,7 +19,7 @@ public class EntryFillEvaluatorTests
 {
     private static readonly Symbol Eurusd = new("EURUSD");
     private static readonly DateTimeOffset Utc = new(2024, 7, 1, 7, 0, 0, TimeSpan.Zero);
-    private static readonly EntryFillEvaluator Evaluator = new();
+    private static readonly EntryFillEvaluator Evaluator = new(new EntryManagementOptions(), SymbolSpec.FxMajor(Eurusd));
 
     // Long: entry 1.0832 (the OTE/FVG limit, in discount), stop 1.0800, T1 1.0876, runner 1.0920.
     private static Setup BullishSetup()

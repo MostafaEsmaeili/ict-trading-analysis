@@ -30,13 +30,13 @@ public class EntryManagerTests
 
     private static readonly PaperTradeFactory Factory = new(new RiskOptions(), new RiskManager());
     private static readonly EntryManager Manager = new(
-        new EntryFillEvaluator(), new FillEvaluator(new FillOptions()), new ExecutionCostModel(new ExecutionCostOptions()),
+        new EntryFillEvaluator(new EntryManagementOptions(), Spec), new FillEvaluator(new FillOptions()), new ExecutionCostModel(new ExecutionCostOptions()),
         new KillzoneClock(new NyClock(new FakeTimeProvider()), KillzoneSchedule.CreateDefault()),
         new KillzoneEntryOptions(), new EntryManagementOptions());
 
     // A manager with a tight max-wait so the backstop can be exercised while the limit is still inside its killzone.
     private static readonly EntryManager ShortWaitManager = new(
-        new EntryFillEvaluator(), new FillEvaluator(new FillOptions()), new ExecutionCostModel(new ExecutionCostOptions()),
+        new EntryFillEvaluator(new EntryManagementOptions(), Spec), new FillEvaluator(new FillOptions()), new ExecutionCostModel(new ExecutionCostOptions()),
         new KillzoneClock(new NyClock(new FakeTimeProvider()), KillzoneSchedule.CreateDefault()),
         new KillzoneEntryOptions(), new EntryManagementOptions { MaxWaitMinutes = 30 });
 

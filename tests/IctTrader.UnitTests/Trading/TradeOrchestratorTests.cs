@@ -38,7 +38,7 @@ public class TradeOrchestratorTests
     private static TradeOrchestrator BuildOrchestrator(EntryManagementOptions entryOptions)
     {
         var entryManager = new EntryManager(
-            new EntryFillEvaluator(),
+            new EntryFillEvaluator(entryOptions, Spec),
             new FillEvaluator(new FillOptions()),
             new ExecutionCostModel(new ExecutionCostOptions()),
             new KillzoneClock(new NyClock(new FakeTimeProvider()), KillzoneSchedule.CreateDefault()),

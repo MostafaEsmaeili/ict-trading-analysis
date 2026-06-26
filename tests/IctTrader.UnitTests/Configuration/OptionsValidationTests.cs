@@ -54,6 +54,16 @@ public class OptionsValidationTests
         => new EntryManagementOptions { MaxWaitMinutes = 0 }.Validate().Should().NotBeEmpty();
 
     [Fact]
+    public void The_eg3_close_proximity_flag_defaults_off_and_its_tolerance_must_be_non_negative()
+    {
+        // EG-3 v1: the close-proximity fill is an additive, default-OFF flag; the tolerance is INVENTED but must be ≥ 0.
+        new EntryManagementOptions().UseCloseProximityEntry.Should().BeFalse();
+        new EntryManagementOptions().CloseProximityTolerancePips.Should().Be(2m);
+        new EntryManagementOptions { UseCloseProximityEntry = true }.Validate().Should().BeEmpty();
+        new EntryManagementOptions { CloseProximityTolerancePips = -0.1m }.Validate().Should().NotBeEmpty();
+    }
+
+    [Fact]
     public void An_out_of_order_or_non_positive_trail_ladder_is_rejected()
     {
         new StopTrailOptions { TrailHalfwayFraction = 0.80m, TrailBreakevenFraction = 0.75m }

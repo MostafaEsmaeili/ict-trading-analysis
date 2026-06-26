@@ -51,7 +51,8 @@ public sealed class ArmedEntry : AggregateRoot<Guid>
         decimal pipSize,
         decimal valuePerPip,
         InstrumentClass instrumentClass,
-        DateTimeOffset armedAtUtc)
+        DateTimeOffset armedAtUtc,
+        decimal? stackedFartherBound = null)
         : base(id)
     {
         Guard.Against(id == Guid.Empty, "ArmedEntry requires a non-empty id.");
@@ -70,6 +71,7 @@ public sealed class ArmedEntry : AggregateRoot<Guid>
         ValuePerPip = valuePerPip;
         InstrumentClass = instrumentClass;
         ArmedAtUtc = armedAtUtc;
+        StackedFartherBound = stackedFartherBound;
         Status = ArmedEntryStatus.Armed;
 
         RaiseDomainEvent(new EntryArmed(Id, AccountId, Symbol, Direction, Size, RiskBudget, armedAtUtc));
@@ -97,6 +99,17 @@ public sealed class ArmedEntry : AggregateRoot<Guid>
 
     /// <summary>The instrument class — carried so the orchestrator can classify the killzone for the no-chase rung.</summary>
     public InstrumentClass InstrumentClass { get; }
+
+    /// <summary>
+    /// FVG-SEM-2b: the far-edge of the deeper stacked FVG (Ep3 L376-413), or null when the entry was not stacked. The
+    /// EntryManager's wrong-order NIX cancels the resting limit if a retrace reaches this bound before the limit fills
+    /// (a stab into the farther gap first = no-trade). The stop already clears it (the §1 widened stop on the Setup's
+    /// plan), so a POST-fill touch is the stop's job — the NIX is pre-fill only.
+    /// </summary>
+    public decimal? StackedFartherBound { get; }
+
+    /// <summary>True when the resting limit sits in front of a stacked farther gap — the wrong-order NIX is armed.</summary>
+    public bool IsStacked => StackedFartherBound is not null;
 
     public DateTimeOffset ArmedAtUtc { get; }
 
