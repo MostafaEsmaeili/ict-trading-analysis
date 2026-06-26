@@ -845,6 +845,41 @@ the bus with persistence + events. Built by the `vsa-slice-builder` agent; gated
   `ScannerHostedService` driving `MarketDataIngestor` → `CandleIngested`; SignalR push + bus-backed REST. Then the app
   RUNS end-to-end.
 
+**🏁 WP7 slice 2e — the runnable Host (issue #90, branch `feature/#90-runnable-host`, PR #91) — DONE. THE BACKEND
+RUNS.** The composition root now assembles the entire ICT-gated loop, proven by an integration test that publishes
+`SetupConfirmed` into the REAL booted Host and reads the persisted trade back from REAL Postgres. Built by a
+general-purpose agent; gated **pr-reviewer APPROVE** (2 Should-fixes applied) + **guardrail 7/7**. 593 unit, 23 arch,
+**17 integration** (2 new `HostScanLoopTests` on Testcontainers Postgres), 0 warnings, format clean:
+
+- **`Program.cs`** — `AddMessaging(Scanning + PaperTrading Application assemblies)` scans the two `CandleIngested`
+  subscribers (Scanning's scan-advance + PaperTrading's trade-advance) + the `SetupConfirmed` subscriber; **Scanning
+  passed FIRST** → deterministic fan-out (detect/confirm before manage). `AddScanLoop(config)` composes the rest.
+- **`ScanLoopRegistration.AddScanLoop`** — `AddDbContext<PaperTradingDbContext>` on Npgsql (lazy connection — a bare
+  Host boots even before a DB is provisioned; migrations-assembly mirrors the design-time factory), the persistence,
+  the Scanning + PaperTrading modules, the validated `ReplayFeedOptions`, and the hosted service.
+- **`ReplayScannerHostedService`** (`BackgroundService`) — idle when replay is **disabled (default)**; else loads the
+  CSV fixture + ingests **inside a try/catch** (the S1 fix — the load is here, NOT an eager DI factory, so a bad
+  fixture path is logged, never a startup crash) → `CandleIngested` → the full chain. **`ReplayFeedOptions`**
+  (`Ict:MarketData:Replay`: `Enabled`/`FixturePath`) is `ValidateOnStart`-gated (the S2 fix — `Enabled` with a blank
+  path fails fast). Host csproj += EF Core 10.0.4 + Npgsql 10.0.2; `appsettings` += the Replay section + the empty
+  `ConnectionStrings:PaperTrading`.
+- **Integration tests (Testcontainers):** **A** boots the real Host (`WebApplicationFactory<Program>` over the
+  container) — the whole scan-loop DI graph resolves + `LiveTradingEnabled=false`; **B** publishes `SetupConfirmed`
+  onto the booted Host's bus → the real `SetupConfirmedHandler` opens + sizes + commits a trade to real Postgres →
+  asserted via `IPaperTradeRepository.GetOpenAsync()`. Proves the composition + persistence end-to-end in the real Host.
+
+**🎯 THE RUNNABLE BACKEND IS COMPLETE.** `dotnet run --project src/IctTrader.Host` composes + boots the full ICT-gated
+modular monolith; enabling `Ict:MarketData:Replay` + a CSV fixture + a Postgres (`docker compose up postgres`, apply
+migrations) drives it end-to-end: **feed → `CandleIngested` → Scanning detectors+FSM → `SetupConfirmed` → rehydrate →
+paper trade opens/arms → candles advance → settles**, all on the in-memory bus, every decision in the pure §2.5 domain.
+
+**Still to come (follow-ons, all additive):** **SignalR push** (handlers → `IHubContext<TradingHub>` for
+`SetupDetected`/`TradeUpdated`/`CandleAppended`) + **bus-backed REST** (replace the stub endpoints with repo/query
+handlers); the **Alerting** + **Performance (WP6)** modules; the **WP9 Gherkin E2E** gate (the raw-candle→confirmation
+`BullishLondonKillzone` fixture); the tracked enrichments (the real `SetupId`/`Killzone` on the trade; the candle↔trade
+timeframe guard + demo-account write serialization + symbol-scoped repo queries); the §2.5.8 long-tail (SMT/Breaker,
+macros, weekly bias, HRLR, Power-3) + cost follow-ons (slippage, session-stepped spread, swap).
+
 **Process cadence (per the operator):** keep the ICT gate strict (`ict-domain-expert` + guardrail + `pr-reviewer`,
 concurrent) but move faster — build directly from the locked design (skip the separate pre-spec when pinned), ship
 bigger complete slices, and reserve the heavy ~600k-case adversarial driver for numeric/money-math slices (it fuzzes
