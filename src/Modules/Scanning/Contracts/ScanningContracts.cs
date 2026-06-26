@@ -33,3 +33,10 @@ public sealed record SetupRejected(string Symbol, string Reason, DateTimeOffset 
 public sealed record GetActiveKillzoneQuery(string Symbol) : IQuery<string?>;
 
 public sealed record GetScanStatusQuery : IQuery<IReadOnlyList<ScanStatusDto>>;
+
+/// <summary>
+/// The most-recent <paramref name="Max"/> confirmed, advisory setups for a <paramref name="Symbol"/>, NEWEST-FIRST,
+/// to overlay on the dashboard's ICT Pattern Chart (plan §9.1). Additive — the frozen REST wire
+/// (<c>GET /api/chart/{symbol}</c>) is unchanged; this is the bus query the Host routes to.
+/// </summary>
+public sealed record GetRecentSetupsQuery(string Symbol, int Max) : IQuery<IReadOnlyList<SetupDto>>;

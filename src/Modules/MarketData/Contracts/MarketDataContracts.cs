@@ -32,3 +32,11 @@ public sealed record StartFeedCommand(string Provider, IReadOnlyList<string> Sym
 public sealed record StopFeedCommand(string Provider) : ICommand;
 
 public sealed record ListFeedsQuery : IQuery<IReadOnlyList<FeedStatusDto>>;
+
+/// <summary>
+/// The most-recent <paramref name="Max"/> candles for a <paramref name="Symbol"/> / <paramref name="Timeframe"/>
+/// series in CHRONOLOGICAL (oldest→newest) order, for the dashboard's ICT Pattern Chart (plan §9.1). Additive —
+/// the frozen REST wire (<c>GET /api/chart/{symbol}</c>) is unchanged; this is the bus query the Host routes to.
+/// </summary>
+public sealed record GetChartCandlesQuery(string Symbol, string Timeframe, int Max)
+    : IQuery<IReadOnlyList<CandleDto>>;

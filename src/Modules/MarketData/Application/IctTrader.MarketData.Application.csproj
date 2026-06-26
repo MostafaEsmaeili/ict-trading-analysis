@@ -6,10 +6,22 @@
     <ProjectReference Include="..\Contracts\IctTrader.MarketData.Contracts.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- IServiceCollection.AddSingleton for the chart read-model's DI registration extension (the handlers are
+         AddMessaging-scanned; ChartCandleStore is the one explicit registration). -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.9" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The unit tests exercise this module's internal chart read-model (ChartCandleStore) and bus wiring
+         directly without widening the module's public surface, which stays Contracts-only (plan §3.0a). -->
+    <InternalsVisibleTo Include="IctTrader.UnitTests" />
+  </ItemGroup>
 
 </Project>
