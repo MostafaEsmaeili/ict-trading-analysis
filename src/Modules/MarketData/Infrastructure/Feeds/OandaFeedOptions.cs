@@ -21,6 +21,15 @@ public sealed class OandaFeedOptions
     /// <summary>The fastest live-poll cadence (one second) — the feed polls for newly-completed candles, not ticks.</summary>
     private const int MinPollSeconds = 1;
 
+    /// <summary>The fewest candles a history fetch (<see cref="FetchHistory"/>) may request.</summary>
+    private const int MinHistoryMaxCandles = 1;
+
+    /// <summary>The default local directory the one-shot history fetch writes its backtest CSVs into.</summary>
+    private const string DefaultHistoryOutputDirectory = "data";
+
+    /// <summary>The default candle budget for a one-shot history fetch (paginated backward, OANDA caps a page at 5000).</summary>
+    private const int DefaultHistoryMaxCandles = 5000;
+
     /// <summary>
     /// The OANDA granularities that map 1:1 to a scanner <c>Timeframe</c> enum member (so a fetched candle's
     /// timeframe string parses downstream). OANDA's <c>M2/M4/M10/D/W/M</c> are excluded — they have no scanner
@@ -60,6 +69,25 @@ public sealed class OandaFeedOptions
     /// </summary>
     public bool LiveStreaming { get; init; }
 
+    // ---- One-shot history-fetch mode (issue #100 — the read-only backtest CSV exporter) ----
+
+    /// <summary>
+    /// When <c>true</c>, the Host runs as a one-shot, <b>read-only</b> history fetcher instead of the normal scan
+    /// loop: for each configured instrument it fetches up to <see cref="HistoryMaxCandles"/> candles via
+    /// <c>OandaHistoryFetcher</c>, writes a backtest CSV under <see cref="HistoryOutputDirectory"/>, then stops the
+    /// app. It writes ONLY local CSV files (no order path — the guardrail is structural). Defaults to <c>false</c>.
+    /// </summary>
+    public bool FetchHistory { get; init; }
+
+    /// <summary>The local directory the one-shot history fetch writes <c>&lt;symbol&gt;-&lt;granularity&gt;.csv</c> into.</summary>
+    public string HistoryOutputDirectory { get; init; } = DefaultHistoryOutputDirectory;
+
+    /// <summary>
+    /// The number of completed candles to fetch per instrument in history-fetch mode. Unlike
+    /// <see cref="HistoryCount"/> (a single 5000-capped request) this paginates backward, so it may exceed 5000.
+    /// </summary>
+    public int HistoryMaxCandles { get; init; } = DefaultHistoryMaxCandles;
+
     public IReadOnlyList<string> Validate()
     {
         var errors = new List<string>();
@@ -98,6 +126,21 @@ public sealed class OandaFeedOptions
         if (PollSeconds < MinPollSeconds)
         {
             errors.Add($"PollSeconds must be at least {MinPollSeconds} but was {PollSeconds}.");
+        }
+
+        // The history-fetch knobs only constrain the run when fetch mode is on (so a normal scan-loop host need not
+        // set them), but a blank output dir or non-positive budget WITH FetchHistory=true is a fail-fast misconfig.
+        if (FetchHistory)
+        {
+            if (string.IsNullOrWhiteSpace(HistoryOutputDirectory))
+            {
+                errors.Add("HistoryOutputDirectory is required and must be non-blank when FetchHistory is true.");
+            }
+
+            if (HistoryMaxCandles < MinHistoryMaxCandles)
+            {
+                errors.Add($"HistoryMaxCandles must be at least {MinHistoryMaxCandles} but was {HistoryMaxCandles}.");
+            }
         }
 
         return errors;

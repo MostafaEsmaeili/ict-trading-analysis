@@ -48,6 +48,9 @@ Desktop.ini
 *.pid
 pgdata/
 
+# ---- Fetched backtest history CSVs (issue #100 — the default OANDA history-fetch output dir; may be large) ----
+data/
+
 # NOTE: .raw/ VTTs and the cleaned .txt transcripts ARE tracked (project data).
 
 # Playwright MCP temp artifacts + local screenshots

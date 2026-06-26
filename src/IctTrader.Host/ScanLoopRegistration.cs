@@ -28,6 +28,19 @@ public static class ScanLoopRegistration
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
+        // History-fetch mode (issue #100): a one-shot, READ-ONLY backtest CSV exporter that runs INSTEAD of the
+        // normal scan loop. When Ict:MarketData:Oanda:FetchHistory is true we register only the OANDA history fetcher
+        // + the export hosted service and return early — no DbContext, no ingestion, no scan-loop persistence — so
+        // the host fetches candles, writes CSV files, and stops. It writes ONLY local CSV (the guardrail is structural).
+        var fetchHistory = configuration.GetSection(OandaFeedOptions.SectionName)
+            .GetValue<bool>(nameof(OandaFeedOptions.FetchHistory));
+        if (fetchHistory)
+        {
+            services.AddOandaHistoryFetcher(configuration);
+            services.AddHostedService<HistoryFetchHostedService>();
+            return services;
+        }
+
         var provider = configuration.GetSection(MarketDataOptions.SectionName)
             .GetValue(nameof(MarketDataOptions.Provider), MarketFeedProvider.Replay);
         var replayEnabled = configuration.GetSection(ReplayFeedOptions.SectionName)
