@@ -776,6 +776,36 @@ arch, 0 warnings, format clean:
   per-candle `Advance` + settle + `AddPaperTradingModule`. A `SetupDto` carrying score / `StackedFartherBound` /
   an explicit runner index would be a (currently-unneeded) frozen-contract change.
 
+**WP7 slice 2d-ii — PaperTrading aggregate repositories + unit-of-work (issue #86, branch
+`feature/#86-papertrading-repositories`, PR #87) — DONE.** The persistence the trade handler needs (plan §3.0/§7).
+Built by the `ef-persistence-engineer` agent; I corrected its one architectural deviation (see below). pr-reviewer
+APPROVE (correction verified complete), guardrail 7/7, **590 unit + 23 arch + 15 integration** (Testcontainers, 1
+skipped placeholder), 0 warnings, format clean:
+
+- **Domain interfaces** (`IctTrader.Domain/Repositories/`, aggregate-scoped, NO generic repo, EF-agnostic):
+  `IPaperAccountRepository` (`GetByIdAsync`/`AddAsync`), `IPaperTradeRepository`
+  (`GetByIdAsync`/`AddAsync`/`GetOpenAsync`), `IArmedEntryRepository` (`GetByIdAsync`/`AddAsync`/`GetActiveAsync`),
+  `IPaperTradingUnitOfWork` (`SaveChangesAsync`). Return domain aggregates + BCL only → Domain stays
+  dependency-free (arch green).
+- **EF impls** (`PaperTrading/Infrastructure/Persistence/Repositories/`, `internal sealed`) wrap the existing WP2
+  `PaperTradingDbContext`: `GetOpen`/`GetActive` filter the enum-string status column → **SQL `WHERE`** (no
+  client-eval); the repos + UoW share the scoped DbContext so `SaveChangesAsync` is **one `xmin`-guarded atomic
+  commit** per bus dispatch; JSONB ledgers / risk-state / `Setup` snapshots rehydrate via the private EF ctors.
+- **`AddPaperTradingPersistence`** DI extension registers the repos + UoW **Scoped** (the DbContext itself is the
+  Host's job — 2e). `Microsoft.Extensions.DependencyInjection.Abstractions 10.0.9` + `InternalsVisibleTo
+  IctTrader.IntegrationTests` on Infrastructure. 6 Testcontainers round-trips (add+reload each aggregate incl.
+  JSONB ledgers; open→**settle** mutate-and-save survives reload; `GetOpen`/`GetActive` subset filters).
+- **Architecture correction (mine):** the agent first placed the interfaces in `PaperTrading.Application` on the
+  flawed premise that the Domain "can't" hold repo interfaces returning aggregates — but a repo interface in the
+  Domain returning a Domain aggregate adds NO external ref, and plan §3.0/§3.1 explicitly mandates Domain. Moved
+  all four to `IctTrader.Domain/Repositories/` + made the UoW doc EF-agnostic (it `<see cref>`'d an EF exception
+  that won't resolve in the EF-free Domain). Renamed `GetAsync`→`GetByIdAsync` for a uniform surface (pr-reviewer nit).
+- **Deferred (2d-iii):** the PaperTrading `SetupConfirmedHandler` (`SetupConfirmed` → `SetupRehydrator` →
+  load/create `PaperAccount` → `TradeOrchestrator.OnSetupConfirmed` → persist via the UoW → publish trade events),
+  the `CandleIngested` per-candle `Advance`, a `ManagedPosition` registry, `AddPaperTradingModule`, and the
+  `TradeOrchestrator` object-graph wiring. **2e** = Host DI of the DbContext, `AddPaperTradingPersistence`, the
+  connection string, and the hosted scanner.
+
 **Process cadence (per the operator):** keep the ICT gate strict (`ict-domain-expert` + guardrail + `pr-reviewer`,
 concurrent) but move faster — build directly from the locked design (skip the separate pre-spec when pinned), ship
 bigger complete slices, and reserve the heavy ~600k-case adversarial driver for numeric/money-math slices (it fuzzes
