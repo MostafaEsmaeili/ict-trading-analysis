@@ -49,3 +49,7 @@ Desktop.ini
 pgdata/
 
 # NOTE: .raw/ VTTs and the cleaned .txt transcripts ARE tracked (project data).
+
+# Playwright MCP temp artifacts + local screenshots
+.playwright-mcp/
+*.png
