@@ -11,6 +11,14 @@ namespace IctTrader.Domain.Setups;
 /// </summary>
 public readonly record struct TargetLadder
 {
+    /// <summary>
+    /// The runner tier's index in the canonical ladder order (T1 at 0, the reward-to-risk runner next, deeper
+    /// SD tiers after). This is the single source of truth the producer (<c>SetupFactory</c>) and the scan→trade
+    /// wire consumer (<c>SetupRehydrator</c>) BOTH reference, so the tier the RR is measured to can never drift
+    /// between them across the lossy <c>SetupDto</c> (which carries the ordered targets but not the runner index).
+    /// </summary>
+    public const int CanonicalRunnerIndex = 1;
+
     private readonly IReadOnlyList<Price> _targets;
 
     /// <summary>The N-tier ladder. <paramref name="runnerIndex"/> names the reward-to-risk tier (the gated draw); any
@@ -35,7 +43,7 @@ public readonly record struct TargetLadder
 
     /// <summary>The legacy two-tier ladder — kept so existing call sites need no churn; the runner is the second tier.</summary>
     public TargetLadder(Direction direction, Price partial, Price runner)
-        : this(direction, new[] { partial, runner }, runnerIndex: 1)
+        : this(direction, new[] { partial, runner }, CanonicalRunnerIndex)
     {
     }
 
