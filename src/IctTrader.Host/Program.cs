@@ -51,12 +51,15 @@ else
     // query, PaperTrading's SetupConfirmedHandler + candle handler, Performance's PaperTradeClosedHandler + query
     // handlers, and Alerting's setup/trade alert handlers + recent-alerts query — closing the
     // candle→scan→paper-trade→performance chain and feeding the dashboard's Alerts feed + ICT Pattern Chart.
+    // The HOST assembly is included too so the bus → SignalR bridge handlers (Realtime/*Broadcaster) are scanned
+    // in and push each event to the dashboard live over the push-only TradingHub (plan §9, WP7 SignalR slice).
     builder.Services.AddMessaging(
         typeof(IctTrader.MarketData.Application.Chart.ChartCandleProjectionHandler).Assembly,
         typeof(IctTrader.Scanning.Application.Scanning.CandleIngestedHandler).Assembly,
         typeof(IctTrader.PaperTrading.Application.Trading.SetupConfirmedHandler).Assembly,
         typeof(IctTrader.Performance.Application.PaperTradeClosedHandler).Assembly,
-        typeof(SetupConfirmedAlertHandler).Assembly);
+        typeof(SetupConfirmedAlertHandler).Assembly,
+        typeof(IctTrader.Host.Realtime.CandleIngestedBroadcaster).Assembly);
 
     // The runnable scan loop (WP7 slice 2e): the PaperTrading DbContext + persistence, the Scanning + PaperTrading
     // modules, and the configured read-only market-data feed driven by a background hosted service.
