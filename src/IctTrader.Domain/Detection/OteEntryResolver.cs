@@ -67,9 +67,9 @@ public static class OteEntryResolver
             chosen.Level, band, leg.Direction, leg.Timeframe, sweetSpot, chosen.Fvg, stackedFartherBound);
     }
 
-    // Retrace the leg from its terminus back toward its origin by fraction f (works for both directions).
-    private static decimal Retrace(Displacement leg, decimal fraction)
-        => leg.Terminus.Value + (fraction * (leg.Origin.Value - leg.Terminus.Value));
+    // Retrace the leg from its terminus back toward its origin by fraction f (works for both directions) — delegated
+    // to the leg's own projection axis so the OTE entry and the SD targets (TGR-2) share ONE source of truth.
+    private static decimal Retrace(Displacement leg, decimal fraction) => leg.Project(fraction);
 
     // Depth of a candidate level on the leg: 0 at the terminus (shallowest, reached first on the retrace) -> 1 at
     // the origin (deepest). Inverse of Retrace, sign-correct for both directions.

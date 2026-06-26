@@ -70,6 +70,11 @@ public sealed class Displacement
     /// <summary>The 50% of the displacement leg — the premium/discount split for the entry-half gate (§2.5.1 step 6).</summary>
     public decimal EquilibriumPrice => Math.Min(Origin.Value, Terminus.Value) + (Size / 2m);
 
+    /// <summary>Project a price on the leg's fib axis: <paramref name="fraction"/> 0 = terminus, 1 = origin; NEGATIVE
+    /// fractions EXTEND beyond the terminus in the draw direction (the SD / target-projection axis). This is the SINGLE
+    /// shared axis the OTE entry retrace (TGR-2) and the standard-deviation targets both use, so they can never drift.</summary>
+    public decimal Project(decimal fraction) => Terminus.Value + (fraction * (Origin.Value - Terminus.Value));
+
     public bool Retraced { get; private set; }
 
     /// <summary>Invalidation: price fully retraced the leg.</summary>
