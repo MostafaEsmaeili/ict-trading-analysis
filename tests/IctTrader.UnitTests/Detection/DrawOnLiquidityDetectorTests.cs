@@ -23,7 +23,7 @@ public class DrawOnLiquidityDetectorTests
     private static readonly FakeTimeProvider Time = new(Base);
 
     private static readonly DrawOnLiquidityDetector Detector =
-        new(new DrawOnLiquidityOptions(), new OteOptions(), new TradeStyleOptions(), new FvgOptions());
+        new(new DrawOnLiquidityOptions(), new OteOptions(), new TradeStyleOptions(), new FvgOptions(), new SdProjectionOptions());
 
     private static readonly Candle Current = new(Eurusd, Timeframe.M5, Base, 1.0830m, 1.0835m, 1.0825m, 1.0830m, 1m);
 
@@ -65,6 +65,24 @@ public class DrawOnLiquidityDetectorTests
         result.KeyLevel.Should().Be(1.0920m);
         ((decimal)result.Evidence![EvidenceKeys.RewardRatio]).Should().BeGreaterThanOrEqualTo(2.5m);
         result.Evidence.Should().ContainKeys(EvidenceKeys.EntryPrice, EvidenceKeys.StopPrice, EvidenceKeys.TargetPrice);
+        result.Evidence.Should().NotContainKey(EvidenceKeys.SdTargetPrices); // SD disabled by default
+    }
+
+    [Fact]
+    public void With_sd_projection_enabled_the_match_carries_the_sd_tier_prices()
+    {
+        // TGR-1/2: SD targets ride the draw evidence (additive). Leg 1.0800->1.0900 -> -1/-1.5/-2 SD = terminus + n*0.0100.
+        var ctx = ArrangeBullishFrame();
+        AddBuySidePool(ctx, 1.0920m);
+        var detector = new DrawOnLiquidityDetector(
+            new DrawOnLiquidityOptions(), new OteOptions(), new TradeStyleOptions(), new FvgOptions(),
+            new SdProjectionOptions { Enabled = true });
+
+        var result = detector.Detect(ctx, Current);
+
+        result.Matched.Should().BeTrue();
+        result.Evidence![EvidenceKeys.RewardRatio].Should().Be(2.75m); // SD does NOT change the gated RR
+        ((decimal[])result.Evidence[EvidenceKeys.SdTargetPrices]).Should().Equal(1.1000m, 1.1050m, 1.1100m);
     }
 
     [Fact]

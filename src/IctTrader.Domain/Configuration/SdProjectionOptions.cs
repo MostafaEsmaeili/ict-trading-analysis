@@ -17,8 +17,9 @@ public sealed class SdProjectionOptions
     /// <summary>The SD multiples (the −1 / −1.5 / −2 SD set) — strictly ascending, positive.</summary>
     public IReadOnlyList<decimal> Multiples { get; init; } = [1.0m, 1.5m, 2.0m];
 
-    /// <summary>When merging into the ladder, keep SD tiers that fall INSIDE the range draw (default: drop them, so the
-    /// ladder stays a clean monotone {T1, T2_range, deeper SD tiers}). Consumed by the deferred ladder-merge.</summary>
+    /// <summary>Reserved — whether to keep SD tiers that fall INSIDE the range draw. The Slice A.2 merge always drops
+    /// inside-draw tiers (the ladder stays a clean monotone {T1, T2_range, deeper SD tiers}); honoring this flag is a
+    /// deferred refinement.</summary>
     public bool IncludeTiersInsideRangeDraw { get; init; }
 
     /// <summary>The Primer-flagged negative-fib variant — OFF by default; when on it REPLACES the SD multiples.</summary>

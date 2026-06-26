@@ -66,4 +66,7 @@ public static class EvidenceKeys
     public const string EntryPrice = "entryPrice";
     public const string StopPrice = "stopPrice";
     public const string TargetPrice = "targetPrice";
+
+    // Standard-deviation projection targets (TGR-1/2) — the −1/−1.5/−2 SD tier prices, present only when enabled.
+    public const string SdTargetPrices = "sdTargetPrices";
 }
