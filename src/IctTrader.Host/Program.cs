@@ -27,22 +27,35 @@ builder.Services.AddSingleton<IValidateOptions<DefensiveOptions>, DefensiveOptio
 // mis-configured host fails fast with the section-qualified reason rather than silently mis-running the model.
 builder.Services.AddIctOptions(builder.Configuration);
 
-// In-memory message bus (plan §3.0a) — the only inter-module seam. The bus singleton is registered with the
-// module Application assemblies so their handlers are Scrutor-scanned in: Scanning's CandleIngestedHandler,
-// PaperTrading's SetupConfirmedHandler + candle handler, and Performance's PaperTradeClosedHandler + query
-// handlers — closing the candle→scan→paper-trade→performance chain.
-builder.Services.AddMessaging(
-    typeof(IctTrader.Scanning.Application.Scanning.CandleIngestedHandler).Assembly,
-    typeof(IctTrader.PaperTrading.Application.Trading.SetupConfirmedHandler).Assembly,
-    typeof(IctTrader.Performance.Application.PaperTradeClosedHandler).Assembly);
+// Fetch-mode (Ict:MarketData:Oanda:FetchHistory) is a STANDALONE one-shot history exporter: it wires only the
+// OANDA fetcher + the fetch hosted service (AddScanLoop returns early) and writes a CSV, then stops the app. We
+// deliberately skip the bus, the module handlers, and the modules in this mode — those handlers reference
+// scan-loop services that fetch-mode never wires, so registering them would fail DI validation at startup.
+var fetchHistoryMode = builder.Configuration.GetValue<bool>("Ict:MarketData:Oanda:FetchHistory");
 
-// The runnable scan loop (WP7 slice 2e): the PaperTrading DbContext + persistence, the Scanning + PaperTrading
-// modules, and the read-only replay feed driven by a background hosted service.
-builder.Services.AddScanLoop(builder.Configuration);
+if (fetchHistoryMode)
+{
+    builder.Services.AddScanLoop(builder.Configuration);
+}
+else
+{
+    // In-memory message bus (plan §3.0a) — the only inter-module seam. The bus singleton is registered with the
+    // module Application assemblies so their handlers are Scrutor-scanned in: Scanning's CandleIngestedHandler,
+    // PaperTrading's SetupConfirmedHandler + candle handler, and Performance's PaperTradeClosedHandler + query
+    // handlers — closing the candle→scan→paper-trade→performance chain.
+    builder.Services.AddMessaging(
+        typeof(IctTrader.Scanning.Application.Scanning.CandleIngestedHandler).Assembly,
+        typeof(IctTrader.PaperTrading.Application.Trading.SetupConfirmedHandler).Assembly,
+        typeof(IctTrader.Performance.Application.PaperTradeClosedHandler).Assembly);
 
-// Performance module (WP6 / plan §5.3): the singleton PerformanceState the closed-trade handler appends to and the
-// summary + equity-curve query handlers read. Read-only R-based analytics — it consumes PaperTradeClosed only.
-builder.Services.AddPerformanceModule();
+    // The runnable scan loop (WP7 slice 2e): the PaperTrading DbContext + persistence, the Scanning + PaperTrading
+    // modules, and the configured read-only market-data feed driven by a background hosted service.
+    builder.Services.AddScanLoop(builder.Configuration);
+
+    // Performance module (WP6 / plan §5.3): the singleton PerformanceState the closed-trade handler appends to and
+    // the summary + equity-curve query handlers read. Read-only R-based analytics — it consumes PaperTradeClosed.
+    builder.Services.AddPerformanceModule();
+}
 
 builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
