@@ -130,13 +130,15 @@ public class SetupRehydratorTests
         setup.Plan.RewardRatio.Value.Should().Be(4.0m);          // (1.0920-1.0832)/(1.0832-1.0810), to the runner
     }
 
-    [Fact]
-    public void Rejects_an_unknown_enum_member()
+    [Theory]
+    [InlineData("Sideways")]   // not a member name
+    [InlineData("99")]         // a numeric TryParse accepts as the undefined (Direction)99 — must be rejected
+    public void Rejects_an_invalid_enum_value(string direction)
     {
-        var dto = BullishDto() with { Direction = "Sideways" };
+        var dto = BullishDto() with { Direction = direction };
 
         var rehydrate = () => SetupRehydrator.ToDomain(dto, Grading);
 
-        rehydrate.Should().Throw<FormatException>().WithMessage("*Sideways*");
+        rehydrate.Should().Throw<FormatException>().WithMessage($"*{direction}*");
     }
 }

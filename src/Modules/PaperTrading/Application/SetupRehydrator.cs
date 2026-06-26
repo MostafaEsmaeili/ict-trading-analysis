@@ -64,7 +64,9 @@ internal static class SetupRehydrator
     };
 
     private static T ParseEnum<T>(string value) where T : struct, Enum =>
-        Enum.TryParse<T>(value, ignoreCase: false, out var parsed)
+        // IsDefined rejects numeric strings (TryParse accepts "99" as the undefined (T)99) — the wire must carry
+        // a defined member NAME, so an out-of-range value fails fast rather than building a garbage setup.
+        Enum.TryParse<T>(value, ignoreCase: false, out var parsed) && Enum.IsDefined(parsed)
             ? parsed
             : throw new FormatException($"'{value}' is not a valid {typeof(T).Name} member.");
 }
