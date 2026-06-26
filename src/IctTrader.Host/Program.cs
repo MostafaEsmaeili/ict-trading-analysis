@@ -1,3 +1,4 @@
+using IctTrader.Alerting.Application;
 using IctTrader.Alerting.Contracts;
 using IctTrader.Host;
 using IctTrader.Host.Hubs;
@@ -45,12 +46,14 @@ else
 {
     // In-memory message bus (plan §3.0a) — the only inter-module seam. The bus singleton is registered with the
     // module Application assemblies so their handlers are Scrutor-scanned in: Scanning's CandleIngestedHandler,
-    // PaperTrading's SetupConfirmedHandler + candle handler, and Performance's PaperTradeClosedHandler + query
-    // handlers — closing the candle→scan→paper-trade→performance chain.
+    // PaperTrading's SetupConfirmedHandler + candle handler, Performance's PaperTradeClosedHandler + query
+    // handlers, and Alerting's setup/trade alert handlers + recent-alerts query — closing the
+    // candle→scan→paper-trade→performance chain and feeding the dashboard's Alerts feed.
     builder.Services.AddMessaging(
         typeof(IctTrader.Scanning.Application.Scanning.CandleIngestedHandler).Assembly,
         typeof(IctTrader.PaperTrading.Application.Trading.SetupConfirmedHandler).Assembly,
-        typeof(IctTrader.Performance.Application.PaperTradeClosedHandler).Assembly);
+        typeof(IctTrader.Performance.Application.PaperTradeClosedHandler).Assembly,
+        typeof(SetupConfirmedAlertHandler).Assembly);
 
     // The runnable scan loop (WP7 slice 2e): the PaperTrading DbContext + persistence, the Scanning + PaperTrading
     // modules, and the configured read-only market-data feed driven by a background hosted service.
@@ -59,6 +62,11 @@ else
     // Performance module (WP6 / plan §5.3): the singleton PerformanceState the closed-trade handler appends to and
     // the summary + equity-curve query handlers read. Read-only R-based analytics — it consumes PaperTradeClosed.
     builder.Services.AddPerformanceModule();
+
+    // Alerting module (plan §9): the singleton AlertLog the setup/trade alert handlers append to and the
+    // recent-alerts query handler reads. Read-only advisory sink — it consumes SetupConfirmed + PaperTradeOpened/
+    // Closed and publishes nothing, feeding the dashboard's Alerts feed.
+    builder.Services.AddAlertingModule();
 }
 
 builder.Services.AddOpenApi();
@@ -78,7 +86,11 @@ app.MapOpenApi();
 // the DTO shapes for the dashboard's generated types; real data is wired in WP3–WP7.
 var api = app.MapGroup("/api");
 
-api.MapGet("/alerts", () => TypedResults.Ok(Array.Empty<AlertDto>()))
+// Real advisory alerts feed (plan §9): REST → bus QueryAsync → the Alerting module's
+// GetRecentAlertsQueryHandler, which returns the most-recent setup/trade notifications newest-first from the
+// bounded AlertLog. Read-only sink — surfacing an advisory notification routes nowhere near an order path (§6.3).
+api.MapGet("/alerts", async (IMessageBus bus) =>
+        TypedResults.Ok(await bus.QueryAsync(new GetRecentAlertsQuery(50))))
     .WithName("GetAlerts");
 
 // Real active-trades read-side (plan §4.1): REST → bus QueryAsync → the PaperTrading module's
