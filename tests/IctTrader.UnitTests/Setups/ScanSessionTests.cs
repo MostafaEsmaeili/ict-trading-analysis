@@ -192,7 +192,7 @@ public class ScanSessionTests
             new DailyBiasDetector(new DailyBiasOptions()),
             new PremiumDiscountGateDetector(new PremiumDiscountOptions()),
             new OteFibDetector(new OteOptions(), new FvgOptions()),
-            new DrawOnLiquidityDetector(new DrawOnLiquidityOptions(), new OteOptions(), new TradeStyleOptions(), new FvgOptions()),
+            new DrawOnLiquidityDetector(new DrawOnLiquidityOptions(), new OteOptions(), new TradeStyleOptions(), new FvgOptions(), new SdProjectionOptions()),
             new CalendarGateDetector(new CalendarOptions()),
         };
         var confluence = new ConfluenceOptions();

@@ -161,10 +161,14 @@ surface yet) · **DONE** (already implemented in a merged slice).
     entry **provably cannot drift** (the TGR-2 single-source invariant is a locked test). `SdProjection`/`SdTier` VOs;
     `SdProjectionOptions` (`Ict:Detection:SdProjection`: `Multiples [1,1.5,2]`, default **Enabled=false**,
     `NegativeFibVariant` Primer-flagged opt-in, `Validate`-gated). Default path byte-identical.
-  - **Slice A.2 — DEFERRED.** The N-tier `TargetLadder` (extend the 2-tier `Partial`/`Runner` record to an ordered
-    list, keep the 2-arg ctor + accessors) + the `SetupFactory` additive merge (append SD tiers beyond the range T2),
-    which needs the leg captured on the `PricedFrame` at confirmation (a small FSM/frame touch). `RunnerSelection`
-    (range-draw default) + the `Anchor` (terminus default) escape hatches ride this cut.
+  - **Slice A.2 — DONE (issue #69).** `TargetLadder` is now **N-tier** with an explicit **`RunnerIndex`** (the
+    reward-to-risk tier = the gated range draw), keeping the `stop < entry < T1 < … < Tn` order invariant + the 2-arg
+    ctor (`runnerIndex=1`). `DrawOnLiquidityDetector` emits the SD tier prices as **additive evidence**
+    (`EvidenceKeys.SdTargetPrices`, gated on `SdProjectionOptions.Enabled`, default off — it does NOT change the gated
+    draw or the RR floor); `PricedFrame` carries them; `SetupFactory` appends the SD tiers **strictly beyond T2** as
+    deeper advisory targets. The runner/RR stays the gated draw, so enabling SD never inflates RR — locked by tests.
+    Default path (SD off) byte-identical. **Deferred:** `RunnerSelection=FarthestBeyondRange` (promote a far SD tier to
+    the runner) + the `Anchor=LegOrigin` escape hatch + `IncludeTiersInsideRangeDraw` consumption.
   - **Slice B — DEFERRED.** SD-as-primary/fallback draw (`AllowSdAsPrimaryDraw`) — touches `DrawOnLiquidityDetector` +
     the RR gate; fires only when no untapped opposite pool qualifies.
 - **TGR-3 — Provenance flags: status-quo.** 70.5% sweet-spot + Silver Bullet stay Primer-flagged; 3-close

@@ -10,9 +10,16 @@ namespace IctTrader.Domain.Setups;
 /// that detector's evidence so the <see cref="SetupFactory"/> prices the setup against the EXACT draw that was
 /// gated — it never re-derives the target (a pool registered/swept later could differ).
 /// </summary>
-public readonly record struct PricedFrame(Direction Direction, decimal Entry, decimal Stop, decimal Target, decimal RewardRatio)
+public readonly record struct PricedFrame(
+    Direction Direction,
+    decimal Entry,
+    decimal Stop,
+    decimal Target,
+    decimal RewardRatio,
+    IReadOnlyList<decimal> SdTargets)
 {
-    /// <summary>Reconstructs the frame from a draw-on-liquidity detector result's evidence, or null if incomplete.</summary>
+    /// <summary>Reconstructs the frame from a draw-on-liquidity detector result's evidence, or null if incomplete. The
+    /// optional standard-deviation projection tiers (TGR-1/2) ride the same evidence when SD targets are enabled.</summary>
     public static PricedFrame? TryFromEvidence(Direction direction, IReadOnlyDictionary<string, object>? evidence)
     {
         if (evidence is not null
@@ -21,7 +28,11 @@ public readonly record struct PricedFrame(Direction Direction, decimal Entry, de
             && evidence.TryGetValue(EvidenceKeys.TargetPrice, out var target) && target is decimal targetPrice
             && evidence.TryGetValue(EvidenceKeys.RewardRatio, out var rr) && rr is decimal rewardRatio)
         {
-            return new PricedFrame(direction, entryPrice, stopPrice, targetPrice, rewardRatio);
+            var sdTargets = evidence.TryGetValue(EvidenceKeys.SdTargetPrices, out var sd)
+                && sd is IReadOnlyList<decimal> tiers
+                ? tiers
+                : [];
+            return new PricedFrame(direction, entryPrice, stopPrice, targetPrice, rewardRatio, sdTargets);
         }
 
         return null;

@@ -24,7 +24,8 @@ public class SetupFactoryTests
             [new ConfluenceContribution(ConfluenceCondition.BiasAligned, Direction.Bullish, 1.0850m, "Daily bias Bullish")],
             frame);
 
-    private static PricedFrame BullishFrame() => new(Direction.Bullish, 1.0832m, 1.0800m, 1.0920m, 2.75m);
+    private static PricedFrame BullishFrame(params decimal[] sdTargets) =>
+        new(Direction.Bullish, 1.0832m, 1.0800m, 1.0920m, 2.75m, sdTargets);
 
     [Fact]
     public void Prices_the_setup_with_t1_at_the_leg_equilibrium_and_t2_at_the_draw()
@@ -44,6 +45,20 @@ public class SetupFactoryTests
     }
 
     [Fact]
+    public void Sd_targets_beyond_the_draw_become_deeper_ladder_tiers_without_moving_the_runner()
+    {
+        // TGR-1/2 Slice A.2: SD tiers beyond T2 append as deeper targets; one inside the draw (1.0900 < 1.0920) is
+        // dropped; T1/T2/RR stay byte-identical (the runner is the gated draw, not the deepest SD tier).
+        var setup = Factory.Create(Confirmation(BullishFrame(1.0900m, 1.0960m, 1.1000m)), TradeStyle.Intraday);
+
+        setup.Plan.Targets.Partial.Value.Should().Be(1.0876m);
+        setup.Plan.Targets.Runner.Value.Should().Be(1.0920m);                              // RR runner = the gated draw
+        setup.Plan.Targets.TierCount.Should().Be(4);                                        // T1, draw, 1.0960, 1.1000
+        setup.Plan.Targets.Targets.Select(t => t.Value).Should().Equal(1.0876m, 1.0920m, 1.0960m, 1.1000m);
+        setup.Plan.RewardRatio.Value.Should().BeApproximately(2.75m, 0.0001m);              // unchanged — entry→draw
+    }
+
+    [Fact]
     public void A_confirmation_without_a_priced_frame_cannot_be_priced()
     {
         var act = () => Factory.Create(Confirmation(frame: null), TradeStyle.Intraday);
@@ -56,7 +71,7 @@ public class SetupFactoryTests
     {
         // draw 1.0860 -> reward 28 pips / risk 32 pips = 0.875R, below the 2.5 Intraday floor.
         var act = () => Factory.Create(
-            Confirmation(new PricedFrame(Direction.Bullish, 1.0832m, 1.0800m, 1.0860m, 0.875m)), TradeStyle.Intraday);
+            Confirmation(new PricedFrame(Direction.Bullish, 1.0832m, 1.0800m, 1.0860m, 0.875m, [])), TradeStyle.Intraday);
 
         act.Should().Throw<DomainException>();
     }

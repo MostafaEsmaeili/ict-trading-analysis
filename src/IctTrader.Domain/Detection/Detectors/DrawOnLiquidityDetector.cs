@@ -22,18 +22,25 @@ public sealed class DrawOnLiquidityDetector : ISetupDetector
     private readonly OteOptions _oteOptions;
     private readonly TradeStyleOptions _styleOptions;
     private readonly FvgOptions _fvgOptions;
+    private readonly SdProjectionOptions _sdOptions;
 
     public DrawOnLiquidityDetector(
-        DrawOnLiquidityOptions options, OteOptions oteOptions, TradeStyleOptions styleOptions, FvgOptions fvgOptions)
+        DrawOnLiquidityOptions options,
+        OteOptions oteOptions,
+        TradeStyleOptions styleOptions,
+        FvgOptions fvgOptions,
+        SdProjectionOptions sdOptions)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(oteOptions);
         ArgumentNullException.ThrowIfNull(styleOptions);
         ArgumentNullException.ThrowIfNull(fvgOptions);
+        ArgumentNullException.ThrowIfNull(sdOptions);
         _options = options;
         _oteOptions = oteOptions;
         _styleOptions = styleOptions;
         _fvgOptions = fvgOptions;
+        _sdOptions = sdOptions;
     }
 
     public ConfluenceCondition? Condition => ConfluenceCondition.DrawTargetRrMet;
@@ -115,6 +122,13 @@ public sealed class DrawOnLiquidityDetector : ISetupDetector
             [EvidenceKeys.TargetPrice] = draw,
             [EvidenceKeys.RewardRatio] = rewardRatio.Value,
         };
+
+        // TGR-1/2 (additive, gated): carry the SD projection tier prices so the priced frame / SetupFactory can append
+        // the deeper SD targets to the ladder. This does NOT change the gating draw or the RR floor — pure evidence.
+        if (_sdOptions.Enabled && SdProjectionResolver.Resolve(context, _sdOptions) is { } sd)
+        {
+            evidence[EvidenceKeys.SdTargetPrices] = sd.Tiers.Select(t => t.Price).ToArray();
+        }
 
         return DetectorResult.Match(
             direction, draw, ReasonFragments.DrawTarget(direction, draw, rewardRatio.Value), evidence);

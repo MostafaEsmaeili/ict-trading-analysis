@@ -35,11 +35,27 @@ public sealed class SetupFactory
         }
 
         var partial = frame.Entry + (_ladder.T1EquilibriumFraction * (frame.Target - frame.Entry));
+
+        // T1 (equilibrium partial) + T2 (the gated range draw) + any SD projection tiers STRICTLY beyond T2 (TGR-1/2).
+        // The SD tiers arrive ordered shallow→deep, so the ladder stays a clean monotone {T1, T2, deeper SD tiers};
+        // when no SD targets ride the frame the ladder is the byte-identical two tiers.
+        var tiers = new List<Price> { new(partial), new(frame.Target) };
+        foreach (var sd in frame.SdTargets)
+        {
+            var beyondTarget = frame.Direction == Direction.Bullish ? sd > frame.Target : sd < frame.Target;
+            if (beyondTarget)
+            {
+                tiers.Add(new Price(sd));
+            }
+        }
+
+        // The gated range draw (tier index 1) is the reward-to-risk runner; the SD tiers are deeper advisory targets,
+        // so enabling SD does NOT change the RR the FSM gated.
         var plan = new TradePlan(
             frame.Direction,
             new Price(frame.Entry),
             new Price(frame.Stop),
-            new TargetLadder(frame.Direction, new Price(partial), new Price(frame.Target)));
+            new TargetLadder(frame.Direction, tiers, runnerIndex: 1));
 
         var floor = Math.Max(_styles.For(style).MinRewardRatio, _styles.AbsoluteMinRewardRatio);
         Guard.Against(
