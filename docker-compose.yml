@@ -1,0 +1,29 @@
+# Dev infrastructure for the ICT paper-trading backend (plan §3.1).
+# Postgres only — this project NEVER connects to a broker for order routing (the no-live-trading guardrail).
+# Usage:
+#   docker compose up -d postgres
+#   $env:PAPERTRADING_CONNECTION_STRING = "Host=localhost;Port=5432;Database=icttrader;Username=icttrader;Password=icttrader_dev"
+#   dotnet ef database update --project src/Modules/PaperTrading/Infrastructure --startup-project src/IctTrader.Host
+#   dotnet run --project src/IctTrader.Host
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: icttrader-postgres
+    environment:
+      POSTGRES_DB: icttrader
+      POSTGRES_USER: icttrader
+      # Local DEV password only — not a secret. The app reads its connection string from config/env, never committed.
+      POSTGRES_PASSWORD: icttrader_dev
+    # Host port 55432 (container 5432) to avoid clashing with any local/other Postgres.
+    ports:
+      - "55432:5432"
+    volumes:
+      - icttrader-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U icttrader -d icttrader"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+volumes:
+  icttrader-pgdata:
