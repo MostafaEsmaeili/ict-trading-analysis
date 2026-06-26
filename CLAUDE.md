@@ -806,6 +806,45 @@ skipped placeholder), 0 warnings, format clean:
   `TradeOrchestrator` object-graph wiring. **2e** = Host DI of the DbContext, `AddPaperTradingPersistence`, the
   connection string, and the hosted scanner.
 
+**WP7 slice 2d-iii — PaperTrading orchestration: open + manage trades (issue #88, branch
+`feature/#88-papertrading-orchestration`, PR #89) — DONE.** 🎯 The scan loop is now **functionally complete
+end-to-end in-process**: `SetupConfirmed` → a trade opens/arms → `CandleIngested` advances it → it settles, all on
+the bus with persistence + events. Built by the `vsa-slice-builder` agent; gated **ict-domain-expert CONFORMANT
+5/5**, **guardrail 7/7**, **pr-reviewer APPROVE**. 593 unit (+3 flow incl. a loss-path) + 23 arch + 15 integration,
+0 warnings, format clean:
+
+- **`SetupConfirmedHandler`** (`IEventHandler<SetupConfirmed>`) — `SetupRehydrator` → load/create the demo
+  `PaperAccount` → resolve `SymbolSpec`/`ContractSpec` → `TradeOrchestrator.OnSetupConfirmed` (arm default / open
+  Immediate) → persist via the UoW → publish `PaperTradeOpened` (Immediate) or nothing yet (Armed rests).
+- **`PaperTradingCandleHandler`** (`IEventHandler<CandleIngested>`) — **DB-AS-STATE** (the key design): loads the
+  symbol's active armed entries (`GetActiveAsync`) + open trades (`GetOpenAsync`) FRESH each candle (scope-safe,
+  restart-safe — no detached-entity cache), reconstructs `ManagedPosition.Resting`/`.Live`, `Advance`s (which
+  **settles** terminal closes), persists, and publishes `PaperTradeOpened` (arm-trigger) / `PaperTradeClosed`.
+- **`TradeOrchestratorFactory` + registry** (per-symbol — `EntryFillEvaluator` binds `SymbolSpec`; mirrors 2c)
+  build the exact `TradeOrchestratorTests` object graph. **`PaperAccountProvider`** load-or-creates ONE demo
+  account (fixed Guid; `PaperTradingOptions.StartingEquity` = `Ict:PaperTrading`, default 10 000; cap reused from
+  `RiskOptions.MaxOpenPortfolioRiskPercent` — one cap owner). `AddPaperTradingModule` registers the
+  factory/registry/provider/options; the handlers are `AddMessaging`-scanned; the DbContext +
+  `AddPaperTradingPersistence` are the **Host's** job (calling them here = a circular Application→Infrastructure ref).
+- **Bus dispatch note:** `IMessageBus.PublishAsync<TEvent>` binds handlers off the **compile-time** `TEvent`, so the
+  handlers publish the **concrete** `Contracts.PaperTradeOpened/Closed` (an `IEvent` ref would resolve 0 handlers),
+  and `ClearDomainEvents()` after draining so a still-open trade carried under DB-as-state can't re-publish.
+- **Deferred Should-fixes (reviewer-flagged, all non-blocking — TRACKED):** **(before WP6/Alerting)** `SetupId` =
+  `trade.Id` and `Killzone` = null are **placeholders** — the `PaperTrade` aggregate doesn't retain the source setup
+  id / killzone, so emitting the truth on every event (incl. a prior-candle **close**, no `Setup` in scope) needs
+  them carried onto `PaperTrade` (a cross-aggregate enrichment so the Performance/Alerting consumers can segment by
+  setup/killzone). **(2e/host)** guard that the management candle's timeframe == the trade's `TriggerTimeframe` (so
+  the §2.5.1-step-9 time-exit window can't drift); serialize the single demo-account write path (`xmin` concurrency);
+  add **symbol-scoped** repo queries (`GetActive`/`GetOpen` currently load all symbols + filter in memory).
+  **(minor)** publish-after-commit is at-most-once (not a transactional outbox); a same-bar open-then-close DTO reads
+  `Status=Closed` on both events (consumers key on event TYPE); `PaperTradePartialClosed`/`StopMoved` have no contract
+  (`PaperTradeFilled` unused). csproj: Application += `Microsoft.Extensions.Options.ConfigurationExtensions` + DI.Abstractions
+  10.0.9; Infrastructure bumped Configuration/.Json 10.0.0→10.0.9 (cleared the pre-existing stale pins).
+- **NEXT — 2e (the runnable Host):** DI the `PaperTradingDbContext` (+ connection string), `AddPaperTradingPersistence`,
+  `AddScanningModule`/`AddPaperTradingModule`, and `AddMessaging` over the module Application assemblies; a Replay-feed
+  `ScannerHostedService` driving `MarketDataIngestor` → `CandleIngested`; SignalR push + bus-backed REST. Then the app
+  RUNS end-to-end.
+
 **Process cadence (per the operator):** keep the ICT gate strict (`ict-domain-expert` + guardrail + `pr-reviewer`,
 concurrent) but move faster — build directly from the locked design (skip the separate pre-spec when pinned), ship
 bigger complete slices, and reserve the heavy ~600k-case adversarial driver for numeric/money-math slices (it fuzzes
