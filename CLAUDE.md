@@ -595,8 +595,8 @@ becomes the within-grade sorter — retiring the C-suppression that made the can
 **Unblocks the Alerting WP.** Grade A is unreachable (~77) until the optional emitters ship. ict-domain-expert
 CONFORMANT, guardrail 7/7, pr-reviewer APPROVE.
 
-**Register-correction slices (the §2.5 fidelity backlog) — 6 MERGED.** Built strict-gated (ict-domain-expert, guardrail,
-pr-reviewer; meatier slices via a design judge-panel + a 4-lens adversarial-verify workflow). Unit tests **431 → 499**:
+**Register-correction slices (the §2.5 fidelity backlog) — 9 MERGED.** Built strict-gated (ict-domain-expert, guardrail,
+pr-reviewer; meatier slices via a design judge-panel + a 4-lens adversarial-verify workflow). Unit tests **431 → 534**:
 
 - **OB-9a** (issue #53, PR #54) — order block = consecutive opposite-close **cluster**, anchored at the run-start
   candle's open; `OrderBlock` body-based mean-threshold (`BodyLow`/`BodyHigh`); `OrderBlockOptions.MaxClusterCandles`=3.
@@ -615,6 +615,20 @@ pr-reviewer; meatier slices via a design judge-panel + a 4-lens adversarial-veri
   (Ep3 "first higher fvg") over the same FVG+OB set; activates the `FairValueGap.IsSelectedEntry`/`Stacked` markers
   (resolver pure, `OteFibDetector` single writer); stacked **detection** carries the farther-gap far edge for 2b
   (CodeRabbit fix: the farther-gap scan uses the broader open set, not the band-filtered subset).
+- **FVG-SEM-3** (issue #65, PR #66) — the five validity exclusions (no-sweep / Asian-range / counter-bias / no-CHoCH /
+  overlapping-wicks) as **flag-only evidence** (6 `EvidenceKeys`, proven scoring-inert; `FvgOptions.ApplyValidityExclusions`
+  default off → byte-identical). When on it vetoes ONLY Asian-range + overlapping-wicks (the other three are already FSM
+  RequiredConditions). Asian-range classifies from the gap's **formation** candle; a vetoed FVG still carries the diagnostic
+  (`DetectorResult.NoMatchWith`). Asian killzone is already selectable (locked) — "deprioritized" = off-by-default, NOT a weight.
+- **TGR-1/2 Slice A** (issue #67, PR #68) — SD-projection geometry on a single shared leg axis: `Displacement.Project(f)`
+  (= `Terminus + f·(Origin−Terminus)`) is now THE axis (`OteEntryResolver.Retrace` delegates to it, byte-identical), and the
+  pure **NON-scoring** `SdProjectionResolver` prices −1/−1.5/−2 SD via `leg.Project(−n)` reading only `ctx.LastDisplacement`
+  (TGR-2 single-source — SD & OTE provably can't drift). `SdProjectionOptions` (default Enabled=false; negative-fib a
+  Primer-flagged opt-in). Σ=9.75 untouched.
+- **TGR-1/2 Slice A.2** (issue #69, PR #70) — `TargetLadder` is now **N-tier** with an explicit `RunnerIndex` (the RR tier =
+  the gated draw); `DrawOnLiquidityDetector` emits the SD tiers as additive evidence (gated, default off), `PricedFrame`
+  carries them, `SetupFactory` appends those **strictly beyond T2** as deeper advisory targets. Enabling SD never inflates
+  the gated RR (runner pinned to the draw). Default path byte-identical; the 2-arg ladder ctor kept.
 
 **Process cadence (per the operator):** keep the ICT gate strict (`ict-domain-expert` + guardrail + `pr-reviewer`,
 concurrent) but move faster — build directly from the locked design (skip the separate pre-spec when pinned), ship
@@ -624,18 +638,19 @@ numeric correctness, not ICT fidelity). Under Ultracode: settle subtle ICT calls
 
 **Still to come — the decisions-register build order (next slices):** the §2.5 detector/target corrections are mostly
 landed (OB-9a, FVG-SEM-1a, EG-1, TIME-11-12, TIME-10, FVG-SEM-2a — all MERGED above). The remaining required-core slices,
-in order:
+in order. The §2.5 fidelity backlog is now essentially cleared (OB-9a, FVG-SEM-1a/2a/3, EG-1, TIME-10/11-12, TGR-1/2 A+A.2
+all MERGED). What remains of the canonical model:
 
-1. **FVG-SEM-3 (NEXT)** — validity exclusions as **flag-only** evidence (`ApplyValidityExclusions=false`; the genuine
-   vetoes are already RequiredConditions) + **Asian as a selectable, deprioritized entry killzone** (drop the
-   Asian-*range* exclusion; Ep10 trades it). Mostly additive-flag.
-2. **FVG-SEM-2b + EG-3 (entry-orchestrator chain)** — the stacked **stop-sizing** + the **wrong-order nix** (new
-   `EntryCancelReason`, `ArmedEntry.StackedFartherBound`, an `EntryManager` rung; FVG-SEM-2a already carries the farther
-   bound) and **EG-3** close-proximity entry (fill at the touched price within a tolerance, OFF by default).
-3. **TGR-1/2** — standard-deviation projection **targets** (a new §2.5.6 detector + an N-tier `TargetLadder`).
+1. **FVG-SEM-2b + EG-3 (NEXT — entry-orchestrator chain)** — the stacked **stop-sizing** + the **wrong-order nix** (new
+   `EntryCancelReason.StackedFartherGapHitFirst`, `ArmedEntry.StackedFartherBound` carried `Setup`→`PricedFrame`→`ArmedEntry`,
+   an `EntryManager` rung with precedence killzone-end > max-wait > nix > fill; FVG-SEM-2a already carries the farther bound;
+   add the overlapping-gap test the verify pass flagged) and **EG-3** close-proximity entry (fill at the touched price within
+   an INVENTED-flagged tolerance, OFF by default). The last meaty required-core slice; closes the §2.5 entry chain.
+2. **TGR-1/2 Slice B (optional)** — SD-as-primary/fallback draw (`AllowSdAsPrimaryDraw`); touches the
+   `DrawOnLiquidityDetector` and the RR gate; fires only when no untapped opposite pool qualifies.
 
-Then the runnable backend: **WP7 host wiring** (bind `Ict:Execution:*`/`Ict:Risk`/`Ict:Confluence`/`Ict:Detection:*` Options
-+ `ValidateOnStart` — incl. the deferred `WindowCapacity ≥ DisplacementLegMaxBars` cross-check and the `Ict:Detection:Fvg`
+Then the runnable backend: **WP7 host wiring** (bind the `Ict:Execution:*`/`Ict:Risk`/`Ict:Confluence`/`Ict:Detection:*`
+Options with `ValidateOnStart` — incl. the deferred `WindowCapacity ≥ DisplacementLegMaxBars` cross-check and the `Ict:Detection:Fvg`
 binding into the OTE/draw detectors; DI the `PaperTradingDbContext` + aggregate-scoped repositories + `TradeOrchestrator`;
 a Replay feed → the Scanning/PaperTrading bus handlers → SignalR + REST) and the **Alerting** module (unblocked by TGR-4);
 the **`Performance` calculator (WP6)**. Optional long-tail (§2.5.8, additive): **SMT/Breaker** detectors, session macros,
