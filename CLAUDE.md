@@ -644,6 +644,23 @@ TIME-10/11-12 · TGR-1/2 A+A.2) is merged. The canonical *ICT 2022 Intraday FVG 
 PD-array OTE entry → SD/draw targets, with the entry-arming, stacked-gap, and management chain — is faithfully encoded
 end-to-end as a pure, deterministic, ICT-gated domain. **The next phase is making it RUNNABLE (WP7).**
 
+**WP7 slice 1 — Host Options binding + `ValidateOnStart` (issue #75, PR #76 → merged) — DONE.** The first runnable-
+backend cut: the Host now binds **all 24 `Ict:*` Options POCOs** to their config sections and self-validates each at
+startup, so a mis-configured host fails fast with the section-qualified reason instead of silently mis-running the model.
+
+- **`IctOptionsRegistration.AddIctOptions(IServiceCollection, IConfiguration)`** (`src/IctTrader.Host/`) binds every POCO
+  (Confluence/scanning ×4 · Detection ×14 · Risk+execution ×6) via a private generic helper —
+  `AddOptions<T>().Bind(section).ValidateOnStart()` + a singleton `IctOptionsValidator<T>` (internal) that delegates to the
+  POCO's own `Validate()` and returns `ValidateOptionsResult.Fail($"{section}: {e}")`. `Program.cs` calls it after the
+  DefensiveOptions block; **DefensiveOptions is deliberately NOT in the set** (it keeps its own bespoke validator).
+- **New `tests/IctTrader.IntegrationTests` project** (references the Host) — `HostOptionsValidationTests` (3): default
+  config binds clean (asserts the verified defaults across Risk/Fvg/Displacement/EntryManagement/SdProjection/Confluence);
+  `Ict:Risk:BaseRiskPercent=0` throws `OptionsValidationException` matching `*Ict:Risk*`; `Ict:Displacement:DisplacementLegMaxBars=0`
+  throws matching `*Ict:Displacement*`. **560 unit + 23 arch + 3 integration**, 0 warnings, format clean. CodeRabbit's lone
+  Major (claimed missing global usings → compile failure) was a verified **false positive** — the csproj declares
+  `<Using Include="Xunit"/>` + `<Using Include="FluentAssertions"/>`, tests pass green; skipped with reason (adding
+  redundant file usings would trip IDE0005 under warnings-as-errors). guardrail 7/7, pr-reviewer APPROVE.
+
 **Process cadence (per the operator):** keep the ICT gate strict (`ict-domain-expert` + guardrail + `pr-reviewer`,
 concurrent) but move faster — build directly from the locked design (skip the separate pre-spec when pinned), ship
 bigger complete slices, and reserve the heavy ~600k-case adversarial driver for numeric/money-math slices (it fuzzes
@@ -655,10 +672,11 @@ backend (WP7). Optional domain follow-ons that remain: **TGR-1/2 Slice B** (SD-a
 `AllowSdAsPrimaryDraw` — touches `DrawOnLiquidityDetector` + the RR gate, fires only when no untapped opposite pool
 qualifies) and the §2.5.8 long-tail (SMT/Breaker, session macros, weekly bias, HRLR, Power-3, Sunday-gap) — all additive.
 
-The runnable backend: **WP7 host wiring** (bind the `Ict:Execution:*`/`Ict:Risk`/`Ict:Confluence`/`Ict:Detection:*`
-Options with `ValidateOnStart` — incl. the deferred `WindowCapacity ≥ DisplacementLegMaxBars` cross-check, the `Ict:Detection:Fvg`
-binding into the OTE/draw detectors, and the per-instrument `SymbolSpec` injected into `EntryFillEvaluator` for EG-3;
-DI the `PaperTradingDbContext` + aggregate-scoped repositories + `TradeOrchestrator`;
+The runnable backend: **WP7 host wiring** — Options binding **DONE (slice 1, PR #76)**: all 24 `Ict:*` POCOs bound +
+`ValidateOnStart`-gated via `IctOptionsRegistration.AddIctOptions`. Still to wire: the deferred
+`WindowCapacity ≥ DisplacementLegMaxBars` cross-check, the `Ict:Detection:Fvg` binding INTO the OTE/draw detectors, and the
+per-instrument `SymbolSpec` injected into `EntryFillEvaluator` for EG-3;
+**slice 2 (the scan loop)** = DI the `PaperTradingDbContext` + aggregate-scoped repositories + `TradeOrchestrator`;
 a Replay feed → the Scanning/PaperTrading bus handlers → SignalR + REST) and the **Alerting** module (unblocked by TGR-4);
 the **`Performance` calculator (WP6)**. Optional long-tail (§2.5.8, additive): **SMT/Breaker** detectors, session macros,
 weekly bias, HRLR/`NeutralCondition`, Power-of-Three/AMD, Sunday-gap; the **slippage**/**session-stepped spread**/**swap**
