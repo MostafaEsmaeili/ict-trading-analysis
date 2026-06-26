@@ -49,7 +49,8 @@ surface yet) · **DONE** (already implemented in a merged slice).
   `OpenArmed` still opens at `Plan.Entry`, so `InitialRiskPerUnit`/`RiskBudget` are preserved (frozen-1R invariant
   safe; a stop-out still books exactly −1R, locked by a test).** Cite: Mentorship Ep10/29/07/22/35 (taught) + Ep09
   (don't-chase). **Deferred:** the "open at the touched price" real-economics variant (would break reserve==RiskBudget),
-  and the band-edge clamp.
+  and the band-edge clamp. **WP7 note:** EG-3's pip→price tolerance defaults to FX-major; the host must inject the
+  instrument's `SymbolSpec` into `EntryFillEvaluator` for non-FX (JPY/index) when EG-3 is enabled.
 
 ## Fair Value Gap semantics (four distinct constructs — never conflate)
 
