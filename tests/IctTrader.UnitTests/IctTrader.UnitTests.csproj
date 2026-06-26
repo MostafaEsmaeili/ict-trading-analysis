@@ -28,6 +28,7 @@
     <ProjectReference Include="..\..\src\Modules\MarketData\Infrastructure\IctTrader.MarketData.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\Scanning\Application\IctTrader.Scanning.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\PaperTrading\Application\IctTrader.PaperTrading.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Alerting\Application\IctTrader.Alerting.Application.csproj" />
   </ItemGroup>
 
 </Project>
