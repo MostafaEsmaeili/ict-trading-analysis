@@ -595,8 +595,8 @@ becomes the within-grade sorter — retiring the C-suppression that made the can
 **Unblocks the Alerting WP.** Grade A is unreachable (~77) until the optional emitters ship. ict-domain-expert
 CONFORMANT, guardrail 7/7, pr-reviewer APPROVE.
 
-**Register-correction slices (the §2.5 fidelity backlog) — 9 MERGED.** Built strict-gated (ict-domain-expert, guardrail,
-pr-reviewer; meatier slices via a design judge-panel + a 4-lens adversarial-verify workflow). Unit tests **431 → 534**:
+**Register-correction slices (the §2.5 fidelity backlog) — 11 MERGED (COMPLETE).** Built strict-gated (ict-domain-expert,
+guardrail, pr-reviewer; meatier slices via a design judge-panel + a 4-lens adversarial-verify workflow). Unit tests **431 → 560**:
 
 - **OB-9a** (issue #53, PR #54) — order block = consecutive opposite-close **cluster**, anchored at the run-start
   candle's open; `OrderBlock` body-based mean-threshold (`BodyLow`/`BodyHigh`); `OrderBlockOptions.MaxClusterCandles`=3.
@@ -629,6 +629,20 @@ pr-reviewer; meatier slices via a design judge-panel + a 4-lens adversarial-veri
   the gated draw); `DrawOnLiquidityDetector` emits the SD tiers as additive evidence (gated, default off), `PricedFrame`
   carries them, `SetupFactory` appends those **strictly beyond T2** as deeper advisory targets. Enabling SD never inflates
   the gated RR (runner pinned to the draw). Default path byte-identical; the 2-arg ladder ctor kept.
+- **FVG-SEM-2b + EG-3** (issue #72, PR #73) — the entry-orchestrator chain. **Stacked stop-sizing**:
+  `DrawOnLiquidityDetector` widens the stop to clear the farther gap (`min(sweep−buffer, fartherBound−buffer)`), computed
+  before the RR floor (a stacked setup below the floor is a faithful NoMatch), gated on `StrictFirstFvg`. **Wrong-order
+  nix**: an `EntryManager.ResolveCancellation` rung (precedence killzone-end > max-wait > nix > fill, pre-fill, `IsStacked`-
+  gated) via `EntryCancelReason.StackedFartherGapHitFirst`; the farther bound threads `StackedFartherBound` evidence →
+  `PricedFrame` → `Setup` (not `TradePlan`) → `ArmedEntry` (+ an EF migration column). **EG-3 v1**: `EntryFillEvaluator`
+  records the touched price clamped within `CloseProximityTolerancePips` (`UseCloseProximityEntry`, default off) but
+  `OpenArmed` still opens at `Plan.Entry` — the frozen-1R invariant holds (a stop-out books exactly −1R). `EntryFillEvaluator`
+  now REQUIRES a `SymbolSpec` (CodeRabbit — no FX-major default).
+
+**🏁 The §2.5 model is COMPLETE.** The audit's entire fidelity backlog (OB-9a · FVG-SEM-1a/2a/2b/3 · EG-1/EG-3 ·
+TIME-10/11-12 · TGR-1/2 A+A.2) is merged. The canonical *ICT 2022 Intraday FVG Model* — sweep → MSS/displacement →
+PD-array OTE entry → SD/draw targets, with the entry-arming, stacked-gap, and management chain — is faithfully encoded
+end-to-end as a pure, deterministic, ICT-gated domain. **The next phase is making it RUNNABLE (WP7).**
 
 **Process cadence (per the operator):** keep the ICT gate strict (`ict-domain-expert` + guardrail + `pr-reviewer`,
 concurrent) but move faster — build directly from the locked design (skip the separate pre-spec when pinned), ship
@@ -636,22 +650,15 @@ bigger complete slices, and reserve the heavy ~600k-case adversarial driver for 
 numeric correctness, not ICT fidelity). Under Ultracode: settle subtle ICT calls with a single ict-domain-expert spec
 (or a design judge-panel for wide design spaces), implement via `ict-detector-engineer`, then adversarially verify.
 
-**Still to come — the decisions-register build order (next slices):** the §2.5 detector/target corrections are mostly
-landed (OB-9a, FVG-SEM-1a, EG-1, TIME-11-12, TIME-10, FVG-SEM-2a — all MERGED above). The remaining required-core slices,
-in order. The §2.5 fidelity backlog is now essentially cleared (OB-9a, FVG-SEM-1a/2a/3, EG-1, TIME-10/11-12, TGR-1/2 A+A.2
-all MERGED). What remains of the canonical model:
+**Still to come — the §2.5 fidelity backlog is COMPLETE (all 11 register slices merged).** The NEXT PHASE is the runnable
+backend (WP7). Optional domain follow-ons that remain: **TGR-1/2 Slice B** (SD-as-primary/fallback draw,
+`AllowSdAsPrimaryDraw` — touches `DrawOnLiquidityDetector` + the RR gate, fires only when no untapped opposite pool
+qualifies) and the §2.5.8 long-tail (SMT/Breaker, session macros, weekly bias, HRLR, Power-3, Sunday-gap) — all additive.
 
-1. **FVG-SEM-2b + EG-3 (NEXT — entry-orchestrator chain)** — the stacked **stop-sizing** + the **wrong-order nix** (new
-   `EntryCancelReason.StackedFartherGapHitFirst`, `ArmedEntry.StackedFartherBound` carried `Setup`→`PricedFrame`→`ArmedEntry`,
-   an `EntryManager` rung with precedence killzone-end > max-wait > nix > fill; FVG-SEM-2a already carries the farther bound;
-   add the overlapping-gap test the verify pass flagged) and **EG-3** close-proximity entry (fill at the touched price within
-   an INVENTED-flagged tolerance, OFF by default). The last meaty required-core slice; closes the §2.5 entry chain.
-2. **TGR-1/2 Slice B (optional)** — SD-as-primary/fallback draw (`AllowSdAsPrimaryDraw`); touches the
-   `DrawOnLiquidityDetector` and the RR gate; fires only when no untapped opposite pool qualifies.
-
-Then the runnable backend: **WP7 host wiring** (bind the `Ict:Execution:*`/`Ict:Risk`/`Ict:Confluence`/`Ict:Detection:*`
-Options with `ValidateOnStart` — incl. the deferred `WindowCapacity ≥ DisplacementLegMaxBars` cross-check and the `Ict:Detection:Fvg`
-binding into the OTE/draw detectors; DI the `PaperTradingDbContext` + aggregate-scoped repositories + `TradeOrchestrator`;
+The runnable backend: **WP7 host wiring** (bind the `Ict:Execution:*`/`Ict:Risk`/`Ict:Confluence`/`Ict:Detection:*`
+Options with `ValidateOnStart` — incl. the deferred `WindowCapacity ≥ DisplacementLegMaxBars` cross-check, the `Ict:Detection:Fvg`
+binding into the OTE/draw detectors, and the per-instrument `SymbolSpec` injected into `EntryFillEvaluator` for EG-3;
+DI the `PaperTradingDbContext` + aggregate-scoped repositories + `TradeOrchestrator`;
 a Replay feed → the Scanning/PaperTrading bus handlers → SignalR + REST) and the **Alerting** module (unblocked by TGR-4);
 the **`Performance` calculator (WP6)**. Optional long-tail (§2.5.8, additive): **SMT/Breaker** detectors, session macros,
 weekly bias, HRLR/`NeutralCondition`, Power-of-Three/AMD, Sunday-gap; the **slippage**/**session-stepped spread**/**swap**
