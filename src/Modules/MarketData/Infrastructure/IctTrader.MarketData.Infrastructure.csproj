@@ -7,6 +7,17 @@
     <ProjectReference Include="..\Application\IctTrader.MarketData.Application.csproj" />
   </ItemGroup>
 
+  <!--
+    BCL-only OANDA feed (no third-party feed SDK). HttpClient + System.Text.Json are in the framework; these
+    Microsoft.Extensions.* packages only provide the DI / Options / typed-HttpClient wiring for AddOandaFeed.
+    Pinned to 10.0.9 to match the rest of the solution.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.9" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
