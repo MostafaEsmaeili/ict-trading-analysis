@@ -10,14 +10,15 @@ namespace IctTrader.PaperTrading.Application.Trading;
 /// language-neutral and no literal is hand-typed here. The DTO is structurally advisory — it carries no order
 /// field and routes nowhere (§6.3 guardrail).
 ///
-/// <para><b>Two contract fields the domain aggregate does not yet carry — PLACEHOLDERS (deferred enrichment).</b>
+/// <para><b>Two contract fields the domain aggregate does not yet carry — emitted as EXPLICITLY UNAVAILABLE.</b>
 /// (1) <see cref="PaperTradeDto.SetupId"/> — the <see cref="PaperTrade"/> opens from a <c>TradePlan</c> and does not
-/// retain its source setup id, so the trade's own id is emitted as a stable correlation key (for an armed trade it
-/// equals the reservation/armed-entry id). (2) <see cref="PaperTradeDto.Killzone"/> — the killzone is the scanner's
-/// session, not a trade field, so it maps to <c>null</c> (the contract permits it). Emitting the TRUE source-setup id
-/// and killzone on EVERY event (incl. a prior-candle trade's close, where no <c>Setup</c> is in scope) requires
-/// carrying both onto the <see cref="PaperTrade"/> aggregate — a focused cross-aggregate enrichment to land before the
-/// Performance/Alerting consumers segment paper-trade results by setup or killzone.</para>
+/// retain its source setup id, so rather than emit a wrong value (e.g. the trade's own id, which would make any
+/// downstream correlation-by-setup join on the wrong key) it is emitted as <see cref="Guid.Empty"/> = "unknown".
+/// (2) <see cref="PaperTradeDto.Killzone"/> — the killzone is the scanner's session, not a trade field, so it maps to
+/// <c>null</c> (the contract permits it). Emitting the TRUE source-setup id and killzone on EVERY event (incl. a
+/// prior-candle trade's close, where no <c>Setup</c> is in scope) requires carrying both onto the
+/// <see cref="PaperTrade"/> aggregate — a focused cross-aggregate enrichment to land before the Performance/Alerting
+/// consumers segment paper-trade results by setup or killzone.</para>
 /// </summary>
 internal static class PaperTradeDtoMapper
 {
@@ -30,7 +31,7 @@ internal static class PaperTradeDtoMapper
 
         return new PaperTradeDto(
             Id: trade.Id,
-            SetupId: trade.Id, // the trade carries no source-setup id; its own id is the stable correlation key
+            SetupId: Guid.Empty, // the trade carries no source-setup id yet — emit "unknown", never a wrong id
             Symbol: trade.Symbol.Value,
             Direction: trade.Direction.ToString(),
             Status: trade.Status.ToString(),

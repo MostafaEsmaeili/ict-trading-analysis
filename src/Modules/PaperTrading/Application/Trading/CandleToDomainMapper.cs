@@ -37,7 +37,12 @@ internal static class CandleToDomainMapper
     public static DateTimeOffset BarCloseUtc(CandleDto dto)
     {
         ArgumentNullException.ThrowIfNull(dto);
-        return dto.OpenTimeUtc.ToUniversalTime() + PeriodOf(ParseTimeframe(dto.Timeframe));
+        var openTimeUtc = dto.OpenTimeUtc.ToUniversalTime();
+        var timeframe = ParseTimeframe(dto.Timeframe);
+
+        // A month is a CALENDAR period, not a fixed span — AddMonths handles 28/29/30/31-day months correctly,
+        // so a monthly candle's close is never off by a few days (which would skew the trade's time-exit math).
+        return timeframe == Timeframe.MN1 ? openTimeUtc.AddMonths(1) : openTimeUtc + PeriodOf(timeframe);
     }
 
     private static Timeframe ParseTimeframe(string timeframe)
@@ -65,7 +70,7 @@ internal static class CandleToDomainMapper
         Timeframe.H4 => TimeSpan.FromHours(4),
         Timeframe.D1 => TimeSpan.FromDays(1),
         Timeframe.W1 => TimeSpan.FromDays(7),
-        Timeframe.MN1 => TimeSpan.FromDays(30),
+        // MN1 is a calendar month — handled by BarCloseUtc via AddMonths, never as a fixed span.
         _ => throw new ArgumentOutOfRangeException(nameof(timeframe), timeframe, "Unsupported timeframe period."),
     };
 }

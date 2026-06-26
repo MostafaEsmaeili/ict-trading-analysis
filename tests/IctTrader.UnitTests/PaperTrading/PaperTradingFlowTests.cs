@@ -59,7 +59,7 @@ public class PaperTradingFlowTests
     [Fact]
     public async Task Immediate_setup_opens_a_trade_then_a_runner_candle_closes_and_settles_it()
     {
-        var harness = new Harness(EntryMode.Immediate);
+        using var harness = new Harness(EntryMode.Immediate);
         var bus = harness.Provider.GetRequiredService<IMessageBus>();
 
         // 1. A confirmed setup opens a trade immediately — reserved against the demo account, persisted, announced.
@@ -95,7 +95,7 @@ public class PaperTradingFlowTests
     [Fact]
     public async Task Armed_setup_rests_a_limit_that_a_retrace_candle_fills_then_runs_to_target()
     {
-        var harness = new Harness(EntryMode.Armed);
+        using var harness = new Harness(EntryMode.Armed);
         var bus = harness.Provider.GetRequiredService<IMessageBus>();
 
         // 1. A confirmed setup ARMS a resting limit — reserved, persisted, but no open event yet.
@@ -131,7 +131,7 @@ public class PaperTradingFlowTests
     [Fact]
     public async Task A_stop_out_candle_closes_the_trade_at_minus_one_R_and_books_the_loss()
     {
-        var harness = new Harness(EntryMode.Immediate);
+        using var harness = new Harness(EntryMode.Immediate);
         var bus = harness.Provider.GetRequiredService<IMessageBus>();
 
         await bus.PublishAsync(new SetupConfirmed(BullishSetupDto()));
@@ -156,7 +156,7 @@ public class PaperTradingFlowTests
 
     // ---- Test harness: the real bus + module wired over in-memory fake repos (no Postgres) ----------------------
 
-    private sealed class Harness
+    private sealed class Harness : IDisposable
     {
         public Harness(EntryMode mode)
         {
@@ -214,6 +214,8 @@ public class PaperTradingFlowTests
         public List<PaperTradeClosedEvent> ClosedEvents { get; } = [];
 
         public PaperAccount Account() => Accounts.Single;
+
+        public void Dispose() => Provider.Dispose();
     }
 
     // ---- In-memory fake repositories (a Dictionary IS the database; the orchestrators are stateless) ------------
