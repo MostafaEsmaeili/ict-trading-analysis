@@ -19,9 +19,10 @@
     </PackageReference>
     <!-- DI abstractions for the AddPaperTradingPersistence extension method. -->
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.9" />
-    <!-- Configuration builder used by the design-time factory to read appsettings. -->
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" />
+    <!-- Configuration builder used by the design-time factory to read appsettings. Pinned to 10.0.9 to match the
+         Application layer's transitive Microsoft.Extensions.Configuration.Binder 10.0.9 (no downgrade). -->
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.9" />
     <!-- Override the transitive System.Security.Cryptography.Xml to a patched version (NU1903 guard). -->
     <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.6" />
   </ItemGroup>
