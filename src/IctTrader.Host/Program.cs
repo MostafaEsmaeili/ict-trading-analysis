@@ -57,7 +57,11 @@ var api = app.MapGroup("/api");
 api.MapGet("/alerts", () => TypedResults.Ok(Array.Empty<AlertDto>()))
     .WithName("GetAlerts");
 
-api.MapGet("/trades/active", () => TypedResults.Ok(Array.Empty<PaperTradeDto>()))
+// Real active-trades read-side (plan §4.1): REST → bus QueryAsync → the PaperTrading module's
+// GetActiveTradesQueryHandler, which projects every OPEN PaperTrade aggregate to its wire DTO. Advisory only —
+// the DTO carries no order field and routes nowhere (§6.3 guardrail).
+api.MapGet("/trades/active", async (IMessageBus bus) =>
+        TypedResults.Ok(await bus.QueryAsync(new GetActiveTradesQuery())))
     .WithName("GetActiveTrades");
 
 api.MapGet("/performance", () => TypedResults.Ok(new PerformanceSummaryDto(0, 0m, 0m, 0m, 0m, 0m)))

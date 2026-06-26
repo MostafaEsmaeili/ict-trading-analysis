@@ -1,11 +1,14 @@
+using System.Net.Http.Json;
 using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Repositories;
 using IctTrader.Domain.Sessions;
 using IctTrader.Domain.Setups;
 using IctTrader.Domain.Styles;
+using IctTrader.Domain.Trading;
 using IctTrader.Domain.ValueObjects;
 using IctTrader.Host;
 using IctTrader.PaperTrading.Application.Trading;
+using IctTrader.PaperTrading.Contracts;
 using IctTrader.PaperTrading.Infrastructure.Persistence;
 using IctTrader.Scanning.Application.Scanning;
 using IctTrader.Scanning.Contracts;
@@ -112,6 +115,44 @@ public sealed class HostScanLoopTests : IAsyncLifetime
         trade.Symbol.Value.Should().Be("EURUSD");
         trade.Plan.Direction.Should().Be(Direction.Bullish);
         trade.AccountId.Should().Be(PaperAccountProvider.DemoAccountId);
+    }
+
+    [DockerRequiredFact]
+    public async Task The_active_trades_query_returns_the_open_trade_as_a_dto_over_the_bus()
+    {
+        // Immediate mode so the confirmed setup opens a trade directly; the bus-backed read-side then returns it.
+        await using var factory = CreateFactory(("Ict:Execution:Entry:Mode", "Immediate"));
+
+        var bus = factory.Services.GetRequiredService<IMessageBus>();
+        await bus.PublishAsync(new SetupConfirmed(BullishSetupDto()));
+
+        // The GetActiveTradesQuery routes over the bus to the PaperTrading query handler (REST → bus → handler).
+        var active = await bus.QueryAsync(new GetActiveTradesQuery());
+
+        active.Should().ContainSingle("the bus read-side projects the one open trade to a DTO");
+        var dto = active.Single();
+        dto.Symbol.Should().Be("EURUSD");
+        dto.Direction.Should().Be(Direction.Bullish.ToString());
+        dto.Status.Should().Be(TradeStatus.Open.ToString());
+        dto.Entry.Should().Be(1.0832m);
+        dto.Stop.Should().Be(1.0800m);
+    }
+
+    [DockerRequiredFact]
+    public async Task The_active_trades_rest_endpoint_returns_the_open_trade_as_a_dto()
+    {
+        // Immediate mode so the confirmed setup opens a trade directly; GET /api/trades/active then returns it.
+        await using var factory = CreateFactory(("Ict:Execution:Entry:Mode", "Immediate"));
+
+        var bus = factory.Services.GetRequiredService<IMessageBus>();
+        await bus.PublishAsync(new SetupConfirmed(BullishSetupDto()));
+
+        using var client = factory.CreateClient();
+        var dtos = await client.GetFromJsonAsync<IReadOnlyList<PaperTradeDto>>("/api/trades/active");
+
+        dtos.Should().ContainSingle("the REST endpoint now returns real persisted active trades, not an empty stub");
+        dtos!.Single().Symbol.Should().Be("EURUSD");
+        dtos.Single().Status.Should().Be(TradeStatus.Open.ToString());
     }
 
     private WebApplicationFactory<Program> CreateFactory(params (string Key, string Value)[] overrides) =>
