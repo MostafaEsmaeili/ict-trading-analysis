@@ -34,6 +34,19 @@ public class OptionsValidationTests
         new ExitManagementOptions().Validate().Should().BeEmpty();
         new StopTrailOptions().Validate().Should().BeEmpty();
         new EntryManagementOptions().Validate().Should().BeEmpty();
+        new SdProjectionOptions().Validate().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Sd_projection_multiples_and_negative_fib_coefficients_must_be_in_contract()
+    {
+        new SdProjectionOptions { Multiples = [] }.Validate().Should().NotBeEmpty();                 // empty
+        new SdProjectionOptions { Multiples = [1.5m, 1.0m] }.Validate().Should().NotBeEmpty();       // not ascending
+        new SdProjectionOptions { Multiples = [0m, 1.0m] }.Validate().Should().NotBeEmpty();         // non-positive
+        new SdProjectionOptions
+        {
+            NegativeFibVariant = new NegativeFibOptions { Enabled = true, Coefficients = [0.5m, 1.5m] },
+        }.Validate().Should().NotBeEmpty();                                                          // coefficient > 1
     }
 
     [Fact]

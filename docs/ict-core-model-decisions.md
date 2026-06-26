@@ -149,11 +149,24 @@ surface yet) · **DONE** (already implemented in a merged slice).
 
 ## Targets · grading · risk
 
-- **TGR-1/TGR-2 — Targets = standard-deviation projections.** PRIMARY runner draw = **−1 / −1.5 / −2 SD**
-  (one SD unit = the displacement leg length, **body-to-body**, reused from the SAME `ctx.DisplacementLeg`
-  the OTE anchors — TGR-2 is a non-configurable single-source invariant). Negative-fib (−0.27/−0.62/−1.0) is
-  **rejected** as default (Primer-flagged opt-in). Cite: §2.5.10 #5; FULL PLAYLIST SD references. **DEFERRED**
-  (the §2.5.6 `StandardDeviationProjection` detector + N-tier `TargetLadder`).
+- **TGR-1/TGR-2 — Targets = standard-deviation projections.** Runner draw = **−1 / −1.5 / −2 SD** (one SD unit =
+  the displacement leg length, **body-to-body**, reused from the SAME `ctx.LastDisplacement` the OTE anchors — TGR-2
+  is a non-configurable single-source invariant). Negative-fib (−0.27/−0.62/−1.0) is **rejected** as default
+  (Primer-flagged opt-in). Cite: §2.5.10 #5; FULL PLAYLIST L8246-8261 / L4110-4121 / L3278-3282 (project the leg
+  magnitude beyond the terminus); L2680 (Primer hook for the negative-fib variant).
+  - **Slice A — DONE (issue #67).** The SD GEOMETRY + single-source axis (NON-scoring, no `ConfluenceCondition`, no
+    weight — Σ=9.75 untouched). `Displacement.Project(fraction)` (= `Terminus + f×(Origin−Terminus)`) is now THE shared
+    leg axis: `OteEntryResolver.Retrace` delegates to it (byte-identical refactor), and `SdProjectionResolver`
+    (pure, reads only `ctx.LastDisplacement`) prices each tier via `leg.Project(−n)` — so the SD targets and the OTE
+    entry **provably cannot drift** (the TGR-2 single-source invariant is a locked test). `SdProjection`/`SdTier` VOs;
+    `SdProjectionOptions` (`Ict:Detection:SdProjection`: `Multiples [1,1.5,2]`, default **Enabled=false**,
+    `NegativeFibVariant` Primer-flagged opt-in, `Validate`-gated). Default path byte-identical.
+  - **Slice A.2 — DEFERRED.** The N-tier `TargetLadder` (extend the 2-tier `Partial`/`Runner` record to an ordered
+    list, keep the 2-arg ctor + accessors) + the `SetupFactory` additive merge (append SD tiers beyond the range T2),
+    which needs the leg captured on the `PricedFrame` at confirmation (a small FSM/frame touch). `RunnerSelection`
+    (range-draw default) + the `Anchor` (terminus default) escape hatches ride this cut.
+  - **Slice B — DEFERRED.** SD-as-primary/fallback draw (`AllowSdAsPrimaryDraw`) — touches `DrawOnLiquidityDetector` +
+    the RR gate; fires only when no untapped opposite pool qualifies.
 - **TGR-3 — Provenance flags: status-quo.** 70.5% sweet-spot + Silver Bullet stay Primer-flagged; 3-close
   bias confirmation OFF; Scalp `AllowDirectFvgEntry=false`; `CalendarClear` (hard gate) and `CalendarDriver`
   (0.35 score) intentionally distinct; invented hold caps + M1 tie-break operator-tunable. **STATUS-QUO**
