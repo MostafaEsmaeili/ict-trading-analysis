@@ -430,7 +430,9 @@ public sealed class PaperTradingDbFixture : IAsyncLifetime
     private PostgreSqlContainer? _container;
     private Respawner? _respawner;
 
-    private string ConnectionString => _container!.GetConnectionString();
+    /// <summary>The live container's connection string — consumed by the Host integration tests (WP7 slice 2e) to
+    /// point the real <c>PaperTradingDbContext</c> at this same Testcontainers Postgres.</summary>
+    public string ConnectionString => _container!.GetConnectionString();
 
     public PaperTradingDbContext CreateContext()
     {

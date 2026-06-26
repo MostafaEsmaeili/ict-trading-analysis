@@ -26,9 +26,16 @@ builder.Services.AddSingleton<IValidateOptions<DefensiveOptions>, DefensiveOptio
 // mis-configured host fails fast with the section-qualified reason rather than silently mis-running the model.
 builder.Services.AddIctOptions(builder.Configuration);
 
-// In-memory message bus (plan §3.0a) — the only inter-module seam. The bus singleton is registered now;
-// each module's Application-assembly handlers are scanned in as their slices land (WP7 slice 2c+).
-builder.Services.AddMessaging();
+// In-memory message bus (plan §3.0a) — the only inter-module seam. The bus singleton is registered with the two
+// module Application assemblies so their handlers (Scanning's CandleIngestedHandler, PaperTrading's
+// SetupConfirmedHandler + candle handler) are Scrutor-scanned in, closing the candle→scan→paper-trade chain.
+builder.Services.AddMessaging(
+    typeof(IctTrader.Scanning.Application.Scanning.CandleIngestedHandler).Assembly,
+    typeof(IctTrader.PaperTrading.Application.Trading.SetupConfirmedHandler).Assembly);
+
+// The runnable scan loop (WP7 slice 2e): the PaperTrading DbContext + persistence, the Scanning + PaperTrading
+// modules, and the read-only replay feed driven by a background hosted service.
+builder.Services.AddScanLoop(builder.Configuration);
 
 builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
