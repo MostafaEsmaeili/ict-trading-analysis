@@ -1,6 +1,4 @@
-using System.Runtime.CompilerServices;
 using FluentAssertions;
-using IctTrader.MarketData.Application.Abstractions;
 using IctTrader.MarketData.Application.Ingestion;
 using IctTrader.MarketData.Contracts;
 using IctTrader.MarketData.Infrastructure.Feeds;
@@ -10,9 +8,10 @@ using Microsoft.Extensions.DependencyInjection;
 namespace IctTrader.UnitTests.MarketData;
 
 /// <summary>
-/// Locks the read-only feed + ingestion (plan §4.1/§6.1/§6.3): the Replay feed streams candles in
-/// chronological order, ingestion publishes one <see cref="CandleIngested"/> per candle through the real
-/// bus, and a non-read-only feed is refused (the structural no-live-trading guardrail).
+/// Locks the read-only feed + ingestion (plan §4.1/§6.1): the Replay feed streams candles in chronological
+/// order and ingestion publishes one <see cref="CandleIngested"/> per candle through the real bus. Read-only
+/// is structural — <see cref="IctTrader.MarketData.Application.Abstractions.IMarketDataFeed"/> exposes no
+/// write/order method — so there is no writable-feed state left to test.
 /// </summary>
 public class MarketDataIngestionTests
 {
@@ -22,11 +21,10 @@ public class MarketDataIngestionTests
     private static readonly DateTimeOffset T0 = new(2024, 1, 15, 7, 0, 0, TimeSpan.Zero);
 
     [Fact]
-    public void Replay_feed_is_read_only_and_named()
+    public void Replay_feed_reports_its_provider_name()
     {
         var feed = new ReplayMarketDataFeed([Candle("EURUSD", T0)]);
 
-        feed.IsReadOnly.Should().BeTrue();
         feed.Provider.Should().Be(ReplayMarketDataFeed.ProviderName);
     }
 
@@ -67,19 +65,6 @@ public class MarketDataIngestionTests
         captured.Closes.Should().Equal(1.10m, 1.11m);   // both, in chronological order
     }
 
-    [Fact]
-    public async Task Ingestor_refuses_a_feed_that_is_not_read_only()
-    {
-        var captured = new CapturedCandles();
-        using var sp = BuildBus(captured);
-        var ingestor = new MarketDataIngestor(new WritableFeed(), sp.GetRequiredService<IMessageBus>());
-
-        var ingest = async () => await ingestor.IngestAsync();
-
-        await ingest.Should().ThrowAsync<InvalidOperationException>();
-        captured.Closes.Should().BeEmpty();   // refused before any publish
-    }
-
     private static ServiceProvider BuildBus(CapturedCandles captured)
     {
         var services = new ServiceCollection();
@@ -100,19 +85,6 @@ public class MarketDataIngestionTests
         {
             captured.Closes.Add(@event.Candle.Close);
             return Task.CompletedTask;
-        }
-    }
-
-    private sealed class WritableFeed : IMarketDataFeed
-    {
-        public string Provider => "Writable";
-        public bool IsReadOnly => false;   // deliberately illegal — the ingestor must refuse it
-
-        public async IAsyncEnumerable<CandleDto> StreamCandlesAsync(
-            [EnumeratorCancellation] CancellationToken cancellationToken = default)
-        {
-            yield return Candle("EURUSD", T0);
-            await Task.CompletedTask;
         }
     }
 }

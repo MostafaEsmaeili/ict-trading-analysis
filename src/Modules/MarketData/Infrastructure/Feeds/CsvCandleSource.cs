@@ -13,9 +13,10 @@ namespace IctTrader.MarketData.Infrastructure.Feeds;
 /// </summary>
 public static class CsvCandleSource
 {
-    private const int ExpectedColumns = 8;
+    private static readonly string[] Header =
+        ["Symbol", "Timeframe", "OpenTimeUtc", "Open", "High", "Low", "Close", "Volume"];
 
-    /// <summary>Reads every candle from <paramref name="reader"/> (header row skipped, blank lines ignored).</summary>
+    /// <summary>Reads every candle from <paramref name="reader"/> (header row validated, blank lines ignored).</summary>
     public static IReadOnlyList<CandleDto> Parse(TextReader reader)
     {
         ArgumentNullException.ThrowIfNull(reader);
@@ -34,7 +35,10 @@ public static class CsvCandleSource
 
             if (!headerSeen)
             {
-                headerSeen = true;   // the first non-blank line is the header
+                // Validate the first non-blank line IS the header — a headerless or wrong-shaped file must
+                // fail fast, never silently drop its first candle by replaying from the wrong position.
+                ValidateHeader(line, lineNumber);
+                headerSeen = true;
                 continue;
             }
 
@@ -52,13 +56,26 @@ public static class CsvCandleSource
         return Parse(reader);
     }
 
+    private static void ValidateHeader(string line, int lineNumber)
+    {
+        var columns = line.Split(',');
+        var matches = columns.Length == Header.Length
+            && columns.Select((c, i) => string.Equals(c.Trim(), Header[i], StringComparison.OrdinalIgnoreCase)).All(m => m);
+
+        if (!matches)
+        {
+            throw new FormatException(
+                $"CSV line {lineNumber}: expected header '{string.Join(',', Header)}' but found '{line.Trim()}'.");
+        }
+    }
+
     private static CandleDto ParseRow(string line, int lineNumber)
     {
         var fields = line.Split(',');
-        if (fields.Length != ExpectedColumns)
+        if (fields.Length != Header.Length)
         {
             throw new FormatException(
-                $"CSV line {lineNumber}: expected {ExpectedColumns} columns but found {fields.Length}.");
+                $"CSV line {lineNumber}: expected {Header.Length} columns but found {fields.Length}.");
         }
 
         try

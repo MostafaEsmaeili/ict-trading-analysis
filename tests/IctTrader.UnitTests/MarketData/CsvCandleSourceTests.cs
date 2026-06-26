@@ -64,6 +64,31 @@ public class CsvCandleSourceTests
     }
 
     [Fact]
+    public void A_headerless_file_fails_fast_instead_of_dropping_the_first_candle()
+    {
+        // No header row — the first data line must NOT be silently consumed as a header.
+        const string headerless =
+            "EURUSD,M5,2024-01-15T07:00:00Z,1.1,1.1,1.1,1.1,1\n" +
+            "EURUSD,M5,2024-01-15T07:05:00Z,1.1,1.1,1.1,1.1,1\n";
+
+        var parse = () => CsvCandleSource.Parse(new StringReader(headerless));
+
+        parse.Should().Throw<FormatException>().WithMessage("*expected header*");
+    }
+
+    [Fact]
+    public void A_wrong_shaped_header_fails_fast()
+    {
+        const string wrongHeader =
+            "Sym,TF,Time,O,H,L,C,V\n" +
+            "EURUSD,M5,2024-01-15T07:00:00Z,1.1,1.1,1.1,1.1,1\n";
+
+        var parse = () => CsvCandleSource.Parse(new StringReader(wrongHeader));
+
+        parse.Should().Throw<FormatException>().WithMessage("*expected header*");
+    }
+
+    [Fact]
     public void A_row_with_an_unparseable_number_fails_with_its_line_number()
     {
         const string badCsv =
