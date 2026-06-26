@@ -38,7 +38,11 @@ public sealed class SdProjectionOptions
         {
             // The negative-fib coefficients are sub-unity-or-unity fib levels (≤ −1 SD), so the (0, 1] cap is
             // deliberate — unlike the unbounded SD Multiples. Do not relax it to allow > 1.
-            ValidateAscendingPositive(NegativeFibVariant.Coefficients, nameof(NegativeFibVariant), max: 1m, errors);
+            ValidateAscendingPositive(
+                NegativeFibVariant.Coefficients,
+                $"{nameof(NegativeFibVariant)}.{nameof(NegativeFibOptions.Coefficients)}",
+                max: 1m,
+                errors);
         }
 
         return errors;
