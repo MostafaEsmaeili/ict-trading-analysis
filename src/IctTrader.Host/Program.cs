@@ -5,6 +5,7 @@ using IctTrader.MarketData.Contracts;
 using IctTrader.PaperTrading.Contracts;
 using IctTrader.Performance.Contracts;
 using IctTrader.Scanning.Contracts;
+using IctTrader.SharedKernel.Messaging;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +25,10 @@ builder.Services.AddSingleton<IValidateOptions<DefensiveOptions>, DefensiveOptio
 // Every Ict:* options POCO is bound to its config section and self-validated at startup (plan §4.6, WP7) — a
 // mis-configured host fails fast with the section-qualified reason rather than silently mis-running the model.
 builder.Services.AddIctOptions(builder.Configuration);
+
+// In-memory message bus (plan §3.0a) — the only inter-module seam. The bus singleton is registered now;
+// each module's Application-assembly handlers are scanned in as their slices land (WP7 slice 2c+).
+builder.Services.AddMessaging();
 
 builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
