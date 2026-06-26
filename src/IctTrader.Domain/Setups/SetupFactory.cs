@@ -49,13 +49,13 @@ public sealed class SetupFactory
             }
         }
 
-        // The gated range draw (tier index 1) is the reward-to-risk runner; the SD tiers are deeper advisory targets,
-        // so enabling SD does NOT change the RR the FSM gated.
+        // The gated range draw (the canonical runner tier) is the reward-to-risk runner; the SD tiers are deeper
+        // advisory targets, so enabling SD does NOT change the RR the FSM gated.
         var plan = new TradePlan(
             frame.Direction,
             new Price(frame.Entry),
             new Price(frame.Stop),
-            new TargetLadder(frame.Direction, tiers, runnerIndex: 1));
+            new TargetLadder(frame.Direction, tiers, TargetLadder.CanonicalRunnerIndex));
 
         var floor = Math.Max(_styles.For(style).MinRewardRatio, _styles.AbsoluteMinRewardRatio);
         Guard.Against(

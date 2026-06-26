@@ -14,4 +14,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- The unit tests exercise this module's internal application services (e.g. SetupRehydrator) without
+         widening the module's public surface, which stays Contracts-only (plan §3.0a). -->
+    <InternalsVisibleTo Include="IctTrader.UnitTests" />
+  </ItemGroup>
+
 </Project>

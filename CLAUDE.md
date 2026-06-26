@@ -750,6 +750,32 @@ applied). **No Domain/Contracts changes.** 581 unit (+2) + 23 arch, 0 warnings, 
   — a per-instrument `SymbolSpec` lookup must precede any index symbol or the §2.5.7 index killzone never applies);
   a real organic multi-bar fixture (vs the seeded seam) would close the last detector-pipeline coverage gap.
 
+**WP7 slice 2d-i — `SetupRehydrator` (issue #84, branch `feature/#84-setup-rehydrator`, PR #85) — DONE.** The
+CONSUMER half of the scan→trade seam (Architecture A): `SetupRehydrator` (PaperTrading.Application, internal)
+rebuilds a domain `Setup` from the wire `SetupDto` so PaperTrading can later size/open a trade. ict-domain-expert
+**CONFORMANT 4/4** ("ship"), guardrail 7/7, pr-reviewer APPROVE (its one Should-fix applied). 589 unit (+8) + 23
+arch, 0 warnings, format clean:
+
+- **Geometry round-trips byte-identical** — `Price`/`RewardRatio` store decimals verbatim (no quantization) and
+  the `TradePlan`/`TargetLadder` ctors **recompute RR from entry→runner**, so the rebuilt RR equals the scanned
+  RR and the frozen 1R (=|entry−stop|, §5.2) is bit-for-bit; a deliberately-wrong wire RR is **ignored** (test).
+- **Two documented wire losses, both safe for the default path:** the exact within-grade **score** is not on the
+  wire → rebuilt as the grade's configured FLOOR (`GradeAThreshold` 80 / `GradeBThreshold` 65; grade-consistent,
+  unused by the trade path which reads only Plan/Symbol/Style/Timeframe); **`StackedFartherBound`** is not a
+  `SetupDto` field → null (only material under the non-default `StrictFirstFvg` — flagged: carry it on the
+  contract before enabling that live). `DetectedAtUtc` normalised to UTC; a bad enum member fails fast.
+- **S1 hardening (both reviewers):** the runner-tier index was a bare literal `1` in three places
+  (`SetupFactory`, the `TargetLadder` legacy ctor, the rehydrator) with no wire field — a future producer change
+  could silently misplace the RR tier. Hoisted to a single shared **`TargetLadder.CanonicalRunnerIndex`** const
+  all three now reference, + a 3-tier (SD) rehydrator test pinning the runner to index 1 (the gated draw, not the
+  deepest SD tier) so enabling SD can't inflate the rebuilt RR.
+- **New pattern:** `[InternalsVisibleTo("IctTrader.UnitTests")]` on PaperTrading.Application (first use) — tests
+  the internal rehydrator directly while the module's public surface stays Contracts-only.
+- **Deferred (2d-ii/iii):** the PaperTrading `SetupConfirmedHandler` (consumes the rehydrator) + per-symbol
+  `SymbolSpec`/`ContractSpec` + the aggregate **repositories** (none exist) + `TradeOrchestrator` `OnSetupConfirmed`/
+  per-candle `Advance` + settle + `AddPaperTradingModule`. A `SetupDto` carrying score / `StackedFartherBound` /
+  an explicit runner index would be a (currently-unneeded) frozen-contract change.
+
 **Process cadence (per the operator):** keep the ICT gate strict (`ict-domain-expert` + guardrail + `pr-reviewer`,
 concurrent) but move faster — build directly from the locked design (skip the separate pre-spec when pinned), ship
 bigger complete slices, and reserve the heavy ~600k-case adversarial driver for numeric/money-math slices (it fuzzes
