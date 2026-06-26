@@ -3,6 +3,7 @@ using IctTrader.Host;
 using IctTrader.Host.Hubs;
 using IctTrader.MarketData.Contracts;
 using IctTrader.PaperTrading.Contracts;
+using IctTrader.Performance.Application;
 using IctTrader.Performance.Contracts;
 using IctTrader.Scanning.Contracts;
 using IctTrader.SharedKernel.Messaging;
@@ -26,16 +27,22 @@ builder.Services.AddSingleton<IValidateOptions<DefensiveOptions>, DefensiveOptio
 // mis-configured host fails fast with the section-qualified reason rather than silently mis-running the model.
 builder.Services.AddIctOptions(builder.Configuration);
 
-// In-memory message bus (plan §3.0a) — the only inter-module seam. The bus singleton is registered with the two
-// module Application assemblies so their handlers (Scanning's CandleIngestedHandler, PaperTrading's
-// SetupConfirmedHandler + candle handler) are Scrutor-scanned in, closing the candle→scan→paper-trade chain.
+// In-memory message bus (plan §3.0a) — the only inter-module seam. The bus singleton is registered with the
+// module Application assemblies so their handlers are Scrutor-scanned in: Scanning's CandleIngestedHandler,
+// PaperTrading's SetupConfirmedHandler + candle handler, and Performance's PaperTradeClosedHandler + query
+// handlers — closing the candle→scan→paper-trade→performance chain.
 builder.Services.AddMessaging(
     typeof(IctTrader.Scanning.Application.Scanning.CandleIngestedHandler).Assembly,
-    typeof(IctTrader.PaperTrading.Application.Trading.SetupConfirmedHandler).Assembly);
+    typeof(IctTrader.PaperTrading.Application.Trading.SetupConfirmedHandler).Assembly,
+    typeof(IctTrader.Performance.Application.PaperTradeClosedHandler).Assembly);
 
 // The runnable scan loop (WP7 slice 2e): the PaperTrading DbContext + persistence, the Scanning + PaperTrading
 // modules, and the read-only replay feed driven by a background hosted service.
 builder.Services.AddScanLoop(builder.Configuration);
+
+// Performance module (WP6 / plan §5.3): the singleton PerformanceState the closed-trade handler appends to and the
+// summary + equity-curve query handlers read. Read-only R-based analytics — it consumes PaperTradeClosed only.
+builder.Services.AddPerformanceModule();
 
 builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
@@ -64,8 +71,18 @@ api.MapGet("/trades/active", async (IMessageBus bus) =>
         TypedResults.Ok(await bus.QueryAsync(new GetActiveTradesQuery())))
     .WithName("GetActiveTrades");
 
-api.MapGet("/performance", () => TypedResults.Ok(new PerformanceSummaryDto(0, 0m, 0m, 0m, 0m, 0m)))
+// Real R-based performance read-side (plan §5.3): REST → bus QueryAsync → the Performance module's
+// GetPerformanceSummaryQueryHandler, which folds the accumulated closed-trade R stream through the pure
+// PerformanceCalculator. Read-only analytics — it routes nowhere near an order path (§6.3 guardrail).
+api.MapGet("/performance", async (IMessageBus bus) =>
+        TypedResults.Ok(await bus.QueryAsync(new GetPerformanceSummaryQuery())))
     .WithName("GetPerformance");
+
+// The cumulative-R equity curve (plan §5.3) over the same closed-trade stream — REST → bus → the Performance
+// module's GetEquityCurveQueryHandler. Each point is the running sum of R at a trade's close, ordered by time.
+api.MapGet("/equity", async (IMessageBus bus) =>
+        TypedResults.Ok(await bus.QueryAsync(new GetEquityCurveQuery())))
+    .WithName("GetEquityCurve");
 
 api.MapGet("/chart/{symbol}", (string symbol, string? tf, string? style) =>
         TypedResults.Ok(new ChartResponse(
