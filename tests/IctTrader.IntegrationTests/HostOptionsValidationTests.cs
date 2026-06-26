@@ -32,9 +32,9 @@ public class HostOptionsValidationTests
         provider.GetRequiredService<IOptions<RiskOptions>>().Value.BaseRiskPercent.Should().Be(1.0m);
         provider.GetRequiredService<IOptions<FvgOptions>>().Value.VoidOnTouchCount.Should().Be(3);
         provider.GetRequiredService<IOptions<DisplacementOptions>>().Value.DisplacementLegMaxBars.Should().Be(3);
-        provider.GetRequiredService<IOptions<EntryManagementOptions>>().Value.Should().NotBeNull();
+        provider.GetRequiredService<IOptions<EntryManagementOptions>>().Value.UseCloseProximityEntry.Should().BeFalse();
         provider.GetRequiredService<IOptions<SdProjectionOptions>>().Value.Enabled.Should().BeFalse();
-        provider.GetRequiredService<IOptions<ConfluenceOptions>>().Value.Should().NotBeNull();
+        provider.GetRequiredService<IOptions<ConfluenceOptions>>().Value.RequiredConditions.Should().NotBeEmpty();
     }
 
     [Fact]
