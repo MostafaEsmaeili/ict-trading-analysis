@@ -95,6 +95,7 @@ public readonly record struct TradePlan
 
     public TargetLadder Targets { get; }
 
-    /// <summary>Reward-to-risk measured entry→runner (Tn) — the §2.5 RR gate, recomputed from the geometry.</summary>
+    /// <summary>Reward-to-risk measured entry→runner (the gated-draw tier, NOT necessarily the deepest target) — the
+    /// §2.5 RR gate, recomputed from the geometry.</summary>
     public RewardRatio RewardRatio { get; }
 }
