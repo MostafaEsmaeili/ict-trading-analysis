@@ -131,17 +131,22 @@ public class InMemoryMessageBusTests
     }
 
     [Fact]
-    public async Task AddMessaging_assembly_scan_auto_discovers_handlers()
+    public async Task AddMessaging_assembly_scan_auto_discovers_command_query_and_event_handlers()
     {
         var services = new ServiceCollection();
         services.AddSingleton<Recorder>();
+        services.AddScoped<UnitOfWorkProbe>();                              // the scanned event handlers need it
         services.AddMessaging(typeof(InMemoryMessageBusTests).Assembly);   // scans THIS assembly
         using var sp = services.BuildServiceProvider();
         var bus = sp.GetRequiredService<IMessageBus>();
 
-        await bus.SendAsync(new ScanPing());
+        await bus.SendAsync(new ScanPing());                  // ICommandHandler<> branch
+        var doubled = await bus.QueryAsync(new AskQuery(21));  // IQueryHandler<,> branch
+        await bus.PublishAsync(new ThingHappened("scan"));     // IEventHandler<> branch
 
-        sp.GetRequiredService<Recorder>().Log.Should().Contain("scanned");
+        // Each scan branch (command/query/event) must be wired, or a regression in one stays green.
+        doubled.Should().Be(42);
+        sp.GetRequiredService<Recorder>().Log.Should().Contain(["scanned", "first:scan", "second:scan"]);
     }
 }
 
