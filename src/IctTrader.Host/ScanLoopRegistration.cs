@@ -22,10 +22,20 @@ public static class ScanLoopRegistration
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
-        // The PaperTrading write-model context on Npgsql. A null/empty connection string is fine at registration —
-        // the context is lazy and only opens a connection when a handler actually reads or writes (so a bare Host
-        // boots and validates even before a database is provisioned). The migrations assembly mirrors the
-        // design-time factory so `dotnet ef` and the runtime resolve the same migrations.
+        // Fail fast: a running replay feed persists paper trades, so a missing connection string would crash mid-loop
+        // on the first DB write rather than at startup. Refuse to start when replay is on without a database.
+        var replayEnabled = configuration.GetSection(ReplayFeedOptions.SectionName).GetValue<bool>(nameof(ReplayFeedOptions.Enabled));
+        if (replayEnabled && string.IsNullOrWhiteSpace(configuration.GetConnectionString("PaperTrading")))
+        {
+            throw new InvalidOperationException(
+                $"{ReplayFeedOptions.SectionName}:Enabled is true but ConnectionStrings:PaperTrading is not set. The " +
+                "scan loop persists paper trades and needs a database — set the connection string or disable replay.");
+        }
+
+        // The PaperTrading write-model context on Npgsql. A null/empty connection string is fine at registration when
+        // replay is OFF — the context is lazy and only opens a connection when a handler reads or writes (so a bare
+        // Host boots even before a database is provisioned). The migrations assembly mirrors the design-time factory
+        // so `dotnet ef` and the runtime resolve the same migrations.
         services.AddDbContext<PaperTradingDbContext>(options =>
             options.UseNpgsql(
                 configuration.GetConnectionString("PaperTrading"),

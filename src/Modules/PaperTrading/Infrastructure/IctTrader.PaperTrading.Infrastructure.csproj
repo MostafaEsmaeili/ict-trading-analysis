@@ -8,12 +8,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- EF Core + Npgsql provider (plan §7). Npgsql 10.0.2 requires EF Core >= 10.0.4. -->
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.4" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.4" />
+    <!-- EF Core + Npgsql provider (plan §7). Npgsql 10.0.2 requires EF Core >= 10.0.4; pinned to the latest 10.0.9 patch. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.9" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.9" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
     <!-- Design-time factory support (dotnet ef migrations). -->
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.4">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
