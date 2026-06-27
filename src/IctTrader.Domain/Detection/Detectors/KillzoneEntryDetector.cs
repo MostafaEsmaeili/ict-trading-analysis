@@ -27,7 +27,7 @@ public sealed class KillzoneEntryDetector : ISetupDetector
         ArgumentNullException.ThrowIfNull(context);
 
         var session = context.Session;
-        if (!session.IsActiveEntryFor(context.InstrumentClass, _options.ActiveKillzones))
+        if (!session.IsActiveEntryFor(context.InstrumentClass, _options.ResolvedActiveKillzones))
         {
             return DetectorResult.NoMatch;
         }

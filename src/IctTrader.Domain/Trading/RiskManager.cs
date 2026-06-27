@@ -24,7 +24,8 @@ public sealed class RiskManager : IRiskManager
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        var lowestUnit = options.LossLadderPercents[^1];
+        var ladder = options.ResolvedLossLadderPercents;
+        var lowestUnit = ladder[^1];
 
         decimal percent;
         if (state.ConsecutiveWins > 0 && state.ConsecutiveWins % options.ConsecutiveWinsForLowestUnit == 0)
@@ -39,9 +40,9 @@ public sealed class RiskManager : IRiskManager
         }
         else
         {
-            // 1 loss -> LossLadderPercents[0], 2 losses -> [1], ... capped at the lowest unit.
-            var step = Math.Min(state.ConsecutiveLosses - 1, options.LossLadderPercents.Count - 1);
-            percent = options.LossLadderPercents[step];
+            // 1 loss -> ladder[0], 2 losses -> [1], ... capped at the lowest unit.
+            var step = Math.Min(state.ConsecutiveLosses - 1, ladder.Count - 1);
+            percent = ladder[step];
         }
 
         percent = Math.Clamp(percent, lowestUnit, options.HardMaxRiskPercent);

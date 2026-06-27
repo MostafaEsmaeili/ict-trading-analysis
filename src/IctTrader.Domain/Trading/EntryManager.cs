@@ -111,7 +111,7 @@ public sealed class EntryManager : IEntryManager
     /// </summary>
     private EntryCancelReason? ResolveCancellation(ArmedEntry armedEntry, Candle candle, DateTimeOffset at)
     {
-        if (!_killzoneClock.IsActiveEntry(candle.OpenTimeUtc, armedEntry.InstrumentClass, _killzoneOptions.ActiveKillzones))
+        if (!_killzoneClock.IsActiveEntry(candle.OpenTimeUtc, armedEntry.InstrumentClass, _killzoneOptions.ResolvedActiveKillzones))
         {
             return EntryCancelReason.KillzoneEnded;
         }

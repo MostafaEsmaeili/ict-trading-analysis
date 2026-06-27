@@ -73,7 +73,7 @@ public sealed class SetupCandidate
         _confluence = confluence;
         _options = options;
         _scorer = scorer;
-        _standingConditions = new HashSet<ConfluenceCondition>(options.StandingConditions);
+        _standingConditions = new HashSet<ConfluenceCondition>(options.ResolvedStandingConditions);
 
         // The denominator is the CONSTANT universe of weighted confluences so that matching more optional
         // confluences pushes B → A and setups stay comparable across the run (plan §2.5.4).

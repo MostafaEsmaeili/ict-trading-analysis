@@ -119,7 +119,7 @@ public sealed class OandaMarketDataFeed : IMarketDataFeed
         CancellationToken cancellationToken)
     {
         var merged = new List<(string Instrument, CandleDto Candle)>();
-        foreach (var instrument in _options.Instruments)
+        foreach (var instrument in _options.ResolvedInstruments)
         {
             var candles = await FetchCandlesAsync(instrument, _options.HistoryCount, cancellationToken)
                 .ConfigureAwait(false);
@@ -138,7 +138,7 @@ public sealed class OandaMarketDataFeed : IMarketDataFeed
         CancellationToken cancellationToken)
     {
         var fresh = new List<(string Instrument, CandleDto Candle)>();
-        foreach (var instrument in _options.Instruments)
+        foreach (var instrument in _options.ResolvedInstruments)
         {
             var hasWatermark = lastYieldedByInstrument.TryGetValue(instrument, out var lastOpen);
 

@@ -66,7 +66,7 @@ public class SetupScorerTests
         var options = new ConfluenceOptions();
         var scorer = new SetupScorer(options);
         var applicable = options.Weights.Keys.ToHashSet();   // the constant weighted universe (Σ = 9.75)
-        var matched = options.RequiredConditions.ToHashSet(); // all required, zero optional
+        var matched = options.EffectiveRequiredConditions.ToHashSet(); // all required, zero optional
 
         var result = scorer.Score(matched, applicable);
 

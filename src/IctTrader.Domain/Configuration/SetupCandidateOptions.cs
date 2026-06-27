@@ -33,9 +33,20 @@ public sealed class SetupCandidateOptions
     /// <summary>
     /// The conditions that describe the CURRENT candle's state (not a one-off event) and so are re-evaluated
     /// every candle rather than latched: daily bias, the premium/discount half, killzone membership, and the
-    /// calendar gate. Defaults to the §2.5 standing filters.
+    /// calendar gate. Defaults to EMPTY so the .NET config binder REPLACES rather than APPENDS to a pre-populated
+    /// initializer (see MarketContextOptions.cs for the documented rationale) — a non-empty default would be
+    /// prepended to the operator's set and (after the HashSet dedupe) silently force REMOVED conditions back into
+    /// the standing set, defeating an intent-to-move-to-event-latching. Consume
+    /// <see cref="ResolvedStandingConditions"/>, never this.
     /// </summary>
-    public IReadOnlyList<ConfluenceCondition> StandingConditions { get; init; } = DefaultStandingConditions;
+    public IReadOnlyList<ConfluenceCondition> StandingConditions { get; init; } = [];
+
+    /// <summary>
+    /// The standing conditions to use — the configured set de-duplicated, or the §2.5 standing filters when none is
+    /// configured. Consume this, never the raw <see cref="StandingConditions"/>.
+    /// </summary>
+    public IReadOnlyList<ConfluenceCondition> ResolvedStandingConditions =>
+        StandingConditions.Count == 0 ? DefaultStandingConditions : StandingConditions.Distinct().ToArray();
 
     /// <summary>The §2.5 standing filters — true/false NOW, with no formation event to remember.</summary>
     public static IReadOnlyList<ConfluenceCondition> DefaultStandingConditions { get; } =

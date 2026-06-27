@@ -5,8 +5,10 @@ namespace IctTrader.Domain.Configuration;
 
 /// <summary>
 /// Tunable per-symbol scanning state (plan §4.1/§4.6). The ring-buffer depth, the per-type open-array cap,
-/// the midnight session reset, and the operator-selected active killzones/styles are all bound from
-/// <c>Ict:Scanning</c> — nothing here is a literal. The Host validates this via <see cref="Validate"/>.
+/// the midnight session reset, and the operator-selected active styles are all bound from
+/// <c>Ict:Scanning</c> — nothing here is a literal. The killzone hunt-set (<c>Ict:Scanning:ActiveKillzones</c>)
+/// is owned by <see cref="KillzoneEntryOptions"/> (the single source the gate reads). The Host validates this
+/// via <see cref="Validate"/>.
 /// </summary>
 public sealed class MarketContextOptions
 {
@@ -34,29 +36,21 @@ public sealed class MarketContextOptions
     /// </summary>
     public TimeOnly MacroReferenceOpenTime { get; init; } = new(8, 30);
 
-    // The operator-selected lists default to EMPTY, not the business default. This is load-bearing: the .NET
+    // The operator-selected list defaults to EMPTY, not the business default. This is load-bearing: the .NET
     // configuration binder APPENDS bound array items to a pre-populated collection initializer rather than
     // replacing it, so a non-empty default would be silently prepended to the operator's config — e.g.
     // `Ict:Scanning:ActiveStyles=["Intraday"]` bound onto a `[Intraday]` default yields `[Intraday, Intraday]`,
     // and the candle handler would then feed every candle to the same scanner TWICE (corrupting its state so no
     // setup ever confirms), while `["Scalp"]` would silently still run Intraday too. With an empty default the
-    // binder replaces cleanly; the ICT business default is applied by the Resolved* accessors below (which the
+    // binder replaces cleanly; the ICT business default is applied by the Resolved* accessor below (which the
     // scanner consumes), and an empty (unconfigured) list falls back to that default there.
-    public IReadOnlyList<Killzone> ActiveKillzones { get; init; } = [];
-
+    //
+    // The killzone hunt-set (`Ict:Scanning:ActiveKillzones`) is owned by KillzoneEntryOptions — the SINGLE source
+    // the detector + entry rung actually read — so it deliberately lives there, not here, even though both POCOs
+    // bind the same `Ict:Scanning` section.
     public IReadOnlyList<TradeStyle> ActiveStyles { get; init; } = [];
 
-    private static readonly IReadOnlyList<Killzone> DefaultActiveKillzones =
-        [Killzone.LondonOpen, Killzone.NewYorkOpen];
-
     private static readonly IReadOnlyList<TradeStyle> DefaultActiveStyles = [TradeStyle.Intraday];
-
-    /// <summary>
-    /// The active killzones the scanner hunts — the configured set de-duplicated, or the ICT default
-    /// (London Open + New York) when none is configured. Consume this, never the raw <see cref="ActiveKillzones"/>.
-    /// </summary>
-    public IReadOnlyList<Killzone> ResolvedActiveKillzones =>
-        ActiveKillzones.Count == 0 ? DefaultActiveKillzones : ActiveKillzones.Distinct().ToArray();
 
     /// <summary>
     /// The active trade styles the scanner runs — the configured set de-duplicated, or the ICT default
@@ -72,7 +66,7 @@ public sealed class MarketContextOptions
     /// outcomes (FX afternoon / index morning) governed by instrument class, not operator-selectable here;
     /// <see cref="Killzone.None"/> is not a killzone.
     /// <para>FVG-SEM-3 (Ep10): <see cref="Killzone.Asian"/> is the LOW-PRIORITY opt-in — selectable here, but
-    /// deliberately excluded from the default <see cref="ActiveKillzones"/> ("deprioritized" = off by default,
+    /// deliberately excluded from the default hunt-set ("deprioritized" = off by default,
     /// NOT a lower confluence weight, which would change Σ(applicable) and break grading). Enable it explicitly
     /// to hunt the Asian window.</para>
     /// </summary>
@@ -91,14 +85,6 @@ public sealed class MarketContextOptions
         if (MaxOpenArraysPerType < 1)
         {
             errors.Add($"MaxOpenArraysPerType must be at least 1 but was {MaxOpenArraysPerType}.");
-        }
-
-        // An empty configured list is VALID — it means "use the ICT default" (applied by the Resolved* accessors).
-        // We validate the CONFIGURED members (a typo'd killzone must still fail fast); the resolved lists are
-        // guaranteed non-empty by construction so there is no "at least one" check.
-        foreach (var killzone in ActiveKillzones.Where(k => !SelectableKillzones.Contains(k)))
-        {
-            errors.Add($"ActiveKillzones must be a subset of [{string.Join(", ", SelectableKillzones)}] but contained {killzone}.");
         }
 
         // The macro reference must be a sane pre-lunch morning time (TIME-10): 00:00 would collide with the
