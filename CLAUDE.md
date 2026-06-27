@@ -1252,3 +1252,47 @@ DLLs — a later `dotnet build` then fails with MSB3026 "being used by another p
 Before rebuilding, kill ONLY the project's host (not other repos' dotnet): `Get-Process IctTrader.Host | Stop-Process
 -Force` (plus the `dotnet run` wrapper via `Get-CimInstance Win32_Process -Filter "Name='dotnet.exe'" | ? CommandLine
 -match IctTrader | % { Stop-Process -Id $_.ProcessId -Force }`), or stop the background task first.
+
+**🏁 Michael-Huddleston research + instrument expansion (ES/SPX500, USDJPY) + retune (issue #174, PR #175 → merged).**
+A deep ICT/Huddleston study driving a full-history OANDA optimization pass. Suite **753 unit + 23 arch**, 0 warnings,
+format clean; ict-domain-expert CONFORMANT (Ep5 transcript: ES≡NQ methodology), guardrail 7/7.
+
+- **Research — [docs/ict-huddleston-research.md].** Transcript-mined (his own words, all 41 episodes) + a WebSearch-only
+  fan-out (WebFetch was platform-rate-limited; **WebSearch snippets are the workaround when WebFetch 429s**). His primary
+  vehicles are the **NASDAQ (NQ) + S&P (ES) index futures** (the 2022 Mentorship IS a NASDAQ e-mini mentorship), then the
+  USD majors **EUR/USD (his cleanest/primary), GBP/USD, AUD/USD, USD/JPY**; gold secondary (event-driven); **exotics/crosses
+  avoided.** Risk **1% max (prefer 0.5/0.25)**, RR **2:1→8:1**, stop after 2 losses, news (FOMC/NFP/CPI) + HRLR avoidance,
+  HTF daily-bias alignment is the biggest win-rate filter, Silver Bullet 10–11 NY.
+- **ES/SPX500 added.** Generalised `InstrumentCatalog` to an index SET `{NAS100USD, SPX500USD}`; new
+  `SymbolSpec.Index`/`ContractSpec.Index` factories (`Nas100` now aliases them, byte-identical). Fetched the full OANDA
+  **M5→D1** history for **SPX500_USD, USD_JPY, AUD_USD, XAU_USD** into `data/` (gitignored) — the universe is now **7
+  instruments**. **NEW INVENTORY:** `data/{EURUSD,GBPUSD,NAS100USD,SPX500USD,USDJPY,AUDUSD,XAUUSD}-{M1?,M5,M15,M30,H1,H4,D1}.csv`.
+- **Retune (full-history backtests, this session):** **BAKED `Ict:Instruments:Overrides:USDJPY` = drop-FvgPresent (7
+  required)** — M5 PF **2.40**, +0.49R, +4.6%, the strongest new instrument. **REVERTED the GBPUSD override to strict** —
+  its prior "PF 4.44" was an overfit 13-trade subperiod; full-history GBPUSD == strict == PF 1.18 net-loss (kept honest).
+  EURUSD strict (M15 PF 1.97, best) + NAS100 drop-FVG (M5 PF 1.80) kept; AUDUSD (PF 0.60) / XAU / ES (sparse, <10 trades)
+  left strict/unbaked. (USDJPY bake is a 10-trade sample — flagged provisional, re-validate on a wider window.)
+- **Fetch-mode bug FIXED (regression from the slice-1/2/3 endpoints).** `Ict:MarketData:Oanda:FetchHistory=true` crashed at
+  startup ("Body was inferred but the method does not allow inferred body parameters") because the new settings/calendar
+  GET endpoints + the backtest endpoint depend on services not registered in fetch mode. **`Program.cs` now boots the
+  one-shot fetcher and `app.Run(); return;` BEFORE mapping the REST/SignalR surface** (fetch mode needs no API).
+
+**🔬 VALIDATION — does our engine catch Michael's 2022 live trades? NO (an honest, important finding).** Extracted his
+documented 2022 trades from all 41 episodes (8 best-dated: Ep11 NQ short ~Feb22 +204h; Ep07 NQ long Feb8 +$2,345; Ep10 NQ
+short Feb17; Ep06 NQ short Feb3; Ep18 EURUSD short Apr7; Ep40 USDCAD short Jun21). **Our engine does NOT replicate them:**
+it is **high-precision / low-recall** — the full §2.5 AND-gate confirms ~**2 setups/YEAR on M15** (EURUSD 15 trades over
+2018→2026; NAS100 ~2 setups over Sep21–Mar22), while Michael **scalps M1–M5 discretionarily** (multiple/week). Verified:
+0 catches in his Jan–Feb 2022 NAS100 window (even relaxed to k=4), and on his one direct-match FX example (EURUSD short
+Apr-7) our engine produced an **opposite-direction long on Apr-8**. Root causes: (a) timeframe — we only have M15 for 2022,
+he trades M1–M5; (b) mechanical AND-gate vs human discretion. **This is by design (precision over recall), not a bug.**
+
+**📊 SETUPS-PER-DAY / "find more setups to follow" (operator ask).** ICT norm ≈ **1 quality setup/day/instrument**
+(Silver Bullet ~1/day; "quality over quantity" — not every killzone fires). Our engine is far below that on M15 strict.
+Measured recall (EURUSD, ~125 trading days): **M15 strict 0.08/day · M5 k=5 0.25/day · M1 k=5 0.40/day** per instrument.
+**To surface a followable stream (~2–3 setups/day aggregate): run M5 (or M1) + k≈5 relaxation + all 7 instruments + both
+killzones** — a "discovery/signal mode" (opt-in; the strict §2.5 model stays the global default). The Settings page (live,
+no restart) is where the operator dials per-instrument k-of-n / required-subset to trade recall for precision.
+
+**CONVENTION (web research under rate-limit):** the `deep-research` workflow uses WebFetch, which the platform sometimes
+429s ("Server is temporarily limiting requests"); when it returns 0 sources, fall back to a **WebSearch-only** research
+workflow (snippets are detailed enough to cite) — and the repo's own transcripts are the PRIMARY ICT source regardless.
