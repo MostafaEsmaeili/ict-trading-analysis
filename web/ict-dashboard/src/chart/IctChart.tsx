@@ -28,6 +28,7 @@ import type { CandleDto } from '../types/api';
 import type { ChartOverlay, OverlayVisibility } from '../types/overlays';
 import { palette } from '../theme';
 import { toUtcTimestamp } from '../time';
+import { priceDecimals } from '../format';
 
 export interface IctChartProps {
   candles: CandleDto[];
@@ -81,6 +82,7 @@ export function IctChart({ candles, overlays, visibility }: IctChartProps): Reac
       borderDownColor: palette.short,
       wickUpColor: palette.long,
       wickDownColor: palette.short,
+      // FX-major default; the candle-feed effect re-applies the per-symbol precision below.
       priceFormat: { type: 'price', precision: 5, minMove: 0.00001 },
     });
     chartRef.current = chart;
@@ -93,11 +95,19 @@ export function IctChart({ candles, overlays, visibility }: IctChartProps): Reac
     };
   }, []);
 
-  // Feed candles.
+  // Feed candles, and re-apply the per-symbol price precision (JPY → 3, metals → 2, indices → 1,
+  // FX majors → 5) since the wire carries no precision field. The symbol comes from the candles.
   useEffect(() => {
     const series = seriesRef.current;
     if (!series) {
       return;
+    }
+    const symbol = candles[0]?.symbol;
+    if (symbol) {
+      const decimals = priceDecimals(symbol);
+      series.applyOptions({
+        priceFormat: { type: 'price', precision: decimals, minMove: 10 ** -decimals },
+      });
     }
     series.setData(candles.map(toCandlestickData));
     chartRef.current?.timeScale().fitContent();

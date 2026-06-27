@@ -11,9 +11,10 @@ import * as lwc from 'lightweight-charts';
 
 vi.mock('lightweight-charts', () => {
   const setData = vi.fn();
+  const applyOptions = vi.fn();
   const createPriceLine = vi.fn(() => ({ id: 'pl' }));
   const removePriceLine = vi.fn();
-  const series = { setData, createPriceLine, removePriceLine };
+  const series = { setData, applyOptions, createPriceLine, removePriceLine };
   return {
     createChart: vi.fn(() => ({
       addSeries: vi.fn(() => series),

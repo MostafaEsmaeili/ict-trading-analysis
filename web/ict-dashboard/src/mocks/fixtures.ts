@@ -188,22 +188,37 @@ export const MOCK_ACTIVE_TRADES: PaperTradeDto[] = [
   },
 ];
 
+// Units match the live wire contract (PerformanceCalculator): winRate a 0..1 fraction; averageR /
+// expectancy / maxDrawdown in R; maxDrawdown a POSITIVE absolute peak-to-trough magnitude;
+// profitFactor a plain ratio (999999 = the "no losses" sentinel — exercised by MOCK_PERFORMANCE_NO_LOSSES).
 export const MOCK_PERFORMANCE: PerformanceSummaryDto = {
   tradeCount: 24,
   winRate: 0.625,
   averageR: 1.18,
   profitFactor: 2.34,
   expectancy: 0.74,
-  maxDrawdown: -3.2,
+  maxDrawdown: 3.2,
 };
 
+// Edge fixture: an all-wins / no-losses book → the backend UndefinedProfitFactor (999999) sentinel,
+// which the panel renders as "∞".
+export const MOCK_PERFORMANCE_NO_LOSSES: PerformanceSummaryDto = {
+  tradeCount: 3,
+  winRate: 1,
+  averageR: 2.1,
+  profitFactor: 999999,
+  expectancy: 2.1,
+  maxDrawdown: 0,
+};
+
+// Cumulative R from a zero baseline (running ΣR), matching EquityPointDto.equity on the wire.
 export const MOCK_EQUITY_CURVE: EquityPointDto[] = [
-  { atUtc: '2026-06-12T20:00:00Z', equity: 10000 },
-  { atUtc: '2026-06-13T20:00:00Z', equity: 10180 },
-  { atUtc: '2026-06-14T20:00:00Z', equity: 10090 },
-  { atUtc: '2026-06-15T20:00:00Z', equity: 10410 },
-  { atUtc: '2026-06-16T20:00:00Z', equity: 10350 },
-  { atUtc: '2026-06-17T20:00:00Z', equity: 10720 },
-  { atUtc: '2026-06-18T20:00:00Z', equity: 10605 },
-  { atUtc: '2026-06-19T20:00:00Z', equity: 10980 },
+  { atUtc: '2026-06-12T20:00:00Z', equity: 0 },
+  { atUtc: '2026-06-13T20:00:00Z', equity: 1.8 },
+  { atUtc: '2026-06-14T20:00:00Z', equity: 0.9 },
+  { atUtc: '2026-06-15T20:00:00Z', equity: 4.1 },
+  { atUtc: '2026-06-16T20:00:00Z', equity: 3.5 },
+  { atUtc: '2026-06-17T20:00:00Z', equity: 7.2 },
+  { atUtc: '2026-06-18T20:00:00Z', equity: 6.05 },
+  { atUtc: '2026-06-19T20:00:00Z', equity: 9.8 },
 ];

@@ -7,16 +7,13 @@
 import { formatDistanceToNowStrict } from 'date-fns';
 import type { Killzone, PaperTradeDto, TradeDirection, TradeStyle } from '../types/api';
 import { directionTone } from '../theme';
+import { formatPrice } from '../format';
 import { DirectionChip, KillzoneBadge, StyleChip } from './Badges';
 
 export interface ActivePaperTradesProps {
   trades: PaperTradeDto[];
   isLoading: boolean;
   onFocusSymbol?: (symbol: string) => void;
-}
-
-function fmtPrice(p: number): string {
-  return p.toFixed(5);
 }
 
 function timeInTrade(openedAtUtc: string): string {
@@ -85,9 +82,11 @@ export function ActivePaperTrades({
                         <KillzoneBadge killzone={t.killzone as Killzone | null} />
                       </div>
                     </td>
-                    <td className="num">{fmtPrice(t.entry)}</td>
-                    <td className="num short">{fmtPrice(t.stop)}</td>
-                    <td className="num long">{target !== undefined ? fmtPrice(target) : '—'}</td>
+                    <td className="num">{formatPrice(t.entry, t.symbol)}</td>
+                    <td className="num short">{formatPrice(t.stop, t.symbol)}</td>
+                    <td className="num long">
+                      {target !== undefined ? formatPrice(target, t.symbol) : '—'}
+                    </td>
                     <td className="num neutral">{timeInTrade(t.openedAtUtc)}</td>
                     <td className={`num ${t.realizedR == null ? 'neutral' : tone}`}>
                       {t.realizedR == null ? 'open' : `${t.realizedR.toFixed(2)}R`}
