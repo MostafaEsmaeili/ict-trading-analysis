@@ -13,8 +13,9 @@ namespace IctTrader.UnitTests.Trading;
 /// HIGH/LOW (never close-only) so an ICT wick-sweep stops a trade out (§2.5.8); a bar that straddles both stop and
 /// runner resolves to the conservative StopFirst worst-case for BOTH directions (overriding the raw OLHC path that
 /// would fill a short's target first); resting orders fill at their LEVEL so a stop-out books exactly −1R and a
-/// runner books the plan reward-to-risk; gap-through fills at the level (slippage worsening is the §5.4 cost
-/// model). The evaluator is pure — it DECIDES, <see cref="PaperTrade.Close"/> APPLIES.
+/// runner books the plan reward-to-risk; a gap-through bar fills at the level (slippage/gap fill-price worsening is
+/// a deferred §5.4 follow-on, spec §5 item 25, not yet modeled). The evaluator is pure — it DECIDES,
+/// <see cref="PaperTrade.Close"/> APPLIES.
 /// </summary>
 public class FillEvaluatorTests
 {
@@ -114,7 +115,7 @@ public class FillEvaluatorTests
     public void A_bar_gapping_through_the_stop_still_fills_at_the_stop_level()
     {
         // The whole bar is at/below the stop (a gap-through). This slice fills at the LEVEL; gap-through slippage
-        // (filling at the worse gapped price) is the §5.4 cost model's job, applied downstream.
+        // (filling at the worse gapped price) is a deferred §5.4 follow-on (spec §5 item 25), not yet modeled.
         var decision = Evaluator.Evaluate(BullishTrade(), Bar(1.0795m, 1.0798m, 1.0790m, 1.0796m));
 
         decision.Outcome.Should().Be(FillOutcome.StopHit);

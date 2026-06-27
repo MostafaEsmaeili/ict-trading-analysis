@@ -110,6 +110,42 @@ describe('IctChart', () => {
     expect(ts.fitContent).toHaveBeenCalledTimes(1);
   });
 
+  it('re-feeds via setData (no update, no fitContent) when a bar is inserted MID-SERIES', () => {
+    // An out-of-order / redelivered bar lands BEFORE the last bar (appendCandle branch 3): the last bar's
+    // time is unchanged but the array grew, so series.update() would only re-push the unchanged last bar and
+    // never render the inserted middle bar. The chart must fall back to setData() — without re-fitting, to
+    // preserve the operator's pan/zoom.
+    const vis = defaultOverlayVisibility();
+    // Start with a 10-min gap between the last two bars so an earlier absent bar can slot in between.
+    const base = MOCK_CANDLES.slice(0, -1);
+    const last = base[base.length - 1];
+    const gapped: CandleDto = {
+      ...MOCK_CANDLES[MOCK_CANDLES.length - 1],
+      openTimeUtc: new Date(Date.parse(last.openTimeUtc) + 10 * 60_000).toISOString(),
+    };
+    const initial = [...base, gapped];
+    const { rerender } = render(<IctChart candles={initial} overlays={[]} visibility={vis} />);
+
+    const series = mockedSeries();
+    const ts = timeScaleSpies();
+    expect(series.setData).toHaveBeenCalledTimes(1);
+    expect(ts.fitContent).toHaveBeenCalledTimes(1);
+
+    // Insert a bar 5 min after `last` (i.e. between `last` and `gapped`) — a mid-series insert.
+    const middle: CandleDto = {
+      ...last,
+      openTimeUtc: new Date(Date.parse(last.openTimeUtc) + 5 * 60_000).toISOString(),
+    };
+    const merged = [...base, middle, gapped]; // last bar (gapped) unchanged; length grew by one
+    rerender(<IctChart candles={merged} overlays={[]} visibility={vis} />);
+
+    // setData called again (the inserted bar is rendered), update() never used, fitContent NOT re-called.
+    expect(series.setData).toHaveBeenCalledTimes(2);
+    expect(series.setData.mock.calls[1][0]).toHaveLength(merged.length);
+    expect(series.update).not.toHaveBeenCalled();
+    expect(ts.fitContent).toHaveBeenCalledTimes(1);
+  });
+
   it('does a full setData+fitContent on a symbol switch (not an incremental update)', () => {
     const vis = defaultOverlayVisibility();
     const { rerender } = render(<IctChart candles={MOCK_CANDLES} overlays={[]} visibility={vis} />);

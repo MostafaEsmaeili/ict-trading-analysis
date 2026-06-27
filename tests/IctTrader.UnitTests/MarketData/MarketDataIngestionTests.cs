@@ -88,13 +88,63 @@ public class MarketDataIngestionTests
         captured.Closes.Should().Equal(1.10m, 1.12m);
     }
 
-    private static ServiceProvider BuildBus(CapturedCandles captured, decimal? throwOnClose = null)
+    [Fact]
+    public async Task A_run_of_consecutive_publish_failures_aborts_the_stream_so_a_deterministic_bug_surfaces()
+    {
+        // A handler that throws on EVERY candle is a deterministic bug, not a transient blip. The circuit breaker
+        // must abort (rethrow to the hosted service's Error boundary) once MaxConsecutivePublishFailures is reached,
+        // instead of demoting the bug to per-candle Warning noise + an "empty but successful" run.
+        var captured = new CapturedCandles();
+        using var sp = BuildBus(captured, alwaysThrow: true);
+        var feed = new ReplayMarketDataFeed(
+            Enumerable
+                .Range(0, MarketDataIngestor.MaxConsecutivePublishFailures + 5)
+                .Select(i => Candle("EURUSD", T0.AddMinutes(5 * i)))
+                .ToArray());
+        var ingestor = new MarketDataIngestor(feed, sp.GetRequiredService<IMessageBus>());
+
+        var act = () => ingestor.IngestAsync();
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
+        // Nothing was ever published successfully (the bug throws on every bar).
+        captured.Closes.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task A_clean_publish_resets_the_consecutive_failure_streak()
+    {
+        // Fewer than MaxConsecutivePublishFailures *consecutive* bad bars, each separated by a good bar, must NOT trip
+        // the breaker — a clean publish resets the streak, so isolated transient blips never accumulate to an abort.
+        var captured = new CapturedCandles();
+        using var sp = BuildBus(captured, throwOnClose: 9.99m);
+        var candles = new List<CandleDto>();
+        var t = T0;
+        for (var i = 0; i < MarketDataIngestor.MaxConsecutivePublishFailures + 10; i++)
+        {
+            candles.Add(Candle("EURUSD", t, close: 9.99m));       // bad — its publish throws
+            t = t.AddMinutes(5);
+            candles.Add(Candle("EURUSD", t, close: 1.10m + i));   // good — resets the streak
+            t = t.AddMinutes(5);
+        }
+
+        var feed = new ReplayMarketDataFeed([.. candles]);
+        var ingestor = new MarketDataIngestor(feed, sp.GetRequiredService<IMessageBus>());
+
+        // No abort: the good bars between the bad ones keep the consecutive count at 1.
+        await ingestor.IngestAsync();
+
+        // Exactly the good bars arrived (every bad bar isolated, never tripping the breaker).
+        captured.Closes.Should().HaveCount(MarketDataIngestor.MaxConsecutivePublishFailures + 10);
+    }
+
+    private static ServiceProvider BuildBus(CapturedCandles captured, decimal? throwOnClose = null, bool alwaysThrow = false)
     {
         var services = new ServiceCollection();
         services.AddSingleton(captured);
-        if (throwOnClose is { } sentinel)
+        if (throwOnClose is { } sentinel || alwaysThrow)
         {
-            services.AddSingleton(new ThrowingMarker(sentinel));
+            // alwaysThrow → an unmatchable sentinel close is irrelevant; ThrowingMarker.AlwaysThrow drives it.
+            services.AddSingleton(new ThrowingMarker(throwOnClose ?? decimal.MinValue, alwaysThrow));
             services.AddScoped<IEventHandler<CandleIngested>, ThrowingCandleHandler>();
         }
 
@@ -103,7 +153,7 @@ public class MarketDataIngestionTests
         return services.BuildServiceProvider();
     }
 
-    private sealed record ThrowingMarker(decimal BadClose);
+    private sealed record ThrowingMarker(decimal BadClose, bool AlwaysThrow = false);
 
     // Registered BEFORE the capturing handler, so a throw on the bad bar happens during the SAME PublishAsync the
     // ingestor must isolate — proving the isolation is at the ingestor (one bad publish does not abort the stream).
@@ -111,7 +161,7 @@ public class MarketDataIngestionTests
     {
         public Task HandleAsync(CandleIngested @event, CancellationToken cancellationToken = default)
         {
-            if (@event.Candle.Close == marker.BadClose)
+            if (marker.AlwaysThrow || @event.Candle.Close == marker.BadClose)
             {
                 throw new InvalidOperationException("Simulated transient downstream fault on one bar.");
             }

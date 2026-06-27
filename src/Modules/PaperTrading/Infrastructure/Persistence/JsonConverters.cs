@@ -88,7 +88,9 @@ internal static class JsonConverters
     /// Converts a confirmed advisory <see cref="Domain.Setups.Setup"/> between its domain type and a JSON
     /// object stored in a <c>jsonb</c> column.  Setup has no persistence identity (it is value-object-like
     /// despite its class shape), so JSONB is the correct plan §7 vehicle for it.  The snapshot is
-    /// advisory-only and never mutated after arming, so a flat serialisation round-trip is exact.
+    /// advisory-only and never mutated after arming, and the DTO carries EVERY field that feeds a domain
+    /// reconstruction — including the FVG-SEM-2b <c>StackedFartherBound</c> — so the round-trip is exact and
+    /// the reloaded Setup does not diverge from the queryable <c>armed_entries.stacked_farther_bound</c> mirror.
     /// </summary>
     public static readonly ValueConverter<Domain.Setups.Setup, string> SetupConverter =
         new(
@@ -160,7 +162,12 @@ internal static class JsonConverters
         IReadOnlyList<decimal> Targets,
         int RunnerIndex,
         string Reason,
-        DateTimeOffset ConfirmedAtUtc)
+        DateTimeOffset ConfirmedAtUtc,
+        // FVG-SEM-2b: the stacked first-FVG far edge (null off the default path). It is NOT a TradePlan tier, so it is
+        // NOT carried by Targets — without this field the snapshot silently dropped it and the reloaded
+        // Setup.StackedFartherBound came back null, diverging from the queryable armed_entries.stacked_farther_bound
+        // column (which IS what the runtime NIX reads). Serialising it here keeps the snapshot faithful.
+        decimal? StackedFartherBound)
     {
         public static SetupDto From(Domain.Setups.Setup s) => new(
             s.Symbol.Value,
@@ -176,7 +183,8 @@ internal static class JsonConverters
             s.Plan.Targets.Targets.Select(price => price.Value).ToList(),
             s.Plan.Targets.RunnerIndex,
             s.Reason.Text,
-            s.ConfirmedAtUtc);
+            s.ConfirmedAtUtc,
+            s.StackedFartherBound);
 
         public Domain.Setups.Setup ToDomain()
         {
@@ -196,7 +204,8 @@ internal static class JsonConverters
                 Score,
                 plan,
                 new Domain.Setups.SetupReason(Reason),
-                ConfirmedAtUtc);
+                ConfirmedAtUtc,
+                StackedFartherBound);
         }
     }
 }

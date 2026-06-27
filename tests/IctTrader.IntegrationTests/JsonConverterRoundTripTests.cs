@@ -70,6 +70,49 @@ public sealed class JsonConverterRoundTripTests
     }
 
     [Fact]
+    public void Setup_jsonb_round_trip_preserves_the_stacked_farther_bound()
+    {
+        // FVG-SEM-2b: a stacked first-FVG entry carries StackedFartherBound (the deeper gap's far edge the wrong-order
+        // NIX watches). It is NOT a TradePlan tier, so the Targets array can't carry it — the SetupDto must serialise
+        // it explicitly, else the reloaded Setup.StackedFartherBound comes back null and diverges from the column.
+        var setup = new Setup(
+            new Symbol("EURUSD"),
+            TradeStyle.Intraday,
+            Timeframe.M5,
+            SetupGrade.B,
+            score: 70,
+            FourTierPlan(),
+            new SetupReason("bias; sweep; MSS; stacked FVG; OTE"),
+            Confirmed,
+            stackedFartherBound: 1.0788m);
+
+        var json = (string)JsonConverters.SetupConverter.ConvertToProvider(setup)!;
+        var restored = (Setup)JsonConverters.SetupConverter.ConvertFromProvider(json)!;
+
+        restored.StackedFartherBound.Should().Be(1.0788m);
+    }
+
+    [Fact]
+    public void Setup_jsonb_round_trip_keeps_a_non_stacked_setup_null()
+    {
+        // The default (non-stacked) path: StackedFartherBound is null and must survive as null (no spurious value).
+        var setup = new Setup(
+            new Symbol("EURUSD"),
+            TradeStyle.Intraday,
+            Timeframe.M5,
+            SetupGrade.B,
+            score: 70,
+            FourTierPlan(),
+            new SetupReason("bias; sweep; MSS; FVG; OTE"),
+            Confirmed);
+
+        var json = (string)JsonConverters.SetupConverter.ConvertToProvider(setup)!;
+        var restored = (Setup)JsonConverters.SetupConverter.ConvertFromProvider(json)!;
+
+        restored.StackedFartherBound.Should().BeNull();
+    }
+
+    [Fact]
     public void TradePlan_jsonb_round_trip_is_byte_identical_for_the_default_two_tier_ladder()
     {
         // Guard the default (SD-off) path: a plain T1+runner ladder must still round-trip exactly.
