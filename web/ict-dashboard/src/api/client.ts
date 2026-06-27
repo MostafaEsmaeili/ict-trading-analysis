@@ -21,6 +21,7 @@ import type {
   PerformanceSummaryDto,
 } from '../types/api';
 import type { ChartOverlay } from '../types/overlays';
+import { setupToOverlays } from '../chart/setupToOverlays';
 import {
   MOCK_ACTIVE_TRADES,
   MOCK_ALERTS,
@@ -30,10 +31,11 @@ import {
   MOCK_PERFORMANCE,
 } from '../mocks/fixtures';
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? '';
+export const API_BASE = import.meta.env.VITE_API_BASE ?? '';
 
 // Default to mocks until the live host (WP7) is wired. An explicit "false" opts into real fetches.
-const USE_MOCKS = (import.meta.env.VITE_USE_MOCKS ?? 'true') !== 'false';
+// Exported so the live SignalR hub gates on the SAME switch (mocks mode stays socket-free).
+export const USE_MOCKS = (import.meta.env.VITE_USE_MOCKS ?? 'true') !== 'false';
 
 async function getJson<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -87,12 +89,19 @@ export async function fetchChart(
   return getJson<ChartResponse>(`/api/chart/${symbol}?${params}`);
 }
 
-// Overlay geometry is derived from a Setup's Evidence by the host (plan §9.1). Until WP7 emits that,
-// the chart draws from the mock overlay fixture so every §9.1 primitive is exercised.
-export async function fetchOverlays(_symbol: string, _timeframe: string): Promise<ChartOverlay[]> {
+// Overlay geometry. There is NO dedicated overlay endpoint in contracts-v1 — overlays ride the
+// ChartResponse the host already returns (and SignalR pushes). So the LIVE path fetches the same
+// /api/chart response and maps its confirmed setups via setupToOverlays, filtered to the requested
+// timeframe (a setup confirmed on another TF must not pollute this chart). Mock mode serves the rich
+// §9.1 fixture so every overlay primitive is exercised in the scaffold.
+export async function fetchOverlays(
+  symbol: string,
+  timeframe: string,
+  style = 'Intraday',
+): Promise<ChartOverlay[]> {
   if (USE_MOCKS) {
     return MOCK_OVERLAYS;
   }
-  // No dedicated REST endpoint in contracts-v1 yet — overlays ride the ChartResponse + SignalR pushes.
-  throw new Error('Overlay endpoint is not available until WP7 (overlays ride ChartResponse / SignalR).');
+  const chart = await fetchChart(symbol, timeframe, style);
+  return chart.overlays.filter((s) => s.triggerTimeframe === timeframe).flatMap(setupToOverlays);
 }

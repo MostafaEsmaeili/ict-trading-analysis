@@ -11,7 +11,7 @@ import { queryKeys } from './queryKeys';
 import type { TradingHubLike } from './tradingHub';
 import { HubEvents } from './tradingHub';
 import type { ChartOverlay } from '../types/overlays';
-import type { SetupDto } from '../types/api';
+import type { CandleDto, PaperTradeDto, PerformanceSummaryDto, SetupDto } from '../types/api';
 
 function fakeHub() {
   const handlers = new Map<string, (...args: unknown[]) => void>();
@@ -74,5 +74,83 @@ describe('useTradingHub overlay merge', () => {
 
     const overlays = qc.getQueryData<ChartOverlay[]>(queryKeys.overlays('EURUSD', 'M5'));
     expect(overlays ?? []).toEqual([]);
+  });
+
+  it('merges a live trade update into the active-trades cache', () => {
+    const qc = new QueryClient();
+    const { hub, emit } = fakeHub();
+    renderHook(() => useTradingHub({ hub, symbol: 'EURUSD', timeframe: 'M5' }), {
+      wrapper: makeWrapper(qc),
+    });
+
+    const trade: PaperTradeDto = {
+      id: 'tr1',
+      setupId: 's1',
+      symbol: 'EURUSD',
+      direction: 'Long',
+      status: 'Open',
+      style: 'Intraday',
+      killzone: 'LondonOpen',
+      entry: 1.07,
+      stop: 1.069,
+      targets: [1.072],
+      size: 0.5,
+      openedAtUtc: '2026-06-19T06:00:00Z',
+      closedAtUtc: null,
+      realizedR: null,
+    };
+    emit(HubEvents.TradeUpdated, trade);
+
+    const trades = qc.getQueryData<PaperTradeDto[]>(queryKeys.activeTrades());
+    expect(trades?.map((t) => t.id)).toEqual(['tr1']);
+  });
+
+  it('merges a live performance summary into the performance cache', () => {
+    const qc = new QueryClient();
+    const { hub, emit } = fakeHub();
+    renderHook(() => useTradingHub({ hub, symbol: 'EURUSD', timeframe: 'M5' }), {
+      wrapper: makeWrapper(qc),
+    });
+
+    const summary: PerformanceSummaryDto = {
+      tradeCount: 7,
+      winRate: 0.57,
+      averageR: 1.1,
+      profitFactor: 2,
+      expectancy: 0.6,
+      maxDrawdown: 2.4,
+    };
+    emit(HubEvents.PerformanceUpdated, summary);
+
+    expect(qc.getQueryData<PerformanceSummaryDto>(queryKeys.performance())).toEqual(summary);
+  });
+
+  it('merges a live candle (matching symbol+timeframe) into the candles cache', () => {
+    const qc = new QueryClient();
+    const { hub, emit } = fakeHub();
+    renderHook(() => useTradingHub({ hub, symbol: 'EURUSD', timeframe: 'M5', style: 'Intraday' }), {
+      wrapper: makeWrapper(qc),
+    });
+
+    const candle: CandleDto = {
+      symbol: 'EURUSD',
+      timeframe: 'M5',
+      openTimeUtc: '2026-06-19T06:00:00Z',
+      open: 1.07,
+      high: 1.071,
+      low: 1.069,
+      close: 1.0705,
+      volume: 100,
+    };
+    emit(HubEvents.CandleAppended, candle);
+
+    const candles = qc.getQueryData<CandleDto[]>(queryKeys.candles('EURUSD', 'M5', 'Intraday'));
+    expect(candles).toHaveLength(1);
+
+    // A candle for a DIFFERENT timeframe is ignored (no cross-timeframe pollution).
+    emit(HubEvents.CandleAppended, { ...candle, timeframe: 'H1' });
+    expect(
+      qc.getQueryData<CandleDto[]>(queryKeys.candles('EURUSD', 'M5', 'Intraday')),
+    ).toHaveLength(1);
   });
 });

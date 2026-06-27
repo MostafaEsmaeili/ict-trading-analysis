@@ -199,6 +199,12 @@ body {
   font-size: 12px;
 }
 
+/* A failed/erroring query surfaces VISIBLY (red), never as a silent blank/loading state (§6.3). */
+.empty.error {
+  color: var(--short);
+  font-weight: 600;
+}
+
 /* ---- Chips / badges ---- */
 
 .chip {

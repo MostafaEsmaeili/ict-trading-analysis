@@ -24,10 +24,16 @@ export function useCandles(symbol: string, timeframe: string, style: string) {
   });
 }
 
-export function useOverlays(symbol: string, timeframe: string) {
+/**
+ * Overlay geometry. fetchOverlays consumes the SAME /api/chart ChartResponse the host already populates
+ * with confirmed setups (mapped via setupToOverlays) — there is no dedicated overlay endpoint, so the
+ * earlier always-throwing live path is gone. Style is part of the chart request; the result is filtered
+ * to the selected timeframe (mirrors the SignalR merge guard) so polled + live pushes share the cache.
+ */
+export function useOverlays(symbol: string, timeframe: string, style: string) {
   return useQuery({
     queryKey: queryKeys.overlays(symbol, timeframe),
-    queryFn: () => fetchOverlays(symbol, timeframe),
+    queryFn: () => fetchOverlays(symbol, timeframe, style),
     refetchInterval: RECONCILE_MS,
   });
 }

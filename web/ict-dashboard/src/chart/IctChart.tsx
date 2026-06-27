@@ -34,6 +34,12 @@ export interface IctChartProps {
   candles: CandleDto[];
   overlays: ChartOverlay[];
   visibility: OverlayVisibility;
+  /**
+   * Optional UTC instant to bring into view (focus-on-alert/trade). When set, the chart seeks the time
+   * scale around it instead of re-fitting the whole window. If the instant is outside the loaded window
+   * the seek is a best-effort no-op (the symbol still switches) — older bars aren't fetched here.
+   */
+  seekToUtc?: string;
 }
 
 function toCandlestickData(c: CandleDto): CandlestickData<Time> {
@@ -45,6 +51,9 @@ function toCandlestickData(c: CandleDto): CandlestickData<Time> {
     close: c.close,
   };
 }
+
+/** Half-width (in bars) of the visible window when seeking to a focused setup's time. */
+const SEEK_WINDOW_BARS = 30;
 
 const CHART_OPTIONS = {
   layout: {
@@ -63,10 +72,20 @@ const CHART_OPTIONS = {
   autoSize: true,
 } as const;
 
-export function IctChart({ candles, overlays, visibility }: IctChartProps): React.JSX.Element {
+export function IctChart({
+  candles,
+  overlays,
+  visibility,
+  seekToUtc,
+}: IctChartProps): React.JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  // Track the last-rendered dataset identity (symbol|timeframe) + the last bar time so a single live
+  // append/forming-bar update goes through series.update() (preserving pan/zoom) while a full dataset
+  // replacement (initial load / symbol or timeframe switch) does setData()+fitContent() exactly once.
+  const lastSeriesKeyRef = useRef<string | undefined>(undefined);
+  const lastBarTimeRef = useRef<number | undefined>(undefined);
 
   // Create the chart + candlestick series once.
   useEffect(() => {
@@ -95,23 +114,81 @@ export function IctChart({ candles, overlays, visibility }: IctChartProps): Reac
     };
   }, []);
 
-  // Feed candles, and re-apply the per-symbol price precision (JPY → 3, metals → 2, indices → 1,
-  // FX majors → 5) since the wire carries no precision field. The symbol comes from the candles.
+  // Feed candles. A full dataset replacement (initial load / symbol or timeframe switch) calls setData()
+  // + fitContent() once and re-applies the per-symbol price precision (JPY → 3, metals → 2, indices → 1,
+  // FX majors → 5; the wire carries no precision field). A single live append or forming-bar update uses
+  // series.update() so the operator's pan/zoom survives the tick (lightweight-charts update() upserts by
+  // time and does NOT touch the time scale).
   useEffect(() => {
     const series = seriesRef.current;
     if (!series) {
       return;
     }
-    const symbol = candles[0]?.symbol;
-    if (symbol) {
+
+    const first = candles[0];
+    const symbol = first?.symbol;
+    const seriesKey = first ? `${first.symbol}|${first.timeframe}` : undefined;
+    const datasetReplaced = seriesKey !== lastSeriesKeyRef.current;
+
+    if (symbol && datasetReplaced) {
       const decimals = priceDecimals(symbol);
       series.applyOptions({
         priceFormat: { type: 'price', precision: decimals, minMove: 10 ** -decimals },
       });
     }
-    series.setData(candles.map(toCandlestickData));
-    chartRef.current?.timeScale().fitContent();
+
+    const lastBar = candles[candles.length - 1];
+    const lastTime = lastBar ? (toUtcTimestamp(lastBar.openTimeUtc) as number) : undefined;
+
+    // Incremental ONLY when the dataset identity is unchanged and exactly the last bar moved (== forming
+    // bar in place, or > one new appended bar) — i.e. the appendCandle shapes. Anything else is a reload.
+    const isIncremental =
+      !datasetReplaced &&
+      lastBar !== undefined &&
+      lastTime !== undefined &&
+      lastBarTimeRef.current !== undefined &&
+      lastTime >= lastBarTimeRef.current;
+
+    if (isIncremental && lastBar) {
+      series.update(toCandlestickData(lastBar));
+    } else {
+      series.setData(candles.map(toCandlestickData));
+      chartRef.current?.timeScale().fitContent();
+    }
+
+    lastSeriesKeyRef.current = seriesKey;
+    lastBarTimeRef.current = lastTime;
   }, [candles]);
+
+  // Seek the time scale to a focus instant (focus-on-alert/trade), keyed on [seekToUtc, candles]. Runs
+  // after the candle effect (declaration order). When a seek target is set we center the visible range
+  // around it instead of leaving the chart fit to the full window. Best-effort: an out-of-window instant
+  // (no surrounding bars) leaves the view as-is — the symbol switch already happened upstream.
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart || !seekToUtc || candles.length === 0) {
+      return;
+    }
+    const target = toUtcTimestamp(seekToUtc);
+    // Window the view to ~SEEK_WINDOW_BARS each side of the target at the data's own bar spacing.
+    const barSec =
+      candles.length >= 2
+        ? Math.max(1, toUtcTimestamp(candles[1].openTimeUtc) - toUtcTimestamp(candles[0].openTimeUtc))
+        : 60;
+    const from = candles[0].openTimeUtc;
+    const to = candles[candles.length - 1].openTimeUtc;
+    const fromSec = toUtcTimestamp(from);
+    const toSec = toUtcTimestamp(to);
+    // Only seek when the instant is within (or near) the loaded window — else there is nothing to show.
+    if (target < fromSec - barSec || target > toSec + barSec) {
+      return;
+    }
+    const half = SEEK_WINDOW_BARS * barSec;
+    chart.timeScale().setVisibleRange({
+      from: Math.max(fromSec, target - half) as UTCTimestamp,
+      to: Math.min(toSec, target + half) as UTCTimestamp,
+    });
+  }, [seekToUtc, candles]);
 
   // Visible overlays (respecting the legend toggles).
   const visibleOverlays = useMemo(

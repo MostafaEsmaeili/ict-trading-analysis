@@ -22,6 +22,7 @@ export function setupToOverlays(setup: SetupDto): ChartOverlay[] {
       stop: setup.stop,
       targets: setup.targets,
       rewardRatio: setup.rewardRatio,
+      setupId: setup.id,
     },
   ];
 
@@ -32,6 +33,7 @@ export function setupToOverlays(setup: SetupDto): ChartOverlay[] {
       direction,
       fromUtc: setup.detectedAtUtc,
       targetPrice: draw,
+      setupId: setup.id,
     });
   }
 

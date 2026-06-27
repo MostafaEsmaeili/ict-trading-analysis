@@ -96,6 +96,8 @@ export interface TradeLevelsOverlay {
   stop: number;
   targets: number[];
   rewardRatio: number;
+  /** Source setup id — lets a live re-delivery REPLACE (not stack) this setup's overlays. */
+  setupId?: string;
 }
 
 /** Daily bias / draw-on-liquidity — an HTF level line + arrow pointing at the targeted pool. */
@@ -104,6 +106,8 @@ export interface DrawOnLiquidityOverlay {
   direction: Direction;
   fromUtc: string;
   targetPrice: number;
+  /** Source setup id — lets a live re-delivery REPLACE (not stack) this setup's overlays. */
+  setupId?: string;
 }
 
 export type ChartOverlay =

@@ -17,11 +17,14 @@ import type { EquityPointDto, PerformanceSummaryDto } from '../types/api';
 import { UNDEFINED_PROFIT_FACTOR } from '../types/api';
 import { palette } from '../theme';
 import { formatNyDateTime } from '../time';
+import { errorMessage } from '../format-error';
 
 export interface PerformancePanelProps {
   summary: PerformanceSummaryDto | undefined;
   equityCurve: EquityPointDto[];
   isLoading: boolean;
+  isError?: boolean;
+  error?: unknown;
 }
 
 function pct(v: number): string {
@@ -53,6 +56,8 @@ export function PerformancePanel({
   summary,
   equityCurve,
   isLoading,
+  isError,
+  error,
 }: PerformancePanelProps): React.JSX.Element {
   const data = equityCurve.map((p) => ({ t: formatNyDateTime(p.atUtc), equity: p.equity }));
   const yDomain = equityDomain(data.map((d) => d.equity));
@@ -64,7 +69,11 @@ export function PerformancePanel({
         {summary ? <span className="neutral num">{summary.tradeCount} trades</span> : null}
       </header>
       <div className="panel__body">
-        {isLoading || !summary ? (
+        {isError ? (
+          <p className="empty error" role="alert">
+            Performance unavailable — {errorMessage(error)}
+          </p>
+        ) : isLoading || !summary ? (
           <p className="empty">Loading performance…</p>
         ) : (
           <>
