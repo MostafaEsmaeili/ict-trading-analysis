@@ -13,6 +13,7 @@ export const queryKeys = {
   account: () => ['account'] as const,
   config: () => ['config'] as const,
   settings: () => ['settings'] as const,
+  calendar: () => ['calendar'] as const,
   backtestDatasets: () => ['backtest', 'datasets'] as const,
   alerts: () => ['alerts'] as const,
   performance: () => ['performance'] as const,

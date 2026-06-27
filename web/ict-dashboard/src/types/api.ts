@@ -234,6 +234,27 @@ export interface SettingsDto {
   availableInstruments: string[];
 }
 
+/** Mirrors Host.CalendarEventDto — one scheduled economic event (NY date + type), flagged if its date is blacked out. */
+export interface CalendarEventDto {
+  date: string;
+  type: string;
+  isBlackout: boolean;
+}
+
+/**
+ * Mirrors Host.CalendarStatusDto — the economic-calendar status (plan §2.5.8): whether the feed is enabled + loaded,
+ * the source provider, the NY-date window, the scheduled FOMC/NFP/CPI events, and the §2.5.2 no-trade (blackout) days.
+ */
+export interface CalendarStatusDto {
+  enabled: boolean;
+  loaded: boolean;
+  provider: string;
+  fromDate: string;
+  toDate: string;
+  events: CalendarEventDto[];
+  blackoutDates: string[];
+}
+
 // ---- Backtest / Optimizer (plan §15 §5/§6) ----
 
 /** Mirrors Host.BacktestDatasetDto — a CSV history dataset available to the Backtest Lab. */

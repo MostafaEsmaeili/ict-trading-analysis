@@ -27,6 +27,11 @@ public sealed class SymbolScanner
     private readonly ScanSession _session;
     private readonly SetupFactory _factory;
     private readonly TradeStyle _style;
+    private readonly IEconomicCalendarStore? _calendarStore;
+
+    // The store revision last loaded into this scanner's MarketContext. The store starts at revision 0 and a load
+    // bumps it to >= 1, so this initial 0 forces the first real load (and only loads again on a later refresh).
+    private int _loadedCalendarRevision;
 
     public SymbolScanner(
         Symbol symbol,
@@ -34,7 +39,8 @@ public sealed class SymbolScanner
         TimeProvider timeProvider,
         ScannerOptions options,
         IInstrumentRegistry instruments,
-        IReadOnlyList<ISetupDetector>? prependDetectors = null)
+        IReadOnlyList<ISetupDetector>? prependDetectors = null,
+        IEconomicCalendarStore? calendarStore = null)
     {
         ArgumentNullException.ThrowIfNull(symbol);
         ArgumentNullException.ThrowIfNull(timeProvider);
@@ -43,6 +49,7 @@ public sealed class SymbolScanner
 
         Symbol = symbol;
         _style = style;
+        _calendarStore = calendarStore;
 
         // Per-instrument resolution (the §2.5.7 FX-vs-index split): the catalog maps the symbol to its class +
         // price geometry, and the scanner builds the MarketContext from THAT SymbolSpec — so an Index symbol
@@ -117,7 +124,31 @@ public sealed class SymbolScanner
     /// confirms a graded setup for this style, otherwise null. Candles must arrive in chronological order.</summary>
     public Setup? OnCandle(Candle candle)
     {
+        RefreshCalendarIfChanged();
         var confirmation = _session.OnCandle(candle);
         return confirmation is null ? null : _factory.Create(confirmation, _style);
+    }
+
+    /// <summary>
+    /// Loads the host's economic-calendar events into this scanner's <see cref="MarketContext"/> the first time
+    /// they are sourced, and again whenever the store's revision moves (a refresh). Until a load happens the gate
+    /// stays in its unverified posture (fail-open by default); once loaded, <c>CalendarGateDetector</c> withholds
+    /// <c>CalendarClear</c> on a blacked-out FOMC/NFP day. No-op when no store is wired (tests / backtest).
+    /// </summary>
+    private void RefreshCalendarIfChanged()
+    {
+        if (_calendarStore is null)
+        {
+            return;
+        }
+
+        var revision = _calendarStore.Revision;
+        if (revision == _loadedCalendarRevision)
+        {
+            return;
+        }
+
+        _session.Context.LoadCalendar(_calendarStore.Events);
+        _loadedCalendarRevision = revision;
     }
 }

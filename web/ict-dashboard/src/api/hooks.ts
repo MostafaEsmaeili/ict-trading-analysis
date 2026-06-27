@@ -10,6 +10,7 @@ import {
   fetchAlerts,
   fetchAllTrades,
   fetchBacktestDatasets,
+  fetchCalendar,
   fetchChart,
   fetchConfig,
   fetchEquityCurve,
@@ -134,6 +135,15 @@ export function useUpdateInstrumentSettings() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.settings() });
     },
+  });
+}
+
+/** The economic-calendar status — enabled/loaded/provider, upcoming events, and §2.5.2 no-trade days (§2.5.8). */
+export function useCalendar() {
+  return useQuery({
+    queryKey: queryKeys.calendar(),
+    queryFn: fetchCalendar,
+    refetchInterval: RECONCILE_MS,
   });
 }
 

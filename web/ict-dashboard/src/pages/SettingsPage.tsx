@@ -15,8 +15,8 @@
 
 import { useMemo, useState } from 'react';
 import type { UseMutationResult } from '@tanstack/react-query';
-import { useConfig, useSettings, useUpdateInstrumentSettings } from '../api/hooks';
-import type { GlobalConceptSettingsDto, InstrumentSettingsDto } from '../types/api';
+import { useCalendar, useConfig, useSettings, useUpdateInstrumentSettings } from '../api/hooks';
+import type { CalendarStatusDto, GlobalConceptSettingsDto, InstrumentSettingsDto } from '../types/api';
 import { formatPct, formatPercentValue } from '../format';
 import { errorMessage } from '../format-error';
 
@@ -189,7 +189,76 @@ export function SettingsPage(): React.JSX.Element {
       </section>
 
       <GlobalConceptCard global={global} loading={settingsQ.isLoading} />
+
+      <EconomicCalendarCard />
     </div>
+  );
+}
+
+/**
+ * The economic-calendar status (§2.5.8): the source/loaded state, the upcoming FOMC/NFP/CPI events, and the §2.5.2
+ * no-trade days the gate enforces. Read-only — it shows what the scanner blocks, with no order control.
+ */
+function EconomicCalendarCard(): React.JSX.Element {
+  const calendarQ = useCalendar();
+  const calendar: CalendarStatusDto | undefined = calendarQ.data;
+
+  return (
+    <section className="panel" aria-label="Economic calendar">
+      <header className="panel__head">
+        <span>Economic calendar</span>
+        {calendar ? (
+          <span className="num neutral">
+            {calendar.enabled ? `${calendar.provider} · ${calendar.loaded ? 'loaded' : 'not loaded'}` : 'disabled'}
+          </span>
+        ) : null}
+      </header>
+      <div className="panel__body">
+        {calendarQ.isError ? (
+          <p className="empty error" role="alert">
+            Calendar unavailable — {errorMessage(calendarQ.error)}
+          </p>
+        ) : !calendar ? (
+          <p className="empty">{calendarQ.isLoading ? 'Loading…' : 'No calendar available.'}</p>
+        ) : !calendar.enabled ? (
+          <p className="empty">
+            The calendar feed is disabled (<code>Ict:Calendar:Enabled=false</code>), so the §2.5.2 FOMC/NFP gate is
+            fail-open — no day is blocked. Enable a source to enforce the no-trade days.
+          </p>
+        ) : (
+          <>
+            <div className="cfg__row">
+              <span className="cfg__label">Window (NY)</span>
+              <span className="cfg__value">
+                {calendar.fromDate} → {calendar.toDate} · {calendar.blackoutDates.length} no-trade day(s)
+              </span>
+            </div>
+            {calendar.events.length === 0 ? (
+              <p className="empty">No FOMC/NFP/CPI events in the window.</p>
+            ) : (
+              <table className="tbl" aria-label="Economic events" style={{ marginTop: 8 }}>
+                <thead>
+                  <tr>
+                    <th>Date (NY)</th>
+                    <th>Event</th>
+                    <th>No-trade</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {calendar.events.map((e) => (
+                    <tr key={`${e.date}-${e.type}`}>
+                      <td className="num">{e.date}</td>
+                      <td>{e.type}</td>
+                      <td className={`num ${e.isBlackout ? 'short' : 'long'}`}>{e.isBlackout ? 'blocked' : 'clear'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </>
+        )}
+      </div>
+    </section>
   );
 }
 

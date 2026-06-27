@@ -12,6 +12,7 @@ import type {
   AlertDto,
   BacktestDatasetDto,
   BacktestResponse,
+  CalendarStatusDto,
   CandleDto,
   ConfigStatusDto,
   EquityPointDto,
@@ -364,6 +365,23 @@ export const MOCK_SETTINGS: SettingsDto = {
     'AUDUSD', 'EURGBP', 'EURJPY', 'EURUSD', 'GBPJPY', 'GBPUSD',
     'NAS100USD', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY', 'XAUUSD',
   ],
+};
+
+// The economic-calendar status: an enabled Config feed with an FOMC + an NFP in the window. The FOMC day and the day
+// after are §2.5.2 no-trade days; the NFP and the two days before it (Wed/Thu) are too — so the offline app shows the
+// same blackout-day behavior the live gate applies.
+export const MOCK_CALENDAR: CalendarStatusDto = {
+  enabled: true,
+  loaded: true,
+  provider: 'Config',
+  fromDate: '2024-01-24',
+  toDate: '2024-02-20',
+  events: [
+    { date: '2024-01-31', type: 'Fomc', isBlackout: true },
+    { date: '2024-02-02', type: 'Nfp', isBlackout: true },
+    { date: '2024-02-13', type: 'Cpi', isBlackout: false },
+  ],
+  blackoutDates: ['2024-01-31', '2024-02-01', '2024-02-02'],
 };
 
 export const MOCK_DATASETS: BacktestDatasetDto[] = [
