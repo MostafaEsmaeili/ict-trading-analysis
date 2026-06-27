@@ -11,25 +11,33 @@ import * as lwc from 'lightweight-charts';
 
 vi.mock('lightweight-charts', () => {
   const setData = vi.fn();
+  const update = vi.fn();
   const applyOptions = vi.fn();
   const createPriceLine = vi.fn(() => ({ id: 'pl' }));
   const removePriceLine = vi.fn();
-  const series = { setData, applyOptions, createPriceLine, removePriceLine };
+  const series = { setData, update, applyOptions, createPriceLine, removePriceLine };
+  // Shared timeScale spies so fitContent/setVisibleRange call counts survive across renders.
+  const fitContent = vi.fn();
+  const setVisibleRange = vi.fn();
+  const timeScale = () => ({ fitContent, setVisibleRange });
   return {
     createChart: vi.fn(() => ({
       addSeries: vi.fn(() => series),
-      timeScale: () => ({ fitContent: vi.fn() }),
+      timeScale,
       remove: vi.fn(),
     })),
     createSeriesMarkers: vi.fn(() => ({ detach: vi.fn() })),
     CandlestickSeries: 'CandlestickSeries',
     ColorType: { Solid: 'solid' },
     LineStyle: { Solid: 0, Dotted: 1, Dashed: 2, LargeDashed: 3, SparseDotted: 4 },
+    // Re-expose the shared timeScale spies for assertions.
+    __timeScale: { fitContent, setVisibleRange },
   };
 });
 
 import { IctChart } from './IctChart';
 import { MOCK_CANDLES, MOCK_OVERLAYS } from '../mocks/fixtures';
+import type { CandleDto } from '../types/api';
 import { defaultOverlayVisibility } from '../types/overlays';
 
 /** Pull the single shared series instance back out of the mocked createChart. */
@@ -39,8 +47,13 @@ function mockedSeries() {
   };
   return chart.addSeries.mock.results.at(-1)?.value as {
     setData: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
     createPriceLine: ReturnType<typeof vi.fn>;
   };
+}
+
+function timeScaleSpies() {
+  return (lwc as unknown as { __timeScale: { fitContent: ReturnType<typeof vi.fn>; setVisibleRange: ReturnType<typeof vi.fn> } }).__timeScale;
 }
 
 describe('IctChart', () => {
@@ -70,5 +83,55 @@ describe('IctChart', () => {
 
     render(<IctChart candles={MOCK_CANDLES} overlays={MOCK_OVERLAYS} visibility={allOff} />);
     expect(mockedSeries().createPriceLine).not.toHaveBeenCalled();
+  });
+
+  it('uses series.update (not setData+fitContent) for an appended live bar', () => {
+    const vis = defaultOverlayVisibility();
+    const { rerender } = render(<IctChart candles={MOCK_CANDLES} overlays={[]} visibility={vis} />);
+
+    const series = mockedSeries();
+    const ts = timeScaleSpies();
+    // Initial load: one setData + one fitContent.
+    expect(series.setData).toHaveBeenCalledTimes(1);
+    expect(ts.fitContent).toHaveBeenCalledTimes(1);
+    expect(series.update).not.toHaveBeenCalled();
+
+    // Append one new bar (new array reference, same symbol/timeframe, strictly-newer last bar).
+    const last = MOCK_CANDLES[MOCK_CANDLES.length - 1];
+    const appended: CandleDto = {
+      ...last,
+      openTimeUtc: new Date(Date.parse(last.openTimeUtc) + 5 * 60_000).toISOString(),
+    };
+    rerender(<IctChart candles={[...MOCK_CANDLES, appended]} overlays={[]} visibility={vis} />);
+
+    // Incremental: update() called, NO second setData/fitContent (pan/zoom preserved).
+    expect(series.update).toHaveBeenCalledTimes(1);
+    expect(series.setData).toHaveBeenCalledTimes(1);
+    expect(ts.fitContent).toHaveBeenCalledTimes(1);
+  });
+
+  it('does a full setData+fitContent on a symbol switch (not an incremental update)', () => {
+    const vis = defaultOverlayVisibility();
+    const { rerender } = render(<IctChart candles={MOCK_CANDLES} overlays={[]} visibility={vis} />);
+    const series = mockedSeries();
+    const ts = timeScaleSpies();
+
+    // Switch symbol → dataset identity changes → full reload.
+    const other = MOCK_CANDLES.map((c) => ({ ...c, symbol: 'GBPUSD' }));
+    rerender(<IctChart candles={other} overlays={[]} visibility={vis} />);
+
+    expect(series.setData).toHaveBeenCalledTimes(2);
+    expect(ts.fitContent).toHaveBeenCalledTimes(2);
+    expect(series.update).not.toHaveBeenCalled();
+  });
+
+  it('seeks the visible range when a seekToUtc within the window is supplied', () => {
+    const vis = defaultOverlayVisibility();
+    const ts = timeScaleSpies();
+    const mid = MOCK_CANDLES[Math.floor(MOCK_CANDLES.length / 2)].openTimeUtc;
+    render(
+      <IctChart candles={MOCK_CANDLES} overlays={[]} visibility={vis} seekToUtc={mid} />,
+    );
+    expect(ts.setVisibleRange).toHaveBeenCalledTimes(1);
   });
 });

@@ -69,6 +69,54 @@ describe('mergeDeltas', () => {
     expect(appended).toHaveLength(2);
   });
 
+  it('inserts an out-of-order bar in ascending time order (never appends non-monotonic)', () => {
+    const base = [
+      candle('2026-06-19T06:00:00Z', 1.07),
+      candle('2026-06-19T06:10:00Z', 1.072),
+    ];
+    // A late/redelivered bar BETWEEN the two existing bars must be inserted, not appended.
+    const merged = appendCandle(base, candle('2026-06-19T06:05:00Z', 1.071));
+    expect(merged.map((c) => c.openTimeUtc)).toEqual([
+      '2026-06-19T06:00:00Z',
+      '2026-06-19T06:05:00Z',
+      '2026-06-19T06:10:00Z',
+    ]);
+  });
+
+  it('upserts an out-of-order duplicate in place rather than duplicating', () => {
+    const base = [
+      candle('2026-06-19T06:00:00Z', 1.07),
+      candle('2026-06-19T06:05:00Z', 1.071),
+      candle('2026-06-19T06:10:00Z', 1.072),
+    ];
+    // A redelivery of a NON-last existing bar must replace it (not append, not duplicate).
+    const merged = appendCandle(base, candle('2026-06-19T06:05:00Z', 1.0715));
+    expect(merged).toHaveLength(3);
+    expect(merged[1].close).toBe(1.0715);
+    expect(merged.map((c) => c.openTimeUtc)).toEqual([
+      '2026-06-19T06:00:00Z',
+      '2026-06-19T06:05:00Z',
+      '2026-06-19T06:10:00Z',
+    ]);
+  });
+
+  it('caps the series at MAX_CANDLES (1500), dropping the oldest bars', () => {
+    let list: CandleDto[] = [];
+    for (let i = 0; i < 1600; i++) {
+      // Sortable, strictly-increasing ISO times (minute resolution over ~26h is fine for the test).
+      const time = new Date(Date.parse('2026-06-19T00:00:00Z') + i * 60_000).toISOString();
+      list = appendCandle(list, candle(time, 1.07 + i * 1e-5));
+    }
+    expect(list).toHaveLength(1500);
+    // The newest bar is retained; the oldest 100 were evicted.
+    expect(list[list.length - 1].openTimeUtc).toBe(
+      new Date(Date.parse('2026-06-19T00:00:00Z') + 1599 * 60_000).toISOString(),
+    );
+    expect(list[0].openTimeUtc).toBe(
+      new Date(Date.parse('2026-06-19T00:00:00Z') + 100 * 60_000).toISOString(),
+    );
+  });
+
   it('derives trade-level + draw overlays from a streamed setup', () => {
     const setup: SetupDto = {
       id: 'x',
@@ -88,5 +136,33 @@ describe('mergeDeltas', () => {
     };
     const overlays = mergeSetupOverlays([], setup);
     expect(overlays.map((o) => o.kind)).toEqual(['tradeLevels', 'drawOnLiquidity']);
+    expect(overlays.every((o) => 'setupId' in o && o.setupId === 'x')).toBe(true);
+  });
+
+  it('de-dups overlays by setup id (a redelivered setup REPLACES, not stacks)', () => {
+    const setup: SetupDto = {
+      id: 'dup',
+      symbol: 'EURUSD',
+      direction: 'Bullish',
+      killzone: 'LondonOpen',
+      style: 'Intraday',
+      grade: 'A',
+      triggerTimeframe: 'M5',
+      entry: 1.0724,
+      stop: 1.0689,
+      targets: [1.0762, 1.079],
+      rewardRatio: 2.6,
+      reason: 'r',
+      detectedAtUtc: '2026-06-19T06:50:00Z',
+      isAdvisoryOnly: true,
+    };
+    const once = mergeSetupOverlays([], setup);
+    const twice = mergeSetupOverlays(once, setup);
+    // Same id merged twice yields the SAME count (2), not 4.
+    expect(twice).toHaveLength(2);
+
+    // A DIFFERENT setup id stacks alongside (its own 2 overlays).
+    const other = mergeSetupOverlays(twice, { ...setup, id: 'other' });
+    expect(other).toHaveLength(4);
   });
 });

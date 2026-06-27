@@ -8,12 +8,16 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import type { Killzone, PaperTradeDto, TradeDirection, TradeStyle } from '../types/api';
 import { directionTone } from '../theme';
 import { formatPrice } from '../format';
+import { errorMessage } from '../format-error';
 import { DirectionChip, KillzoneBadge, StyleChip } from './Badges';
+import type { FocusTarget } from './AlertsFeed';
 
 export interface ActivePaperTradesProps {
   trades: PaperTradeDto[];
   isLoading: boolean;
-  onFocusSymbol?: (symbol: string) => void;
+  isError?: boolean;
+  error?: unknown;
+  onFocus?: (target: FocusTarget) => void;
 }
 
 function timeInTrade(openedAtUtc: string): string {
@@ -23,7 +27,9 @@ function timeInTrade(openedAtUtc: string): string {
 export function ActivePaperTrades({
   trades,
   isLoading,
-  onFocusSymbol,
+  isError,
+  error,
+  onFocus,
 }: ActivePaperTradesProps): React.JSX.Element {
   return (
     <section className="panel" aria-label="Active paper trades">
@@ -32,7 +38,11 @@ export function ActivePaperTrades({
         <span className="badge-advisory">Paper</span>
       </header>
       <div className="panel__body panel__body--flush">
-        {isLoading ? (
+        {isError ? (
+          <p className="empty error" role="alert">
+            Trades unavailable — {errorMessage(error)}
+          </p>
+        ) : isLoading ? (
           <p className="empty">Loading trades…</p>
         ) : trades.length === 0 ? (
           <p className="empty">No open paper trades.</p>
@@ -52,7 +62,9 @@ export function ActivePaperTrades({
               {trades.map((t) => {
                 const tone = directionTone(t.direction);
                 const target = t.targets.at(-1);
-                const focus = onFocusSymbol ? () => onFocusSymbol(t.symbol) : undefined;
+                const focus = onFocus
+                  ? () => onFocus({ symbol: t.symbol, atUtc: t.openedAtUtc })
+                  : undefined;
                 return (
                   <tr
                     key={t.id}

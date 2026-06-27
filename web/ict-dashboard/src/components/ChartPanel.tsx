@@ -13,6 +13,7 @@ import {
   type OverlayVisibility,
 } from '../types/overlays';
 import { IctChart } from '../chart/IctChart';
+import { errorMessage } from '../format-error';
 import { KillzoneBadge, StyleChip } from './Badges';
 
 export const SYMBOLS = ['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD'] as const;
@@ -39,6 +40,10 @@ export interface ChartPanelProps {
   overlays: ChartOverlay[];
   visibility: OverlayVisibility;
   isLoading: boolean;
+  isError?: boolean;
+  error?: unknown;
+  /** Optional UTC instant to seek the chart to (focus-on-alert/trade). */
+  seekToUtc?: string;
   activeKillzone: Killzone | null;
   triggerTimeframe: string | null;
   onSymbolChange: (symbol: string) => void;
@@ -56,6 +61,9 @@ export function ChartPanel(props: ChartPanelProps): React.JSX.Element {
     overlays,
     visibility,
     isLoading,
+    isError,
+    error,
+    seekToUtc,
     activeKillzone,
     triggerTimeframe,
     onSymbolChange,
@@ -110,12 +118,23 @@ export function ChartPanel(props: ChartPanelProps): React.JSX.Element {
         </div>
       </header>
 
-      {isLoading ? (
+      {isError ? (
+        <div className="chart-surface">
+          <p className="empty error" role="alert">
+            Chart unavailable — {errorMessage(error)}
+          </p>
+        </div>
+      ) : isLoading ? (
         <div className="chart-surface">
           <p className="empty">Loading candles…</p>
         </div>
       ) : (
-        <IctChart candles={candles} overlays={overlays} visibility={visibility} />
+        <IctChart
+          candles={candles}
+          overlays={overlays}
+          visibility={visibility}
+          seekToUtc={seekToUtc}
+        />
       )}
 
       <div className="chart-legend" role="group" aria-label="Overlay toggles">
