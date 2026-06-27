@@ -1214,3 +1214,41 @@ making specific global knobs (risk %, active killzones/styles) live-editable wou
 orchestrator factory overlay — a clean follow-on. (4) `Ict:Calendar` is documented (commented, `Enabled:false`) in
 `appsettings.json` with `Fmp.ApiKey` sourced from env, never committed. **To enable the gate live:** set
 `Ict:Calendar:Enabled=true`, a provider, and (Config) the FOMC/NFP dates — or an FMP key.
+
+**🏁 Optimized-state retune + live demo run (issue #171, PR #172 → merged).** Re-ran the optimizer/backtests over the
+FULL history (data-driven, not stale notes) to settle the best per-pair config, baked the winners as the LIVE defaults
+in `Ict:Instruments`, and proved the optimized model end-to-end on a clean run. **Confirmed per-pair optima
+(full-history Intraday):**
+- **EURUSD → strict §2.5 (all 8), best on M15** — 15 trades, 60% win, +0.28R, **PF 1.97**, maxDD 1.33R (the single
+  strongest combo; no override — strict IS its optimum).
+- **NAS100USD → drop FvgPresent (7-concept), best on M5** — 16 trades, +0.41R, **PF 1.80** (already baked; reconfirmed).
+- **GBPUSD → drop {LiquiditySweep, FvgPresent} (6-concept), best on M15** — 13 trades, 69% win, +0.62R, **PF 4.44**,
+  +2.9%. **NEWLY BAKED (#172)** as `Ict:Instruments:Overrides:GBPUSD`. ⚠ AGGRESSIVE/EXPERIMENTAL: GBPUSD *loses* strict
+  (M15 PF 0.95 / M5 PF 1.06 net-flat), and this is the only net-profitable config found — but it drops TWO core ICT
+  concepts (the Judas sweep AND the FVG) on a 13-trade sample. Opt-in per-pair; the global model stays strict; flagged
+  in the appsettings comment; re-validate before relying on it.
+- **Method note:** the optimizer's `ProfitFactor` objective surfaces tiny-sample flukes (e.g. a 3-trade M30 PF 3.98) —
+  filter for a meaningful trade count (≥~10) before trusting a PF/expectancy winner. A full 464-combo sweep took ~7 min;
+  prefer targeted single full-period backtests (~1s each) when confirming a handful of candidates.
+
+**Optimized live run (the proof, on a CLEAN DB):** dropped+recreated the `icttrader` DB, applied migrations, and ran the
+best combo (Replay = **EURUSD M15, 2024→2026**, a gitignored trimmed `data/EURUSD-M15-live.csv`, ~62k candles, ~5 min)
+through the real feed→scan→trade→persist→perf chain: **17 setups → 5 paper trades, 80% win, +0.82R avg, PF 5.12, maxDD
+1.00R, equity +3.4%** — incl. a **Grade-A** EURUSD setup (order block + 08:30-macro confluence). The dashboard rendered
+it live (Alerts feed with full §2.5 reasoning, Trades, Performance, Settings showing the GBPUSD 6/8 + NAS100 7/8
+overrides). The calendar gate was OFF for this run (alerts read "calendar clear — no data loaded").
+
+**To reproduce the optimized run (2 terminals, sandbox-disabled for the .NET socket):** `docker compose up -d postgres`;
+reset+migrate if you want a clean slate (`DROP DATABASE icttrader; CREATE DATABASE icttrader;` via
+`docker exec icttrader-postgres psql -U icttrader -d postgres`, then
+`ConnectionStrings__PaperTrading=Host=localhost;Port=55432;Database=icttrader;Username=icttrader;Password=icttrader_dev dotnet ef database update --project src/Modules/PaperTrading/Infrastructure --startup-project src/IctTrader.Host`);
+run the Host with that connection string + `Ict__Backtest__DataDirectory=<repo>/data` + `Ict__MarketData__Provider=Replay`
++ `Ict__MarketData__Replay__Enabled=true` + `Ict__MarketData__Replay__FixturePath=<repo>/data/EURUSD-M15-live.csv` on
+`--urls http://localhost:5080 --no-launch-profile`; then `cd web/ict-dashboard && VITE_USE_MOCKS=false npm run dev` →
+`http://localhost:5173`. Backtest/Optimizer are in-memory (no DB needed); Trades/Live/Performance need Postgres.
+
+**CONVENTION (dev hygiene):** a backgrounded `dotnet run` Host keeps `IctTrader.Host.exe` alive and LOCKS the output
+DLLs — a later `dotnet build` then fails with MSB3026 "being used by another process" (looks like spurious errors).
+Before rebuilding, kill ONLY the project's host (not other repos' dotnet): `Get-Process IctTrader.Host | Stop-Process
+-Force` (plus the `dotnet run` wrapper via `Get-CimInstance Win32_Process -Filter "Name='dotnet.exe'" | ? CommandLine
+-match IctTrader | % { Stop-Process -Id $_.ProcessId -Force }`), or stop the background task first.
