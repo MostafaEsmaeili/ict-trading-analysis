@@ -253,4 +253,27 @@ public class SetupScorerTests
         new ConfluenceOptions { MinRequiredConditions = 99 }.Validate().Should().NotBeEmpty();
         new ConfluenceOptions { MinRequiredConditions = 5 }.Validate().Should().BeEmpty(); // 5 ≤ 8 default required
     }
+
+    [Fact]
+    public void A_required_subset_confirms_a_setup_that_the_full_strict_set_would_reject()
+    {
+        // The feature-subset search: require only {Bias, Killzone, Sweep, MSS, FVG, Draw} — drop PremiumDiscountHalf
+        // + CalendarClear to OPTIONAL. A setup matching just those six now confirms (strict-on-subset ⇒ TGR-4 B),
+        // whereas the full strict §2.5 set rejects it (PD + Calendar missing). The dropped two still score if matched.
+        var subset = new[]
+        {
+            ConfluenceCondition.BiasAligned, ConfluenceCondition.KillzoneEntry, ConfluenceCondition.LiquiditySweep,
+            ConfluenceCondition.DisplacementMss, ConfluenceCondition.FvgPresent, ConfluenceCondition.DrawTargetRrMet,
+        };
+        var applicable = new ConfluenceOptions().Weights.Keys.ToHashSet();
+        var matched = subset.ToHashSet();
+
+        var subsetOptions = new ConfluenceOptions()
+            .WithRequiredConditions(subset)
+            .WithMinRequiredConditions(subset.Length); // require the whole subset (strict-on-subset)
+        new SetupScorer(subsetOptions).Score(matched, applicable).Grade.Should().Be(SetupGrade.B);
+
+        // The canonical full required set rejects the SAME matched set (PremiumDiscountHalf + CalendarClear missing).
+        new SetupScorer(new ConfluenceOptions()).Score(matched, applicable).Grade.Should().Be(SetupGrade.Reject);
+    }
 }

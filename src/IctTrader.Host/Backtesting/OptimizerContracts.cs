@@ -17,7 +17,11 @@ public sealed record OptimizeRequest(
     DateTimeOffset? ToUtc = null,
     string? Objective = null,
     int TopN = 25,
-    IReadOnlyList<int>? MinRequiredConditions = null);
+    IReadOnlyList<int>? MinRequiredConditions = null,
+    // Feature-subset search over WHICH concepts to require: explicit candidate subsets…
+    IReadOnlyList<IReadOnlyList<string>>? RequiredConditionSets = null,
+    // …or auto-generate them by dropping up to this many of the (non-MSS) default required conditions to optional.
+    int? LeaveOutUpTo = null);
 
 /// <summary>One ranked combination's headline result — the parameters plus the key R-based metrics, ending balance,
 /// and the objective score it was ranked by.</summary>
@@ -27,6 +31,7 @@ public sealed record OptimizerResultDto(
     string Style,
     decimal RiskPercent,
     int? MinRequiredConditions,
+    IReadOnlyList<string>? RequiredConditions,
     int TradeCount,
     decimal WinRate,
     decimal AverageR,

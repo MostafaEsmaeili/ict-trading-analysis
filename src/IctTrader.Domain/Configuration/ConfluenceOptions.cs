@@ -57,6 +57,27 @@ public sealed class ConfluenceOptions
     };
 
     /// <summary>
+    /// Returns a copy with <see cref="RequiredConditions"/> overridden — the per-run "which concepts to require"
+    /// subset the optimizer's feature-subset search varies (e.g. require {Bias, Killzone, Sweep, MSS, FVG, Draw},
+    /// dropping {PremiumDiscount, Calendar} to optional/scored). The dropped conditions still contribute to the
+    /// weighted §2.5.4 score; only the gate changes. <see cref="MinRequiredConditions"/> is preserved.
+    /// </summary>
+    public ConfluenceOptions WithRequiredConditions(IReadOnlyList<ConfluenceCondition> requiredConditions)
+    {
+        ArgumentNullException.ThrowIfNull(requiredConditions);
+        return new ConfluenceOptions
+        {
+            Weights = Weights,
+            RequiredConditions = requiredConditions,
+            GradeAThreshold = GradeAThreshold,
+            GradeBThreshold = GradeBThreshold,
+            GradeCThreshold = GradeCThreshold,
+            AlertMinimumGrade = AlertMinimumGrade,
+            MinRequiredConditions = MinRequiredConditions,
+        };
+    }
+
+    /// <summary>
     /// Applies a symbol's per-instrument confluence override (its baked tuning result, e.g. NAS100 → 6-of-8). The
     /// explicit per-run <see cref="MinRequiredConditions"/> (set by a backtest request / optimizer combo) WINS over
     /// the instrument's baked value, so a sweep can still override it; an unset per-run value falls back to the
@@ -67,7 +88,20 @@ public sealed class ConfluenceOptions
     public ConfluenceOptions WithInstrumentOverrides(InstrumentOptionOverrides overrides)
     {
         ArgumentNullException.ThrowIfNull(overrides);
-        return WithMinRequiredConditions(MinRequiredConditions ?? overrides.MinRequiredConditions);
+
+        var result = this;
+
+        // The required-condition SUBSET (which concepts to require). A per-run subset (a backtest set RequiredConditions
+        // explicitly) WINS; otherwise the instrument's baked subset (e.g. NAS100 drops FvgPresent) applies. An empty
+        // per-run set means "not explicitly chosen", so the instrument's subset can fill in.
+        if (RequiredConditions.Count == 0 && overrides.RequiredConditions is { Count: > 0 } instrumentSubset)
+        {
+            result = result.WithRequiredConditions(instrumentSubset);
+        }
+
+        // The required COUNT (k-of-n). The explicit per-run value wins; else the instrument's baked k. FX None leaves
+        // both unset (strict, byte-identical).
+        return result.WithMinRequiredConditions(result.MinRequiredConditions ?? overrides.MinRequiredConditions);
     }
 
     /// <summary>The score at or above which an all-required setup is promoted from B to A (§2.5.4 — the one

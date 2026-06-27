@@ -131,6 +131,32 @@ public sealed class BacktestEndpointTests : IDisposable
         result.Results.Should().OnlyContain(r => r.Symbol == "EURUSD" && r.Timeframe == "M5");
     }
 
+    [Fact]
+    public async Task The_optimizer_subset_search_generates_leave_out_combinations()
+    {
+        await using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+
+        // LeaveOutUpTo = 1 over EURUSD M5: drop-0 (the full 8) + drop-1 (7 single-drop subsets) = 8 combinations,
+        // each carrying the required-condition subset it ran (DisplacementMss is never dropped — it stays in every set).
+        var request = new OptimizeRequest(
+            Symbols: ["EURUSD"],
+            Styles: ["Intraday"],
+            RiskPercents: [1.0m],
+            StartingBalance: 10_000m,
+            Timeframes: ["M5"],
+            LeaveOutUpTo: 1);
+
+        var response = await client.PostAsJsonAsync("/api/backtest/optimize", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<OptimizeResponse>();
+        result.Should().NotBeNull();
+        result!.CombinationCount.Should().Be(8);
+        result.Results.Should().OnlyContain(r => r.RequiredConditions != null && r.RequiredConditions.Count >= 7);
+        result.Results.Should().OnlyContain(r => r.RequiredConditions!.Contains("DisplacementMss"));
+    }
+
     private WebApplicationFactory<Program> CreateFactory() => new BacktestFactory(_dataDir);
 
     /// <summary>Boots the Host with the backtest data dir pointed at the temp fixture and ingestion left OFF (Replay

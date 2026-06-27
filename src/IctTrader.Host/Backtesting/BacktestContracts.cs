@@ -18,7 +18,8 @@ public sealed record BacktestRequest(
     string? Timeframe = null,
     DateTimeOffset? FromUtc = null,
     DateTimeOffset? ToUtc = null,
-    int? MinRequiredConditions = null);
+    int? MinRequiredConditions = null,
+    IReadOnlyList<string>? RequiredConditions = null);
 
 /// <summary>One point on a backtest equity curve: the account balance and the cumulative R at a trade's close.</summary>
 public sealed record BacktestEquityPointDto(DateTimeOffset AtUtc, decimal Equity, decimal CumulativeR);
@@ -37,6 +38,7 @@ public sealed record BacktestResponse(
     decimal StartingBalance,
     decimal RiskPercent,
     int? MinRequiredConditions,
+    IReadOnlyList<string>? RequiredConditions,
     decimal EndingBalance,
     int CandlesProcessed,
     int SetupCount,

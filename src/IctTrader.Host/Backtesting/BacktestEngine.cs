@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using IctTrader.Domain.Configuration;
+using IctTrader.Domain.Detection;
 using IctTrader.Domain.Instruments;
 using IctTrader.Domain.Services;
 using IctTrader.Domain.Setups;
@@ -114,7 +115,7 @@ public sealed class BacktestEngine
             .ToList();
 
         var perRunRisk = BuildRisk(_defaultRisk, request.RiskPercent);
-        var perRunConfluence = BuildConfluence(request.MinRequiredConditions);
+        var perRunConfluence = BuildConfluence(request.MinRequiredConditions, request.RequiredConditions);
 
         if (candles.Count == 0)
         {
@@ -122,8 +123,8 @@ public sealed class BacktestEngine
             var emptyTo = request.ToUtc ?? emptyFrom;
             return new BacktestResponse(
                 symbol.Value, timeframe.ToString(), style.ToString(), emptyFrom, emptyTo,
-                request.StartingBalance, request.RiskPercent, request.MinRequiredConditions, request.StartingBalance,
-                0, 0, 0, EmptySummary(), [], []);
+                request.StartingBalance, request.RiskPercent, request.MinRequiredConditions, request.RequiredConditions,
+                request.StartingBalance, 0, 0, 0, EmptySummary(), [], []);
         }
 
         var profile = _instruments.Resolve(symbol);
@@ -306,8 +307,8 @@ public sealed class BacktestEngine
         return new BacktestResponse(
             symbol.Value, timeframe.ToString(), style.ToString(),
             candles[0].OpenTimeUtc, candles[^1].OpenTimeUtc,
-            request.StartingBalance, request.RiskPercent, request.MinRequiredConditions, account.Equity.Amount,
-            candles.Count, setupCount, trades.Count,
+            request.StartingBalance, request.RiskPercent, request.MinRequiredConditions, request.RequiredConditions,
+            account.Equity.Amount, candles.Count, setupCount, trades.Count,
             ToDto(summary), equity, trades);
     }
 
@@ -419,16 +420,36 @@ public sealed class BacktestEngine
         return risk;
     }
 
-    /// <summary>Builds the per-run <see cref="ConfluenceOptions"/> when the request relaxes the required gate (k-of-n),
-    /// validated; <c>null</c> (strict §2.5, all required) leaves the scanner on the host default.</summary>
-    private ConfluenceOptions? BuildConfluence(int? minRequiredConditions)
+    /// <summary>
+    /// Builds the per-run <see cref="ConfluenceOptions"/> when the request relaxes the required gate — either by
+    /// COUNT (<paramref name="minRequiredConditions"/>, k-of-n) or by SUBSET
+    /// (<paramref name="requiredConditions"/>, which specific concepts to require; the optimizer's feature-subset
+    /// search). <c>null</c>/<c>null</c> leaves the scanner on the host default (the strict §2.5 model + any baked
+    /// per-instrument override). When a subset is given it is required IN FULL by default (strict-on-subset), and the
+    /// non-null count blocks a per-instrument k from overriding the explicit subset gate. Validated.
+    /// </summary>
+    private ConfluenceOptions? BuildConfluence(int? minRequiredConditions, IReadOnlyList<string>? requiredConditions)
     {
-        if (minRequiredConditions is null)
+        if (minRequiredConditions is null && requiredConditions is null)
         {
             return null;
         }
 
-        var confluence = _defaultConfluence.WithMinRequiredConditions(minRequiredConditions);
+        var confluence = _defaultConfluence;
+        if (requiredConditions is not null)
+        {
+            var subset = ParseConditions(requiredConditions);
+            // Require the whole subset by default (= subset size); an explicit count still wins and, being non-null,
+            // also prevents the per-instrument k (applied later by the scanner) from loosening the explicit subset.
+            confluence = confluence
+                .WithRequiredConditions(subset)
+                .WithMinRequiredConditions(minRequiredConditions ?? subset.Count);
+        }
+        else
+        {
+            confluence = confluence.WithMinRequiredConditions(minRequiredConditions);
+        }
+
         var errors = confluence.Validate();
         if (errors.Count > 0)
         {
@@ -436,6 +457,29 @@ public sealed class BacktestEngine
         }
 
         return confluence;
+    }
+
+    /// <summary>Parses the required-condition names into <see cref="ConfluenceCondition"/>s (case-insensitive); throws
+    /// <see cref="ArgumentException"/> on an empty list or an unknown name.</summary>
+    private static IReadOnlyList<ConfluenceCondition> ParseConditions(IReadOnlyList<string> names)
+    {
+        if (names.Count == 0)
+        {
+            throw new ArgumentException("RequiredConditions must contain at least one condition.");
+        }
+
+        var parsed = new List<ConfluenceCondition>(names.Count);
+        foreach (var name in names)
+        {
+            if (!Enum.TryParse<ConfluenceCondition>(name, ignoreCase: true, out var condition))
+            {
+                throw new ArgumentException($"Unknown confluence condition '{name}'.");
+            }
+
+            parsed.Add(condition);
+        }
+
+        return parsed;
     }
 
     private static void ValidateRiskAndBalance(BacktestRequest request)

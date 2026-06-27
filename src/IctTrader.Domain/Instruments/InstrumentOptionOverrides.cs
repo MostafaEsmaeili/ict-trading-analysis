@@ -1,3 +1,5 @@
+using IctTrader.Domain.Detection;
+
 namespace IctTrader.Domain.Instruments;
 
 /// <summary>
@@ -77,6 +79,13 @@ public sealed record InstrumentOptionOverrides
     /// (<c>Ict:Instruments</c>), surfaced/overridable in appsettings, never silently magic.</summary>
     public int? MinRequiredConditions { get; init; }
 
+    /// <summary>The per-instrument required-condition SUBSET (<c>ConfluenceOptions.RequiredConditions</c>) — the BAKED
+    /// feature-subset tuning result: WHICH specific concepts to require for this symbol (the dropped ones become
+    /// optional/scored). <c>null</c> = the canonical §2.5 all-required set (FX majors). The optimizer's subset search
+    /// found, e.g., that NAS100 trades best WITHOUT requiring an FVG (PF 1.8 vs 0.7 strict), so the index carries the
+    /// 7-condition set here. A per-run backtest subset still wins. Sourced from config (<c>Ict:Instruments</c>).</summary>
+    public IReadOnlyList<ConfluenceCondition>? RequiredConditions { get; init; }
+
     /// <summary>The no-override sentinel — FX carries this so its option POCOs are returned unchanged (byte-identical).</summary>
     public static InstrumentOptionOverrides None { get; } = new();
 
@@ -102,6 +111,7 @@ public sealed record InstrumentOptionOverrides
             CommissionPerLotRoundTripUsd = other.CommissionPerLotRoundTripUsd ?? CommissionPerLotRoundTripUsd,
             UseMacroOpenReference = other.UseMacroOpenReference ?? UseMacroOpenReference,
             MinRequiredConditions = other.MinRequiredConditions ?? MinRequiredConditions,
+            RequiredConditions = other.RequiredConditions ?? RequiredConditions,
         };
     }
 }

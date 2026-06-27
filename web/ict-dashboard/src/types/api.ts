@@ -206,6 +206,8 @@ export interface BacktestRequest {
   toUtc?: string;
   /** "k of n" required-condition relaxation; omit/undefined = strict all-required §2.5 model. */
   minRequiredConditions?: number;
+  /** The specific concepts to require (the feature-subset); omit = the default/instrument required set. */
+  requiredConditions?: string[];
 }
 
 /**
@@ -228,6 +230,7 @@ export interface BacktestResponse {
   startingBalance: number;
   riskPercent: number;
   minRequiredConditions?: number | null;
+  requiredConditions?: string[] | null;
   endingBalance: number;
   candlesProcessed: number;
   setupCount: number;
@@ -250,6 +253,10 @@ export interface OptimizeRequest {
   topN: number;
   /** Sweep the "k of n" required-condition relaxation; omit = strict only (all required). */
   minRequiredConditions?: number[];
+  /** Explicit candidate required-condition subsets to sweep (each a list of concept names). */
+  requiredConditionSets?: string[][];
+  /** Auto-generate subsets by dropping up to this many of the (non-MSS) default required conditions. */
+  leaveOutUpTo?: number;
 }
 
 /** One row of the optimizer leaderboard — a single (symbol,tf,style,risk%) combination's result. */
@@ -259,6 +266,7 @@ export interface OptimizerResultDto {
   style: string;
   riskPercent: number;
   minRequiredConditions?: number | null;
+  requiredConditions?: string[] | null;
   tradeCount: number;
   winRate: number;
   averageR: number;
