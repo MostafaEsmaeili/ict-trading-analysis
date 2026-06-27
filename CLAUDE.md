@@ -1141,3 +1141,33 @@ the full-range optimizer sweep (bound the period or add a warm candle cache — 
 persistence + time-range chart for historical overlays; the §2.5.8 long-tail. **Git cadence note:** after a merge+sync
 the working branch is `main` — remember to `git switch -c` a fresh branch BEFORE editing the next slice (twice this
 session edits landed on `main` and had to be moved to a branch; harmless but avoidable).
+
+**🏁 Per-instrument tuned defaults + optimizer feature-subset search (PRs #160/#162, issues #159/#161 — MERGED).** Two
+slices that answer "tune each pair, and use it": the optimizer now searches WHICH concepts to require (not just how
+many), and a winning per-pair setting becomes the LIVE default. Suite **736 unit + 23 arch + 55 integration (1 skip) +
+12 E2E**, 0 warnings, format clean; frontend typecheck/lint clean + 69 vitest.
+
+- **(#160) Per-instrument config seam (`Ict:Instruments`).** `InstrumentOptionOverrides.MinRequiredConditions`
+  (+ later `RequiredConditions`) + `OverlayWith`; `ConfluenceOptions.WithInstrumentOverrides` applies the symbol's baked
+  gate with **explicit-per-run precedence** (the scanner applies it LAST); `ScannerOptions.WithInstrumentOverrides`
+  threads it into the confluence FSM. A `ConfigurableInstrumentRegistry` overlays `Ict:Instruments:Overrides:<sym>` on
+  the built-in catalog (config wins where set, built-in index geometry survives), registered in the Host BEFORE the
+  modules so scanner/orchestrator/backtest all resolve it.
+- **(#162) Optimizer feature-subset search.** `ConfluenceOptions.WithRequiredConditions` (per-run subset); the backtest
+  takes `RequiredConditions`; the optimizer sweeps subsets — explicit `RequiredConditionSets` or auto `LeaveOutUpTo`
+  (drop up to k of the **non-MSS** required to optional; `DisplacementMss` is NEVER dropped — the FSM needs it to lock
+  direction). Each leaderboard row reports its required subset; the dashboard Optimizer gained a "drop up to" control +
+  a Dropped column. The winning subset bakes per-instrument via `InstrumentOptionOverrides.RequiredConditions`.
+
+**📊 KEY TUNING FINDING (the subset search beats the count):** **NAS100 trades best WITHOUT requiring an FVG** —
+requiring `FvgPresent` filtered out good index trades, so dropping it to optional/scored gave **PF ~1.8 (16 trades) vs
+the strict all-8 PF 0.7** over the full history (more explainable + better than the blind 6-of-8 count, PF 1.78).
+**EURUSD stays strict** (M15 PF 1.97, best by ending balance). So `appsettings` bakes **`Ict:Instruments:Overrides:
+NAS100USD:RequiredConditions` = the 7-concept set (FvgPresent optional)**; a DEFAULT NAS100 M5 backtest now runs that
+subset (PF 1.8) with no per-run override, EURUSD M15 stays strict. **CONVENTION: a baked per-pair tuning result lives in
+`Ict:Instruments` (operator-visible), the strict §2.5 model stays the global default, and an explicit per-run backtest/
+optimizer value always wins over the baked one.** Re-run the optimizer `leaveOutUpTo` subset search to retune.
+
+**Note (appsettings JSON comments):** `appsettings.json` uses `//` comments throughout — the .NET config provider
+allows them (the Host boots fine), but the IDE's strict-JSON linter flags them as errors. They are false positives;
+keep the established commented style (it documents every invented/derived number).
