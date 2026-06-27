@@ -85,6 +85,21 @@ describe('IctChart', () => {
     expect(mockedSeries().createPriceLine).not.toHaveBeenCalled();
   });
 
+  it('INITIAL data load calls setData + fitContent (full render), NOT series.update', () => {
+    const vis = defaultOverlayVisibility();
+    render(<IctChart candles={MOCK_CANDLES} overlays={[]} visibility={vis} />);
+
+    const series = mockedSeries();
+    const ts = timeScaleSpies();
+    // The first-ever data for the series must render the WHOLE series and fit the time scale so all the
+    // candles (and their overlays) are visible — the auto-scale-to-one-bar (~4-pip window) regression is
+    // precisely the case where update() is wrongly used on first load.
+    expect(series.setData).toHaveBeenCalledTimes(1);
+    expect(series.setData.mock.calls[0][0]).toHaveLength(MOCK_CANDLES.length);
+    expect(ts.fitContent).toHaveBeenCalledTimes(1);
+    expect(series.update).not.toHaveBeenCalled();
+  });
+
   it('uses series.update (not setData+fitContent) for an appended live bar', () => {
     const vis = defaultOverlayVisibility();
     const { rerender } = render(<IctChart candles={MOCK_CANDLES} overlays={[]} visibility={vis} />);
@@ -159,6 +174,31 @@ describe('IctChart', () => {
     expect(series.setData).toHaveBeenCalledTimes(2);
     expect(ts.fitContent).toHaveBeenCalledTimes(2);
     expect(series.update).not.toHaveBeenCalled();
+  });
+
+  it('re-renders fully (setData + fitContent) when the series is RECREATED (remount), not incrementally', () => {
+    // The live regression: when the chart effect tears down and recreates the series (remount / StrictMode
+    // double-invoke), the new series is EMPTY. The candle effect must NOT treat the same candles as an
+    // incremental append against the stale (now-destroyed) series — it must do a full setData + fitContent,
+    // else lightweight-charts auto-scales to a single pushed bar's ~4-pip range with no visible candles.
+    const vis = defaultOverlayVisibility();
+    const { unmount } = render(<IctChart candles={MOCK_CANDLES} overlays={[]} visibility={vis} />);
+
+    const ts = timeScaleSpies();
+    expect(ts.fitContent).toHaveBeenCalledTimes(1);
+    unmount();
+
+    // Mount a fresh instance with the SAME candles (same symbol|timeframe identity).
+    render(<IctChart candles={MOCK_CANDLES} overlays={[]} visibility={vis} />);
+    // NOTE: the lightweight-charts mock returns a SINGLE shared series object across all chart instances,
+    // so its spy call-counts accumulate across both mounts. The remount must have done a FULL render: a
+    // second setData of the whole series + a second fitContent, and update() must NEVER have fired (the
+    // regression would have routed the remount through series.update on the new empty series → no fit).
+    const series = mockedSeries();
+    expect(series.setData).toHaveBeenCalledTimes(2);
+    expect(series.setData.mock.calls.at(-1)?.[0]).toHaveLength(MOCK_CANDLES.length);
+    expect(series.update).not.toHaveBeenCalled();
+    expect(ts.fitContent).toHaveBeenCalledTimes(2); // one fit per mounted instance
   });
 
   it('seeks the visible range when a seekToUtc within the window is supplied', () => {
