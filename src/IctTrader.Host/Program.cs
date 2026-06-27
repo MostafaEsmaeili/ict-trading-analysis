@@ -1,9 +1,11 @@
 using IctTrader.Alerting.Application;
 using IctTrader.Alerting.Contracts;
+using IctTrader.Domain.Configuration;
 using IctTrader.Host;
 using IctTrader.Host.Hubs;
 using IctTrader.MarketData.Application.Chart;
 using IctTrader.MarketData.Contracts;
+using IctTrader.PaperTrading.Application;
 using IctTrader.PaperTrading.Contracts;
 using IctTrader.Performance.Application;
 using IctTrader.Performance.Contracts;
@@ -112,6 +114,21 @@ api.MapGet("/trades/active", async (IMessageBus bus) =>
         TypedResults.Ok(await bus.QueryAsync(new GetActiveTradesQuery())))
     .WithName("GetActiveTrades");
 
+// The full trades ledger (plan §5.3) — every trade, or filtered by status (Open/Closed) and/or symbol — for the
+// dashboard's trades table: REST → bus QueryAsync → the PaperTrading module's GetTradesQueryHandler, which projects
+// each PaperTrade aggregate (incl. its close reason, gross/net P&L, costs and R) to the wire DTO. Advisory only —
+// the DTO carries no order field and routes nowhere (§6.3 guardrail).
+api.MapGet("/trades", async (string? status, string? symbol, IMessageBus bus) =>
+        TypedResults.Ok(await bus.QueryAsync(new GetTradesQuery(status, symbol))))
+    .WithName("GetTrades");
+
+// The live demo-account status (plan §5.1/§5.3) — equity vs starting equity, the adaptive-risk peak/trough + win/
+// loss streaks, and open risk vs the §2.5.10 portfolio cap — for the dashboard's live-config panel: REST → bus
+// QueryAsync → the PaperTrading module's GetAccountStatusQueryHandler. Read-only — routes nowhere near an order path.
+api.MapGet("/account", async (IMessageBus bus) =>
+        TypedResults.Ok(await bus.QueryAsync(new GetAccountStatusQuery())))
+    .WithName("GetAccountStatus");
+
 // Real R-based performance read-side (plan §5.3): REST → bus QueryAsync → the Performance module's
 // GetPerformanceSummaryQueryHandler, which folds the accumulated closed-trade R stream through the pure
 // PerformanceCalculator. Read-only analytics — it routes nowhere near an order path (§6.3 guardrail).
@@ -139,6 +156,33 @@ api.MapGet("/chart/{symbol}", async (string symbol, string? tf, string? style, I
         return TypedResults.Ok(new ChartResponse(symbol, timeframe, style ?? ChartDefaults.Style, candles, overlays));
     })
     .WithName("GetChart");
+
+// The live operator config (plan §4.6) — the RESOLVED Ict:* options the scanner is running under (provider,
+// scanned symbols, active styles + killzones, base + portfolio risk, spread + commission, starting equity) — for
+// the dashboard's live-config panel. The Host projects it directly from the injected options (it is the integrator
+// that can read every module's config); read-only, routes nowhere near an order path (§6.3 guardrail).
+api.MapGet("/config", (
+        IOptions<MarketContextOptions> scanning,
+        IOptions<KillzoneEntryOptions> killzones,
+        IOptions<RiskOptions> risk,
+        IOptions<ExecutionCostOptions> execution,
+        IOptions<PaperTradingOptions> paperTrading,
+        IConfiguration configuration) =>
+    {
+        var providerRaw = configuration.GetValue<string>("Ict:MarketData:Provider");
+        var provider = string.IsNullOrWhiteSpace(providerRaw) ? "Replay" : providerRaw;
+        return TypedResults.Ok(new ConfigStatusDto(
+            Provider: provider,
+            Symbols: ConfigStatusBuilder.ResolveSymbols(provider, configuration),
+            ActiveStyles: scanning.Value.ResolvedActiveStyles.Select(s => s.ToString()).ToArray(),
+            ActiveKillzones: killzones.Value.ResolvedActiveKillzones.Select(k => k.ToString()).ToArray(),
+            BaseRiskPercent: risk.Value.BaseRiskPercent,
+            MaxOpenPortfolioRiskPercent: risk.Value.MaxOpenPortfolioRiskPercent,
+            SpreadBasePips: execution.Value.Spread.BasePips,
+            CommissionPerLotRoundTripUsd: execution.Value.Commission.PerLotRoundTripUsd,
+            StartingEquity: paperTrading.Value.StartingEquity));
+    })
+    .WithName("GetConfig");
 
 // Advisory only — this NEVER routes to a broker (plan §6.3); the simulator is wired in WP4.
 api.MapPost("/paper-trades", (ExecutePaperTradeRequest request) =>

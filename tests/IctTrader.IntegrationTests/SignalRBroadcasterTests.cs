@@ -33,7 +33,10 @@ public sealed class SignalRBroadcasterTests
     private static readonly PaperTradeDto Trade = new(
         Id: Guid.NewGuid(), SetupId: Guid.NewGuid(), Symbol: "EURUSD", Direction: "Bullish", Status: "Open",
         Style: "Intraday", Killzone: "LondonOpen", Entry: 1.0832m, Stop: 1.0800m, Targets: [1.0876m],
-        Size: 0.1m, OpenedAtUtc: DateTimeOffset.UnixEpoch, ClosedAtUtc: null, RealizedR: null);
+        Size: 0.1m, OpenedAtUtc: DateTimeOffset.UnixEpoch, ClosedAtUtc: null, RealizedR: null,
+        Lifecycle: "Open", CloseReason: null, NetR: null, GrossPnl: null, Costs: null, NetPnl: null,
+        HasScaledOut: false, IsBreakevenArmed: false, RiskBudget: 100m, Timeframe: "M5",
+        CurrentStop: 1.0800m, ExitPrice: null, ManagedFromUtc: DateTimeOffset.UnixEpoch);
 
     private static readonly PerformanceSummaryDto Summary = new(
         TradeCount: 3, WinRate: 0.66m, AverageR: 1.2m, ProfitFactor: 2.1m, Expectancy: 0.8m, MaxDrawdown: -1.5m);

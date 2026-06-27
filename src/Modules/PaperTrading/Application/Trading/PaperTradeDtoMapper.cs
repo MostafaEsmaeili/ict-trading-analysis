@@ -46,7 +46,21 @@ internal static class PaperTradeDtoMapper
             Size: trade.Size.Lots,
             OpenedAtUtc: trade.OpenedAtUtc,
             ClosedAtUtc: trade.ClosedAtUtc,
-            RealizedR: trade.RealizedR);
+            RealizedR: trade.RealizedR,
+            // Management + P&L state the aggregate already owns — the enum-like fields carry the domain MEMBER names.
+            Lifecycle: trade.Lifecycle.ToString(),
+            CloseReason: trade.CloseReason?.ToString(),
+            NetR: trade.NetR,
+            GrossPnl: trade.GrossPnl?.Amount,
+            Costs: trade.Costs?.Amount,
+            NetPnl: trade.NetPnl?.Amount,
+            HasScaledOut: trade.HasScaledOut,
+            IsBreakevenArmed: trade.IsBreakevenArmed,
+            RiskBudget: trade.RiskBudget.Amount,
+            Timeframe: trade.Timeframe.ToString(),
+            CurrentStop: trade.CurrentStop.Value,
+            ExitPrice: trade.ExitPrice?.Value,
+            ManagedFromUtc: trade.ManagedFromUtc);
     }
 
     /// <summary>
@@ -66,8 +80,23 @@ internal static class PaperTradeDtoMapper
         return ToDto(trade) with
         {
             Status = TradeStatus.Open.ToString(),
+            Lifecycle = TradeLifecycle.Open.ToString(),
             ClosedAtUtc = null,
             RealizedR = null,
+            // The realized outcome belongs only on the separate PaperTradeClosed event — keep an open notification
+            // internally consistent so a consumer segmenting on Status can never misread the close fields.
+            CloseReason = null,
+            NetR = null,
+            GrossPnl = null,
+            Costs = null,
+            NetPnl = null,
+            ExitPrice = null,
+            // Reset the management state to its at-open values too: in the same-bar open-then-close case the
+            // aggregate is already past these by the time the events drain, so mapping the post-advance state onto
+            // the OPEN notification would ship a trailed stop / breakeven-armed / scaled flag on a just-opened trade.
+            CurrentStop = trade.Stop.Value,
+            HasScaledOut = false,
+            IsBreakevenArmed = false,
         };
     }
 }

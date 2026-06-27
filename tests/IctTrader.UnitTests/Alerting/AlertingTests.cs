@@ -60,7 +60,20 @@ public sealed class AlertingTests
         Size: 0.31m,
         OpenedAtUtc: T0.AddMinutes(minute),
         ClosedAtUtc: T0.AddMinutes(minute + 30),
-        RealizedR: realizedR);
+        RealizedR: realizedR,
+        Lifecycle: "Closed",
+        CloseReason: "TargetHit",
+        NetR: realizedR,
+        GrossPnl: realizedR * 100m,
+        Costs: 0m,
+        NetPnl: realizedR * 100m,
+        HasScaledOut: false,
+        IsBreakevenArmed: false,
+        RiskBudget: 100m,
+        Timeframe: "M5",
+        CurrentStop: 1.0800m,
+        ExitPrice: 1.0920m,
+        ManagedFromUtc: T0.AddMinutes(minute));
 
     [Fact]
     public async Task The_alert_handlers_record_setup_and_trade_events_newest_first_over_the_bus()

@@ -19,4 +19,16 @@ public interface IPaperTradeRepository
     /// read-side and the warm-start set the orchestrator needs on reload.
     /// </summary>
     Task<IReadOnlyList<PaperTrade>> GetOpenAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns every CLOSED trade newest-first (by close time) — the realized history the dashboard's trades table
+    /// and the performance views read. A pure read; the returned aggregates route nowhere (§6.3).
+    /// </summary>
+    Task<IReadOnlyList<PaperTrade>> GetClosedAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns every trade (open and closed), most-recently-opened first — the full ledger the dashboard's trades
+    /// table renders. A pure read; the returned aggregates route nowhere (§6.3).
+    /// </summary>
+    Task<IReadOnlyList<PaperTrade>> GetAllAsync(CancellationToken cancellationToken = default);
 }

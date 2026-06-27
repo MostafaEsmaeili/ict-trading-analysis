@@ -38,4 +38,20 @@ internal sealed class PaperTradeRepository : IPaperTradeRepository
         => await _context.PaperTrades
             .Where(t => t.Status == TradeStatus.Open)
             .ToListAsync(cancellationToken);
+
+    /// <inheritdoc/>
+    /// <remarks>The Closed filter is a SQL string-equality predicate (enum-as-string column, plan §7); ordered
+    /// newest-first by close time so the trades table shows the most recent results at the top.</remarks>
+    public async Task<IReadOnlyList<PaperTrade>> GetClosedAsync(CancellationToken cancellationToken = default)
+        => await _context.PaperTrades
+            .Where(t => t.Status == TradeStatus.Closed)
+            .OrderByDescending(t => t.ClosedAtUtc)
+            .ToListAsync(cancellationToken);
+
+    /// <inheritdoc/>
+    /// <remarks>Ordered most-recently-opened first; the full ledger is small at paper volume.</remarks>
+    public async Task<IReadOnlyList<PaperTrade>> GetAllAsync(CancellationToken cancellationToken = default)
+        => await _context.PaperTrades
+            .OrderByDescending(t => t.OpenedAtUtc)
+            .ToListAsync(cancellationToken);
 }

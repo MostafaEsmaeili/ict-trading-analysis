@@ -407,6 +407,15 @@ public class PaperTradingFlowTests
         public Task<IReadOnlyList<PaperTrade>> GetOpenAsync(CancellationToken cancellationToken = default)
             => Task.FromResult<IReadOnlyList<PaperTrade>>(
                 _trades.Values.Where(t => t.Status == TradeStatus.Open).ToList());
+
+        public Task<IReadOnlyList<PaperTrade>> GetClosedAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<PaperTrade>>(
+                _trades.Values.Where(t => t.Status == TradeStatus.Closed)
+                    .OrderByDescending(t => t.ClosedAtUtc).ToList());
+
+        public Task<IReadOnlyList<PaperTrade>> GetAllAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<PaperTrade>>(
+                _trades.Values.OrderByDescending(t => t.OpenedAtUtc).ToList());
     }
 
     private sealed class FakeArmedEntryRepository : IArmedEntryRepository

@@ -41,7 +41,20 @@ public sealed class PerformanceModuleTests
         Size: 0.31m,
         OpenedAtUtc: T0,
         ClosedAtUtc: T0.AddMinutes(minute),
-        RealizedR: realizedR);
+        RealizedR: realizedR,
+        Lifecycle: "Closed",
+        CloseReason: "TargetHit",
+        NetR: realizedR,
+        GrossPnl: realizedR * 100m,
+        Costs: 0m,
+        NetPnl: realizedR * 100m,
+        HasScaledOut: false,
+        IsBreakevenArmed: false,
+        RiskBudget: 100m,
+        Timeframe: "M5",
+        CurrentStop: 1.0800m,
+        ExitPrice: 1.0920m,
+        ManagedFromUtc: T0);
 
     [Fact]
     public async Task The_closed_trade_handler_and_query_handlers_serve_real_R_based_metrics_over_the_bus()
