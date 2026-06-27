@@ -22,6 +22,10 @@ export function setupToOverlays(setup: SetupDto): ChartOverlay[] {
       stop: setup.stop,
       targets: setup.targets,
       rewardRatio: setup.rewardRatio,
+      // The entry MARKER pins to the confirming candle (detectedAtUtc) so the chart shows WHEN the
+      // trade enters, not only the entry price line. The symbol drives the marker's price-label precision.
+      entryUtc: setup.detectedAtUtc,
+      symbol: setup.symbol,
       setupId: setup.id,
     },
   ];

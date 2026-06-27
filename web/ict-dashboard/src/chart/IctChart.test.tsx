@@ -37,8 +37,10 @@ vi.mock('lightweight-charts', () => {
 
 import { IctChart } from './IctChart';
 import { MOCK_CANDLES, MOCK_OVERLAYS } from '../mocks/fixtures';
-import type { CandleDto } from '../types/api';
+import { setupToOverlays } from './setupToOverlays';
+import type { CandleDto, SetupDto } from '../types/api';
 import { defaultOverlayVisibility } from '../types/overlays';
+import type { SeriesMarker, Time } from 'lightweight-charts';
 
 /** Pull the single shared series instance back out of the mocked createChart. */
 function mockedSeries() {
@@ -54,6 +56,11 @@ function mockedSeries() {
 
 function timeScaleSpies() {
   return (lwc as unknown as { __timeScale: { fitContent: ReturnType<typeof vi.fn>; setVisibleRange: ReturnType<typeof vi.fn> } }).__timeScale;
+}
+
+/** The markers array handed to the LAST createSeriesMarkers(series, markers) call. */
+function lastMarkers(): SeriesMarker<Time>[] {
+  return (vi.mocked(lwc.createSeriesMarkers).mock.calls.at(-1)?.[1] ?? []) as SeriesMarker<Time>[];
 }
 
 describe('IctChart', () => {
@@ -209,5 +216,137 @@ describe('IctChart', () => {
       <IctChart candles={MOCK_CANDLES} overlays={[]} visibility={vis} seekToUtc={mid} />,
     );
     expect(ts.setVisibleRange).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('IctChart entry markers', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // The setup's entry candle is candle index 10 in MOCK_CANDLES (its openTimeUtc). A LONG (Bullish)
+  // setup must produce an arrowUp entry marker BELOW the bar at exactly that time, coloured long-green.
+  function longSetup(overrides: Partial<SetupDto> = {}): SetupDto {
+    return {
+      id: 'long-1',
+      symbol: 'EURUSD',
+      direction: 'Bullish',
+      killzone: 'LondonOpen',
+      style: 'Intraday',
+      grade: 'A',
+      triggerTimeframe: 'M5',
+      entry: 1.0919,
+      stop: 1.0689,
+      targets: [1.0962, 1.099],
+      rewardRatio: 2.6,
+      reason: 'r',
+      detectedAtUtc: MOCK_CANDLES[10].openTimeUtc,
+      isAdvisoryOnly: true,
+      ...overrides,
+    };
+  }
+
+  it('a Long setup produces an arrowUp entry marker at its detectedAtUtc (the entry POINT)', () => {
+    const vis = defaultOverlayVisibility();
+    render(
+      <IctChart
+        candles={MOCK_CANDLES}
+        overlays={setupToOverlays(longSetup())}
+        visibility={vis}
+      />,
+    );
+
+    const entry = lastMarkers().find((m) => typeof m.text === 'string' && m.text.startsWith('Entry'));
+    expect(entry).toBeDefined();
+    expect(entry?.shape).toBe('arrowUp'); // long → up-arrow
+    expect(entry?.position).toBe('belowBar'); // long arrow sits below the bar
+    // Pinned to the exact entry candle (detectedAtUtc), in UTC-seconds.
+    expect(entry?.time).toBe(Math.floor(Date.parse(MOCK_CANDLES[10].openTimeUtc) / 1000));
+    expect(entry?.text).toBe('Entry 1.09190'); // FX-major 5dp from the symbol
+  });
+
+  it('a Short setup produces an arrowDown entry marker ABOVE the bar', () => {
+    const vis = defaultOverlayVisibility();
+    render(
+      <IctChart
+        candles={MOCK_CANDLES}
+        overlays={setupToOverlays(longSetup({ direction: 'Bearish', entry: 1.075 }))}
+        visibility={vis}
+      />,
+    );
+
+    const entry = lastMarkers().find((m) => typeof m.text === 'string' && m.text.startsWith('Entry'));
+    expect(entry?.shape).toBe('arrowDown');
+    expect(entry?.position).toBe('aboveBar');
+  });
+
+  it('emits markers in ASCENDING time order across multiple setups', () => {
+    const vis = defaultOverlayVisibility();
+    // Two setups, supplied LATEST-first so an unsorted pipeline would emit descending times.
+    const later = longSetup({ id: 'later', detectedAtUtc: MOCK_CANDLES[14].openTimeUtc });
+    const earlier = longSetup({ id: 'earlier', detectedAtUtc: MOCK_CANDLES[10].openTimeUtc });
+    render(
+      <IctChart
+        candles={MOCK_CANDLES}
+        overlays={[...setupToOverlays(later), ...setupToOverlays(earlier)]}
+        visibility={vis}
+      />,
+    );
+
+    const times = lastMarkers().map((m) => m.time as number);
+    const ascending = [...times].sort((a, b) => a - b);
+    expect(times).toEqual(ascending);
+  });
+
+  it('de-dups entry markers by setup id (a re-delivered setup REPLACES, not stacks)', () => {
+    const vis = defaultOverlayVisibility();
+    const setup = longSetup({ id: 'dup' });
+    // The SAME setup's overlays delivered twice (a live re-emit) must yield ONE entry marker.
+    render(
+      <IctChart
+        candles={MOCK_CANDLES}
+        overlays={[...setupToOverlays(setup), ...setupToOverlays(setup)]}
+        visibility={vis}
+      />,
+    );
+
+    const entries = lastMarkers().filter(
+      (m) => typeof m.text === 'string' && m.text.startsWith('Entry'),
+    );
+    expect(entries).toHaveLength(1);
+  });
+
+  it('drops an entry marker whose detectedAtUtc is OUTSIDE the loaded candle window', () => {
+    const vis = defaultOverlayVisibility();
+    // An entry time one full step BEFORE the first candle — there is no bar to anchor it to.
+    const before = new Date(Date.parse(MOCK_CANDLES[0].openTimeUtc) - 5 * 60_000).toISOString();
+    render(
+      <IctChart
+        candles={MOCK_CANDLES}
+        overlays={setupToOverlays(longSetup({ detectedAtUtc: before }))}
+        visibility={vis}
+      />,
+    );
+
+    const entries = lastMarkers().filter(
+      (m) => typeof m.text === 'string' && m.text.startsWith('Entry'),
+    );
+    expect(entries).toHaveLength(0);
+  });
+
+  it('hides the entry marker when the tradeLevels overlay toggle is OFF', () => {
+    const vis = { ...defaultOverlayVisibility(), tradeLevels: false };
+    render(
+      <IctChart
+        candles={MOCK_CANDLES}
+        overlays={setupToOverlays(longSetup())}
+        visibility={vis}
+      />,
+    );
+
+    const entries = lastMarkers().filter(
+      (m) => typeof m.text === 'string' && m.text.startsWith('Entry'),
+    );
+    expect(entries).toHaveLength(0);
   });
 });

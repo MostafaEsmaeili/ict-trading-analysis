@@ -233,7 +233,24 @@ export function IctChart({
     [overlays, visibility],
   );
 
-  // Draw overlays as markers (sweep/MSS) + price lines (levels/zones/bands/liquidity/draw).
+  // The loaded candle window's [first, last] open-time bounds (UTC seconds). A marker/overlay whose time
+  // falls OUTSIDE this is dropped (lightweight-charts requires marker times to exist in the series data).
+  // Memoised on the window EDGES so the overlay effect only re-runs when the visible window actually grows
+  // (a strict append / symbol switch) — a forming-bar-in-place tick (same last time) re-uses the same
+  // bounds and does NOT redraw the markers/lines (the "not on every incremental bar unnecessarily" rule).
+  const firstCandleUtc = candles[0]?.openTimeUtc;
+  const lastCandleUtc = candles[candles.length - 1]?.openTimeUtc;
+  const windowBounds = useMemo(() => {
+    if (firstCandleUtc === undefined || lastCandleUtc === undefined) {
+      return undefined;
+    }
+    return {
+      from: toUtcTimestamp(firstCandleUtc),
+      to: toUtcTimestamp(lastCandleUtc),
+    };
+  }, [firstCandleUtc, lastCandleUtc]);
+
+  // Draw overlays as markers (sweep/MSS/entry) + price lines (levels/zones/bands/liquidity/draw).
   useEffect(() => {
     const chart = chartRef.current;
     const series = seriesRef.current;
@@ -243,6 +260,20 @@ export function IctChart({
 
     const markers: SeriesMarker<Time>[] = [];
     const priceLines: IPriceLine[] = [];
+    // De-dup entry markers by setup id: a live re-delivery of the same setup must REPLACE, not stack,
+    // its entry point (mirrors the overlay de-dup in mergeSetupOverlays). Anonymous (no setupId) entry
+    // markers — e.g. the mock fixture — fall back to a per-time key so distinct setups still coexist.
+    const entryMarkerKeys = new Set<string>();
+
+    // Is `utcIso` inside the loaded candle window? An out-of-window time has no bar to anchor a marker to,
+    // so the marker is dropped (lightweight-charts requires marker times to exist in the series data).
+    const inWindow = (utcIso: string): boolean => {
+      if (!windowBounds) {
+        return false;
+      }
+      const sec = toUtcTimestamp(utcIso);
+      return sec >= windowBounds.from && sec <= windowBounds.to;
+    };
 
     const line = (
       price: number,
@@ -310,7 +341,10 @@ export function IctChart({
           line(o.targetPrice, palette.pending, 'Draw', LineStyle.Dashed);
           break;
         case 'tradeLevels': {
-          line(o.entry, palette.entry, 'Entry', LineStyle.Solid, 2);
+          // The entry MARKER is the focus — a POINT at the exact entry candle/time + price. The entry
+          // PRICE LINE is kept (it shows the level across time) but made visually SECONDARY (dashed,
+          // thin) so the marker reads as the "when". Stop/targets keep their solid/dashed weight-2 lines.
+          line(o.entry, palette.entry, 'Entry', LineStyle.Dashed, 1);
           line(o.stop, palette.short, 'Stop (1R)', LineStyle.Solid, 2);
           // Each target sits at its own distance from entry, so its R differs — compute per target
           // (R = |target − entry| / |entry − stop|, the frozen 1R) instead of repeating the plan RR.
@@ -319,6 +353,24 @@ export function IctChart({
             const r = riskPerUnit > 0 ? Math.abs(tp - o.entry) / riskPerUnit : 0;
             line(tp, palette.long, `T${i + 1} · ${r.toFixed(1)}R`, LineStyle.Dashed, 2);
           });
+
+          // The entry POINT: an arrow at the exact entry bar (detectedAtUtc) so the operator sees WHEN the
+          // trade enters, not only the price. Long → green arrowUp BELOW the bar; Short → red arrowDown
+          // ABOVE. Dropped if the entry time is outside the loaded window or already drawn for this setup.
+          if (o.entryUtc && inWindow(o.entryUtc)) {
+            const key = o.setupId ?? `entry@${o.entryUtc}`;
+            if (!entryMarkerKeys.has(key)) {
+              entryMarkerKeys.add(key);
+              const isLong = o.direction === 'Bullish';
+              markers.push({
+                time: toUtcTimestamp(o.entryUtc) as UTCTimestamp,
+                position: isLong ? 'belowBar' : 'aboveBar',
+                color: isLong ? palette.long : palette.short,
+                shape: isLong ? 'arrowUp' : 'arrowDown',
+                text: `Entry ${o.entry.toFixed(priceDecimals(o.symbol ?? ''))}`,
+              });
+            }
+          }
           break;
         }
         case 'killzone':
@@ -328,7 +380,14 @@ export function IctChart({
       }
     }
 
-    const markersPlugin = createSeriesMarkers(series, markers);
+    // lightweight-charts requires markers in ASCENDING time order. Sweep/MSS/entry markers come from
+    // overlays in legend order (not time order), and multiple setups contribute multiple entry markers,
+    // so sort by time before handing them to the plugin (a stable, non-mutating copy via slice()).
+    const sortedMarkers = markers
+      .slice()
+      .sort((a, b) => (a.time as number) - (b.time as number));
+
+    const markersPlugin = createSeriesMarkers(series, sortedMarkers);
 
     return () => {
       markersPlugin.detach();
@@ -336,7 +395,7 @@ export function IctChart({
         series.removePriceLine(pl);
       }
     };
-  }, [visibleOverlays]);
+  }, [visibleOverlays, windowBounds]);
 
   return <div ref={containerRef} data-testid="ict-chart" className="chart-surface" />;
 }
