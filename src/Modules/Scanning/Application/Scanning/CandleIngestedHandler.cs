@@ -45,7 +45,13 @@ public sealed class CandleIngestedHandler(
                 continue;
             }
 
-            // The bar-close time stamps the detection; the killzone is the scanner's session for this candle.
+            // Detection is stamped with the confirming candle's OPEN time, by design — it is the identity of the bar
+            // that produced the signal, and it is the SAME instant the PaperTrading seam uses to OPEN/ARM the trade
+            // (setup.ConfirmedAtUtc == DetectedAtUtc) so the no-same-bar-look-ahead filter (a position is managed only
+            // from the bar AFTER its open bar) is calibrated to it. It also feeds the DeterministicId hash, so the open
+            // time keeps "same candle → same id" stable. (The alert feed / chart overlay therefore show the bar-open
+            // instant; that one-bar display offset is accepted to keep the open-stamp and the look-ahead filter aligned.)
+            // The killzone is the scanner's session for this candle.
             var dto = SetupDtoMapper.ToDto(setup, scanner.CurrentKillzone, candle.OpenTimeUtc);
 
             // Observability (WP7): a confirmed advisory setup is a notable, infrequent event — surface it so an

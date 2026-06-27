@@ -50,7 +50,7 @@ public sealed class AlertingTests
         Id: Guid.NewGuid(),
         SetupId: Guid.NewGuid(),
         Symbol: symbol,
-        Direction: "Bullish",
+        Direction: "Long", // a TRADE side is "Long"/"Short" on the wire (PaperTradeDtoMapper routes through ToTradeDirection)
         Status: "Closed",
         Style: "Intraday",
         Killzone: "LondonOpen",
@@ -82,7 +82,7 @@ public sealed class AlertingTests
         closed.Kind.Should().Be("TradeClosed");
         closed.Symbol.Should().Be("EURUSD");
         closed.Message.Should().Be("Closed EURUSD TargetHit (+2.00R)");
-        closed.Direction.Should().Be("Bullish");
+        closed.Direction.Should().Be("Long"); // a paper-trade side is Long/Short on the wire
 
         var confirmed = alerts[1];
         confirmed.Kind.Should().Be("Setup");

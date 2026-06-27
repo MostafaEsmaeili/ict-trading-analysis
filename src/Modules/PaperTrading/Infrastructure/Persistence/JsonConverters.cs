@@ -101,15 +101,17 @@ internal static class JsonConverters
         string Direction,
         decimal Entry,
         decimal Stop,
-        decimal T1,
-        decimal T2)
+        IReadOnlyList<decimal> Targets,
+        int RunnerIndex)
     {
         public static TradePlanDto From(TradePlan p) => new(
             p.Direction.ToString(),
             p.Entry.Value,
             p.Stop.Value,
-            p.Targets.Partial.Value,
-            p.Targets.Runner.Value);
+            // Persist the FULL ordered N-tier ladder + the runner index so deeper TGR-1/2 SD-projection tiers survive
+            // the round-trip (a 2-target shape silently dropped tiers[2..] under DB-as-state).
+            p.Targets.Targets.Select(price => price.Value).ToList(),
+            p.Targets.RunnerIndex);
 
         public TradePlan ToDomain()
         {
@@ -118,7 +120,7 @@ internal static class JsonConverters
                 dir,
                 new Price(Entry),
                 new Price(Stop),
-                new TargetLadder(dir, new Price(T1), new Price(T2)));
+                new TargetLadder(dir, Targets.Select(value => new Price(value)).ToList(), RunnerIndex));
         }
     }
 
@@ -155,8 +157,8 @@ internal static class JsonConverters
         string Direction,
         decimal Entry,
         decimal Stop,
-        decimal T1,
-        decimal T2,
+        IReadOnlyList<decimal> Targets,
+        int RunnerIndex,
         string Reason,
         DateTimeOffset ConfirmedAtUtc)
     {
@@ -169,8 +171,10 @@ internal static class JsonConverters
             s.Direction.ToString(),
             s.Plan.Entry.Value,
             s.Plan.Stop.Value,
-            s.Plan.Targets.Partial.Value,
-            s.Plan.Targets.Runner.Value,
+            // Persist the FULL ordered N-tier ladder + the runner index (see TradePlanDto) so the snapshot's deeper
+            // SD-projection targets survive the JSONB round-trip.
+            s.Plan.Targets.Targets.Select(price => price.Value).ToList(),
+            s.Plan.Targets.RunnerIndex,
             s.Reason.Text,
             s.ConfirmedAtUtc);
 
@@ -181,7 +185,8 @@ internal static class JsonConverters
                 direction,
                 new Price(Entry),
                 new Price(Stop),
-                new Domain.Setups.TargetLadder(direction, new Price(T1), new Price(T2)));
+                new Domain.Setups.TargetLadder(
+                    direction, Targets.Select(value => new Price(value)).ToList(), RunnerIndex));
 
             return new Domain.Setups.Setup(
                 new Domain.ValueObjects.Symbol(Symbol),

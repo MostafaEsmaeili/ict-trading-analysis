@@ -75,6 +75,8 @@ public class ScanLoopTests
         setup.Targets[0].Should().Be(1.0876m);   // 1.0832 + 0.5 * (1.0920 - 1.0832)
         setup.Targets[1].Should().Be(1.0920m);   // the gated draw runner
 
+        // Detection is stamped with the confirming candle's OPEN time (the identity of the signal bar, and the same
+        // instant the PaperTrading seam opens the trade — so the no-same-bar-look-ahead filter stays calibrated).
         setup.DetectedAtUtc.Should().Be(London);
         setup.Reason.Should().NotBeNullOrWhiteSpace();
     }

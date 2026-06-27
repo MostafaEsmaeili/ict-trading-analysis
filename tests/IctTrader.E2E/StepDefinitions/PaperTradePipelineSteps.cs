@@ -100,7 +100,8 @@ public sealed class PaperTradePipelineSteps(PipelineWorld world)
         var trade = active.Single();
         trade.Symbol.Should().Be(symbol);
         trade.Status.Should().Be(TradeStatus.Open.ToString());
-        trade.Direction.Should().Be(Direction.Bullish.ToString());
+        // The paper-trade wire carries the TRADE side (Long/Short), not the structural Bullish/Bearish.
+        trade.Direction.Should().Be(Direction.Bullish.ToTradeDirection().ToString());
 
         // Capture the trade id so a later step can reload it once it leaves the open set (it closes + settles).
         _world.OpenedTradeId = trade.Id;
