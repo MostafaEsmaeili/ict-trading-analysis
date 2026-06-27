@@ -312,8 +312,9 @@ export const MOCK_CONFIG: ConfigStatusDto = {
 };
 
 // The live settings snapshot: one baked per-instrument override (NAS100 → a relaxed 7-concept subset, the
-// tuned result) + the read-only global concept settings mirroring the §2.5.3/§5.1/§5.4 defaults. `let` so the
-// mock PUT handler can mutate the overrides in place (the offline app behaves like the live one).
+// tuned result) + the read-only global concept settings mirroring the §2.5.3/§5.1/§5.4 defaults. The mock PUT
+// handler mutates the nested `instrumentOverrides` object IN PLACE (never reassigns the const), so the offline
+// app behaves like the live one.
 export const MOCK_SETTINGS: SettingsDto = {
   instrumentOverrides: {
     NAS100USD: {
