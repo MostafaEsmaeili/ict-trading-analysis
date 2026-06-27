@@ -21,7 +21,7 @@ namespace IctTrader.PaperTrading.Application.Trading;
 /// <see cref="PaperTrade"/> aggregate — a focused cross-aggregate enrichment to land before the Performance/Alerting
 /// consumers segment paper-trade results by setup or killzone.</para>
 /// </summary>
-internal static class PaperTradeDtoMapper
+public static class PaperTradeDtoMapper
 {
     public static PaperTradeDto ToDto(PaperTrade trade)
     {

@@ -39,11 +39,12 @@ public sealed class OandaFeedOptions
     private const int DefaultHistoryMaxCandles = 5000;
 
     /// <summary>
-    /// The OANDA granularities that map 1:1 to a scanner <c>Timeframe</c> enum member (so a fetched candle's
-    /// timeframe string parses downstream). OANDA's <c>M2/M4/M10/D/W/M</c> are excluded — they have no scanner
-    /// timeframe — so a typo or an unusable granularity fails fast at startup rather than at the first fetch.
+    /// The OANDA granularities that map to a scanner <c>Timeframe</c> enum member (so a fetched candle's timeframe
+    /// string parses downstream). The intraday set maps 1:1; OANDA's daily <c>D</c> maps to <c>D1</c> (and weekly
+    /// <c>W</c> to <c>W1</c>) via <see cref="OandaCandleParser"/>'s granularity normalisation. OANDA's
+    /// <c>M2/M4/M10/MN</c> are excluded — no scanner timeframe — so a typo fails fast at startup, not at the first fetch.
     /// </summary>
-    private static readonly string[] SupportedGranularities = ["M1", "M5", "M15", "M30", "H1", "H4"];
+    private static readonly string[] SupportedGranularities = ["M1", "M5", "M15", "M30", "H1", "H4", "D", "W"];
 
     /// <summary>
     /// The OANDA REST base URL. Defaults to the <b>practice</b> (fxPractice) host: broker-accurate and

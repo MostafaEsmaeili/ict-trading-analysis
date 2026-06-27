@@ -70,11 +70,13 @@ internal sealed class HistoryFetchHostedService(
             return;
         }
 
-        // The fetcher normalises the symbol to the dashboard form (EUR_USD → EURUSD) on the CandleDto, so the file
-        // name uses that symbol + the granularity — exactly what the Replay feed's CsvCandleSource reads back.
+        // The fetcher normalises the symbol to the dashboard form (EUR_USD → EURUSD) AND the granularity to the
+        // scanner timeframe (OANDA "D" → "D1") on the CandleDto, so the file name uses that symbol + the candle's
+        // OWN timeframe — guaranteeing the filename's "-<TF>" segment matches the Timeframe column the Replay feed's
+        // CsvCandleSource reads back (e.g. a daily fetch writes EURUSD-D1.csv, not EURUSD-D.csv).
         var symbol = candles[0].Symbol;
         var fileName = string.Format(
-            CultureInfo.InvariantCulture, "{0}-{1}.csv", symbol, options.Granularity);
+            CultureInfo.InvariantCulture, "{0}-{1}.csv", symbol, candles[0].Timeframe);
         var path = Path.Combine(options.HistoryOutputDirectory, fileName);
 
         await CandleCsvWriter.WriteAsync(candles, path, ct).ConfigureAwait(false);

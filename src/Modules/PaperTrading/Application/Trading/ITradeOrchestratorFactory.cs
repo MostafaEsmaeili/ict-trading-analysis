@@ -1,3 +1,4 @@
+using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Trading;
 using IctTrader.Domain.ValueObjects;
 
@@ -9,5 +10,11 @@ namespace IctTrader.PaperTrading.Application.Trading;
 /// immutable).</summary>
 public interface ITradeOrchestratorFactory
 {
-    TradeOrchestrator Create(Symbol symbol);
+    /// <summary>
+    /// Builds the orchestrator for <paramref name="symbol"/>. <paramref name="risk"/> overrides the host's
+    /// configured <see cref="RiskOptions"/> for this orchestrator (the on-demand backtest passes a per-run risk
+    /// policy so an operator can size the run); <c>null</c> uses the host default. The per-instrument overrides
+    /// still apply on top of whichever risk policy is used.
+    /// </summary>
+    TradeOrchestrator Create(Symbol symbol, RiskOptions? risk = null);
 }
