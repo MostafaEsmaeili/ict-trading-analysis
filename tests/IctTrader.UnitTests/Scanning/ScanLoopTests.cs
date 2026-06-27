@@ -120,6 +120,8 @@ public class ScanLoopTests
 
         // The seeded scan: the registry is the real singleton; the factory prepends the proven structural seeders.
         services.AddSingleton<ISymbolScannerFactory>(new SeededScannerFactory(new FakeTimeProvider(London)));
+        services.AddSingleton<IctTrader.Domain.Configuration.IRuntimeSettings>(
+            new IctTrader.Domain.Configuration.RuntimeSettings()); // the registry watches it for live setting changes
         services.AddSingleton<ISymbolScannerRegistry, SymbolScannerRegistry>();
 
         // The recent-setup chart read-model: the Scanning.Application assembly also carries the

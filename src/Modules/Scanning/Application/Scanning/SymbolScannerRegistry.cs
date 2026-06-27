@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Styles;
 using IctTrader.Domain.ValueObjects;
 
@@ -14,14 +15,29 @@ namespace IctTrader.Scanning.Application.Scanning;
 /// <para>NOTE: a <see cref="SymbolScanner"/> is single-symbol mutable working memory — candles for ONE
 /// (symbol, style) must arrive in chronological order; the registry never shares an instance across keys.</para>
 /// </summary>
-public sealed class SymbolScannerRegistry(ISymbolScannerFactory factory) : ISymbolScannerRegistry
+public sealed class SymbolScannerRegistry(ISymbolScannerFactory factory, IRuntimeSettings settings)
+    : ISymbolScannerRegistry
 {
     private readonly ISymbolScannerFactory _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+    private readonly IRuntimeSettings _settings = settings ?? throw new ArgumentNullException(nameof(settings));
     private readonly ConcurrentDictionary<ScannerKey, SymbolScanner> _scanners = new();
+    private int _builtRevision = -1;
 
     public SymbolScanner GetOrCreate(Symbol symbol, TradeStyle style)
     {
         ArgumentNullException.ThrowIfNull(symbol);
+
+        // Live-apply seam (plan §15): when the operator changes settings the revision ticks, so drop the cached
+        // scanners and rebuild them with the new options on the next candle. The scan FSM/context warm-state is
+        // intentionally reset — a live settings change re-warms the scanner (the cost of applying without a restart).
+        // The bus dispatches a symbol's candles sequentially, so this evict-then-rebuild is not contended.
+        var revision = _settings.Revision;
+        if (_builtRevision != revision)
+        {
+            _scanners.Clear();
+            _builtRevision = revision;
+        }
+
         var key = new ScannerKey(symbol.Value, style);
         return _scanners.GetOrAdd(key, _ => _factory.Create(symbol, style));
     }

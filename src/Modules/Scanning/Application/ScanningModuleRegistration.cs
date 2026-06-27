@@ -1,3 +1,4 @@
+using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Instruments;
 using IctTrader.Scanning.Application.Scanning;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +24,9 @@ public static class ScanningModuleRegistration
         // The per-instrument catalog (§2.5.7 FX-vs-index resolution) — shared by Scanning + PaperTrading, so it is
         // registered idempotently (TryAdd) by whichever module wires first. The built-in catalog is pure/immutable.
         services.TryAddSingleton<IInstrumentRegistry>(InstrumentCatalog.Default);
+        // The live runtime-settings store the scanner registry watches for changes. TryAdd (empty fallback) so a
+        // standalone module/test resolves it; the Host registers the config-seeded one first, which wins.
+        services.TryAddSingleton<IRuntimeSettings>(_ => new RuntimeSettings());
         services.AddSingleton<ISymbolScannerFactory, SymbolScannerFactory>();
         services.AddSingleton<ISymbolScannerRegistry, SymbolScannerRegistry>();
         services.AddSingleton<RecentSetupStore>();
