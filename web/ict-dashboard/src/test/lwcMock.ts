@@ -7,6 +7,7 @@ export function lightweightChartsMock() {
     createChart: vi.fn(() => ({
       addSeries: vi.fn(() => ({
         setData: vi.fn(),
+        applyOptions: vi.fn(),
         createPriceLine: vi.fn(() => ({ id: 'pl' })),
         removePriceLine: vi.fn(),
       })),

@@ -142,7 +142,22 @@ export interface AlertDto {
 
 // ---- Performance.Contracts ----
 
-/** Mirrors Performance.Contracts.PerformanceSummaryDto. */
+/**
+ * Sentinel emitted by the backend `PerformanceCalculator.UndefinedProfitFactor` when there are no
+ * losing trades (gross loss = 0), i.e. profit factor is mathematically undefined / infinite. The
+ * dashboard renders this as "∞" rather than the raw magnitude. Mirrors the C# `decimal` constant.
+ */
+export const UNDEFINED_PROFIT_FACTOR = 999999;
+
+/**
+ * Mirrors Performance.Contracts.PerformanceSummaryDto.
+ *
+ * Unit notes (the wire is R-based, NOT dollars/percent — see PerformanceCalculator):
+ * - `winRate` is a true 0..1 fraction (render via the `pct()` helper).
+ * - `averageR` / `expectancy` are in R units.
+ * - `maxDrawdown` is a POSITIVE absolute peak-to-trough magnitude in R units (never a percent).
+ * - `profitFactor` uses the {@link UNDEFINED_PROFIT_FACTOR} sentinel for "no losses / undefined".
+ */
 export interface PerformanceSummaryDto {
   tradeCount: number;
   winRate: number;
@@ -152,7 +167,10 @@ export interface PerformanceSummaryDto {
   maxDrawdown: number;
 }
 
-/** Mirrors Performance.Contracts.EquityPointDto. */
+/**
+ * Mirrors Performance.Contracts.EquityPointDto. `equity` is CUMULATIVE R from a zero baseline
+ * (running ΣR), NOT an account-currency balance — the curve passes through ~0.
+ */
 export interface EquityPointDto {
   atUtc: string;
   equity: number;
