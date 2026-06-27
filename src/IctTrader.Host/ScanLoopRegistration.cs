@@ -1,3 +1,5 @@
+using IctTrader.Domain.Configuration;
+using IctTrader.Domain.Instruments;
 using IctTrader.MarketData.Application.Abstractions;
 using IctTrader.MarketData.Infrastructure.Feeds;
 using IctTrader.PaperTrading.Application;
@@ -71,6 +73,15 @@ public static class ScanLoopRegistration
                 npgsql => npgsql.MigrationsAssembly(typeof(PaperTradingDbContext).Assembly.FullName)));
 
         services.AddPaperTradingPersistence();
+
+        // Per-instrument overrides (Ict:Instruments): a config-augmenting registry overlays the operator's per-symbol
+        // settings (the baked tuning results, e.g. NAS100 → 6-of-8) on the built-in catalog. Registered BEFORE the
+        // modules so their TryAddSingleton(InstrumentCatalog.Default) is a no-op and EVERY consumer — the scanner, the
+        // trade orchestrator, and the backtest engine — resolves THIS config-aware registry.
+        services.AddSingleton<IInstrumentRegistry>(sp => new ConfigurableInstrumentRegistry(
+            InstrumentCatalog.Default,
+            sp.GetRequiredService<IOptions<InstrumentOverridesOptions>>().Value.Overrides));
+
         services.AddScanningModule();
         services.AddPaperTradingModule();
 

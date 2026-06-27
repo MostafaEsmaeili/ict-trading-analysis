@@ -69,6 +69,39 @@ public sealed record InstrumentOptionOverrides
     /// here by the catalog, per TIME-10's "explicit opt-in" design.</summary>
     public bool? UseMacroOpenReference { get; init; }
 
+    /// <summary>The per-instrument "k of n" required-condition relaxation
+    /// (<c>ConfluenceOptions.MinRequiredConditions</c>) — the BAKED tuning result. <c>null</c> = the strict, canonical
+    /// all-required §2.5 model (FX majors). A symbol whose backtest showed a relaxed gate outperforms (NAS100 → 6 of 8,
+    /// PF 1.78 vs strict 0.70) carries that k here so the LIVE scanner trades it relaxed by default, while an explicit
+    /// per-run backtest override still wins. This is a TUNING value, not an ICT rule — sourced from config
+    /// (<c>Ict:Instruments</c>), surfaced/overridable in appsettings, never silently magic.</summary>
+    public int? MinRequiredConditions { get; init; }
+
     /// <summary>The no-override sentinel — FX carries this so its option POCOs are returned unchanged (byte-identical).</summary>
     public static InstrumentOptionOverrides None { get; } = new();
+
+    /// <summary>
+    /// Returns this bundle with <paramref name="other"/>'s non-null fields overlaid on top — the merge the
+    /// config-augmentable registry uses to apply an operator's <c>Ict:Instruments</c> overrides ON TOP of the
+    /// catalog's built-in per-class values (so config wins where set, the built-in geometry survives where config is
+    /// silent). A null <paramref name="other"/> field leaves this one's value unchanged.
+    /// </summary>
+    public InstrumentOptionOverrides OverlayWith(InstrumentOptionOverrides other)
+    {
+        ArgumentNullException.ThrowIfNull(other);
+        return new InstrumentOptionOverrides
+        {
+            MinStopDistancePips = other.MinStopDistancePips ?? MinStopDistancePips,
+            StopBufferPips = other.StopBufferPips ?? StopBufferPips,
+            SweptLevelExclusionPips = other.SweptLevelExclusionPips ?? SweptLevelExclusionPips,
+            FvgMinGapPips = other.FvgMinGapPips ?? FvgMinGapPips,
+            FvgStackProximityPips = other.FvgStackProximityPips ?? FvgStackProximityPips,
+            EqualLevelTolerancePips = other.EqualLevelTolerancePips ?? EqualLevelTolerancePips,
+            CloseProximityTolerancePips = other.CloseProximityTolerancePips ?? CloseProximityTolerancePips,
+            SpreadBasePips = other.SpreadBasePips ?? SpreadBasePips,
+            CommissionPerLotRoundTripUsd = other.CommissionPerLotRoundTripUsd ?? CommissionPerLotRoundTripUsd,
+            UseMacroOpenReference = other.UseMacroOpenReference ?? UseMacroOpenReference,
+            MinRequiredConditions = other.MinRequiredConditions ?? MinRequiredConditions,
+        };
+    }
 }

@@ -75,5 +75,7 @@ public static class IctOptionsRegistration
             .AddIctOptions<FillOptions>(config, FillOptions.SectionName, o => o.Validate())
             .AddIctOptions<ExitManagementOptions>(config, ExitManagementOptions.SectionName, o => o.Validate())
             .AddIctOptions<StopTrailOptions>(config, StopTrailOptions.SectionName, o => o.Validate())
-            .AddIctOptions<EntryManagementOptions>(config, EntryManagementOptions.SectionName, o => o.Validate());
+            .AddIctOptions<EntryManagementOptions>(config, EntryManagementOptions.SectionName, o => o.Validate())
+            // Per-instrument overrides (the baked per-pair tuning results, e.g. NAS100 → 6-of-8)
+            .AddIctOptions<InstrumentOverridesOptions>(config, InstrumentOverridesOptions.SectionName, o => o.Validate());
 }

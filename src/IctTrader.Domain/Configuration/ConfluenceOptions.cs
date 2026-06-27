@@ -1,4 +1,5 @@
 using IctTrader.Domain.Detection;
+using IctTrader.Domain.Instruments;
 using IctTrader.Domain.Setups;
 
 namespace IctTrader.Domain.Configuration;
@@ -54,6 +55,20 @@ public sealed class ConfluenceOptions
         AlertMinimumGrade = AlertMinimumGrade,
         MinRequiredConditions = minRequiredConditions,
     };
+
+    /// <summary>
+    /// Applies a symbol's per-instrument confluence override (its baked tuning result, e.g. NAS100 → 6-of-8). The
+    /// explicit per-run <see cref="MinRequiredConditions"/> (set by a backtest request / optimizer combo) WINS over
+    /// the instrument's baked value, so a sweep can still override it; an unset per-run value falls back to the
+    /// instrument's <see cref="InstrumentOptionOverrides.MinRequiredConditions"/>. An FX
+    /// <see cref="InstrumentOptionOverrides.None"/> bundle leaves this unchanged (strict, byte-identical). The
+    /// scanner applies this LAST (after any per-run override), so the precedence holds.
+    /// </summary>
+    public ConfluenceOptions WithInstrumentOverrides(InstrumentOptionOverrides overrides)
+    {
+        ArgumentNullException.ThrowIfNull(overrides);
+        return WithMinRequiredConditions(MinRequiredConditions ?? overrides.MinRequiredConditions);
+    }
 
     /// <summary>The score at or above which an all-required setup is promoted from B to A (§2.5.4 — the one
     /// score-driven grading gate; an all-required setup below it is still a tradeable B, TGR-4).</summary>
