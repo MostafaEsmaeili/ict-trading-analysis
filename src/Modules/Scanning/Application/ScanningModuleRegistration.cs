@@ -1,5 +1,7 @@
+using IctTrader.Domain.Instruments;
 using IctTrader.Scanning.Application.Scanning;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace IctTrader.Scanning.Application;
 
@@ -18,6 +20,9 @@ public static class ScanningModuleRegistration
 {
     public static IServiceCollection AddScanningModule(this IServiceCollection services)
     {
+        // The per-instrument catalog (§2.5.7 FX-vs-index resolution) — shared by Scanning + PaperTrading, so it is
+        // registered idempotently (TryAdd) by whichever module wires first. The built-in catalog is pure/immutable.
+        services.TryAddSingleton<IInstrumentRegistry>(InstrumentCatalog.Default);
         services.AddSingleton<ISymbolScannerFactory, SymbolScannerFactory>();
         services.AddSingleton<ISymbolScannerRegistry, SymbolScannerRegistry>();
         services.AddSingleton<RecentSetupStore>();

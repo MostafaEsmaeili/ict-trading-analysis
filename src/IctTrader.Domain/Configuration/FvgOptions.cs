@@ -1,3 +1,5 @@
+using IctTrader.Domain.Instruments;
+
 namespace IctTrader.Domain.Configuration;
 
 /// <summary>
@@ -50,6 +52,32 @@ public sealed class FvgOptions
     /// <c>Validate()</c> rule (a bool is always in contract).
     /// </summary>
     public bool ApplyValidityExclusions { get; init; }
+
+    /// <summary>
+    /// Returns a copy with the instrument-class scalar overrides applied where present
+    /// (<see cref="MinGapPips"/> + <see cref="StackProximityPips"/>). A <see cref="InstrumentOptionOverrides.None"/>
+    /// / FX bundle leaves both at their global value (byte-identical). The ATR gate, touch semantics, and the
+    /// correct-half rule are instrument-agnostic and unchanged — for the index the ATR gate (which self-scales)
+    /// carries the displacement-quality floor, so the absolute gap floor is set to 0.
+    /// </summary>
+    public FvgOptions WithInstrumentOverrides(InstrumentOptionOverrides overrides)
+    {
+        ArgumentNullException.ThrowIfNull(overrides);
+        return new FvgOptions
+        {
+            MinGapPips = overrides.FvgMinGapPips ?? MinGapPips,
+            AtrMultiple = AtrMultiple,
+            AtrPeriod = AtrPeriod,
+            VoidOnTouchCount = VoidOnTouchCount,
+            TouchSemantics = TouchSemantics,
+            MitigateOnFullFill = MitigateOnFullFill,
+            RequireInCorrectHalf = RequireInCorrectHalf,
+            EquilibriumPercent = EquilibriumPercent,
+            StackProximityPips = overrides.FvgStackProximityPips ?? StackProximityPips,
+            StrictFirstFvg = StrictFirstFvg,
+            ApplyValidityExclusions = ApplyValidityExclusions,
+        };
+    }
 
     public IReadOnlyList<string> Validate()
     {

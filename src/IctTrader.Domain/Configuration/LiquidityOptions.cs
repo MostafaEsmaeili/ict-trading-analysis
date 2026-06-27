@@ -1,3 +1,5 @@
+using IctTrader.Domain.Instruments;
+
 namespace IctTrader.Domain.Configuration;
 
 /// <summary>
@@ -17,6 +19,23 @@ public sealed class LiquidityOptions
 
     /// <summary>A sweep requires a close back inside the pool; a close BEYOND is a run (HRLR), not a sweep.</summary>
     public bool RequireCloseBackInside { get; init; } = true;
+
+    /// <summary>
+    /// Returns a copy with the instrument-class scalar overrides applied where present
+    /// (<see cref="EqualLevelTolerancePips"/>). A <see cref="InstrumentOptionOverrides.None"/> / FX bundle leaves
+    /// every field unchanged (byte-identical). <see cref="SweepMinPenetrationPips"/> (0.5 ≈ 2 ICT ticks) is DERIVED
+    /// from the "penetrate by a tick or two" rule and stays at its global value for the index too.
+    /// </summary>
+    public LiquidityOptions WithInstrumentOverrides(InstrumentOptionOverrides overrides)
+    {
+        ArgumentNullException.ThrowIfNull(overrides);
+        return new LiquidityOptions
+        {
+            EqualLevelTolerancePips = overrides.EqualLevelTolerancePips ?? EqualLevelTolerancePips,
+            SweepMinPenetrationPips = SweepMinPenetrationPips,
+            RequireCloseBackInside = RequireCloseBackInside,
+        };
+    }
 
     public IReadOnlyList<string> Validate()
     {

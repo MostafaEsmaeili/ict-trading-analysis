@@ -1,3 +1,4 @@
+using IctTrader.Domain.Instruments;
 using IctTrader.Domain.Styles;
 
 namespace IctTrader.Domain.Configuration;
@@ -22,6 +23,23 @@ public sealed class DrawOnLiquidityOptions
 
     /// <summary>Which trade style's MinRewardRatio floor applies (single-source RR; default Intraday = the §2.5 model).</summary>
     public TradeStyle Style { get; init; } = TradeStyle.Intraday;
+
+    /// <summary>
+    /// Returns a copy with the instrument-class scalar overrides applied where present
+    /// (<see cref="StopBufferPips"/> + <see cref="SweptLevelExclusionPips"/>). A
+    /// <see cref="InstrumentOptionOverrides.None"/> / FX bundle leaves both at their global value (byte-identical).
+    /// The RR <see cref="Style"/> is instrument-agnostic and unchanged.
+    /// </summary>
+    public DrawOnLiquidityOptions WithInstrumentOverrides(InstrumentOptionOverrides overrides)
+    {
+        ArgumentNullException.ThrowIfNull(overrides);
+        return new DrawOnLiquidityOptions
+        {
+            StopBufferPips = overrides.StopBufferPips ?? StopBufferPips,
+            SweptLevelExclusionPips = overrides.SweptLevelExclusionPips ?? SweptLevelExclusionPips,
+            Style = Style,
+        };
+    }
 
     public IReadOnlyList<string> Validate()
     {

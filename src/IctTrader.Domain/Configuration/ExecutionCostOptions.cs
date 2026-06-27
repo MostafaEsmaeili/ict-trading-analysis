@@ -1,3 +1,5 @@
+using IctTrader.Domain.Instruments;
+
 namespace IctTrader.Domain.Configuration;
 
 /// <summary>
@@ -14,6 +16,25 @@ public sealed class ExecutionCostOptions
     public SpreadOptions Spread { get; init; } = new();
 
     public CommissionOptions Commission { get; init; } = new();
+
+    /// <summary>
+    /// Returns a copy with the instrument-class cost overrides applied where present (the round-trip spread base
+    /// pips/points and the per-unit commission). A <see cref="InstrumentOptionOverrides.None"/> / FX bundle leaves
+    /// both nested POCOs unchanged (byte-identical). For the NAS100 CFD the overrides set a ~1.0-point spread and
+    /// 0 commission (OANDA commission-free), so paper P&amp;L books point-based costs rather than the FX 10/pip.
+    /// </summary>
+    public ExecutionCostOptions WithInstrumentOverrides(InstrumentOptionOverrides overrides)
+    {
+        ArgumentNullException.ThrowIfNull(overrides);
+        return new ExecutionCostOptions
+        {
+            Spread = new SpreadOptions { BasePips = overrides.SpreadBasePips ?? Spread.BasePips },
+            Commission = new CommissionOptions
+            {
+                PerLotRoundTripUsd = overrides.CommissionPerLotRoundTripUsd ?? Commission.PerLotRoundTripUsd,
+            },
+        };
+    }
 
     public IReadOnlyList<string> Validate()
     {

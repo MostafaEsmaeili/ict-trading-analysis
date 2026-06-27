@@ -1,4 +1,5 @@
 using IctTrader.Domain.Configuration;
+using IctTrader.Domain.Instruments;
 using IctTrader.Domain.Styles;
 using IctTrader.Domain.ValueObjects;
 using Microsoft.Extensions.Options;
@@ -15,9 +16,11 @@ public sealed class SymbolScannerFactory : ISymbolScannerFactory
 {
     private readonly TimeProvider _timeProvider;
     private readonly ScannerOptions _options;
+    private readonly IInstrumentRegistry _instruments;
 
     public SymbolScannerFactory(
         TimeProvider timeProvider,
+        IInstrumentRegistry instruments,
         IOptions<MarketContextOptions> marketContext,
         IOptions<ConfluenceOptions> confluence,
         IOptions<SetupCandidateOptions> setupCandidate,
@@ -38,7 +41,9 @@ public sealed class SymbolScannerFactory : ISymbolScannerFactory
         IOptions<TargetLadderOptions> targetLadder)
     {
         ArgumentNullException.ThrowIfNull(timeProvider);
+        ArgumentNullException.ThrowIfNull(instruments);
         _timeProvider = timeProvider;
+        _instruments = instruments;
         _options = new ScannerOptions
         {
             MarketContext = marketContext.Value,
@@ -63,5 +68,5 @@ public sealed class SymbolScannerFactory : ISymbolScannerFactory
     }
 
     public SymbolScanner Create(Symbol symbol, TradeStyle style)
-        => new(symbol, style, _timeProvider, _options);
+        => new(symbol, style, _timeProvider, _options, _instruments);
 }

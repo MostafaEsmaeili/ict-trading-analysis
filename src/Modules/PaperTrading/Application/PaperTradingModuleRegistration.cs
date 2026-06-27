@@ -1,5 +1,7 @@
+using IctTrader.Domain.Instruments;
 using IctTrader.PaperTrading.Application.Trading;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 namespace IctTrader.PaperTrading.Application;
@@ -25,6 +27,9 @@ public static class PaperTradingModuleRegistration
 {
     public static IServiceCollection AddPaperTradingModule(this IServiceCollection services)
     {
+        // The per-instrument catalog (§2.5.7 FX-vs-index resolution) — shared with Scanning, registered idempotently
+        // (TryAdd) so module wiring order does not matter. The orchestrator factory resolves each symbol's profile.
+        services.TryAddSingleton<IInstrumentRegistry>(InstrumentCatalog.Default);
         services.AddSingleton<ITradeOrchestratorFactory, TradeOrchestratorFactory>();
         services.AddSingleton<ITradeOrchestratorRegistry, TradeOrchestratorRegistry>();
         services.AddScoped<IPaperAccountProvider, PaperAccountProvider>();

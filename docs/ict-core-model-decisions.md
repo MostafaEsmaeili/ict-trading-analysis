@@ -157,6 +157,16 @@ surface yet) · **DONE** (already implemented in a merged slice).
   L289-290 (midnight); Ep4/5/7/10 (08:30 macro). **Deferred (CONTESTED ~80%):** auto-enabling the macro reference for
   `InstrumentClass==Index` (kept an explicit opt-in flag, no silent FX change); the at/after-open vs candle-containing
   -08:30 capture nuance (~85%, only matters on non-aligned feeds).
+  - **TIME-10 index resolution — RESOLVED ~80% (issue #144, per-instrument-class slice).** The deferred
+    CONTESTED-~80% branch above is now resolved ON **for the index**: the NASDAQ-100 (`NAS100USD`) profile sets
+    `UseMacroOpenReference = true` via the pure-domain `InstrumentCatalog` overrides, because the index AM killzone
+    opens at **08:30 NY** (`KillzoneClock.ClassifyIndex`), so the Judas read consults the 08:30 macro open alongside
+    midnight (Ep17 L154-159). FX stays `false` (byte-identical, midnight-only). Crucially this honours TIME-10's
+    explicit-flag mandate: the flag is set by the **catalog** (per-class config), **never branched on
+    `InstrumentClass` inside detector code** — `MarketContext.ReferenceOpen` reads the same `UseMacroOpenReference`
+    flag it always has. Provenance: the 08:30 dual-reference is an **FX-grounded** rule applied to the index because
+    of the index 08:30 AM-session open, not an intrinsic index-only mechanic; confidence ~80% (defensible, not
+    certain), so it stays a configurable override an operator can flip.
 
 ## Targets · grading · risk
 

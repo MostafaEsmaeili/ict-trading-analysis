@@ -1,3 +1,5 @@
+using IctTrader.Domain.Instruments;
+
 namespace IctTrader.Domain.Configuration;
 
 /// <summary>
@@ -36,6 +38,24 @@ public sealed class EntryManagementOptions
     /// small. Read only when <see cref="UseCloseProximityEntry"/> is on; must be non-negative.
     /// </summary>
     public decimal CloseProximityTolerancePips { get; init; } = 2m;
+
+    /// <summary>
+    /// Returns a copy with the instrument-class scalar overrides applied where present
+    /// (<see cref="CloseProximityTolerancePips"/>, only live under <see cref="UseCloseProximityEntry"/>). A
+    /// <see cref="InstrumentOptionOverrides.None"/> / FX bundle leaves every field unchanged (byte-identical). The
+    /// entry <see cref="Mode"/> and the no-chase <see cref="MaxWaitMinutes"/> backstop are instrument-agnostic.
+    /// </summary>
+    public EntryManagementOptions WithInstrumentOverrides(InstrumentOptionOverrides overrides)
+    {
+        ArgumentNullException.ThrowIfNull(overrides);
+        return new EntryManagementOptions
+        {
+            Mode = Mode,
+            MaxWaitMinutes = MaxWaitMinutes,
+            UseCloseProximityEntry = UseCloseProximityEntry,
+            CloseProximityTolerancePips = overrides.CloseProximityTolerancePips ?? CloseProximityTolerancePips,
+        };
+    }
 
     public IReadOnlyList<string> Validate()
     {

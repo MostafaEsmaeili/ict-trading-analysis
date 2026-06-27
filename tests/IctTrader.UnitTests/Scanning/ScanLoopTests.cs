@@ -1,6 +1,7 @@
 using FluentAssertions;
 using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Detection;
+using IctTrader.Domain.Instruments;
 using IctTrader.Domain.MarketStructure;
 using IctTrader.Domain.Sessions;
 using IctTrader.Domain.Setups;
@@ -174,7 +175,7 @@ public class ScanLoopTests
         };
 
         public SymbolScanner Create(Symbol symbol, TradeStyle style)
-            => new(symbol, style, timeProvider, Options, Seeders());
+            => new(symbol, style, timeProvider, Options, InstrumentCatalog.Default, Seeders());
 
         private static ISetupDetector[] Seeders() =>
         [

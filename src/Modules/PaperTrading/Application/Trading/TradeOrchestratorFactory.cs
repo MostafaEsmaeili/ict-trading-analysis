@@ -1,4 +1,5 @@
 using IctTrader.Domain.Configuration;
+using IctTrader.Domain.Instruments;
 using IctTrader.Domain.Sessions;
 using IctTrader.Domain.Trading;
 using IctTrader.Domain.ValueObjects;
@@ -22,6 +23,7 @@ namespace IctTrader.PaperTrading.Application.Trading;
 public sealed class TradeOrchestratorFactory : ITradeOrchestratorFactory
 {
     private readonly TimeProvider _timeProvider;
+    private readonly IInstrumentRegistry _instruments;
     private readonly FillOptions _fill;
     private readonly ExecutionCostOptions _executionCost;
     private readonly StopTrailOptions _stopTrail;
@@ -33,6 +35,7 @@ public sealed class TradeOrchestratorFactory : ITradeOrchestratorFactory
 
     public TradeOrchestratorFactory(
         TimeProvider timeProvider,
+        IInstrumentRegistry instruments,
         IOptions<FillOptions> fill,
         IOptions<ExecutionCostOptions> executionCost,
         IOptions<StopTrailOptions> stopTrail,
@@ -43,7 +46,9 @@ public sealed class TradeOrchestratorFactory : ITradeOrchestratorFactory
         IOptions<RiskOptions> risk)
     {
         ArgumentNullException.ThrowIfNull(timeProvider);
+        ArgumentNullException.ThrowIfNull(instruments);
         _timeProvider = timeProvider;
+        _instruments = instruments;
         _fill = fill.Value;
         _executionCost = executionCost.Value;
         _stopTrail = stopTrail.Value;
@@ -58,28 +63,38 @@ public sealed class TradeOrchestratorFactory : ITradeOrchestratorFactory
     {
         ArgumentNullException.ThrowIfNull(symbol);
 
-        var spec = SymbolSpec.FxMajor(symbol);
-        var contract = ContractSpec.FxMajor(symbol);
+        // Per-instrument resolution (§2.5.7): the catalog yields the symbol's price + money geometry and its
+        // per-class overrides. For an Index symbol the cost model books point-based spread + 0 commission and the
+        // entry band reads the index tolerance; an FX major's `None` bundle leaves every option field-equal, so the
+        // FX orchestrator is byte-identical to the prior hardcoded FxMajor path.
+        var profile = _instruments.Resolve(symbol);
+        var spec = profile.SymbolSpec;
+        var contract = profile.ContractSpec;
+        var executionCost = _executionCost.WithInstrumentOverrides(profile.Overrides);
+        var entryManagement = _entryManagement.WithInstrumentOverrides(profile.Overrides);
+        var risk = _risk.WithInstrumentOverrides(profile.Overrides);
 
         var entryManager = new EntryManager(
-            new EntryFillEvaluator(_entryManagement, spec),
+            new EntryFillEvaluator(entryManagement, spec),
             new FillEvaluator(_fill),
-            new ExecutionCostModel(_executionCost),
+            new ExecutionCostModel(executionCost),
             new KillzoneClock(new NyClock(_timeProvider), KillzoneSchedule.CreateDefault()),
             _killzoneEntry,
-            _entryManagement);
+            entryManagement);
 
         var exitManager = new ExitManager(
             new FillEvaluator(_fill),
             new StopTrailPolicy(_stopTrail),
-            new ExecutionCostModel(_executionCost),
+            new ExecutionCostModel(executionCost),
             _exitManagement,
             new NyClock(_timeProvider),
             _tradeStyles,
             contract);
 
-        var factory = new PaperTradeFactory(_risk, new RiskManager());
+        var factory = new PaperTradeFactory(risk, new RiskManager());
 
-        return new TradeOrchestrator(entryManager, exitManager, factory, _entryManagement);
+        // The orchestrator shares the SAME resolved EntryManagementOptions the entry manager + entry-fill evaluator
+        // use (one source of truth for the entry mode + no-chase backstop + the close-proximity band).
+        return new TradeOrchestrator(entryManager, exitManager, factory, entryManagement);
     }
 }

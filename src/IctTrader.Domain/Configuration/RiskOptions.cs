@@ -1,3 +1,5 @@
+using IctTrader.Domain.Instruments;
+
 namespace IctTrader.Domain.Configuration;
 
 /// <summary>
@@ -52,6 +54,27 @@ public sealed class RiskOptions
     /// is the more conservative framework default and is intentionally NOT used here (kept configurable).
     /// </summary>
     public decimal HardMaxRiskPercent { get; init; } = 4.5m;
+
+    /// <summary>
+    /// Returns a copy with the instrument-class scalar overrides applied where present (only
+    /// <see cref="MinStopDistancePips"/> here). A <see cref="InstrumentOptionOverrides.None"/> / FX bundle leaves
+    /// every field at its global value, so the result is field-equal to <c>this</c> (the FX path stays
+    /// byte-identical). All other risk knobs (ladder, win-cycle, caps) are instrument-agnostic and unchanged.
+    /// </summary>
+    public RiskOptions WithInstrumentOverrides(InstrumentOptionOverrides overrides)
+    {
+        ArgumentNullException.ThrowIfNull(overrides);
+        return new RiskOptions
+        {
+            BaseRiskPercent = BaseRiskPercent,
+            MaxOpenPortfolioRiskPercent = MaxOpenPortfolioRiskPercent,
+            MinStopDistancePips = overrides.MinStopDistancePips ?? MinStopDistancePips,
+            LossLadderPercents = LossLadderPercents,
+            ConsecutiveWinsForLowestUnit = ConsecutiveWinsForLowestUnit,
+            DipRecoveryFraction = DipRecoveryFraction,
+            HardMaxRiskPercent = HardMaxRiskPercent,
+        };
+    }
 
     public IReadOnlyList<string> Validate()
     {
