@@ -940,7 +940,7 @@ reference `Reqnroll.Tools.MsBuild.Generation` DIRECTLY or no `.feature.cs` is ge
 steps share state via the native `IObjectContainer`.)
 
 **🏁 ALL WORK PACKAGES COMPLETE (WP0–WP9) + THREE adversarial audit-hardening rounds (CONVERGED) — full green suite:
-build 0 warnings · 662 unit · 23 arch · 46 integration · 12 E2E (= 743 tests) · `dotnet format` clean.** The ICT 2022 Intraday FVG model is faithfully encoded end-to-end, the
+build 0 warnings · 712 unit · 23 arch · 46 integration · 12 E2E (= 793 tests) · `dotnet format` clean.** The ICT 2022 Intraday FVG model is faithfully encoded end-to-end, the
 runnable backend is proven on 2.7 years of real EUR/USD, the React dashboard runs live on it, and the mandatory E2E gate
 guards the pipeline.
 
@@ -1022,6 +1022,38 @@ of `setData`+`fitContent`). Both fixed + verified: the live dashboard renders re
 setup's entry/stop/target/draw overlays, the §2.5 alerts feed, and the Performance + equity panels (screenshot
 `ict-dashboard-final.png`). **Lesson for the next session: after a frontend change, RENDER it live (screenshot) — a
 green typecheck/vitest does not catch a fit/scale or a stale-stub render bug.**
+
+**Operator session — backtests + NASDAQ index + Grade-A emitters + entry markers (PRs #143/#145/#147 for issues
+#142/#144/#146; suite now 712 unit + 23 arch + 46 integration + 12 E2E = 793 green).**
+
+- **Real backtests on the fetched history (the deliverable the operator asked for).** Driving the full 200k-candle M5
+  Replay feeds through the live loop: **EUR/USD (Oct 2023→Jun 2026): 39 setups → 20 trades, 55% win, +0.18R avg, profit
+  factor 1.59, max DD 2.83R, net +$187.48** (after the now-correct round-trip spread+commission) — a modestly profitable
+  positive-expectancy result. **NAS100 (index, same window): 30 setups → 8 trades, 12.5% win, −0.23R, PF 0.70** — the
+  index path works end-to-end (point geometry, setups in the index AM killzone) but the FX-default model is NOT profitable
+  on NAS100 over this sample (small N; the index wants its own tuning). **The backtest is slow (~15-20 min/200k)** — the
+  DB-per-candle reload is the bottleneck (documented follow-up: a warm in-memory aggregate cache).
+- **NASDAQ-100 index (#144/#145).** New pure-domain `InstrumentCatalog` (`IctTrader.Domain/Instruments/`) resolves every
+  symbol → `{InstrumentClass, SymbolSpec, ContractSpec, per-class option overrides}`; FX majors keep `FxMajor` (byte-
+  identical, `None` overrides), `NAS100USD` → the Index profile (`PipSize=1.0` point, `TickSize=0.1`, value `1.0/point`,
+  `LotStep/MinLot=1`). This is the §2.5.7 instrument-class split: with the catalog, `NAS100USD` carries
+  `InstrumentClass.Index`, so the ALREADY-CORRECT `KillzoneClock.ClassifyIndex` (AM 08:30–11:00, last-entry 10:40) finally
+  activates, plus the 08:30 macro reference open (`UseMacroOpenReference` on for index) and point-based stops/costs
+  (index `MinStopDistance≈10pts`, `StopBuffer≈2pts`, spread `≈1.0pt`, commission 0 — all INVENTED-flagged). `SymbolScanner`/
+  `SetupConfirmedHandler`/`TradeOrchestratorFactory` resolve via the catalog (was hardcoded `FxMajor` — the flagged
+  prerequisite). Dashboard selector gains NAS100. **To scan it live:** OANDA provider + `NAS100_USD` in
+  `Ict:MarketData:Oanda:Instruments` (normalizes to `NAS100USD`).
+- **Grade A now reachable — the 4 optional confluence emitters (#146/#147).** `OpenPriceReferenceDetector` (0.50, price
+  vs the 08:30/midnight reference open agrees with bias), `MacroTimeDetector` (0.45, NY macro windows 08:30/09:30/13:30/
+  15:00 ±10m INVENTED), `CleanPriceActionDetector` (0.40, displacement-leg Σ|body|/Σrange ≥ 0.60 INVENTED — the HRLR
+  inverse), `CalendarDriverDetector` (0.35, a same-day driver event outside the blackout, distinct from `CalendarClear`
+  per TGR-3). **Grading-safe by construction:** these weights were ALREADY in the constant Σ=9.75 universe, so the
+  emitters only add to the numerator when matched — no existing grade drops; the bare-RequiredConditions setup still
+  scores 63. Grade A proven (required 6.15 + OteZone 0.70 + OPR 0.50 + MacroTime 0.45 = 7.80/9.75 = 80). The §2.5.8
+  long-tail (SMT/Breaker/Power-3/weekly/Sunday-gap) stays deferred — per the ICT spec they must be NON-scoring or reuse
+  an existing weight, never a NEW `ConfluenceCondition` weight (that would change Σ and shift every grade).
+- **Chart: entry is now a POINT (#142/#143).** An arrow marker at the setup's exact `detectedAtUtc`+entry price (up/down
+  by direction), so the operator sees WHEN the trade enters, not just a horizontal level — alongside the stop/target lines.
 
 **To see it (2 terminals):** (1) `docker compose up -d postgres`; apply migrations; run the Host
 with the Replay env on `--urls http://localhost:5080 --no-launch-profile` pointed at a `data/*.csv`; (2)
