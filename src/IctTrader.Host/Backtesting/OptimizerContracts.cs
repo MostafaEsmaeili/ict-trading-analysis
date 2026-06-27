@@ -1,0 +1,41 @@
+namespace IctTrader.Host.Backtesting;
+
+/// <summary>
+/// A parameter-sweep request (plan §15): backtest the cartesian product of symbols × styles × timeframes ×
+/// risk percentages over one period and rank the combinations, so an operator can find the optimum settings for
+/// each asset in each timeframe in each way of trading — and see WHERE the defensive model actually produces edge.
+/// <see cref="Timeframes"/> is optional: when empty, each style runs on its default entry timeframe (Scalp→M1,
+/// Intraday→M5, Swing→M15, Position→H4); when given, every style is run on every listed timeframe.
+/// </summary>
+public sealed record OptimizeRequest(
+    IReadOnlyList<string> Symbols,
+    IReadOnlyList<string> Styles,
+    IReadOnlyList<decimal> RiskPercents,
+    decimal StartingBalance,
+    IReadOnlyList<string>? Timeframes = null,
+    DateTimeOffset? FromUtc = null,
+    DateTimeOffset? ToUtc = null,
+    string? Objective = null,
+    int TopN = 25);
+
+/// <summary>One ranked combination's headline result — the parameters plus the key R-based metrics, ending balance,
+/// and the objective score it was ranked by.</summary>
+public sealed record OptimizerResultDto(
+    string Symbol,
+    string Timeframe,
+    string Style,
+    decimal RiskPercent,
+    int TradeCount,
+    decimal WinRate,
+    decimal AverageR,
+    decimal ProfitFactor,
+    decimal Expectancy,
+    decimal MaxDrawdownR,
+    decimal EndingBalance,
+    decimal Score);
+
+/// <summary>The optimizer leaderboard: how many combinations ran, the objective they were ranked by, and the top N.</summary>
+public sealed record OptimizeResponse(
+    int CombinationCount,
+    string Objective,
+    IReadOnlyList<OptimizerResultDto> Results);

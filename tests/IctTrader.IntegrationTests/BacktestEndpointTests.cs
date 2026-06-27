@@ -107,6 +107,30 @@ public sealed class BacktestEndpointTests : IDisposable
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
+    [Fact]
+    public async Task The_optimize_endpoint_ranks_the_grid_combinations()
+    {
+        await using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+
+        // 1 symbol × 2 styles × 1 timeframe × 2 risk% = 4 combinations, all on the one EURUSD-M5 dataset we wrote.
+        var request = new OptimizeRequest(
+            Symbols: ["EURUSD"],
+            Styles: ["Intraday", "Scalp"],
+            RiskPercents: [0.5m, 1.0m],
+            StartingBalance: 10_000m,
+            Timeframes: ["M5"]);
+
+        var response = await client.PostAsJsonAsync("/api/backtest/optimize", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<OptimizeResponse>();
+        result.Should().NotBeNull();
+        result!.CombinationCount.Should().Be(4);
+        result.Results.Should().HaveCount(4);
+        result.Results.Should().OnlyContain(r => r.Symbol == "EURUSD" && r.Timeframe == "M5");
+    }
+
     private WebApplicationFactory<Program> CreateFactory() => new BacktestFactory(_dataDir);
 
     /// <summary>Boots the Host with the backtest data dir pointed at the temp fixture and ingestion left OFF (Replay
