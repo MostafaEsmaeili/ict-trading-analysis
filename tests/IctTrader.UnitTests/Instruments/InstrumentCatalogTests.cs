@@ -65,6 +65,29 @@ public class InstrumentCatalogTests
     }
 
     [Fact]
+    public void Spx500_resolves_to_the_same_index_profile_as_nas100()
+    {
+        // ES (SPX500USD) is the 2022 Mentorship's co-primary index — it shares the OANDA CFD point geometry + the
+        // §2.5.7 index killzone + the 08:30 macro reference with NAS100. The catalog recognises the index SET, so the
+        // profile (class + price/money geometry + overrides) is field-equal to NAS100's apart from the symbol.
+        var profile = Catalog.Resolve(new Symbol("SPX500USD"));
+
+        profile.InstrumentClass.Should().Be(InstrumentClass.Index);
+        profile.IsKnown.Should().BeTrue();
+        profile.SymbolSpec.PipSize.Should().Be(1.0m);
+        profile.SymbolSpec.TickSize.Should().Be(0.1m);
+        profile.ContractSpec.ValuePerPip.Should().Be(1m);
+        profile.Overrides.Should().Be(Catalog.Resolve(Nas100).Overrides); // same index overrides (macro ref, point costs)
+    }
+
+    [Fact]
+    public void Known_symbols_include_both_index_vehicles_and_the_fx_majors()
+    {
+        InstrumentCatalog.KnownSymbols.Should().Contain("NAS100USD").And.Contain("SPX500USD")
+            .And.Contain("EURUSD").And.Contain("USDJPY");
+    }
+
+    [Fact]
     public void An_unknown_symbol_falls_back_to_fx_default_but_is_flagged_not_known()
     {
         var profile = Catalog.Resolve(new Symbol("ZZZZZZ"));

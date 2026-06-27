@@ -21,8 +21,19 @@ public sealed class InstrumentCatalog : IInstrumentRegistry
     /// <summary>The NASDAQ-100 index symbol this catalog recognises (OANDA's CFD ticker).</summary>
     public const string Nas100Symbol = "NAS100USD";
 
-    // The built-in FX majors (normalised, upper-invariant). Anything not here OR NAS100USD falls back to FX-default
-    // (IsKnown=false). This is the same FX-major set the system has always implicitly scanned as FxMajor.
+    /// <summary>The S&amp;P 500 (E-mini ES proxy) index symbol — OANDA's CFD ticker. The 2022 Mentorship's co-primary
+    /// index alongside the NASDAQ; same CFD point geometry + the §2.5.7 index killzone.</summary>
+    public const string Spx500Symbol = "SPX500USD";
+
+    // The built-in US index CFDs (normalised, upper-invariant) — Michael Huddleston's primary vehicles (NQ + ES).
+    // Both resolve to InstrumentClass.Index (point geometry + the §2.5.7 AM killzone + the 08:30 macro reference).
+    private static readonly IReadOnlySet<string> IndexSymbols = new HashSet<string>(StringComparer.Ordinal)
+    {
+        Nas100Symbol, Spx500Symbol,
+    };
+
+    // The built-in FX majors (normalised, upper-invariant). Anything not here OR an index symbol falls back to
+    // FX-default (IsKnown=false). This is the same FX-major set the system has always implicitly scanned as FxMajor.
     private static readonly IReadOnlySet<string> FxMajors = new HashSet<string>(StringComparer.Ordinal)
     {
         "EURUSD", "GBPUSD", "USDJPY", "AUDUSD", "USDCHF", "USDCAD", "NZDUSD", "EURGBP",
@@ -84,19 +95,19 @@ public sealed class InstrumentCatalog : IInstrumentRegistry
     /// from when adding a per-instrument override. An uncatalogued symbol still resolves (FX-default fallback), so
     /// this is a convenience list for the UI, not a hard whitelist.</summary>
     public static IReadOnlyList<string> KnownSymbols { get; } =
-        FxMajors.Append(Nas100Symbol).OrderBy(s => s, StringComparer.Ordinal).ToArray();
+        FxMajors.Concat(IndexSymbols).OrderBy(s => s, StringComparer.Ordinal).ToArray();
 
     public InstrumentProfile Resolve(Symbol symbol)
     {
         ArgumentNullException.ThrowIfNull(symbol);
         var key = symbol.Value; // Symbol normalises to trimmed upper-invariant on construction.
 
-        if (key == Nas100Symbol)
+        if (IndexSymbols.Contains(key))
         {
             return new InstrumentProfile(
                 symbol,
-                SymbolSpec.Nas100(symbol),
-                ContractSpec.Nas100(symbol),
+                SymbolSpec.Index(symbol),
+                ContractSpec.Index(symbol),
                 IndexOverrides,
                 isKnown: true);
         }

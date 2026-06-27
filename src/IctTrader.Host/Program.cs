@@ -110,6 +110,18 @@ app.Logger.LogInformation(
 
 app.MapOpenApi();
 
+// Fetch-history mode is a one-shot, READ-ONLY CSV exporter (the OANDA history fetcher runs on startup, writes the
+// CSVs, then stops the app) — it needs NO API surface. Boot it and exit BEFORE mapping the REST/SignalR endpoints:
+// many of those endpoints depend on services that fetch mode deliberately does not register (the backtest engine,
+// the runtime-settings store, the calendar store/options), so mapping them here would make minimal-API try to bind
+// a missing service from the request body and crash startup ("Body was inferred…"). Guarding the map keeps fetch
+// mode a clean standalone tool.
+if (fetchHistoryMode)
+{
+    app.Run();
+    return;
+}
+
 // Frozen REST surface (plan §11.1 #6). WP0 returns typed empty results so the OpenAPI document carries
 // the DTO shapes for the dashboard's generated types; real data is wired in WP3–WP7.
 var api = app.MapGroup("/api");
