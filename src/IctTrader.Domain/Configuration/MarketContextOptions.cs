@@ -34,10 +34,37 @@ public sealed class MarketContextOptions
     /// </summary>
     public TimeOnly MacroReferenceOpenTime { get; init; } = new(8, 30);
 
-    public IReadOnlyList<Killzone> ActiveKillzones { get; init; } =
+    // The operator-selected lists default to EMPTY, not the business default. This is load-bearing: the .NET
+    // configuration binder APPENDS bound array items to a pre-populated collection initializer rather than
+    // replacing it, so a non-empty default would be silently prepended to the operator's config — e.g.
+    // `Ict:Scanning:ActiveStyles=["Intraday"]` bound onto a `[Intraday]` default yields `[Intraday, Intraday]`,
+    // and the candle handler would then feed every candle to the same scanner TWICE (corrupting its state so no
+    // setup ever confirms), while `["Scalp"]` would silently still run Intraday too. With an empty default the
+    // binder replaces cleanly; the ICT business default is applied by the Resolved* accessors below (which the
+    // scanner consumes), and an empty (unconfigured) list falls back to that default there.
+    public IReadOnlyList<Killzone> ActiveKillzones { get; init; } = [];
+
+    public IReadOnlyList<TradeStyle> ActiveStyles { get; init; } = [];
+
+    private static readonly IReadOnlyList<Killzone> DefaultActiveKillzones =
         [Killzone.LondonOpen, Killzone.NewYorkOpen];
 
-    public IReadOnlyList<TradeStyle> ActiveStyles { get; init; } = [TradeStyle.Intraday];
+    private static readonly IReadOnlyList<TradeStyle> DefaultActiveStyles = [TradeStyle.Intraday];
+
+    /// <summary>
+    /// The active killzones the scanner hunts — the configured set de-duplicated, or the ICT default
+    /// (London Open + New York) when none is configured. Consume this, never the raw <see cref="ActiveKillzones"/>.
+    /// </summary>
+    public IReadOnlyList<Killzone> ResolvedActiveKillzones =>
+        ActiveKillzones.Count == 0 ? DefaultActiveKillzones : ActiveKillzones.Distinct().ToArray();
+
+    /// <summary>
+    /// The active trade styles the scanner runs — the configured set de-duplicated, or the ICT default
+    /// (Intraday — the §2.5 model) when none is configured. Consume this, never the raw <see cref="ActiveStyles"/>:
+    /// a duplicate style would feed each candle to the same per-(symbol, style) scanner more than once.
+    /// </summary>
+    public IReadOnlyList<TradeStyle> ResolvedActiveStyles =>
+        ActiveStyles.Count == 0 ? DefaultActiveStyles : ActiveStyles.Distinct().ToArray();
 
     /// <summary>
     /// The killzones an operator may enable via <c>Ict:Scanning:ActiveKillzones</c> — the FROZEN CONTRACT
@@ -66,21 +93,12 @@ public sealed class MarketContextOptions
             errors.Add($"MaxOpenArraysPerType must be at least 1 but was {MaxOpenArraysPerType}.");
         }
 
-        if (ActiveKillzones is null || ActiveKillzones.Count == 0)
+        // An empty configured list is VALID — it means "use the ICT default" (applied by the Resolved* accessors).
+        // We validate the CONFIGURED members (a typo'd killzone must still fail fast); the resolved lists are
+        // guaranteed non-empty by construction so there is no "at least one" check.
+        foreach (var killzone in ActiveKillzones.Where(k => !SelectableKillzones.Contains(k)))
         {
-            errors.Add("At least one active killzone must be configured.");
-        }
-        else
-        {
-            foreach (var killzone in ActiveKillzones.Where(k => !SelectableKillzones.Contains(k)))
-            {
-                errors.Add($"ActiveKillzones must be a subset of [{string.Join(", ", SelectableKillzones)}] but contained {killzone}.");
-            }
-        }
-
-        if (ActiveStyles is null || ActiveStyles.Count == 0)
-        {
-            errors.Add("At least one active trade style must be configured.");
+            errors.Add($"ActiveKillzones must be a subset of [{string.Join(", ", SelectableKillzones)}] but contained {killzone}.");
         }
 
         // The macro reference must be a sane pre-lunch morning time (TIME-10): 00:00 would collide with the

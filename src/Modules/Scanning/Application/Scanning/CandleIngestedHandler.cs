@@ -2,6 +2,8 @@ using IctTrader.Domain.Configuration;
 using IctTrader.MarketData.Contracts;
 using IctTrader.Scanning.Contracts;
 using IctTrader.SharedKernel.Messaging;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
 namespace IctTrader.Scanning.Application.Scanning;
@@ -18,13 +20,15 @@ namespace IctTrader.Scanning.Application.Scanning;
 public sealed class CandleIngestedHandler(
     ISymbolScannerRegistry registry,
     IMessageBus bus,
-    IOptions<MarketContextOptions> scanningOptions)
+    IOptions<MarketContextOptions> scanningOptions,
+    ILogger<CandleIngestedHandler>? logger = null)
     : IEventHandler<CandleIngested>
 {
     private readonly ISymbolScannerRegistry _registry = registry ?? throw new ArgumentNullException(nameof(registry));
     private readonly IMessageBus _bus = bus ?? throw new ArgumentNullException(nameof(bus));
     private readonly MarketContextOptions _scanning =
         (scanningOptions ?? throw new ArgumentNullException(nameof(scanningOptions))).Value;
+    private readonly ILogger<CandleIngestedHandler> _logger = logger ?? NullLogger<CandleIngestedHandler>.Instance;
 
     public async Task HandleAsync(CandleIngested @event, CancellationToken cancellationToken = default)
     {
@@ -32,7 +36,7 @@ public sealed class CandleIngestedHandler(
 
         var candle = CandleDtoMapper.ToDomain(@event.Candle);
 
-        foreach (var style in _scanning.ActiveStyles)
+        foreach (var style in _scanning.ResolvedActiveStyles)
         {
             var scanner = _registry.GetOrCreate(candle.Symbol, style);
             var setup = scanner.OnCandle(candle);
@@ -43,6 +47,13 @@ public sealed class CandleIngestedHandler(
 
             // The bar-close time stamps the detection; the killzone is the scanner's session for this candle.
             var dto = SetupDtoMapper.ToDto(setup, scanner.CurrentKillzone, candle.OpenTimeUtc);
+
+            // Observability (WP7): a confirmed advisory setup is a notable, infrequent event — surface it so an
+            // operator (and a backtest) can see the scanner working without per-candle noise. Advisory only.
+            _logger.LogInformation(
+                "Setup confirmed: {Symbol} {Style} {Direction} grade {Grade} entry {Entry} stop {Stop} RR {RewardRatio} @ {DetectedAtUtc:o}",
+                dto.Symbol, dto.Style, dto.Direction, dto.Grade, dto.Entry, dto.Stop, dto.RewardRatio, dto.DetectedAtUtc);
+
             await _bus.PublishAsync(new SetupConfirmed(dto), cancellationToken).ConfigureAwait(false);
         }
     }
