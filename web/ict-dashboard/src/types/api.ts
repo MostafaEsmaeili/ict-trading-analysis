@@ -105,9 +105,17 @@ export interface ScanStatusDto {
 
 // ---- PaperTrading.Contracts ----
 
+/** IctTrader.Domain.Trading.TradeLifecycle — Open → PartialTaken (a scale-out booked) → Closed. */
+export type TradeLifecycle = 'Open' | 'PartialTaken' | 'Closed';
+
 /**
  * Mirrors PaperTrading.Contracts.PaperTradeDto — a SIMULATED trade. There is no live counterpart
  * anywhere in the system (plan §6.3). `realizedR` is null while the trade is open.
+ *
+ * EXTENDED (plan §15): the full trade record the Trades-history + Backtest tables render — lifecycle,
+ * close reason, net P&L breakdown (gross / costs / net), the live `currentStop` (ratcheted by the
+ * trail), the scale-out / breakeven flags, the reserved risk budget and the trigger timeframe. All
+ * fields are still advisory paper; `direction` carries Long/Short (TradeDirection).
  */
 export interface PaperTradeDto {
   id: string;
@@ -124,6 +132,147 @@ export interface PaperTradeDto {
   openedAtUtc: string;
   closedAtUtc: string | null;
   realizedR: number | null;
+  lifecycle: string;
+  closeReason: string | null;
+  netR: number | null;
+  grossPnl: number | null;
+  costs: number | null;
+  netPnl: number | null;
+  hasScaledOut: boolean;
+  isBreakevenArmed: boolean;
+  riskBudget: number;
+  timeframe: string;
+  currentStop: number;
+  exitPrice: number | null;
+  managedFromUtc: string;
+}
+
+/**
+ * Mirrors PaperTrading.Contracts.AccountStatusDto — the live paper account snapshot (plan §15 §3).
+ * Money is in account currency; `openRisk`/`openRiskCap` are reserved-risk amounts; the
+ * `riskUtilizationPercent` is `openRisk / openRiskCap` as a 0..100 percent. Streaks feed the §2.4
+ * adaptive risk ladder. Read-only — there is no deposit/withdraw control anywhere (§6.3).
+ */
+export interface AccountStatusDto {
+  startingEquity: number;
+  equity: number;
+  peakEquity: number;
+  drawdownTrough: number;
+  openRisk: number;
+  openRiskCap: number;
+  riskUtilizationPercent: number;
+  maxOpenPortfolioRiskPercent: number;
+  consecutiveWins: number;
+  consecutiveLosses: number;
+  openTradeCount: number;
+}
+
+/**
+ * Mirrors Host.ConfigStatusDto — the operator-visible runtime configuration (plan §15 §3). Reflects
+ * the bound `Ict:*` options: the data provider, the scanned symbols, the active styles/killzones, the
+ * risk %, the §5.4 cost model (spread + commission) and the starting equity.
+ */
+export interface ConfigStatusDto {
+  provider: string;
+  symbols: string[];
+  activeStyles: string[];
+  activeKillzones: string[];
+  baseRiskPercent: number;
+  maxOpenPortfolioRiskPercent: number;
+  spreadBasePips: number;
+  commissionPerLotRoundTripUsd: number;
+  startingEquity: number;
+}
+
+// ---- Backtest / Optimizer (plan §15 §5/§6) ----
+
+/** Mirrors Host.BacktestDatasetDto — a CSV history dataset available to the Backtest Lab. */
+export interface BacktestDatasetDto {
+  symbol: string;
+  timeframe: string;
+  fromUtc: string;
+  toUtc: string;
+  candleCount: number;
+}
+
+/** `POST /api/backtest` body — run the §2.5 model over a dataset slice (plan §15 §5). */
+export interface BacktestRequest {
+  symbol: string;
+  style: string;
+  startingBalance: number;
+  riskPercent: number;
+  timeframe?: string;
+  fromUtc?: string;
+  toUtc?: string;
+}
+
+/**
+ * Mirrors Host.BacktestEquityPointDto — one point on the backtest balance curve. `equity` is the
+ * ACCOUNT BALANCE (money), `cumulativeR` the running ΣR (so the curve can toggle units, plan §15 §5).
+ */
+export interface BacktestEquityPointDto {
+  atUtc: string;
+  equity: number;
+  cumulativeR: number;
+}
+
+/** `POST /api/backtest` 200 response — the run summary, equity curve and the trades it produced. */
+export interface BacktestResponse {
+  symbol: string;
+  timeframe: string;
+  style: string;
+  fromUtc: string;
+  toUtc: string;
+  startingBalance: number;
+  riskPercent: number;
+  endingBalance: number;
+  candlesProcessed: number;
+  setupCount: number;
+  tradeCount: number;
+  summary: PerformanceSummaryDto;
+  equity: BacktestEquityPointDto[];
+  trades: PaperTradeDto[];
+}
+
+/** `POST /api/backtest/optimize` body — a grid sweep over the cartesian product (plan §15 §6). */
+export interface OptimizeRequest {
+  symbols: string[];
+  styles: string[];
+  riskPercents: number[];
+  startingBalance: number;
+  timeframes?: string[];
+  fromUtc?: string;
+  toUtc?: string;
+  objective?: string;
+  topN: number;
+}
+
+/** One row of the optimizer leaderboard — a single (symbol,tf,style,risk%) combination's result. */
+export interface OptimizerResultDto {
+  symbol: string;
+  timeframe: string;
+  style: string;
+  riskPercent: number;
+  tradeCount: number;
+  winRate: number;
+  averageR: number;
+  profitFactor: number;
+  expectancy: number;
+  maxDrawdownR: number;
+  endingBalance: number;
+  score: number;
+}
+
+/** `POST /api/backtest/optimize` 200 response — the ranked leaderboard (plan §15 §6). */
+export interface OptimizeResponse {
+  combinationCount: number;
+  objective: string;
+  results: OptimizerResultDto[];
+}
+
+/** A 400/404 error body the backtest/optimize endpoints return on a bad/missing request. */
+export interface ApiErrorDto {
+  error: string;
 }
 
 // ---- Alerting.Contracts ----

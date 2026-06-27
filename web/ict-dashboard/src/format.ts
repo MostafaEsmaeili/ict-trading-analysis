@@ -25,3 +25,41 @@ export function priceDecimals(symbol: string): number {
 export function formatPrice(price: number, symbol: string): string {
   return price.toFixed(priceDecimals(symbol));
 }
+
+/**
+ * Format an account-currency amount. Money is rendered with a thousands separator and 2 decimals; a
+ * non-negative value carries a leading "+" so a colored P&L cell reads as a signed delta. `null` →
+ * em-dash (an open trade has no realized money yet).
+ */
+export function formatMoney(amount: number | null | undefined, options: { signed?: boolean } = {}): string {
+  if (amount == null) return '—';
+  const abs = Math.abs(amount).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const sign = amount < 0 ? '-' : options.signed ? '+' : '';
+  return `${sign}$${abs}`;
+}
+
+/** Format an R multiple — null (an open trade) renders as an em-dash. */
+export function formatR(r: number | null | undefined): string {
+  if (r == null) return '—';
+  const sign = r > 0 ? '+' : '';
+  return `${sign}${r.toFixed(2)}R`;
+}
+
+/** Format a 0..1 fraction as a percent (e.g. 0.625 → "62.5%"). */
+export function formatPct(fraction: number, decimals = 1): string {
+  return `${(fraction * 100).toFixed(decimals)}%`;
+}
+
+/** Format an already-0..100 percent value (e.g. a risk-utilization percent). */
+export function formatPercentValue(value: number, decimals = 1): string {
+  return `${value.toFixed(decimals)}%`;
+}
+
+/** A signed percent delta vs a base (e.g. equity vs starting), as a string like "+4.88%". */
+export function deltaPercent(current: number, base: number): number {
+  if (base === 0) return 0;
+  return ((current - base) / base) * 100;
+}

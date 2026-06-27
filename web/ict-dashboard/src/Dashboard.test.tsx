@@ -22,6 +22,15 @@ describe('Dashboard', () => {
     // Defensive guardrail surfaced in the UI — there is no execute/order control anywhere.
     expect(screen.getByText(/advisory · paper only/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /execute|go live|place order|buy|sell/i })).toBeNull();
+    expect(screen.queryByRole('link', { name: /execute|go live|place order|buy|sell/i })).toBeNull();
+
+    // The 4-page nav is present on every page (§15).
+    const nav = screen.getByRole('navigation', { name: /primary/i });
+    expect(nav).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Live' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Trades' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Backtest' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Optimizer' })).toBeInTheDocument();
 
     // Mock data resolves through React Query into the panels.
     await waitFor(() => {

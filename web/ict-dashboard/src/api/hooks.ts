@@ -3,15 +3,28 @@
 // merge into the same keys (see hub/useTradingHub). Mocks back every call until WP7 (api/client.ts).
 // ---------------------------------------------------------------------------------------------------
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
+  fetchAccountStatus,
   fetchActiveTrades,
   fetchAlerts,
+  fetchAllTrades,
+  fetchBacktestDatasets,
   fetchChart,
+  fetchConfig,
   fetchEquityCurve,
   fetchOverlays,
   fetchPerformance,
+  runBacktest,
+  runOptimize,
+  type TradeFilters,
 } from './client';
+import type {
+  BacktestRequest,
+  BacktestResponse,
+  OptimizeRequest,
+  OptimizeResponse,
+} from '../types/api';
 import { queryKeys } from './queryKeys';
 
 const RECONCILE_MS = 30_000;
@@ -67,5 +80,54 @@ export function useEquityCurve() {
     queryKey: queryKeys.equityCurve(),
     queryFn: fetchEquityCurve,
     refetchInterval: RECONCILE_MS,
+  });
+}
+
+/** The full trades history (open + closed) with optional server-side status/symbol filters (§15 §4). */
+export function useAllTrades(filters: TradeFilters = {}) {
+  return useQuery({
+    queryKey: queryKeys.allTrades(filters.status, filters.symbol),
+    queryFn: () => fetchAllTrades(filters),
+    refetchInterval: RECONCILE_MS,
+  });
+}
+
+/** The live paper-account snapshot (equity, open risk vs cap, streaks) — Live-page config panel (§15 §3). */
+export function useAccountStatus() {
+  return useQuery({
+    queryKey: queryKeys.account(),
+    queryFn: fetchAccountStatus,
+    refetchInterval: RECONCILE_MS,
+  });
+}
+
+/** The operator-visible runtime configuration (provider/symbols/styles/killzones/risk/costs) (§15 §3). */
+export function useConfig() {
+  return useQuery({
+    queryKey: queryKeys.config(),
+    queryFn: fetchConfig,
+    refetchInterval: RECONCILE_MS,
+  });
+}
+
+/** The CSV history datasets available to the Backtest Lab + Optimizer (§15 §5/§6). */
+export function useBacktestDatasets() {
+  return useQuery({
+    queryKey: queryKeys.backtestDatasets(),
+    queryFn: fetchBacktestDatasets,
+  });
+}
+
+/** Run a single backtest (POST /api/backtest). A mutation — results live in component state (§15 §5). */
+export function useRunBacktest() {
+  return useMutation<BacktestResponse, Error, BacktestRequest>({
+    mutationFn: runBacktest,
+  });
+}
+
+/** Run a parameter-grid optimization (POST /api/backtest/optimize) (§15 §6). */
+export function useOptimize() {
+  return useMutation<OptimizeResponse, Error, OptimizeRequest>({
+    mutationFn: runOptimize,
   });
 }

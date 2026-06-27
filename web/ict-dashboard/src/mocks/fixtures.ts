@@ -8,9 +8,14 @@
 // ---------------------------------------------------------------------------------------------------
 
 import type {
+  AccountStatusDto,
   AlertDto,
+  BacktestDatasetDto,
+  BacktestResponse,
   CandleDto,
+  ConfigStatusDto,
   EquityPointDto,
+  OptimizeResponse,
   PaperTradeDto,
   PerformanceSummaryDto,
   SetupDto,
@@ -171,6 +176,19 @@ export const MOCK_ACTIVE_TRADES: PaperTradeDto[] = [
     openedAtUtc: t(10),
     closedAtUtc: null,
     realizedR: null,
+    lifecycle: 'Open',
+    closeReason: null,
+    netR: null,
+    grossPnl: null,
+    costs: null,
+    netPnl: null,
+    hasScaledOut: false,
+    isBreakevenArmed: false,
+    riskBudget: 175,
+    timeframe: MOCK_TIMEFRAME,
+    currentStop: 1.0689,
+    exitPrice: null,
+    managedFromUtc: t(11),
   },
   {
     id: 'c2222222-2222-2222-2222-222222222222',
@@ -187,8 +205,236 @@ export const MOCK_ACTIVE_TRADES: PaperTradeDto[] = [
     openedAtUtc: new Date(BASE_TIME + 30 * STEP_MS).toISOString(),
     closedAtUtc: null,
     realizedR: null,
+    lifecycle: 'PartialTaken',
+    closeReason: null,
+    netR: null,
+    grossPnl: null,
+    costs: null,
+    netPnl: null,
+    hasScaledOut: true,
+    isBreakevenArmed: true,
+    riskBudget: 105,
+    timeframe: 'M5',
+    currentStop: 1.272,
+    exitPrice: null,
+    managedFromUtc: new Date(BASE_TIME + 31 * STEP_MS).toISOString(),
   },
 ];
+
+// A closed-trade history (Trades page + the backtest table). Mix of win/loss/breakeven, all paper.
+function closedTrade(
+  id: string,
+  symbol: string,
+  direction: 'Long' | 'Short',
+  style: PaperTradeDto['style'],
+  killzone: string,
+  entry: number,
+  stop: number,
+  targets: number[],
+  openMin: number,
+  closeMin: number,
+  realizedR: number,
+  closeReason: 'TargetHit' | 'StopHit' | 'TimeExit' | 'Manual',
+  exitPrice: number,
+): PaperTradeDto {
+  const riskBudget = 100;
+  const grossPnl = realizedR * riskBudget;
+  const costs = 4.2;
+  const netPnl = grossPnl - costs;
+  return {
+    id,
+    setupId: `s-${id}`,
+    symbol,
+    direction,
+    status: 'Closed',
+    style,
+    killzone,
+    entry,
+    stop,
+    targets,
+    size: 0.4,
+    openedAtUtc: new Date(BASE_TIME + openMin * STEP_MS).toISOString(),
+    closedAtUtc: new Date(BASE_TIME + closeMin * STEP_MS).toISOString(),
+    realizedR,
+    lifecycle: 'Closed',
+    closeReason,
+    netR: netPnl / riskBudget,
+    grossPnl,
+    costs,
+    netPnl,
+    hasScaledOut: closeReason === 'TargetHit',
+    isBreakevenArmed: realizedR >= 0,
+    riskBudget,
+    timeframe: 'M5',
+    currentStop: stop,
+    exitPrice,
+    managedFromUtc: new Date(BASE_TIME + (openMin + 1) * STEP_MS).toISOString(),
+  };
+}
+
+export const MOCK_CLOSED_TRADES: PaperTradeDto[] = [
+  closedTrade('d1111111-1111-1111-1111-111111111111', MOCK_SYMBOL, 'Long', 'Intraday', 'LondonOpen', 1.0724, 1.0689, [1.0762, 1.079], 10, 16, 2.5, 'TargetHit', 1.079),
+  closedTrade('d2222222-2222-2222-2222-222222222222', 'GBPUSD', 'Short', 'Scalp', 'NewYorkOpen', 1.272, 1.2745, [1.2695, 1.2655], 30, 36, -1.0, 'StopHit', 1.2745),
+  closedTrade('d3333333-3333-3333-3333-333333333333', MOCK_SYMBOL, 'Long', 'Intraday', 'LondonOpen', 1.081, 1.0788, [1.0832, 1.0855], 50, 70, 0.95, 'TimeExit', 1.0831),
+  closedTrade('d4444444-4444-4444-4444-444444444444', 'USDJPY', 'Long', 'Swing', 'NewYorkOpen', 156.42, 156.05, [156.9, 157.6], 90, 140, 1.8, 'TargetHit', 157.6),
+  closedTrade('d5555555-5555-5555-5555-555555555555', 'XAUUSD', 'Short', 'Intraday', 'LondonOpen', 2342.5, 2349.0, [2330.0, 2318.0], 120, 150, -1.0, 'StopHit', 2349.0),
+  closedTrade('d6666666-6666-6666-6666-666666666666', MOCK_SYMBOL, 'Long', 'Intraday', 'LondonOpen', 1.0701, 1.0682, [1.0728, 1.0752], 160, 180, 0.02, 'Manual', 1.0701),
+];
+
+/** All trades (open + closed) — what `GET /api/trades` returns when no status filter is applied. */
+export const MOCK_ALL_TRADES: PaperTradeDto[] = [...MOCK_ACTIVE_TRADES, ...MOCK_CLOSED_TRADES];
+
+export const MOCK_ACCOUNT: AccountStatusDto = {
+  startingEquity: 10000,
+  equity: 10487.6,
+  peakEquity: 10612.4,
+  drawdownTrough: 9923.1,
+  openRisk: 280,
+  openRiskCap: 524.38,
+  riskUtilizationPercent: 53.4,
+  maxOpenPortfolioRiskPercent: 5,
+  consecutiveWins: 2,
+  consecutiveLosses: 0,
+  openTradeCount: 2,
+};
+
+export const MOCK_CONFIG: ConfigStatusDto = {
+  provider: 'Replay',
+  symbols: ['EURUSD', 'GBPUSD'],
+  activeStyles: ['Intraday'],
+  activeKillzones: ['LondonOpen', 'NewYorkOpen'],
+  baseRiskPercent: 1,
+  maxOpenPortfolioRiskPercent: 5,
+  spreadBasePips: 0.7,
+  commissionPerLotRoundTripUsd: 6,
+  startingEquity: 10000,
+};
+
+export const MOCK_DATASETS: BacktestDatasetDto[] = [
+  { symbol: 'EURUSD', timeframe: 'M5', fromUtc: '2023-10-01T00:00:00Z', toUtc: '2026-06-20T00:00:00Z', candleCount: 200000 },
+  { symbol: 'GBPUSD', timeframe: 'M5', fromUtc: '2023-10-01T00:00:00Z', toUtc: '2026-06-20T00:00:00Z', candleCount: 200000 },
+  { symbol: 'NAS100USD', timeframe: 'M5', fromUtc: '2023-10-01T00:00:00Z', toUtc: '2026-06-20T00:00:00Z', candleCount: 198450 },
+];
+
+/** A deterministic balance/cumulative-R curve for a mock backtest run. */
+function mockBacktestEquity(startingBalance: number): BacktestResponse['equity'] {
+  const rs = [0, 2.5, 1.5, 1.6, 0.6, 2.4, 1.4, 1.4, 0.95, 2.95, 1.95, 1.97];
+  let balance = startingBalance;
+  let cumR = 0;
+  const riskAmt = startingBalance * 0.01;
+  return rs.map((r, i) => {
+    cumR += r;
+    balance += r * riskAmt;
+    return {
+      atUtc: new Date(Date.parse('2026-01-02T14:00:00Z') + i * 6 * 3600 * 1000).toISOString(),
+      equity: Number(balance.toFixed(2)),
+      cumulativeR: Number(cumR.toFixed(2)),
+    };
+  });
+}
+
+/** Deterministic mock backtest run (POST /api/backtest). The trades reuse the closed-trade fixtures. */
+export function mockBacktestResponse(
+  symbol: string,
+  style: string,
+  startingBalance: number,
+  riskPercent: number,
+  timeframe = 'M5',
+): BacktestResponse {
+  const trades = MOCK_CLOSED_TRADES.map((tr) => ({ ...tr, symbol, style }));
+  const equity = mockBacktestEquity(startingBalance);
+  const endingBalance = equity.at(-1)?.equity ?? startingBalance;
+  const wins = trades.filter((tr) => (tr.realizedR ?? 0) > 0).length;
+  return {
+    symbol,
+    timeframe,
+    style,
+    fromUtc: '2026-01-02T00:00:00Z',
+    toUtc: '2026-03-31T00:00:00Z',
+    startingBalance,
+    riskPercent,
+    endingBalance,
+    candlesProcessed: 24500,
+    setupCount: 12,
+    tradeCount: trades.length,
+    summary: {
+      tradeCount: trades.length,
+      winRate: wins / trades.length,
+      averageR: 0.71,
+      profitFactor: 1.59,
+      expectancy: 0.71,
+      maxDrawdown: 2.0,
+    },
+    equity,
+    trades,
+  };
+}
+
+export const MOCK_BACKTEST: BacktestResponse = mockBacktestResponse('EURUSD', 'Intraday', 10000, 1);
+
+/** Deterministic mock optimizer leaderboard (POST /api/backtest/optimize). */
+export function mockOptimizeResponse(
+  symbols: string[],
+  styles: string[],
+  riskPercents: number[],
+  startingBalance: number,
+  objective = 'Expectancy',
+  topN = 10,
+  timeframes: string[] = ['M5'],
+): OptimizeResponse {
+  const rows = [];
+  for (const symbol of symbols.length ? symbols : ['EURUSD']) {
+    for (const tf of timeframes.length ? timeframes : ['M5']) {
+      for (const style of styles.length ? styles : ['Intraday']) {
+        for (const risk of riskPercents.length ? riskPercents : [1]) {
+          // Deterministic pseudo-score from the combination so the leaderboard ranks stably.
+          const seed = (symbol.charCodeAt(0) + style.charCodeAt(0) + tf.charCodeAt(1) + risk * 10) % 23;
+          const averageR = Number((0.05 + seed * 0.04).toFixed(3));
+          const winRate = Number((0.4 + (seed % 7) * 0.03).toFixed(3));
+          const profitFactor = Number((0.8 + seed * 0.07).toFixed(2));
+          const tradeCount = 8 + (seed % 12);
+          const expectancy = averageR;
+          const endingBalance = Number((startingBalance * (1 + averageR * tradeCount * (risk / 100))).toFixed(2));
+          const score =
+            objective === 'ProfitFactor'
+              ? profitFactor
+              : objective === 'AverageR'
+                ? averageR
+                : objective === 'EndingBalance'
+                  ? endingBalance
+                  : expectancy;
+          rows.push({
+            symbol,
+            timeframe: tf,
+            style,
+            riskPercent: risk,
+            tradeCount,
+            winRate,
+            averageR,
+            profitFactor,
+            expectancy,
+            maxDrawdownR: Number((1 + (seed % 5) * 0.5).toFixed(2)),
+            endingBalance,
+            score: Number(score.toFixed(4)),
+          });
+        }
+      }
+    }
+  }
+  rows.sort((a, b) => b.score - a.score);
+  return {
+    combinationCount: rows.length,
+    objective,
+    results: rows.slice(0, topN),
+  };
+}
+
+export const MOCK_OPTIMIZE: OptimizeResponse = mockOptimizeResponse(
+  ['EURUSD', 'GBPUSD'],
+  ['Scalp', 'Intraday'],
+  [0.5, 1, 1.5],
+  10000,
+);
 
 // Units match the live wire contract (PerformanceCalculator): winRate a 0..1 fraction; averageR /
 // expectancy / maxDrawdown in R; maxDrawdown a POSITIVE absolute peak-to-trough magnitude;

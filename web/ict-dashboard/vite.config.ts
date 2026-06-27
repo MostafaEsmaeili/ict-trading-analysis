@@ -19,5 +19,10 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     css: false,
     include: ['src/**/*.test.{ts,tsx}'],
+    // Force the deterministic, offline mock data layer for the whole suite, independent of any local
+    // `.env.local` (the operator may set VITE_USE_MOCKS=false there for live render-verification —
+    // that must NOT make the unit suite hit the real host). client.test.ts overrides this per-test
+    // via vi.stubEnv to exercise the live fetch path.
+    env: { VITE_USE_MOCKS: 'true' },
   },
 });
