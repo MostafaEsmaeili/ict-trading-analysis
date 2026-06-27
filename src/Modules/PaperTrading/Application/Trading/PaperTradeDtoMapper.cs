@@ -45,4 +45,26 @@ internal static class PaperTradeDtoMapper
             ClosedAtUtc: trade.ClosedAtUtc,
             RealizedR: trade.RealizedR);
     }
+
+    /// <summary>
+    /// Maps the trade to the wire DTO for an <c>OPEN</c> notification, forcing the open-state fields regardless of the
+    /// aggregate's CURRENT state. A same-bar open-then-close (the −1R straddle / same-bar runner) raises both
+    /// <c>PaperTradeOpened</c> and <c>PaperTradeClosed</c> in one advance, but the aggregate is already Closed by the
+    /// time the events are drained — so mapping a single post-advance DTO onto BOTH events would ship a
+    /// <c>PaperTradeOpened</c> carrying <c>Status=Closed</c> with the close fields populated. This overload keeps the
+    /// open notification internally consistent (<see cref="TradeStatus.Open"/>, no <c>ClosedAtUtc</c>/<c>RealizedR</c>)
+    /// so a future consumer that segments off <see cref="PaperTradeDto.Status"/> cannot misread an open as a close; the
+    /// realized outcome flows on the separate <c>PaperTradeClosed</c> event (mapped via <see cref="ToDto"/>).
+    /// </summary>
+    public static PaperTradeDto ToOpenedDto(PaperTrade trade)
+    {
+        ArgumentNullException.ThrowIfNull(trade);
+
+        return ToDto(trade) with
+        {
+            Status = TradeStatus.Open.ToString(),
+            ClosedAtUtc = null,
+            RealizedR = null,
+        };
+    }
 }

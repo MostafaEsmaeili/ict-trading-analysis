@@ -59,7 +59,7 @@ public sealed class PaperTradingCandleHandler(
         var candle = CandleToDomainMapper.ToDomain(@event.Candle);
         var barCloseUtc = CandleToDomainMapper.BarCloseUtc(@event.Candle);
 
-        var active = await LoadActivePositionsAsync(symbol, cancellationToken).ConfigureAwait(false);
+        var active = await LoadActivePositionsAsync(symbol, candle.OpenTimeUtc, cancellationToken).ConfigureAwait(false);
         if (active.Count == 0)
         {
             return;
@@ -104,20 +104,30 @@ public sealed class PaperTradingCandleHandler(
     }
 
     /// <summary>Loads the symbol's active armed entries + open trades FRESH (tracked by this scope's context) and
-    /// reconstructs a <see cref="ManagedPosition"/> per aggregate — the DB-as-state warm-start set.</summary>
+    /// reconstructs a <see cref="ManagedPosition"/> per aggregate — the DB-as-state warm-start set.
+    ///
+    /// <para><b>No same-bar look-ahead (plan §4.1).</b> A setup confirmed on candle N is opened/armed mid-dispatch by
+    /// <see cref="SetupConfirmedHandler"/> with <see cref="PaperTrade.OpenedAtUtc"/> / <see cref="ArmedEntry.ArmedAtUtc"/>
+    /// stamped at candle N's open. The Scanning handler fans out before this one on the SAME <see cref="CandleIngested"/>,
+    /// so that just-created position is already persisted when this method reloads. Advancing it on candle N would let its
+    /// entry limit fill — or its stop/runner hit — on the very bar that produced the signal: look-ahead bias, since live
+    /// the order could not have been resting during the bar that generated it. So a position is eligible for management
+    /// only from the bar AFTER its arm/open bar — filter to those created STRICTLY BEFORE this candle's open. (This is a
+    /// different concern from the legitimate same-bar entry-then-exit re-feed INSIDE
+    /// <see cref="TradeOrchestrator.Advance"/>, which is left untouched.)</para></summary>
     private async Task<IReadOnlyList<ManagedPosition>> LoadActivePositionsAsync(
-        Symbol symbol, CancellationToken cancellationToken)
+        Symbol symbol, DateTimeOffset candleOpenUtc, CancellationToken cancellationToken)
     {
         var positions = new List<ManagedPosition>();
 
         var resting = await _armedEntries.GetActiveAsync(cancellationToken).ConfigureAwait(false);
-        foreach (var armed in resting.Where(a => a.Symbol == symbol))
+        foreach (var armed in resting.Where(a => a.Symbol == symbol && a.ArmedAtUtc < candleOpenUtc))
         {
             positions.Add(ManagedPosition.Resting(armed));
         }
 
         var open = await _trades.GetOpenAsync(cancellationToken).ConfigureAwait(false);
-        foreach (var trade in open.Where(t => t.Symbol == symbol))
+        foreach (var trade in open.Where(t => t.Symbol == symbol && t.OpenedAtUtc < candleOpenUtc))
         {
             positions.Add(ManagedPosition.Live(trade));
         }
@@ -139,9 +149,11 @@ public sealed class PaperTradingCandleHandler(
 
     /// <summary>Drains the aggregate's raised domain events and translates the terminal ones to the frozen contract
     /// events. A just-opened trade → <see cref="Contracts.PaperTradeOpened"/>; a closed trade →
-    /// <see cref="Contracts.PaperTradeClosed"/>. A same-bar open-then-close yields both. The DTO is mapped from the
-    /// trade's CURRENT state (after the advance), so a same-bar open-then-close reports the final Closed status on
-    /// both events — the events differentiate the transitions, the DTO is the latest snapshot.</summary>
+    /// <see cref="Contracts.PaperTradeClosed"/>. A same-bar open-then-close yields both. Each event carries a DTO
+    /// snapshotted for ITS transition — the open notification reports <see cref="TradeStatus.Open"/> (via
+    /// <see cref="PaperTradeDtoMapper.ToOpenedDto"/>) and the close carries the realized outcome (via
+    /// <see cref="PaperTradeDtoMapper.ToDto"/>) — so a same-bar straddle never ships a "PaperTradeOpened" that says
+    /// Closed, and a consumer that segments off <see cref="PaperTradeDto.Status"/> reads each event coherently.</summary>
     private static void CollectContractEvents(
         ManagedPosition position,
         List<Contracts.PaperTradeOpened> opened,
@@ -153,18 +165,17 @@ public sealed class PaperTradingCandleHandler(
         }
 
         var trade = position.Trade;
-        var dto = PaperTradeDtoMapper.ToDto(trade);
 
         foreach (var domainEvent in trade.DomainEvents)
         {
             switch (domainEvent)
             {
                 case Domain.Trading.PaperTradeOpened:
-                    opened.Add(new Contracts.PaperTradeOpened(dto));
+                    opened.Add(new Contracts.PaperTradeOpened(PaperTradeDtoMapper.ToOpenedDto(trade)));
                     break;
 
                 case Domain.Trading.PaperTradeClosed close:
-                    closed.Add(new Contracts.PaperTradeClosed(dto, OutcomeOf(close.Reason)));
+                    closed.Add(new Contracts.PaperTradeClosed(PaperTradeDtoMapper.ToDto(trade), OutcomeOf(close.Reason)));
                     break;
             }
         }
