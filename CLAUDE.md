@@ -928,12 +928,33 @@ warm-cache would speed backtests. The chart shows only the **last ~1500 candles*
 are **not persisted**, so the chart cannot show overlays for HISTORICAL setups (months back) — a "focus chart on alert"
 needs **candle persistence (plan §7 `CandleEntity`) + a time-range `/api/chart?from=&to=`** to render old setups.
 
-**Still to come (follow-ons, all additive):** the **WP9 Gherkin E2E** gate (raw-candle→confirmation fixture); **candle
+**WP9 E2E acceptance gate (issue #115, PR #116 → merged) — DONE. 🏁 The plan's mandatory gate is in place.** A
+bus-driven `tests/IctTrader.E2E` (Reqnroll + Testcontainers Postgres) boots the REAL `Program` via
+`CustomWebApplicationFactory<Program>` and drives the real in-memory bus + Scanning/PaperTrading/Performance/Alerting
+handlers + EF persistence end-to-end: **PaperTradePipeline.feature** (a valid bullish London setup → paper trade →
+**TargetHit** 100% win / setup+close alerts / advisory-only assertion; and a stop-out candle → **StopHit −1R**) +
+**KillzoneClassification.feature** (10-example NY-boundary Scenario Outline via `KillzoneClock`, ICU `America/New_York`).
+Bus-driven by design (the §2.5 model needs ~14k warmup candles, too slow to confirm per-test from raw candles): the
+gate publishes a crafted Grade-B `SetupConfirmed` + the driving `CandleIngested` bars. **12 E2E green.** (Reqnroll note:
+reference `Reqnroll.Tools.MsBuild.Generation` DIRECTLY or no `.feature.cs` is generated; the DI plugin is NOT used —
+steps share state via the native `IObjectContainer`.)
+
+**🏁 ALL WORK PACKAGES COMPLETE (WP0–WP9) — full green suite: build 0 warnings · 640 unit · 23 arch · 33 integration ·
+12 E2E (= 708 tests) · `dotnet format` clean.** The ICT 2022 Intraday FVG model is faithfully encoded end-to-end, the
+runnable backend is proven on 2.7 years of real EUR/USD, the React dashboard runs live on it, and the mandatory E2E gate
+guards the pipeline. **To see it (2 terminals):** (1) `docker compose up -d postgres`; apply migrations; run the Host
+with the Replay env on `--urls http://localhost:5080 --no-launch-profile` pointed at a `data/*.csv`; (2)
+`cd web/ict-dashboard && VITE_USE_MOCKS=false npm run dev` → `http://localhost:5173`. **NOTE: the .NET process's outbound
+HTTPS + localhost-DB connections are BLOCKED in the default sandbox — run those with the sandbox disabled.**
+
+**Still to come (OPTIONAL follow-ons, all additive — the plan is otherwise complete):** **candle
 persistence + historical/time-range chart** (so the centerpiece chart shows any setup's FVG/OTE/entry-stop-target
-overlays); the tracked enrichments (candle↔trade timeframe guard, symbol-scoped repo queries, per-instrument `SymbolSpec`
-into `EntryFillEvaluator` for EG-3, the `Ict:Detection:Fvg` binding into OTE/draw, `WindowCapacity ≥ DisplacementLegMaxBars`
-cross-check); the §2.5.8 long-tail (SMT/Breaker, macros, weekly bias, HRLR, Power-3, Sunday-gap) + cost follow-ons
-(slippage, session-stepped spread, swap); backtest-speed batching. **The fix to wiring the operator's killzone selection:
+overlays for setups older than the in-memory ~1500-candle window); the tracked enrichments (candle↔trade timeframe guard,
+symbol-scoped repo queries, per-instrument `SymbolSpec` into `EntryFillEvaluator` for EG-3, the `Ict:Detection:Fvg`
+binding into OTE/draw, `WindowCapacity ≥ DisplacementLegMaxBars` cross-check); the §2.5.8 long-tail (SMT/Breaker, macros,
+weekly bias, HRLR, Power-3, Sunday-gap) + cost follow-ons (slippage, session-stepped spread, swap); **backtest-speed
+batching** (the DB-per-candle reload makes a 200k backtest ~15-20 min — a warm in-memory aggregate cache would fix it).
+**The fix to wiring the operator's killzone selection:
 `KillzoneEntryDetector` reads `KillzoneEntryOptions.ActiveKillzones` (its own section), so `Ict:Scanning:ActiveKillzones`
 does NOT currently change the detector's hunt-set — reconcile these two ActiveKillzones sources.**
 
