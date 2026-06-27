@@ -2,6 +2,7 @@ using IctTrader.Alerting.Application;
 using IctTrader.Alerting.Contracts;
 using IctTrader.Domain.Configuration;
 using IctTrader.Host;
+using IctTrader.Host.Backtesting;
 using IctTrader.Host.Hubs;
 using IctTrader.MarketData.Application.Chart;
 using IctTrader.MarketData.Contracts;
@@ -81,6 +82,10 @@ else
     // recent-alerts query handler reads. Read-only advisory sink — it consumes SetupConfirmed + PaperTradeOpened/
     // Closed and publishes nothing, feeding the dashboard's Alerts feed.
     builder.Services.AddAlertingModule();
+
+    // On-demand backtest engine (plan §15): an in-memory, deterministic run over recorded-history CSVs that REUSES
+    // the pure §2.5 domain (scanner + orchestrator + account) — no bus, no DB. Pure analysis surface (§6.3).
+    builder.Services.AddBacktesting(builder.Configuration);
 }
 
 builder.Services.AddOpenApi();
@@ -183,6 +188,34 @@ api.MapGet("/config", (
             StartingEquity: paperTrading.Value.StartingEquity));
     })
     .WithName("GetConfig");
+
+// The recorded-history datasets available to backtest (plan §15) — one per <symbol>-<tf>.csv with its date range +
+// candle count, so the Backtest Lab can bound its period picker. Read-only directory scan.
+api.MapGet("/backtest/datasets", (BacktestEngine engine) =>
+        TypedResults.Ok(engine.ListDatasets()))
+    .WithName("GetBacktestDatasets");
+
+// Run an on-demand backtest (plan §15): the in-memory engine replays the chosen symbol/timeframe/period through the
+// pure §2.5 domain with the requested style + starting balance + risk, and returns the summary, equity curve, and
+// every trade. Synchronous CPU work is pushed off the request thread; a bad request → 400, a missing dataset → 404.
+// Advisory only — it reads a CSV and routes nothing near a broker (§6.3 guardrail).
+api.MapPost("/backtest", async (BacktestRequest request, BacktestEngine engine) =>
+    {
+        try
+        {
+            var result = await Task.Run(() => engine.Run(request)).ConfigureAwait(false);
+            return Results.Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            return Results.BadRequest(new { error = ex.Message });
+        }
+        catch (FileNotFoundException ex)
+        {
+            return Results.NotFound(new { error = ex.Message });
+        }
+    })
+    .WithName("RunBacktest");
 
 // Advisory only — this NEVER routes to a broker (plan §6.3); the simulator is wired in WP4.
 api.MapPost("/paper-trades", (ExecutePaperTradeRequest request) =>

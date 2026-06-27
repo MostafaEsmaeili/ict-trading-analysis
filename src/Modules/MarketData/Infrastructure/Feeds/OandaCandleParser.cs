@@ -81,7 +81,7 @@ internal static class OandaCandleParser
 
         return new CandleDto(
             Symbol: symbol,
-            Timeframe: granularity,
+            Timeframe: NormaliseGranularity(granularity),
             OpenTimeUtc: ParseTime(GetRequiredString(candle, TimeProperty)),
             Open: ParsePrice(mid, OpenProperty),
             High: ParsePrice(mid, HighProperty),
@@ -98,6 +98,19 @@ internal static class OandaCandleParser
     /// <summary>Strips the OANDA underscore so <c>EUR_USD</c> becomes the dashboard form <c>EURUSD</c>.</summary>
     private static string NormaliseSymbol(string instrument)
         => instrument.Replace(OandaInstrumentSeparator.ToString(), string.Empty, StringComparison.Ordinal);
+
+    /// <summary>
+    /// Maps an OANDA granularity to the scanner <c>Timeframe</c> member NAME so the persisted candle's timeframe
+    /// string parses downstream: the intraday granularities (M1/M5/M15/M30/H1/H4) already match the enum members,
+    /// while OANDA's daily <c>D</c> → <c>D1</c> and weekly <c>W</c> → <c>W1</c>. Anything else is passed through
+    /// (the options allowlist has already rejected unusable granularities at startup).
+    /// </summary>
+    private static string NormaliseGranularity(string granularity) => granularity switch
+    {
+        "D" => "D1",
+        "W" => "W1",
+        _ => granularity,
+    };
 
     /// <summary>
     /// Parses the RFC3339 timestamp as UTC. OANDA emits nanosecond precision

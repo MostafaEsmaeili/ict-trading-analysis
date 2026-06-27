@@ -59,7 +59,7 @@ public sealed class TradeOrchestratorFactory : ITradeOrchestratorFactory
         _risk = risk.Value;
     }
 
-    public TradeOrchestrator Create(Symbol symbol)
+    public TradeOrchestrator Create(Symbol symbol, RiskOptions? risk = null)
     {
         ArgumentNullException.ThrowIfNull(symbol);
 
@@ -72,7 +72,9 @@ public sealed class TradeOrchestratorFactory : ITradeOrchestratorFactory
         var contract = profile.ContractSpec;
         var executionCost = _executionCost.WithInstrumentOverrides(profile.Overrides);
         var entryManagement = _entryManagement.WithInstrumentOverrides(profile.Overrides);
-        var risk = _risk.WithInstrumentOverrides(profile.Overrides);
+        // A per-run RiskOptions (the on-demand backtest's sizing) overrides the host default; the per-instrument
+        // scalar overrides still apply on top so an index keeps its point-based min-stop either way.
+        var resolvedRisk = (risk ?? _risk).WithInstrumentOverrides(profile.Overrides);
 
         var entryManager = new EntryManager(
             new EntryFillEvaluator(entryManagement, spec),
@@ -91,7 +93,7 @@ public sealed class TradeOrchestratorFactory : ITradeOrchestratorFactory
             _tradeStyles,
             contract);
 
-        var factory = new PaperTradeFactory(risk, new RiskManager());
+        var factory = new PaperTradeFactory(resolvedRisk, new RiskManager());
 
         // The orchestrator shares the SAME resolved EntryManagementOptions the entry manager + entry-fill evaluator
         // use (one source of truth for the entry mode + no-chase backstop + the close-proximity band).
