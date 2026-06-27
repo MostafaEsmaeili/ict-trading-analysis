@@ -9,8 +9,9 @@ namespace IctTrader.Domain.Trading;
 /// wick-sweep that closes back inside still fills a resting stop (§2.5.8); resting orders fill at their LEVEL so a
 /// stop-out books the R implied by the LIVE stop — exactly −1R when un-trailed, ~0R once trailed to breakeven
 /// (§2.5.9) — and a runner books the plan reward-to-risk; a bar that straddles both stop and runner is resolved by
-/// <see cref="FillOptions.StopVsTarget"/> (default worst-case StopFirst, applied to longs AND shorts). Gap-through
-/// and spread/slippage worsening are the §5.4 cost model's job, not this evaluator's.
+/// <see cref="FillOptions.StopVsTarget"/> (default worst-case StopFirst, applied to longs AND shorts). Gap-through /
+/// slippage fill-price worsening is NOT yet modeled (a deferred §5.4 follow-on, spec §5 item 25): this slice fills
+/// at the resting LEVEL, so a gap-through stop books optimistically at exactly −1R rather than the worse gapped price.
 /// </summary>
 public sealed class FillEvaluator : IFillEvaluator
 {
@@ -54,8 +55,8 @@ public sealed class FillEvaluator : IFillEvaluator
         // A bar that straddles both: the worst-case StopFirst assumption fills the stop for BOTH directions,
         // overriding the raw Open→Low→High→Close path (which would fill a short's target first). Resting orders
         // fill at their LEVEL — a stop-out books the R implied by the live stop (−1R un-trailed, ~0R at breakeven),
-        // a runner books the plan reward-to-risk. Gap-through and spread/slippage worsening are the §5.4 cost
-        // model's job, applied downstream.
+        // a runner books the plan reward-to-risk. Gap-through / slippage fill-price worsening is NOT yet modeled
+        // (a deferred §5.4 follow-on, spec §5 item 25): this slice fills at the level, never the worse gapped price.
         if (stopTouched && runnerTouched && _options.StopVsTarget == IntrabarFillAssumption.StopFirst)
         {
             return FillDecision.Stop(trade.CurrentStop);

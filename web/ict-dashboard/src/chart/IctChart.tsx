@@ -86,6 +86,10 @@ export function IctChart({
   // replacement (initial load / symbol or timeframe switch) does setData()+fitContent() exactly once.
   const lastSeriesKeyRef = useRef<string | undefined>(undefined);
   const lastBarTimeRef = useRef<number | undefined>(undefined);
+  // Track the array length alongside the last bar time so a MID-SERIES insert/upsert (out-of-order /
+  // redelivered bar — appendCandle branch 2/3, where the LAST bar is unchanged) is distinguished from a
+  // pure forming-bar-in-place update and re-fed via setData() instead of being missed by series.update().
+  const lastLenRef = useRef<number | undefined>(undefined);
 
   // Create the chart + candlestick series once.
   useEffect(() => {
@@ -140,17 +144,28 @@ export function IctChart({
     const lastBar = candles[candles.length - 1];
     const lastTime = lastBar ? (toUtcTimestamp(lastBar.openTimeUtc) as number) : undefined;
 
-    // Incremental ONLY when the dataset identity is unchanged and exactly the last bar moved (== forming
-    // bar in place, or > one new appended bar) — i.e. the appendCandle shapes. Anything else is a reload.
-    const isIncremental =
+    // The incremental series.update() fast-path applies ONLY to a true last-bar move: a strict append of
+    // one-or-more newer bars (lastTime > last), OR a pure forming-bar-in-place update (lastTime == last AND
+    // the length is unchanged). A MID-SERIES insert/upsert (appendCandle branch 2/3 — an out-of-order /
+    // redelivered bar lands before the last one, so lastTime is unchanged but the length grew or a middle
+    // bar's content shifted) is NOT incremental: update() would only re-push the unchanged last bar and the
+    // inserted/edited middle bar would never reach lightweight-charts until a full reload. Those fall back to
+    // setData() WITHOUT fitContent() so the operator's pan/zoom survives (consistent with update()).
+    const sameSeries =
       !datasetReplaced &&
       lastBar !== undefined &&
       lastTime !== undefined &&
-      lastBarTimeRef.current !== undefined &&
-      lastTime >= lastBarTimeRef.current;
+      lastBarTimeRef.current !== undefined;
+    const isPureAppend = sameSeries && lastTime! > lastBarTimeRef.current!;
+    const isFormingBar =
+      sameSeries && lastTime === lastBarTimeRef.current && candles.length === lastLenRef.current;
+    const isIncremental = isPureAppend || isFormingBar;
 
     if (isIncremental && lastBar) {
       series.update(toCandlestickData(lastBar));
+    } else if (!datasetReplaced && lastBar) {
+      // Mid-series insert/upsert (out-of-order / redelivered bar): re-feed without re-fitting so pan/zoom survives.
+      series.setData(candles.map(toCandlestickData));
     } else {
       series.setData(candles.map(toCandlestickData));
       chartRef.current?.timeScale().fitContent();
@@ -158,6 +173,7 @@ export function IctChart({
 
     lastSeriesKeyRef.current = seriesKey;
     lastBarTimeRef.current = lastTime;
+    lastLenRef.current = candles.length;
   }, [candles]);
 
   // Seek the time scale to a focus instant (focus-on-alert/trade), keyed on [seekToUtc, candles]. Runs
