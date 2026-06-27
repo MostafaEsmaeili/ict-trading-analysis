@@ -16,9 +16,14 @@ namespace IctTrader.Domain.Trading;
 /// </summary>
 public interface ITradeOrchestrator
 {
-    /// <summary>Turns a confirmed advisory setup into a managed position per the configured <c>EntryMode</c>.</summary>
+    /// <summary>
+    /// Turns a confirmed advisory setup into a managed position per the configured <c>EntryMode</c>. The optional
+    /// <paramref name="setupId"/> (the deterministic <c>SetupDto.Id</c>) becomes the opened/armed aggregate id, so a
+    /// redelivered/restart-re-streamed setup maps to the SAME id and the seam stays idempotent; default mints a fresh id.
+    /// </summary>
     ManagedPosition OnSetupConfirmed(
-        Setup setup, PaperAccount account, SymbolSpec symbolSpec, ContractSpec contractSpec, DateTimeOffset atUtc);
+        Setup setup, PaperAccount account, SymbolSpec symbolSpec, ContractSpec contractSpec, DateTimeOffset atUtc,
+        Guid setupId = default);
 
     /// <summary>Advances the position one candle, applying every decided entry/exit action and settling on close.</summary>
     ManagedPosition Advance(ManagedPosition position, PaperAccount account, Candle candle, DateTimeOffset barCloseUtc);

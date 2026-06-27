@@ -47,7 +47,8 @@ public sealed class TradeOrchestrator : ITradeOrchestrator
     }
 
     public ManagedPosition OnSetupConfirmed(
-        Setup setup, PaperAccount account, SymbolSpec symbolSpec, ContractSpec contractSpec, DateTimeOffset atUtc)
+        Setup setup, PaperAccount account, SymbolSpec symbolSpec, ContractSpec contractSpec, DateTimeOffset atUtc,
+        Guid setupId = default)
     {
         ArgumentNullException.ThrowIfNull(setup);
         ArgumentNullException.ThrowIfNull(account);
@@ -57,9 +58,11 @@ public sealed class TradeOrchestrator : ITradeOrchestrator
 
         // EntryMode.Immediate opens at the plan entry now (§5.1); the default Armed rests a limit at the OTE/FVG level
         // and reserves its risk, waiting for the retrace (§2.5.1 step 7). Both reserve against the same portfolio cap.
+        // The deterministic setup id is threaded into the opened/armed aggregate so the seam is idempotent (a
+        // redelivered/restart-re-streamed setup re-derives the SAME aggregate id — the handler short-circuits on it).
         return _entryOptions.Mode == EntryMode.Immediate
-            ? ManagedPosition.Live(_factory.Open(setup, account, symbolSpec, contractSpec, atUtc))
-            : ManagedPosition.Resting(_factory.Arm(setup, account, symbolSpec, contractSpec, atUtc));
+            ? ManagedPosition.Live(_factory.Open(setup, account, symbolSpec, contractSpec, atUtc, setupId))
+            : ManagedPosition.Resting(_factory.Arm(setup, account, symbolSpec, contractSpec, atUtc, setupId));
     }
 
     public ManagedPosition Advance(ManagedPosition position, PaperAccount account, Candle candle, DateTimeOffset barCloseUtc)

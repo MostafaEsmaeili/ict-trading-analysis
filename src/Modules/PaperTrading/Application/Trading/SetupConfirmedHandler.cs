@@ -56,16 +56,28 @@ public sealed class SetupConfirmedHandler(
     {
         ArgumentNullException.ThrowIfNull(@event);
 
+        // Idempotency on the deterministic seam key (SetupDto.Id): a replayed / redelivered / restart-re-streamed
+        // SetupConfirmed for the SAME setup must NOT open a second trade (double-reserving the ~5% cap, double-counting
+        // performance). The id becomes the opened/armed aggregate id below, so an existing trade OR armed entry under it
+        // means this setup is already handled — short-circuit BEFORE touching the account/orchestrator.
+        var setupId = @event.Setup.Id;
+        if (await _trades.GetByIdAsync(setupId, cancellationToken).ConfigureAwait(false) is not null
+            || await _armedEntries.GetByIdAsync(setupId, cancellationToken).ConfigureAwait(false) is not null)
+        {
+            return;
+        }
+
         var setup = SetupRehydrator.ToDomain(@event.Setup, _grading);
         var account = await _accountProvider.GetOrCreateAsync(cancellationToken).ConfigureAwait(false);
 
         var symbolSpec = SymbolSpec.FxMajor(setup.Symbol);
         var contractSpec = ContractSpec.FxMajor(setup.Symbol);
 
-        // The domain DECIDES: arm (reserve) or open (register) — both mutate the account ledger.
+        // The domain DECIDES: arm (reserve) or open (register) — both mutate the account ledger. The deterministic
+        // seam id is threaded in so the opened/armed aggregate carries it (the idempotency key the guard above reads).
         var position = _registry
             .GetOrCreate(setup.Symbol)
-            .OnSetupConfirmed(setup, account, symbolSpec, contractSpec, setup.ConfirmedAtUtc);
+            .OnSetupConfirmed(setup, account, symbolSpec, contractSpec, setup.ConfirmedAtUtc, setupId);
 
         if (position.Trade is not null)
         {

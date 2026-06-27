@@ -33,7 +33,8 @@ public sealed class PaperTradeFactory
         PaperAccount account,
         SymbolSpec symbolSpec,
         ContractSpec contractSpec,
-        DateTimeOffset openedAtUtc)
+        DateTimeOffset openedAtUtc,
+        Guid id = default)
     {
         ArgumentNullException.ThrowIfNull(setup);
         ArgumentNullException.ThrowIfNull(account);
@@ -49,7 +50,9 @@ public sealed class PaperTradeFactory
             new Pips(_risk.MinStopDistancePips));
 
         var trade = new PaperTrade(
-            Guid.NewGuid(),
+            // The deterministic SETUP id becomes the trade id (the seam's idempotency key, threaded from SetupDto.Id) so a
+            // redelivered/restart-re-streamed setup maps to the SAME aggregate; an unsupplied id mints a fresh one.
+            id == Guid.Empty ? Guid.NewGuid() : id,
             account.Id,
             setup.Symbol,
             setup.Style,
@@ -79,7 +82,8 @@ public sealed class PaperTradeFactory
         PaperAccount account,
         SymbolSpec symbolSpec,
         ContractSpec contractSpec,
-        DateTimeOffset armedAtUtc)
+        DateTimeOffset armedAtUtc,
+        Guid id = default)
     {
         ArgumentNullException.ThrowIfNull(setup);
         ArgumentNullException.ThrowIfNull(account);
@@ -97,8 +101,10 @@ public sealed class PaperTradeFactory
         // Construct the ArmedEntry BEFORE reserving so the arm is atomic (mirroring how Open builds the trade before
         // RegisterOpen): a bad entity ctor (e.g. a non-UTC time) throws before any reservation, and a cap-refused
         // Reserve discards the un-returned ArmedEntry — either path leaves the account untouched.
+        // The armed id IS the future trade id (via OpenArmed) — threading the deterministic SetupDto.Id here makes the
+        // whole arm→trigger→trade chain idempotent on the seam key; an unsupplied id mints a fresh one.
         var armedEntry = new ArmedEntry(
-            Guid.NewGuid(), account.Id, setup, sizing.Size, sizing.RiskBudget,
+            id == Guid.Empty ? Guid.NewGuid() : id, account.Id, setup, sizing.Size, sizing.RiskBudget,
             symbolSpec.PipSize, contractSpec.ValuePerPip, symbolSpec.InstrumentClass, armedAtUtc,
             setup.StackedFartherBound); // FVG-SEM-2b: carry the stacked farther bound onto the resting limit for the NIX
         account.Reserve(armedEntry.Id, sizing.RiskBudget);

@@ -1,4 +1,5 @@
 using IctTrader.Domain.Trading;
+using IctTrader.Domain.ValueObjects;
 using IctTrader.PaperTrading.Contracts;
 
 namespace IctTrader.PaperTrading.Application.Trading;
@@ -33,7 +34,9 @@ internal static class PaperTradeDtoMapper
             Id: trade.Id,
             SetupId: Guid.Empty, // the trade carries no source-setup id yet — emit "unknown", never a wrong id
             Symbol: trade.Symbol.Value,
-            Direction: trade.Direction.ToString(),
+            // A TRADE side is "Long"/"Short" on the wire (the frozen TradeDirection contract the Gherkin + dashboard
+            // assert), NOT the structural "Bullish"/"Bearish" of the underlying Direction — route through the converter.
+            Direction: trade.Direction.ToTradeDirection().ToString(),
             Status: trade.Status.ToString(),
             Style: trade.Style.ToString(),
             Killzone: null, // the killzone is the scanner's session, not a field on the trade aggregate

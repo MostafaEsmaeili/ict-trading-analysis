@@ -68,7 +68,8 @@ public class PaperTradingFlowTests
         harness.OpenedEvents.Should().ContainSingle();
         var openedDto = harness.OpenedEvents.Single().Trade;
         openedDto.Symbol.Should().Be(Eurusd.Value);
-        openedDto.Direction.Should().Be(Direction.Bullish.ToString());
+        // The wire carries the TRADE side (Long/Short), not the structural Bullish/Bearish (PaperTradeDtoMapper).
+        openedDto.Direction.Should().Be(Direction.Bullish.ToTradeDirection().ToString());
         openedDto.Status.Should().Be(TradeStatus.Open.ToString());
 
         harness.Trades.Saved.Should().ContainSingle();
@@ -221,6 +222,53 @@ public class PaperTradingFlowTests
         closed.Trade.Status.Should().Be(TradeStatus.Closed.ToString());
         closed.Trade.RealizedR.Should().BeApproximately(-1m, 0.0001m);
         closed.Outcome.Should().Be(TradeCloseReason.StopHit.ToString());
+    }
+
+    [Fact]
+    public async Task Publishing_the_same_SetupConfirmed_twice_opens_exactly_one_trade_idempotent_on_the_seam_id()
+    {
+        using var harness = new Harness(EntryMode.Immediate);
+        var bus = harness.Provider.GetRequiredService<IMessageBus>();
+
+        // The SAME wire setup (one deterministic SetupDto.Id) is delivered twice — a Replay-restart re-stream, a feed
+        // redelivery, or a future at-least-once transport. The deterministic id is the idempotency key: the SECOND
+        // delivery must be a no-op (no second trade, no second cap reservation).
+        var setup = BullishSetupDto();
+        await bus.PublishAsync(new SetupConfirmed(setup));
+        await bus.PublishAsync(new SetupConfirmed(setup));
+
+        harness.OpenedEvents.Should().ContainSingle("a redelivered setup must not open a second trade");
+        harness.Trades.Saved.Should().ContainSingle();
+        (await harness.Trades.GetOpenAsync()).Should().ContainSingle();
+
+        // The trade carries the deterministic seam id, and only ONE reservation is held against the portfolio cap.
+        harness.Trades.Saved.Single().Id.Should().Be(setup.Id);
+        var openRiskAfterOne = harness.Account().OpenRisk.Amount;
+        openRiskAfterOne.Should().BeGreaterThan(0m);
+
+        // A third redelivery is still a no-op — the reservation does not grow.
+        await bus.PublishAsync(new SetupConfirmed(setup));
+        harness.OpenedEvents.Should().ContainSingle();
+        harness.Account().OpenRisk.Amount.Should().Be(openRiskAfterOne);
+    }
+
+    [Fact]
+    public async Task Publishing_the_same_SetupConfirmed_twice_in_armed_mode_arms_exactly_one_resting_limit()
+    {
+        using var harness = new Harness(EntryMode.Armed);
+        var bus = harness.Provider.GetRequiredService<IMessageBus>();
+
+        // Mirror the Immediate idempotency proof on the armed (default) path: the resting limit is keyed by the same
+        // deterministic id, so a redelivered setup must not arm a SECOND limit (double-reserving the cap).
+        var setup = BullishSetupDto();
+        await bus.PublishAsync(new SetupConfirmed(setup));
+        var openRiskAfterOne = harness.Account().OpenRisk.Amount;
+
+        await bus.PublishAsync(new SetupConfirmed(setup));
+
+        harness.ArmedEntries.Saved.Should().ContainSingle("a redelivered setup must not arm a second limit");
+        harness.ArmedEntries.Saved.Single().Id.Should().Be(setup.Id);
+        harness.Account().OpenRisk.Amount.Should().Be(openRiskAfterOne); // the reservation did not double
     }
 
     // ---- Test harness: the real bus + module wired over in-memory fake repos (no Postgres) ----------------------

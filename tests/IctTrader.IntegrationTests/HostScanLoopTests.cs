@@ -132,7 +132,8 @@ public sealed class HostScanLoopTests : IAsyncLifetime
         active.Should().ContainSingle("the bus read-side projects the one open trade to a DTO");
         var dto = active.Single();
         dto.Symbol.Should().Be("EURUSD");
-        dto.Direction.Should().Be(Direction.Bullish.ToString());
+        // The paper-trade wire carries the TRADE side (Long/Short), not the structural Bullish/Bearish.
+        dto.Direction.Should().Be(Direction.Bullish.ToTradeDirection().ToString());
         dto.Status.Should().Be(TradeStatus.Open.ToString());
         dto.Entry.Should().Be(1.0832m);
         dto.Stop.Should().Be(1.0800m);
