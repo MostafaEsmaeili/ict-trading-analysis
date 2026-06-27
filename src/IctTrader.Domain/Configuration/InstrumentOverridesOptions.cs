@@ -1,3 +1,4 @@
+using IctTrader.Domain.Detection;
 using IctTrader.Domain.Instruments;
 
 namespace IctTrader.Domain.Configuration;
@@ -35,6 +36,22 @@ public sealed class InstrumentOverridesOptions
                 errors.Add(
                     $"Ict:Instruments:Overrides:{symbol}:MinRequiredConditions must be within [1, {RequiredSetSize}] " +
                     $"but was {k}.");
+            }
+
+            if (o.RequiredConditions is { } subset)
+            {
+                if (subset.Count == 0)
+                {
+                    errors.Add(
+                        $"Ict:Instruments:Overrides:{symbol}:RequiredConditions must not be empty (omit it for the " +
+                        "strict all-required default).");
+                }
+                else if (!subset.Contains(ConfluenceCondition.DisplacementMss))
+                {
+                    errors.Add(
+                        $"Ict:Instruments:Overrides:{symbol}:RequiredConditions must include DisplacementMss — the " +
+                        "confluence FSM needs it to lock the trade direction, so a subset without it never confirms.");
+                }
             }
         }
 

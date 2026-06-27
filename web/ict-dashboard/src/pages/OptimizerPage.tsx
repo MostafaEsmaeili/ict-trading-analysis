@@ -22,6 +22,19 @@ const RISK_CHOICES = [0.5, 1, 1.5, 2] as const;
 // The "k of n" required-condition relaxation to sweep; none selected = strict all-8 §2.5 model only.
 const MIN_REQUIRED_CHOICES = [5, 6, 7, 8] as const;
 
+// The canonical §2.5.2 required set — used to show which concepts a subset DROPPED (made optional) in the leaderboard.
+const ALL_REQUIRED = [
+  'BiasAligned', 'KillzoneEntry', 'LiquiditySweep', 'DisplacementMss',
+  'FvgPresent', 'PremiumDiscountHalf', 'DrawTargetRrMet', 'CalendarClear',
+] as const;
+
+/** The required conditions a row DROPPED to optional (empty = strict all-required). */
+function droppedConditions(required: readonly string[] | null | undefined): string {
+  if (!required || required.length === 0) return '—';
+  const dropped = ALL_REQUIRED.filter((c) => !required.includes(c));
+  return dropped.length === 0 ? '—' : dropped.map((c) => c.replace(/[a-z]/g, '')).join(' ');
+}
+
 /** A simple checkbox multi-select group. */
 function MultiSelect({
   label,
@@ -101,6 +114,7 @@ export function OptimizerPage(): React.JSX.Element {
   const [topN, setTopN] = useState(10);
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
+  const [leaveOut, setLeaveOut] = useState(0);
 
   // Default the symbol selection to all available once datasets load (kept controlled but lazy).
   const effectiveSymbols = symbols.size > 0 ? [...symbols] : symbolOptions;
@@ -119,6 +133,7 @@ export function OptimizerPage(): React.JSX.Element {
       fromUtc: fromDate ? `${fromDate}T00:00:00Z` : undefined,
       toUtc: toDate ? `${toDate}T23:59:59Z` : undefined,
       minRequiredConditions: minReqs.size > 0 ? [...minReqs].map(Number) : undefined,
+      leaveOutUpTo: leaveOut > 0 ? leaveOut : undefined,
     };
     optimize.mutate(req);
   }
@@ -214,6 +229,20 @@ export function OptimizerPage(): React.JSX.Element {
             </label>
 
             <label className="form__field">
+              <span>Drop up to (subset search)</span>
+              <input
+                type="number"
+                className="input"
+                aria-label="Leave out up to"
+                min={0}
+                max={3}
+                step={1}
+                value={leaveOut}
+                onChange={(e) => setLeaveOut(Number(e.target.value))}
+              />
+            </label>
+
+            <label className="form__field">
               <span>Objective</span>
               <select
                 className="input"
@@ -288,6 +317,7 @@ export function OptimizerPage(): React.JSX.Element {
                   <th>Style</th>
                   <th>Risk %</th>
                   <th>k/n</th>
+                  <th>Dropped</th>
                   <th>Trades</th>
                   <th>Win %</th>
                   <th>Avg R</th>
@@ -299,7 +329,7 @@ export function OptimizerPage(): React.JSX.Element {
               <tbody>
                 {result.results.map((row, i) => (
                   <tr
-                    key={`${row.symbol}-${row.timeframe}-${row.style}-${row.riskPercent}-${row.minRequiredConditions ?? 'all'}`}
+                    key={`${row.symbol}-${row.timeframe}-${row.style}-${row.riskPercent}-${row.minRequiredConditions ?? 'all'}-${(row.requiredConditions ?? []).join('+')}`}
                     className={i === 0 ? 'row--top' : undefined}
                     role="button"
                     tabIndex={0}
@@ -321,6 +351,9 @@ export function OptimizerPage(): React.JSX.Element {
                     <td>{row.style}</td>
                     <td className="num">{row.riskPercent}</td>
                     <td className="num neutral">{row.minRequiredConditions ?? 'all'}</td>
+                    <td className="num neutral" title={(row.requiredConditions ?? []).join(', ')}>
+                      {droppedConditions(row.requiredConditions)}
+                    </td>
                     <td className="num">{row.tradeCount}</td>
                     <td className="num">{formatPct(row.winRate)}</td>
                     <td className={`num ${row.averageR >= 0 ? 'long' : 'short'}`}>
