@@ -1089,3 +1089,55 @@ cross-check, the `Ict:Detection:Fvg` binding INTO the OTE/draw detectors, the pe
 **WP9 Gherkin E2E** gate; backtest-speed batching; the two-`ActiveKillzones`-source reconciliation; and the §2.5.8
 long-tail + cost follow-ons (slippage / session-stepped spread / swap; lot-step flooring of the partial leg).
 **WP8 frontend scaffold — MERGED (PR #34, issue #30); now runs LIVE on real backend data.**
+
+**🏁 Trader-grade backtest lab + optimizer + multi-page UX + k-of-n relaxation (plan §15; PRs #150/#152/#153/#155/#157,
+issues #149/#151/#154/#156 — all MERGED).** Turned the system from "runs + scans" into a usable paper-trading platform
+the operator drives: define a period/style/portfolio/risk, backtest it, optimize across assets/timeframes/styles, and
+inspect every trade + the live account. Suite **730 unit + 23 arch + ~54 integration + 12 E2E**, 0 warnings, format
+clean; frontend typecheck/lint clean + 69 vitest. The OANDA fetch was extended to a full **M1→D1** ladder (D/W
+granularity added, `OandaCandleParser` maps D→D1/W→W1) so all four styles backtest on native timeframes
+(`data/{SYMBOL}-{TF}.csv`, gitignored).
+
+- **(A, #150) Read-API for live visibility.** Extended `PaperTradeDto` (close reason, gross/net P&L, costs, NetR,
+  lifecycle, current stop, exit price, risk budget, timeframe, managed-from, breakeven-armed); `GetClosedAsync`/
+  `GetAllAsync` + `GetTradesQuery` → `GET /api/trades?status=&symbol=`; `AccountStatusDto` + `GET /api/account`;
+  Host-owned `ConfigStatusDto` + `GET /api/config`. Read-only projections.
+- **(B, #152) In-memory `BacktestEngine`** (`src/IctTrader.Host/Backtesting/`) REUSES the pure §2.5 domain
+  (`SymbolScanner` + `TradeOrchestrator` + throwaway `PaperAccount`) synchronously over a CSV — no bus/DB, deterministic,
+  seconds-fast, **no detection/fill/cost/sizing logic reimplemented** (no-look-ahead preserved). `POST /api/backtest` +
+  `GET /api/backtest/datasets`; pure `CandleAggregator` + `TimeframeExtensions`; per-run risk override on
+  `ITradeOrchestratorFactory.Create`; `PaperTradeDtoMapper` made public.
+- **(C, #153) `BacktestOptimizer`** — sweeps symbols × styles × timeframes × risk (× k-of-n) → ranked leaderboard;
+  datasets cached per (symbol,tf), bounded grid, concurrent. `POST /api/backtest/optimize`.
+- **(D, #155) Trader dashboard** (`web/ict-dashboard`, react-router) — **Live · Trades · Backtest · Optimizer**: Live
+  Account/Config panel; full sortable Trades history (status/close-reason pills/net-P&L/R/filters/totals); Backtest Lab
+  (KPI tiles + Recharts equity curve + trades); Optimizer leaderboard (row → drills into the lab). Mocks cover every new
+  endpoint. **Render-verified live (all 4 pages)** — caught + fixed a starting-balance number-input `step` that made the
+  default 10,000 invalid; added a date range to the Optimizer. "Advisory · Paper only" everywhere; no execute control.
+- **(F, #157) Configurable k-of-n required conditions — the operator's idea.** `ConfluenceOptions.MinRequiredConditions`:
+  **null = strict canonical §2.5 (byte-identical)**; k<n = an EXPLICITLY non-canonical, experimental relaxation — a setup
+  confirms with k of the n required conditions ONLY if its weighted §2.5.4 score still clears the alert floor (grading
+  handed back to the score; strict-complete keeps TGR-4 ≥B, relaxed-partial graded by band). Threaded through
+  `SetupScorer` + scanner factory + backtest (per-run) + optimizer (sweep dimension) + UI (backtest input, optimizer
+  multi-select, leaderboard k/n column). **CONVENTION: any deliberate §2.5 deviation must be default-off + opt-in +
+  flagged, so the canonical model stays default and tests stay byte-identical.**
+
+**📊 BACKTEST + TUNING FINDINGS (full OANDA history via the optimizer):** **EUR/USD M15 Intraday strict = the best FX
+combo (15 trades, 60% win, +0.28R, PF 1.97)**; EURUSD M5 PF 1.40; GBPUSD M5 PF 1.16 (marginal). **NAS100 needs its own
+tuning: strict M5 PF 0.70 (losing) → k=6-of-8 PF 1.78, +0.36R, +6.3%** — proof the k-of-n relaxation pays off PER ASSET
+(EURUSD prefers strict; NAS100/GBPUSD benefit from relaxation). Strict all-AND yields **0 Swing/Position trades** on the
+fetched history — the optimizer/relaxation is how the defensive model is made productive on harder assets/styles. The
+optimum is per (asset, timeframe, style, k); re-run a sweep to refresh.
+
+**To run the trader UX (2 terminals):** `docker compose up -d postgres`; run the Host with
+`ConnectionStrings__PaperTrading=Host=localhost;Port=55432;Database=icttrader;Username=icttrader;Password=icttrader_dev`,
+`Ict__Backtest__DataDirectory=data`, Replay off, `--no-launch-profile -- --urls http://localhost:5080`;
+`cd web/ict-dashboard && VITE_USE_MOCKS=false npm run dev`. Backtest/Optimizer need no DB (in-memory); Trades/Account
+need Postgres. **The .NET socket is sandbox-blocked — run host/feed/test cmds with `dangerouslyDisableSandbox: true`.**
+
+**Still-open follow-ons (additive):** bake the k-of-n + per-pair tuned settings as LIVE per-instrument defaults via a
+config-augmentable `InstrumentCatalog` (`Ict:Instruments:*`); NAS100 index-specific detector/killzone tuning; speed up
+the full-range optimizer sweep (bound the period or add a warm candle cache — M5 full = 200k × many combos); candle
+persistence + time-range chart for historical overlays; the §2.5.8 long-tail. **Git cadence note:** after a merge+sync
+the working branch is `main` — remember to `git switch -c` a fresh branch BEFORE editing the next slice (twice this
+session edits landed on `main` and had to be moved to a branch; harmless but avoidable).
