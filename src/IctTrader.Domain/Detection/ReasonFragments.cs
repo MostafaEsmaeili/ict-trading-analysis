@@ -57,4 +57,16 @@ public static class ReasonFragments
 
     public static string CalendarClearUnverified()
         => "Calendar clear (no calendar data loaded)";
+
+    public static string OpenPriceReference(Direction direction, decimal referenceOpen)
+        => $"Price on the {(direction == Direction.Bearish ? "premium" : "discount")} side of the reference open {N(referenceOpen)}";
+
+    public static string MacroTime(TimeOnly nyTime)
+        => $"Inside the macro window around {nyTime.ToString("HH\\:mm", CultureInfo.InvariantCulture)} NY";
+
+    public static string CleanPriceAction(Direction direction, decimal bodyRatio)
+        => $"Clean {direction} displacement (body ratio {N(bodyRatio)})";
+
+    public static string CalendarDriver(CalendarEventType type, DateOnly nyDate)
+        => $"{type} driver on {nyDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}";
 }

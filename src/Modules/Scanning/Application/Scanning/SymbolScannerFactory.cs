@@ -38,7 +38,11 @@ public sealed class SymbolScannerFactory : ISymbolScannerFactory
         IOptions<KillzoneEntryOptions> killzoneEntry,
         IOptions<CalendarOptions> calendar,
         IOptions<TradeStyleOptions> tradeStyles,
-        IOptions<TargetLadderOptions> targetLadder)
+        IOptions<TargetLadderOptions> targetLadder,
+        IOptions<OpenPriceReferenceOptions> openPriceReference,
+        IOptions<MacroTimeOptions> macroTime,
+        IOptions<CleanPriceActionOptions> cleanPriceAction,
+        IOptions<CalendarDriverOptions> calendarDriver)
     {
         ArgumentNullException.ThrowIfNull(timeProvider);
         ArgumentNullException.ThrowIfNull(instruments);
@@ -64,6 +68,10 @@ public sealed class SymbolScannerFactory : ISymbolScannerFactory
             Calendar = calendar.Value,
             TradeStyles = tradeStyles.Value,
             TargetLadder = targetLadder.Value,
+            OpenPriceReference = openPriceReference.Value,
+            MacroTime = macroTime.Value,
+            CleanPriceAction = cleanPriceAction.Value,
+            CalendarDriver = calendarDriver.Value,
         };
     }
 

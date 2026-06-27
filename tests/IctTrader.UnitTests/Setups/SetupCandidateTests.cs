@@ -101,6 +101,38 @@ public class SetupCandidateTests
     }
 
     [Fact]
+    public void Grade_A_is_reachable_through_the_FSM_when_the_optional_emitters_match()
+    {
+        // END-TO-END proof through the FSM (not just SetupScorer): under the DEFAULT §2.5.3 weights (Σ = 9.75), a
+        // setup with ALL RequiredConditions PLUS the three optional confluences OteZone + OpenPriceReference +
+        // MacroTime scores 7.80 / 9.75 = 80 -> Grade A. Before these emitters existed the model topped out at B.
+        var confluence = new ConfluenceOptions(); // real §2.5.3 weights + the constant weighted universe
+        var candidate = new SetupCandidate(confluence, new SetupCandidateOptions(), new SetupScorer(confluence));
+        var ctx = NewContext();
+
+        // Sweep first (event, precedes the shift).
+        Step(ctx, candidate, 0, mss: null, Match(ConfluenceCondition.LiquiditySweep, Direction.Bullish));
+
+        // The shift + every other RequiredCondition + the three optional Grade-A enablers, all bullish-aligned.
+        var confirmation = Step(
+            ctx, candidate, 1, Mss(Direction.Bullish),
+            Match(ConfluenceCondition.DisplacementMss, Direction.Bullish),
+            Match(ConfluenceCondition.BiasAligned, Direction.Bullish),
+            Match(ConfluenceCondition.PremiumDiscountHalf, Direction.Bullish),
+            Match(ConfluenceCondition.FvgPresent, Direction.Bullish),
+            Match(ConfluenceCondition.KillzoneEntry, direction: null),
+            Match(ConfluenceCondition.CalendarClear, direction: null),
+            Match(ConfluenceCondition.DrawTargetRrMet, Direction.Bullish),
+            Match(ConfluenceCondition.OteZone, Direction.Bullish),
+            Match(ConfluenceCondition.OpenPriceReference, Direction.Bullish),
+            Match(ConfluenceCondition.MacroTime, direction: null));
+
+        confirmation.Should().NotBeNull();
+        confirmation!.Grade.Should().Be(SetupGrade.A);
+        confirmation.Score.Should().Be(80);
+    }
+
+    [Fact]
     public void Does_not_confirm_while_a_required_condition_is_missing()
     {
         var ctx = NewContext();

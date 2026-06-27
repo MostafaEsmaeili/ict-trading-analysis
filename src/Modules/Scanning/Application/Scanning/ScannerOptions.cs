@@ -49,6 +49,15 @@ public sealed record ScannerOptions
 
     public required TargetLadderOptions TargetLadder { get; init; }
 
+    // The four OPTIONAL §2.5.3 confluence emitters (the Grade-A enablers) — scoring-only, instrument-agnostic.
+    public required OpenPriceReferenceOptions OpenPriceReference { get; init; }
+
+    public required MacroTimeOptions MacroTime { get; init; }
+
+    public required CleanPriceActionOptions CleanPriceAction { get; init; }
+
+    public required CalendarDriverOptions CalendarDriver { get; init; }
+
     /// <summary>
     /// Returns a copy with the per-instrument-class overrides applied to the geometry/reference options the index
     /// re-defaults (<see cref="MarketContext"/>, <see cref="Liquidity"/>, <see cref="Fvg"/>,

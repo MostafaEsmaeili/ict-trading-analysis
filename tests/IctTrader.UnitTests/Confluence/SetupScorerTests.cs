@@ -77,6 +77,50 @@ public class SetupScorerTests
     }
 
     [Fact]
+    public void Grade_A_is_reachable_with_the_optional_emitters_under_the_default_weights()
+    {
+        // PROOF that Grade A is reachable end-to-end through SetupScorer once the four optional emitters can match.
+        // Under the §2.5.3 default weights: all RequiredConditions (Σ = 6.15) + OteZone (0.70) + OpenPriceReference
+        // (0.50) + MacroTime (0.45) = 7.80 of the constant Σ = 9.75 universe → 80 → Grade A (the GradeAThreshold).
+        var options = new ConfluenceOptions();
+        var scorer = new SetupScorer(options);
+        var applicable = options.Weights.Keys.ToHashSet(); // the constant weighted universe (Σ = 9.75)
+        var matched = options.EffectiveRequiredConditions
+            .Concat([
+                ConfluenceCondition.OteZone,
+                ConfluenceCondition.OpenPriceReference,
+                ConfluenceCondition.MacroTime,
+            ])
+            .ToHashSet();
+
+        var result = scorer.Score(matched, applicable);
+
+        result.AllRequiredMatched.Should().BeTrue();
+        result.Score.Should().Be(80);             // 7.80 / 9.75 × 100
+        result.Grade.Should().Be(SetupGrade.A);   // the optional emitters PROMOTE a complete setup to A
+    }
+
+    [Fact]
+    public void The_optional_emitters_are_not_required_so_the_bare_setup_still_scores_63()
+    {
+        // GRADING-SAFETY: the four new emitters are OPTIONAL (not in EffectiveRequiredConditions), so a bare
+        // all-required setup is unchanged — still 63 (6.15 / 9.75) and a tradeable B. Adding their weights only ever
+        // adds to the numerator; Σ(applicable) is untouched, so existing grades never drop.
+        var options = new ConfluenceOptions();
+
+        options.EffectiveRequiredConditions.Should().NotContain(ConfluenceCondition.OpenPriceReference);
+        options.EffectiveRequiredConditions.Should().NotContain(ConfluenceCondition.MacroTime);
+        options.EffectiveRequiredConditions.Should().NotContain(ConfluenceCondition.CleanPriceAction);
+        options.EffectiveRequiredConditions.Should().NotContain(ConfluenceCondition.CalendarDriver);
+
+        var result = new SetupScorer(options).Score(
+            options.EffectiveRequiredConditions.ToHashSet(), options.Weights.Keys.ToHashSet());
+
+        result.Score.Should().Be(63);
+        result.Grade.Should().Be(SetupGrade.B);
+    }
+
+    [Fact]
     public void The_display_only_b_threshold_does_not_gate_the_grade()
     {
         // Since TGR-4, GradeBThreshold is a display-band label, not a grading gate: an all-required setup scoring 50
