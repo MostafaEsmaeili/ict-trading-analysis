@@ -37,7 +37,7 @@ public sealed class CalendarGateDetector : ISetupDetector
                 : DetectorResult.Match(null, null, ReasonFragments.CalendarClearUnverified());
         }
 
-        if (IsCalendarBlocked(context, date))
+        if (CalendarBlackoutPolicy.IsBlackedOut(date, context.EconomicEvents, _options))
         {
             return DetectorResult.NoMatch; // blocked day -> CalendarClear absent -> setup rejected
         }
@@ -47,36 +47,5 @@ public sealed class CalendarGateDetector : ISetupDetector
             [EvidenceKeys.CalendarDate] = date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
         };
         return DetectorResult.Match(null, null, ReasonFragments.CalendarClear(date), evidence);
-    }
-
-    private bool IsCalendarBlocked(MarketContext context, DateOnly date)
-    {
-        foreach (var economicEvent in context.EconomicEvents)
-        {
-            switch (economicEvent.Type)
-            {
-                case CalendarEventType.Fomc when _options.BlockPostFomc:
-                    // The FOMC day (knee-jerk) and the configured days after it (post-FOMC).
-                    if (date >= economicEvent.NyDate
-                        && date.DayNumber - economicEvent.NyDate.DayNumber <= _options.FomcBlockDaysAfter)
-                    {
-                        return true;
-                    }
-
-                    break;
-
-                case CalendarEventType.Nfp when _options.BlockNfpWeek:
-                    // The configured days up to and including the NFP release (Wed/Thu/Fri for a Friday NFP).
-                    if (date <= economicEvent.NyDate
-                        && economicEvent.NyDate.DayNumber - date.DayNumber <= _options.NfpBlockDaysBefore)
-                    {
-                        return true;
-                    }
-
-                    break;
-            }
-        }
-
-        return false;
     }
 }

@@ -64,6 +64,11 @@ public static class IctOptionsRegistration
             .AddIctOptions<DrawOnLiquidityOptions>(config, DrawOnLiquidityOptions.SectionName, o => o.Validate())
             .AddIctOptions<TargetLadderOptions>(config, TargetLadderOptions.SectionName, o => o.Validate())
             .AddIctOptions<SdProjectionOptions>(config, SdProjectionOptions.SectionName, o => o.Validate())
+            // Optional §2.5.3 confluences (the Grade-A enablers)
+            .AddIctOptions<OpenPriceReferenceOptions>(config, OpenPriceReferenceOptions.SectionName, o => o.Validate())
+            .AddIctOptions<MacroTimeOptions>(config, MacroTimeOptions.SectionName, o => o.Validate())
+            .AddIctOptions<CleanPriceActionOptions>(config, CleanPriceActionOptions.SectionName, o => o.Validate())
+            .AddIctOptions<CalendarDriverOptions>(config, CalendarDriverOptions.SectionName, o => o.Validate())
             // Risk + execution
             .AddIctOptions<RiskOptions>(config, RiskOptions.SectionName, o => o.Validate())
             .AddIctOptions<ExecutionCostOptions>(config, ExecutionCostOptions.SectionName, o => o.Validate())

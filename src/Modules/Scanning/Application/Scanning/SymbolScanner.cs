@@ -53,13 +53,18 @@ public sealed class SymbolScanner
         var profile = instruments.Resolve(symbol);
         var resolvedOptions = options.WithInstrumentOverrides(profile.Overrides);
 
+        var nyClock = new NyClock(timeProvider);
         var context = new MarketContext(
             profile.SymbolSpec,
-            new KillzoneClock(new NyClock(timeProvider), KillzoneSchedule.CreateDefault()),
+            new KillzoneClock(nyClock, KillzoneSchedule.CreateDefault()),
             resolvedOptions.MarketContext);
 
         // The PINNED canonical order (ScanSessionTests): SwingPointDetector before the MSS, and the
         // displacement feeder before the MSS, so the breach-vs-MSS race is deterministic (spec §5 item 19).
+        // The four OPTIONAL §2.5.3 confluence emitters (OpenPriceReference → MacroTime → CleanPriceAction →
+        // CalendarDriver) run AFTER the structural + RequiredCondition detectors — they read the bias / reference
+        // open / displacement leg / calendar those already populated, and contribute ONLY to the score (never a
+        // RequiredCondition), so they promote a complete setup toward Grade A without changing Σ(applicable).
         var pipeline = new ISetupDetector[]
         {
             new SwingPointDetector(resolvedOptions.Swing),
@@ -81,6 +86,10 @@ public sealed class SymbolScanner
                 resolvedOptions.SdProjection),
             new KillzoneEntryDetector(resolvedOptions.KillzoneEntry),
             new CalendarGateDetector(resolvedOptions.Calendar),
+            new OpenPriceReferenceDetector(resolvedOptions.OpenPriceReference),
+            new MacroTimeDetector(nyClock, resolvedOptions.MacroTime),
+            new CleanPriceActionDetector(resolvedOptions.CleanPriceAction),
+            new CalendarDriverDetector(resolvedOptions.CalendarDriver, resolvedOptions.Calendar),
         };
 
         // TEST SEAM only: feeder/seeder detectors prepended ahead of the real pipeline so a test can seed the

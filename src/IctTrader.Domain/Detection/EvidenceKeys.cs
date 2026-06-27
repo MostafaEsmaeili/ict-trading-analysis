@@ -59,6 +59,12 @@ public static class EvidenceKeys
     public const string OteSweetSpot = "oteSweetSpot";
     public const string RewardRatio = "rewardRatio";
 
+    // Optional §2.5.3 confluences (the Grade-A enablers)
+    public const string ReferenceOpenPrice = "referenceOpenPrice";
+    public const string MacroWindowTime = "macroWindowTime";
+    public const string CleanBodyRatio = "cleanBodyRatio";
+    public const string DriverEventType = "driverEventType";
+
     // Calendar
     public const string CalendarDate = "calendarDate";
 

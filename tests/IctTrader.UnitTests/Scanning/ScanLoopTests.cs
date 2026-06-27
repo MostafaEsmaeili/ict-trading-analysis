@@ -172,6 +172,10 @@ public class ScanLoopTests
             Calendar = new CalendarOptions(),
             TradeStyles = new TradeStyleOptions(),
             TargetLadder = new TargetLadderOptions(),
+            OpenPriceReference = new OpenPriceReferenceOptions(),
+            MacroTime = new MacroTimeOptions(),
+            CleanPriceAction = new CleanPriceActionOptions(),
+            CalendarDriver = new CalendarDriverOptions(),
         };
 
         public SymbolScanner Create(Symbol symbol, TradeStyle style)

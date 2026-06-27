@@ -36,6 +36,10 @@ public class OptionsValidationTests
         new StopTrailOptions().Validate().Should().BeEmpty();
         new EntryManagementOptions().Validate().Should().BeEmpty();
         new SdProjectionOptions().Validate().Should().BeEmpty();
+        new OpenPriceReferenceOptions().Validate().Should().BeEmpty();
+        new MacroTimeOptions().Validate().Should().BeEmpty();
+        new CleanPriceActionOptions().Validate().Should().BeEmpty();
+        new CalendarDriverOptions().Validate().Should().BeEmpty();
     }
 
     [Fact]
