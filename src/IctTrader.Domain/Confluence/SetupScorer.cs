@@ -60,22 +60,47 @@ public sealed class SetupScorer
             ? 0
             : (int)Math.Round(matchedWeight / applicableWeight * 100m, MidpointRounding.AwayFromZero);
 
-        var allRequiredMatched = _options.EffectiveRequiredConditions.All(matched.Contains);
+        var required = _options.EffectiveRequiredConditions;
+        var requiredTotal = required.Count;
+        var requiredMatched = required.Count(matched.Contains);
+        var threshold = _options.MinRequiredConditions ?? requiredTotal;
+        var allRequiredMatched = requiredMatched == requiredTotal;
 
-        return new ConfluenceScore(score, GradeFor(score, allRequiredMatched), allRequiredMatched);
+        return new ConfluenceScore(
+            score, GradeFor(score, requiredMatched, requiredTotal, threshold), allRequiredMatched);
     }
 
-    private SetupGrade GradeFor(int score, bool allRequiredMatched)
+    private SetupGrade GradeFor(int score, int requiredMatched, int requiredTotal, int threshold)
     {
-        // A missing RequiredCondition is never tradeable (§2.5.2).
-        if (!allRequiredMatched)
+        // The required gate: fewer than the (possibly relaxed) threshold of RequiredConditions ⇒ never tradeable
+        // (§2.5.2). In the DEFAULT strict model threshold == requiredTotal, so only a fully-complete setup passes.
+        if (requiredMatched < threshold)
         {
             return SetupGrade.Reject;
         }
 
-        // All RequiredConditions hold ⇒ this is the tradeable §2.5 model, so it grades at least B (TGR-4). The score
-        // only promotes B → A at the A threshold; it can no longer demote a complete setup below B. The lower
-        // (B/C) thresholds remain display-band labels for the raw score, not grading gates.
-        return score >= _options.GradeAThreshold ? SetupGrade.A : SetupGrade.B;
+        // A fully-complete setup IS the tradeable §2.5 model, so it grades at least B (TGR-4); the score only
+        // promotes B → A. This is the ONLY reachable branch in the strict default (threshold == requiredTotal),
+        // keeping the canonical model byte-identical.
+        if (requiredMatched == requiredTotal)
+        {
+            return score >= _options.GradeAThreshold ? SetupGrade.A : SetupGrade.B;
+        }
+
+        // RELAXED (k-of-n, threshold < requiredTotal): the all-AND auto-B no longer applies — a partial setup must
+        // EARN its grade from the weighted §2.5.4 score, graded against the standard bands. Combined with the alert
+        // floor (default B = 65) this means a relaxed setup confirms only when its confluence score is genuinely high
+        // enough, so the relaxation trades more often without admitting low-quality setups.
+        if (score >= _options.GradeAThreshold)
+        {
+            return SetupGrade.A;
+        }
+
+        if (score >= _options.GradeBThreshold)
+        {
+            return SetupGrade.B;
+        }
+
+        return score >= _options.GradeCThreshold ? SetupGrade.C : SetupGrade.Reject;
     }
 }

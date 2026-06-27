@@ -177,4 +177,80 @@ public class SetupScorerTests
 
         new ConfluenceOptions { GradeBThreshold = 90 }.Validate().Should().NotBeEmpty();
     }
+
+    // ---- k-of-n required-condition relaxation (the configurable MinRequiredConditions) ----
+
+    // The first four weighted conditions used as a 4-strong required set + the remaining six as "optional".
+    private static readonly ConfluenceCondition[] FourRequired =
+    [
+        ConfluenceCondition.KillzoneEntry, ConfluenceCondition.LiquiditySweep,
+        ConfluenceCondition.DisplacementMss, ConfluenceCondition.FvgPresent,
+    ];
+
+    private static readonly ConfluenceCondition[] SixOptional =
+    [
+        ConfluenceCondition.BiasAligned, ConfluenceCondition.PremiumDiscountHalf, ConfluenceCondition.OteZone,
+        ConfluenceCondition.OrderBlockConfluence, ConfluenceCondition.DrawTargetRrMet, ConfluenceCondition.SmtDivergence,
+    ];
+
+    // 2 of the 4 required + all 6 optional = 8 of the 10 weighted → score 80, but an INCOMPLETE required set.
+    private static IReadOnlySet<ConfluenceCondition> TwoRequiredPlusSixOptional()
+        => new HashSet<ConfluenceCondition>(SixOptional)
+        {
+            ConfluenceCondition.KillzoneEntry,
+            ConfluenceCondition.LiquiditySweep,
+        };
+
+    private static SetupScorer Scorer(int? minRequired) => new(new ConfluenceOptions
+    {
+        Weights = Weighted.ToDictionary(c => c, _ => 1.0m),
+        RequiredConditions = FourRequired,
+        MinRequiredConditions = minRequired,
+    });
+
+    [Fact]
+    public void Strict_default_rejects_a_partial_required_setup_even_at_a_high_score()
+    {
+        // The canonical all-AND model: 2 of 4 required (+ 6 optional, score 80) is still a Reject — the strict gate
+        // demands every RequiredCondition. This is the behaviour the relaxation deliberately opts out of.
+        var result = Scorer(minRequired: null).Score(TwoRequiredPlusSixOptional(), new HashSet<ConfluenceCondition>(Weighted));
+
+        result.Score.Should().Be(80);
+        result.AllRequiredMatched.Should().BeFalse();
+        result.Grade.Should().Be(SetupGrade.Reject);
+    }
+
+    [Fact]
+    public void Relaxed_k_of_n_confirms_a_partial_required_setup_graded_by_its_score()
+    {
+        // With MinRequiredConditions = 2, the same 2-of-4 setup passes the relaxed gate and is graded purely by its
+        // weighted score (80 ≥ the A threshold) — the user's "k of n" idea: trade more, but only when the confluence
+        // score is genuinely high. It is still flagged as NOT a complete §2.5 setup.
+        var result = Scorer(minRequired: 2).Score(TwoRequiredPlusSixOptional(), new HashSet<ConfluenceCondition>(Weighted));
+
+        result.Score.Should().Be(80);
+        result.AllRequiredMatched.Should().BeFalse();
+        result.Grade.Should().Be(SetupGrade.A);
+    }
+
+    [Fact]
+    public void Relaxed_still_rejects_below_the_k_threshold()
+    {
+        // Only 1 required (+ 6 optional, score 70) is below the k = 2 threshold → Reject even though the score clears
+        // the alert floor: the relaxation lowers the bar, it does not remove it.
+        var matched = new HashSet<ConfluenceCondition>(SixOptional) { ConfluenceCondition.KillzoneEntry };
+
+        var result = Scorer(minRequired: 2).Score(matched, new HashSet<ConfluenceCondition>(Weighted));
+
+        result.Score.Should().Be(70);
+        result.Grade.Should().Be(SetupGrade.Reject);
+    }
+
+    [Fact]
+    public void MinRequiredConditions_must_be_within_the_required_set_size()
+    {
+        new ConfluenceOptions { MinRequiredConditions = 0 }.Validate().Should().NotBeEmpty();
+        new ConfluenceOptions { MinRequiredConditions = 99 }.Validate().Should().NotBeEmpty();
+        new ConfluenceOptions { MinRequiredConditions = 5 }.Validate().Should().BeEmpty(); // 5 ≤ 8 default required
+    }
 }

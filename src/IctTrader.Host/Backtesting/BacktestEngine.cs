@@ -35,6 +35,7 @@ public sealed class BacktestEngine
     private readonly ITradeOrchestratorFactory _orchestratorFactory;
     private readonly IInstrumentRegistry _instruments;
     private readonly RiskOptions _defaultRisk;
+    private readonly ConfluenceOptions _defaultConfluence;
     private readonly string _dataDirectory;
     private readonly ILogger<BacktestEngine> _logger;
 
@@ -46,6 +47,7 @@ public sealed class BacktestEngine
         ITradeOrchestratorFactory orchestratorFactory,
         IInstrumentRegistry instruments,
         IOptions<RiskOptions> defaultRisk,
+        IOptions<ConfluenceOptions> defaultConfluence,
         IOptions<BacktestOptions> backtestOptions,
         ILogger<BacktestEngine>? logger = null)
     {
@@ -53,6 +55,7 @@ public sealed class BacktestEngine
         _orchestratorFactory = orchestratorFactory ?? throw new ArgumentNullException(nameof(orchestratorFactory));
         _instruments = instruments ?? throw new ArgumentNullException(nameof(instruments));
         _defaultRisk = (defaultRisk ?? throw new ArgumentNullException(nameof(defaultRisk))).Value;
+        _defaultConfluence = (defaultConfluence ?? throw new ArgumentNullException(nameof(defaultConfluence))).Value;
         var dir = (backtestOptions ?? throw new ArgumentNullException(nameof(backtestOptions))).Value.DataDirectory;
         _dataDirectory = Path.IsPathRooted(dir) ? dir : Path.GetFullPath(dir);
         _logger = logger ?? NullLogger<BacktestEngine>.Instance;
@@ -111,6 +114,7 @@ public sealed class BacktestEngine
             .ToList();
 
         var perRunRisk = BuildRisk(_defaultRisk, request.RiskPercent);
+        var perRunConfluence = BuildConfluence(request.MinRequiredConditions);
 
         if (candles.Count == 0)
         {
@@ -118,12 +122,12 @@ public sealed class BacktestEngine
             var emptyTo = request.ToUtc ?? emptyFrom;
             return new BacktestResponse(
                 symbol.Value, timeframe.ToString(), style.ToString(), emptyFrom, emptyTo,
-                request.StartingBalance, request.RiskPercent, request.StartingBalance, 0, 0, 0,
-                EmptySummary(), [], []);
+                request.StartingBalance, request.RiskPercent, request.MinRequiredConditions, request.StartingBalance,
+                0, 0, 0, EmptySummary(), [], []);
         }
 
         var profile = _instruments.Resolve(symbol);
-        var scanner = _scannerFactory.Create(symbol, style);
+        var scanner = _scannerFactory.Create(symbol, style, perRunConfluence);
         var orchestrator = _orchestratorFactory.Create(symbol, perRunRisk);
         var account = new PaperAccount(
             Guid.NewGuid(), new Money(request.StartingBalance), perRunRisk.MaxOpenPortfolioRiskPercent);
@@ -302,7 +306,7 @@ public sealed class BacktestEngine
         return new BacktestResponse(
             symbol.Value, timeframe.ToString(), style.ToString(),
             candles[0].OpenTimeUtc, candles[^1].OpenTimeUtc,
-            request.StartingBalance, request.RiskPercent, account.Equity.Amount,
+            request.StartingBalance, request.RiskPercent, request.MinRequiredConditions, account.Equity.Amount,
             candles.Count, setupCount, trades.Count,
             ToDto(summary), equity, trades);
     }
@@ -413,6 +417,25 @@ public sealed class BacktestEngine
         }
 
         return risk;
+    }
+
+    /// <summary>Builds the per-run <see cref="ConfluenceOptions"/> when the request relaxes the required gate (k-of-n),
+    /// validated; <c>null</c> (strict §2.5, all required) leaves the scanner on the host default.</summary>
+    private ConfluenceOptions? BuildConfluence(int? minRequiredConditions)
+    {
+        if (minRequiredConditions is null)
+        {
+            return null;
+        }
+
+        var confluence = _defaultConfluence.WithMinRequiredConditions(minRequiredConditions);
+        var errors = confluence.Validate();
+        if (errors.Count > 0)
+        {
+            throw new ArgumentException($"The backtest confluence policy is invalid: {string.Join("; ", errors)}");
+        }
+
+        return confluence;
     }
 
     private static void ValidateRiskAndBalance(BacktestRequest request)

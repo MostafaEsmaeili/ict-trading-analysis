@@ -81,7 +81,7 @@ public sealed class BacktestOptimizer
             var result = _engine.Run(combo, candles);
             var summary = result.Summary;
             return new OptimizerResultDto(
-                result.Symbol, result.Timeframe, result.Style, combo.RiskPercent,
+                result.Symbol, result.Timeframe, result.Style, combo.RiskPercent, combo.MinRequiredConditions,
                 summary.TradeCount, summary.WinRate, summary.AverageR, summary.ProfitFactor,
                 summary.Expectancy, summary.MaxDrawdown, result.EndingBalance,
                 Score(objective, summary, result.EndingBalance));
@@ -100,7 +100,13 @@ public sealed class BacktestOptimizer
             ? request.Timeframes.Select(tf => (string?)tf).ToArray()
             : [null];
 
-        var seen = new HashSet<(string, string, string, decimal)>();
+        // null min-required → the strict all-AND §2.5 gate; a list sweeps the k-of-n relaxation (the user's
+        // "5 of 8 vs 8 of 8" question — does a relaxed combination outperform the strict model).
+        var minRequireds = request.MinRequiredConditions is { Count: > 0 }
+            ? request.MinRequiredConditions.Select(k => (int?)k).ToArray()
+            : [null];
+
+        var seen = new HashSet<(string, string, string, decimal, int?)>();
         var combos = new List<BacktestRequest>();
         foreach (var symbol in request.Symbols)
         {
@@ -110,13 +116,17 @@ public sealed class BacktestOptimizer
                 {
                     foreach (var risk in request.RiskPercents)
                     {
-                        var combo = new BacktestRequest(
-                            symbol, style, request.StartingBalance, risk, timeframe, request.FromUtc, request.ToUtc);
-                        // Dedup on the RESOLVED timeframe so an explicit tf equal to a style default isn't run twice.
-                        var key = (symbol, _engine.ResolveTimeframe(combo).ToString(), style, risk);
-                        if (seen.Add(key))
+                        foreach (var minRequired in minRequireds)
                         {
-                            combos.Add(combo);
+                            var combo = new BacktestRequest(
+                                symbol, style, request.StartingBalance, risk, timeframe, request.FromUtc,
+                                request.ToUtc, minRequired);
+                            // Dedup on the RESOLVED timeframe so an explicit tf equal to a style default isn't run twice.
+                            var key = (symbol, _engine.ResolveTimeframe(combo).ToString(), style, risk, minRequired);
+                            if (seen.Add(key))
+                            {
+                                combos.Add(combo);
+                            }
                         }
                     }
                 }

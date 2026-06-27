@@ -19,6 +19,8 @@ import { errorMessage } from '../format-error';
 
 const OBJECTIVES = ['Expectancy', 'ProfitFactor', 'AverageR', 'EndingBalance'] as const;
 const RISK_CHOICES = [0.5, 1, 1.5, 2] as const;
+// The "k of n" required-condition relaxation to sweep; none selected = strict all-8 §2.5 model only.
+const MIN_REQUIRED_CHOICES = [5, 6, 7, 8] as const;
 
 /** A simple checkbox multi-select group. */
 function MultiSelect({
@@ -93,6 +95,7 @@ export function OptimizerPage(): React.JSX.Element {
   const [styles, toggleStyle] = useToggleSet(['Intraday']);
   const [timeframes, toggleTimeframe] = useToggleSet([]);
   const [risks, toggleRisk] = useToggleSet(['1']);
+  const [minReqs, toggleMinReq] = useToggleSet([]);
   const [startingBalance, setStartingBalance] = useState(10000);
   const [objective, setObjective] = useState<(typeof OBJECTIVES)[number]>('Expectancy');
   const [topN, setTopN] = useState(10);
@@ -115,6 +118,7 @@ export function OptimizerPage(): React.JSX.Element {
       topN,
       fromUtc: fromDate ? `${fromDate}T00:00:00Z` : undefined,
       toUtc: toDate ? `${toDate}T23:59:59Z` : undefined,
+      minRequiredConditions: minReqs.size > 0 ? [...minReqs].map(Number) : undefined,
     };
     optimize.mutate(req);
   }
@@ -165,6 +169,13 @@ export function OptimizerPage(): React.JSX.Element {
               options={RISK_CHOICES}
               selected={risks}
               onToggle={toggleRisk}
+            />
+            <MultiSelect
+              label="Min required (k of n) — none = strict 8"
+              ariaLabel="Min required conditions multi-select"
+              options={MIN_REQUIRED_CHOICES}
+              selected={minReqs}
+              onToggle={toggleMinReq}
             />
 
             <label className="form__field">
@@ -276,6 +287,7 @@ export function OptimizerPage(): React.JSX.Element {
                   <th>TF</th>
                   <th>Style</th>
                   <th>Risk %</th>
+                  <th>k/n</th>
                   <th>Trades</th>
                   <th>Win %</th>
                   <th>Avg R</th>
@@ -287,7 +299,7 @@ export function OptimizerPage(): React.JSX.Element {
               <tbody>
                 {result.results.map((row, i) => (
                   <tr
-                    key={`${row.symbol}-${row.timeframe}-${row.style}-${row.riskPercent}`}
+                    key={`${row.symbol}-${row.timeframe}-${row.style}-${row.riskPercent}-${row.minRequiredConditions ?? 'all'}`}
                     className={i === 0 ? 'row--top' : undefined}
                     role="button"
                     tabIndex={0}
@@ -308,6 +320,7 @@ export function OptimizerPage(): React.JSX.Element {
                     <td className="num">{row.timeframe}</td>
                     <td>{row.style}</td>
                     <td className="num">{row.riskPercent}</td>
+                    <td className="num neutral">{row.minRequiredConditions ?? 'all'}</td>
                     <td className="num">{row.tradeCount}</td>
                     <td className="num">{formatPct(row.winRate)}</td>
                     <td className={`num ${row.averageR >= 0 ? 'long' : 'short'}`}>

@@ -30,6 +30,31 @@ public sealed class ConfluenceOptions
     public IReadOnlyList<ConfluenceCondition> EffectiveRequiredConditions =>
         RequiredConditions.Count == 0 ? DefaultRequiredConditions : RequiredConditions;
 
+    /// <summary>
+    /// The MINIMUM number of <see cref="EffectiveRequiredConditions"/> that must match to confirm — the "k of n"
+    /// relaxation of the §2.5.2 all-AND gate. <c>null</c> (the default) = ALL required, i.e. the strict, canonical
+    /// §2.5 model (byte-identical to before this knob existed). When set to <c>k &lt; n</c> it is an EXPERIMENTAL,
+    /// explicitly NON-canonical relaxation: a setup may confirm with only k of the required conditions, but ONLY if
+    /// its weighted §2.5.4 score still clears the <see cref="AlertMinimumGrade"/> floor — so grading is handed back
+    /// to the score (the all-AND auto-B of TGR-4 applies only to a fully-complete setup). Use it to discover, via the
+    /// backtest optimizer, whether a relaxed combination outperforms the strict model on a given asset/timeframe;
+    /// keep it null in production unless a backtest justifies otherwise.
+    /// </summary>
+    public int? MinRequiredConditions { get; init; }
+
+    /// <summary>Returns a copy with <see cref="MinRequiredConditions"/> overridden — the per-run knob the backtest
+    /// engine + optimizer vary without mutating the host's shared options.</summary>
+    public ConfluenceOptions WithMinRequiredConditions(int? minRequiredConditions) => new()
+    {
+        Weights = Weights,
+        RequiredConditions = RequiredConditions,
+        GradeAThreshold = GradeAThreshold,
+        GradeBThreshold = GradeBThreshold,
+        GradeCThreshold = GradeCThreshold,
+        AlertMinimumGrade = AlertMinimumGrade,
+        MinRequiredConditions = minRequiredConditions,
+    };
+
     /// <summary>The score at or above which an all-required setup is promoted from B to A (§2.5.4 — the one
     /// score-driven grading gate; an all-required setup below it is still a tradeable B, TGR-4).</summary>
     public int GradeAThreshold { get; init; } = 80;
@@ -103,6 +128,15 @@ public sealed class ConfluenceOptions
 
         // An empty CONFIGURED list is VALID — it means "use the §2.5.2 defaults" (applied by EffectiveRequiredConditions,
         // which is non-empty by construction). So there is no "at least one" check on the raw property.
+
+        // The k-of-n relaxation, when set, must be a sane subset count: at least 1 (the model still needs structure)
+        // and at most the full required set (≥ that IS the strict default — express it as null instead).
+        if (MinRequiredConditions is { } k && (k < 1 || k > EffectiveRequiredConditions.Count))
+        {
+            errors.Add(
+                $"MinRequiredConditions must be within [1, {EffectiveRequiredConditions.Count}] (the required-set size) " +
+                $"but was {k}. Leave it null for the strict all-required §2.5 model.");
+        }
 
         if (!Enum.IsDefined(AlertMinimumGrade))
         {
