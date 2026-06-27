@@ -1,4 +1,5 @@
 using IctTrader.Domain.Configuration;
+using IctTrader.Domain.Instruments;
 
 namespace IctTrader.Scanning.Application.Scanning;
 
@@ -47,4 +48,23 @@ public sealed record ScannerOptions
     public required TradeStyleOptions TradeStyles { get; init; }
 
     public required TargetLadderOptions TargetLadder { get; init; }
+
+    /// <summary>
+    /// Returns a copy with the per-instrument-class overrides applied to the geometry/reference options the index
+    /// re-defaults (<see cref="MarketContext"/>, <see cref="Liquidity"/>, <see cref="Fvg"/>,
+    /// <see cref="DrawOnLiquidity"/>). An <see cref="InstrumentOptionOverrides.None"/> / FX bundle leaves every
+    /// POCO at its global value, so the FX scanner pipeline is byte-identical. Detector/confluence/style/ladder
+    /// options are instrument-agnostic and pass through unchanged.
+    /// </summary>
+    public ScannerOptions WithInstrumentOverrides(InstrumentOptionOverrides overrides)
+    {
+        ArgumentNullException.ThrowIfNull(overrides);
+        return this with
+        {
+            MarketContext = MarketContext.WithInstrumentOverrides(overrides),
+            Liquidity = Liquidity.WithInstrumentOverrides(overrides),
+            Fvg = Fvg.WithInstrumentOverrides(overrides),
+            DrawOnLiquidity = DrawOnLiquidity.WithInstrumentOverrides(overrides),
+        };
+    }
 }

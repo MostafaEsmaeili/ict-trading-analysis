@@ -23,6 +23,7 @@ describe('priceDecimals', () => {
   it('uses 1 decimal for indices', () => {
     expect(priceDecimals('US30')).toBe(1);
     expect(priceDecimals('NAS100')).toBe(1);
+    expect(priceDecimals('NAS100USD')).toBe(1); // the OANDA NAS100 CFD ticker the selector lists
     expect(priceDecimals('SPX500')).toBe(1);
   });
 });

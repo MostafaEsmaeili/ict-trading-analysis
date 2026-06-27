@@ -2,6 +2,7 @@ using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Confluence;
 using IctTrader.Domain.Detection;
 using IctTrader.Domain.Detection.Detectors;
+using IctTrader.Domain.Instruments;
 using IctTrader.Domain.Sessions;
 using IctTrader.Domain.Setups;
 using IctTrader.Domain.Styles;
@@ -32,42 +33,54 @@ public sealed class SymbolScanner
         TradeStyle style,
         TimeProvider timeProvider,
         ScannerOptions options,
+        IInstrumentRegistry instruments,
         IReadOnlyList<ISetupDetector>? prependDetectors = null)
     {
         ArgumentNullException.ThrowIfNull(symbol);
         ArgumentNullException.ThrowIfNull(timeProvider);
         ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(instruments);
 
         Symbol = symbol;
         _style = style;
 
-        // FX-only scope (the methodology's default instrument class): SymbolSpec.FxMajor fixes
-        // InstrumentClass.Fx, which drives the FX killzone windows (NY 07:00–10:00 / London 02:00–05:00 / …).
-        // A per-instrument SymbolSpec lookup must replace this BEFORE any index symbol is scanned, or the §2.5.7
-        // index killzone (AM 08:30–11:00) would silently never apply — deferred WP7 wiring.
+        // Per-instrument resolution (the §2.5.7 FX-vs-index split): the catalog maps the symbol to its class +
+        // price geometry, and the scanner builds the MarketContext from THAT SymbolSpec — so an Index symbol
+        // (NAS100USD) carries InstrumentClass.Index and the KillzoneClock routes it to ClassifyIndex (AM
+        // 08:30–11:00) automatically. An FX major resolves to the existing FxMajor geometry with NO overrides, so
+        // its pipeline is byte-identical to the prior hardcoded path. The index's geometry/reference re-defaults
+        // are applied onto the shared options below (the FX `None` bundle is a field-equal no-op).
+        var profile = instruments.Resolve(symbol);
+        var resolvedOptions = options.WithInstrumentOverrides(profile.Overrides);
+
         var context = new MarketContext(
-            SymbolSpec.FxMajor(symbol),
+            profile.SymbolSpec,
             new KillzoneClock(new NyClock(timeProvider), KillzoneSchedule.CreateDefault()),
-            options.MarketContext);
+            resolvedOptions.MarketContext);
 
         // The PINNED canonical order (ScanSessionTests): SwingPointDetector before the MSS, and the
         // displacement feeder before the MSS, so the breach-vs-MSS race is deterministic (spec §5 item 19).
         var pipeline = new ISetupDetector[]
         {
-            new SwingPointDetector(options.Swing),
-            new LiquidityPoolDetector(options.Liquidity),
-            new DealingRangeContextDetector(options.PremiumDiscount),
-            new LiquiditySweepDetector(options.Liquidity),
-            new DisplacementDetector(options.Displacement),
-            new MarketStructureShiftDetector(options.MarketStructureShift),
-            new FairValueGapDetector(options.Fvg),
-            new OrderBlockDetector(options.OrderBlock),
-            new DailyBiasDetector(options.DailyBias),
-            new PremiumDiscountGateDetector(options.PremiumDiscount),
-            new OteFibDetector(options.Ote, options.Fvg),
-            new DrawOnLiquidityDetector(options.DrawOnLiquidity, options.Ote, options.TradeStyles, options.Fvg, options.SdProjection),
-            new KillzoneEntryDetector(options.KillzoneEntry),
-            new CalendarGateDetector(options.Calendar),
+            new SwingPointDetector(resolvedOptions.Swing),
+            new LiquidityPoolDetector(resolvedOptions.Liquidity),
+            new DealingRangeContextDetector(resolvedOptions.PremiumDiscount),
+            new LiquiditySweepDetector(resolvedOptions.Liquidity),
+            new DisplacementDetector(resolvedOptions.Displacement),
+            new MarketStructureShiftDetector(resolvedOptions.MarketStructureShift),
+            new FairValueGapDetector(resolvedOptions.Fvg),
+            new OrderBlockDetector(resolvedOptions.OrderBlock),
+            new DailyBiasDetector(resolvedOptions.DailyBias),
+            new PremiumDiscountGateDetector(resolvedOptions.PremiumDiscount),
+            new OteFibDetector(resolvedOptions.Ote, resolvedOptions.Fvg),
+            new DrawOnLiquidityDetector(
+                resolvedOptions.DrawOnLiquidity,
+                resolvedOptions.Ote,
+                resolvedOptions.TradeStyles,
+                resolvedOptions.Fvg,
+                resolvedOptions.SdProjection),
+            new KillzoneEntryDetector(resolvedOptions.KillzoneEntry),
+            new CalendarGateDetector(resolvedOptions.Calendar),
         };
 
         // TEST SEAM only: feeder/seeder detectors prepended ahead of the real pipeline so a test can seed the
@@ -80,9 +93,9 @@ public sealed class SymbolScanner
             : pipeline;
 
         var candidate = new SetupCandidate(
-            options.Confluence, options.SetupCandidate, new SetupScorer(options.Confluence));
-        _session = new ScanSession(context, detectors, candidate, options.SetupCandidate);
-        _factory = new SetupFactory(options.TargetLadder, options.TradeStyles);
+            resolvedOptions.Confluence, resolvedOptions.SetupCandidate, new SetupScorer(resolvedOptions.Confluence));
+        _session = new ScanSession(context, detectors, candidate, resolvedOptions.SetupCandidate);
+        _factory = new SetupFactory(resolvedOptions.TargetLadder, resolvedOptions.TradeStyles);
     }
 
     public Symbol Symbol { get; }

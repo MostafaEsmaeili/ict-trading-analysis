@@ -1,4 +1,5 @@
 using IctTrader.Domain.Configuration;
+using IctTrader.Domain.Instruments;
 using IctTrader.Domain.Repositories;
 using IctTrader.Domain.Trading;
 using IctTrader.Domain.ValueObjects;
@@ -26,6 +27,7 @@ namespace IctTrader.PaperTrading.Application.Trading;
 public sealed class SetupConfirmedHandler(
     ITradeOrchestratorRegistry registry,
     IPaperAccountProvider accountProvider,
+    IInstrumentRegistry instruments,
     IPaperTradeRepository trades,
     IArmedEntryRepository armedEntries,
     IPaperTradingUnitOfWork unitOfWork,
@@ -38,6 +40,9 @@ public sealed class SetupConfirmedHandler(
 
     private readonly IPaperAccountProvider _accountProvider =
         accountProvider ?? throw new ArgumentNullException(nameof(accountProvider));
+
+    private readonly IInstrumentRegistry _instruments =
+        instruments ?? throw new ArgumentNullException(nameof(instruments));
 
     private readonly IPaperTradeRepository _trades = trades ?? throw new ArgumentNullException(nameof(trades));
 
@@ -70,8 +75,11 @@ public sealed class SetupConfirmedHandler(
         var setup = SetupRehydrator.ToDomain(@event.Setup, _grading);
         var account = await _accountProvider.GetOrCreateAsync(cancellationToken).ConfigureAwait(false);
 
-        var symbolSpec = SymbolSpec.FxMajor(setup.Symbol);
-        var contractSpec = ContractSpec.FxMajor(setup.Symbol);
+        // Per-instrument resolution (§2.5.7): NAS100USD sizes with index point geometry (1.0/point, 1-unit lots),
+        // an FX major with the existing FxMajor money geometry — so a counter-class symbol can never be mis-sized.
+        var profile = _instruments.Resolve(setup.Symbol);
+        var symbolSpec = profile.SymbolSpec;
+        var contractSpec = profile.ContractSpec;
 
         // The domain DECIDES: arm (reserve) or open (register) — both mutate the account ledger. The deterministic
         // seam id is threaded in so the opened/armed aggregate carries it (the idempotency key the guard above reads).

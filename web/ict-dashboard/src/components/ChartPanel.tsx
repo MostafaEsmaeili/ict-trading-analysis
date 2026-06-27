@@ -16,9 +16,18 @@ import { IctChart } from '../chart/IctChart';
 import { errorMessage } from '../format-error';
 import { KillzoneBadge, StyleChip } from './Badges';
 
-export const SYMBOLS = ['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD'] as const;
+export const SYMBOLS = ['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD', 'NAS100USD'] as const;
 export const TIMEFRAMES = ['M1', 'M5', 'M15', 'H1'] as const;
 export const STYLES: readonly TradeStyle[] = ['Scalp', 'Intraday', 'Swing', 'Position'];
+
+/** Friendly display labels for symbols whose wire ticker is not the natural name (e.g. the NAS100 CFD). */
+const SYMBOL_LABELS: Readonly<Record<string, string>> = { NAS100USD: 'NAS100' };
+
+/** The label to show in the symbol selector — the friendly name when one exists, else the raw ticker. Kept
+ *  non-exported so this component file does not add a Fast-Refresh non-component export (lint stays clean). */
+function symbolLabel(symbol: string): string {
+  return SYMBOL_LABELS[symbol] ?? symbol;
+}
 
 const OVERLAY_SWATCH: Record<OverlayKind, string> = {
   killzone: 'var(--pending)',
@@ -84,7 +93,7 @@ export function ChartPanel(props: ChartPanelProps): React.JSX.Element {
           >
             {SYMBOLS.map((s) => (
               <option key={s} value={s}>
-                {s}
+                {symbolLabel(s)}
               </option>
             ))}
           </select>

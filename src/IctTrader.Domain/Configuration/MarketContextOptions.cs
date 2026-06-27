@@ -1,3 +1,4 @@
+using IctTrader.Domain.Instruments;
 using IctTrader.Domain.Sessions;
 using IctTrader.Domain.Styles;
 
@@ -72,6 +73,29 @@ public sealed class MarketContextOptions
     /// </summary>
     public static IReadOnlyList<Killzone> SelectableKillzones { get; } =
         [Killzone.Asian, Killzone.LondonOpen, Killzone.NewYorkOpen, Killzone.LondonClose];
+
+    /// <summary>
+    /// Returns a copy with the instrument-class scalar overrides applied where present
+    /// (<see cref="UseMacroOpenReference"/>). A <see cref="InstrumentOptionOverrides.None"/> / FX bundle leaves the
+    /// flag off (byte-identical, midnight-only Judas reference); the index sets it ON — the TIME-10
+    /// CONTESTED-~80% resolution — so the 08:30 macro open anchors the Judas read alongside midnight. This is the
+    /// explicit-flag seam TIME-10 mandated: the flag is set HERE by the catalog, never branched on
+    /// <see cref="InstrumentClass"/> inside detector code. The macro CAPTURE time, window sizing, midnight reset,
+    /// and active styles are instrument-agnostic and unchanged.
+    /// </summary>
+    public MarketContextOptions WithInstrumentOverrides(InstrumentOptionOverrides overrides)
+    {
+        ArgumentNullException.ThrowIfNull(overrides);
+        return new MarketContextOptions
+        {
+            WindowCapacity = WindowCapacity,
+            MaxOpenArraysPerType = MaxOpenArraysPerType,
+            ResetSessionStateAtNyMidnight = ResetSessionStateAtNyMidnight,
+            UseMacroOpenReference = overrides.UseMacroOpenReference ?? UseMacroOpenReference,
+            MacroReferenceOpenTime = MacroReferenceOpenTime,
+            ActiveStyles = ActiveStyles,
+        };
+    }
 
     public IReadOnlyList<string> Validate()
     {
