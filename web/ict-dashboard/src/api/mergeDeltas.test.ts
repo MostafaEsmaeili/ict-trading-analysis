@@ -31,6 +31,19 @@ const trade = (id: string, status: string): PaperTradeDto => ({
   openedAtUtc: '2026-06-19T06:00:00Z',
   closedAtUtc: null,
   realizedR: null,
+  lifecycle: 'Open',
+  closeReason: null,
+  netR: null,
+  grossPnl: null,
+  costs: null,
+  netPnl: null,
+  hasScaledOut: false,
+  isBreakevenArmed: false,
+  riskBudget: 100,
+  timeframe: 'M5',
+  currentStop: 1.069,
+  exitPrice: null,
+  managedFromUtc: '2026-06-19T06:00:00Z',
 });
 
 const candle = (time: string, close: number): CandleDto => ({

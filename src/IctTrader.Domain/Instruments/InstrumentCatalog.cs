@@ -80,6 +80,12 @@ public sealed class InstrumentCatalog : IInstrumentRegistry
     /// convenient shared instance for code paths that have no DI-injected registry.</summary>
     public static InstrumentCatalog Default { get; } = new();
 
+    /// <summary>The built-in catalogued symbols (the FX majors + NAS100USD), sorted — the set the operator can pick
+    /// from when adding a per-instrument override. An uncatalogued symbol still resolves (FX-default fallback), so
+    /// this is a convenience list for the UI, not a hard whitelist.</summary>
+    public static IReadOnlyList<string> KnownSymbols { get; } =
+        FxMajors.Append(Nas100Symbol).OrderBy(s => s, StringComparer.Ordinal).ToArray();
+
     public InstrumentProfile Resolve(Symbol symbol)
     {
         ArgumentNullException.ThrowIfNull(symbol);

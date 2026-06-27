@@ -22,10 +22,12 @@ import type {
   ChartResponse,
   ConfigStatusDto,
   EquityPointDto,
+  InstrumentSettingsDto,
   OptimizeRequest,
   OptimizeResponse,
   PaperTradeDto,
   PerformanceSummaryDto,
+  SettingsDto,
 } from '../types/api';
 import type { ChartOverlay } from '../types/overlays';
 import { setupToOverlays } from '../chart/setupToOverlays';
@@ -40,6 +42,7 @@ import {
   MOCK_EQUITY_CURVE,
   MOCK_OVERLAYS,
   MOCK_PERFORMANCE,
+  MOCK_SETTINGS,
   mockBacktestResponse,
   mockOptimizeResponse,
 } from '../mocks/fixtures';
@@ -77,6 +80,23 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
     throw new Error(detail || `POST ${path} → ${res.status}`);
   }
   return (await res.json()) as T;
+}
+
+/**
+ * PUT a JSON body to an endpoint that returns 204 No Content on success (the settings mutation). On a
+ * non-OK status the `{ error }` body carries the validation reason (e.g. a bad k-of-n or a subset missing
+ * DisplacementMss) — surface it so the form shows WHY the save was rejected.
+ */
+async function putNoContent(path: string, body: unknown): Promise<void> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'PUT',
+    headers: { accept: 'application/json', 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const detail = await readErrorDetail(res);
+    throw new Error(detail || `PUT ${path} → ${res.status}`);
+  }
 }
 
 /** Best-effort read of an `{ error }` body from a non-OK response (empty string if absent/unparseable). */
@@ -141,6 +161,37 @@ export async function fetchConfig(): Promise<ConfigStatusDto> {
     return MOCK_CONFIG;
   }
   return getJson<ConfigStatusDto>('/api/config');
+}
+
+export async function fetchSettings(): Promise<SettingsDto> {
+  if (USE_MOCKS) {
+    return MOCK_SETTINGS;
+  }
+  return getJson<SettingsDto>('/api/settings');
+}
+
+/**
+ * Set (body) or clear (null body) one symbol's LIVE per-instrument override. The change applies without a
+ * restart (the runtime store bumps its revision; the scanner/orchestrator caches rebuild on the next
+ * candle). In mocks mode it mutates the in-memory fixture (with the same DisplacementMss-required guard the
+ * backend enforces) so the offline app behaves like the live one.
+ */
+export async function updateInstrumentSettings(
+  symbol: string,
+  body: InstrumentSettingsDto | null,
+): Promise<void> {
+  if (USE_MOCKS) {
+    if (body === null) {
+      delete MOCK_SETTINGS.instrumentOverrides[symbol];
+      return;
+    }
+    if (body.requiredConditions && !body.requiredConditions.includes('DisplacementMss')) {
+      throw new Error('A required subset must include DisplacementMss (the FSM direction lock).');
+    }
+    MOCK_SETTINGS.instrumentOverrides[symbol] = body;
+    return;
+  }
+  return putNoContent(`/api/settings/instruments/${encodeURIComponent(symbol)}`, body);
 }
 
 export async function fetchBacktestDatasets(): Promise<BacktestDatasetDto[]> {
