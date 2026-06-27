@@ -156,6 +156,70 @@ public sealed class HostScanLoopTests : IAsyncLifetime
         dtos.Single().Status.Should().Be(TradeStatus.Open.ToString());
     }
 
+    [DockerRequiredFact]
+    public async Task The_trades_rest_endpoint_returns_the_trade_with_the_extended_management_fields()
+    {
+        await using var factory = CreateFactory(("Ict:Execution:Entry:Mode", "Immediate"));
+
+        var bus = factory.Services.GetRequiredService<IMessageBus>();
+        await bus.PublishAsync(new SetupConfirmed(BullishSetupDto()));
+
+        using var client = factory.CreateClient();
+
+        // The full ledger endpoint returns the open trade carrying the extended management + P&L state fields.
+        var all = await client.GetFromJsonAsync<IReadOnlyList<PaperTradeDto>>("/api/trades");
+        all.Should().ContainSingle("the full trades endpoint returns every trade, here the one open trade");
+        var dto = all!.Single();
+        dto.Symbol.Should().Be("EURUSD");
+        dto.Status.Should().Be(TradeStatus.Open.ToString());
+        dto.Lifecycle.Should().Be(TradeLifecycle.Open.ToString());
+        dto.Timeframe.Should().Be(Timeframe.M5.ToString());
+        dto.RiskBudget.Should().BeGreaterThan(0m, "an open trade reserves a positive risk budget");
+        dto.CurrentStop.Should().Be(1.0800m, "the live stop starts at the plan stop");
+        dto.NetPnl.Should().BeNull("an open trade has no realized P&L yet");
+
+        // The status filter is honoured: no trade has closed, so the Closed view is empty.
+        var closed = await client.GetFromJsonAsync<IReadOnlyList<PaperTradeDto>>("/api/trades?status=Closed");
+        closed.Should().BeEmpty("no trade has closed yet");
+    }
+
+    [DockerRequiredFact]
+    public async Task The_account_rest_endpoint_reports_equity_open_risk_and_streaks()
+    {
+        await using var factory = CreateFactory(("Ict:Execution:Entry:Mode", "Immediate"));
+
+        var bus = factory.Services.GetRequiredService<IMessageBus>();
+        await bus.PublishAsync(new SetupConfirmed(BullishSetupDto()));
+
+        using var client = factory.CreateClient();
+        var account = await client.GetFromJsonAsync<AccountStatusDto>("/api/account");
+
+        account.Should().NotBeNull();
+        account!.StartingEquity.Should().BeGreaterThan(0m);
+        account.Equity.Should().Be(account.StartingEquity, "equity is unchanged until a trade settles");
+        account.OpenRisk.Should().BeGreaterThan(0m, "the one open trade reserves risk against the cap");
+        account.OpenTradeCount.Should().Be(1);
+        account.ConsecutiveLosses.Should().Be(0);
+        account.MaxOpenPortfolioRiskPercent.Should().BeGreaterThan(0m);
+    }
+
+    [DockerRequiredFact]
+    public async Task The_config_rest_endpoint_projects_the_resolved_operator_options()
+    {
+        await using var factory = CreateFactory();
+
+        using var client = factory.CreateClient();
+        var config = await client.GetFromJsonAsync<ConfigStatusDto>("/api/config");
+
+        config.Should().NotBeNull();
+        config!.Provider.Should().NotBeNullOrWhiteSpace();
+        config.ActiveStyles.Should().Contain(
+            TradeStyle.Intraday.ToString(), "Intraday is the resolved default active style");
+        config.BaseRiskPercent.Should().BeGreaterThan(0m);
+        config.MaxOpenPortfolioRiskPercent.Should().BeGreaterThan(0m);
+        config.StartingEquity.Should().BeGreaterThan(0m);
+    }
+
     private WebApplicationFactory<Program> CreateFactory(params (string Key, string Value)[] overrides) =>
         new HostFactory(_fixture.ConnectionString, overrides);
 
