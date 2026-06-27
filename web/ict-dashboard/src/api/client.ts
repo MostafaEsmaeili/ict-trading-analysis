@@ -72,9 +72,10 @@ export async function fetchEquityCurve(): Promise<EquityPointDto[]> {
   if (USE_MOCKS) {
     return MOCK_EQUITY_CURVE;
   }
-  // No dedicated REST endpoint in contracts-v1 yet (GetEquityCurveQuery is bus-only); the host wires
-  // it in WP7. Until then a live build has nowhere to fetch it — surface that rather than fake it.
-  throw new Error('Equity-curve endpoint is not available until WP7 (GetEquityCurveQuery is bus-only).');
+  // The host now serves the equity curve over REST (GET /api/equity → EquityPointDto[]); the curve is
+  // CUMULATIVE R from a zero baseline, not an account balance (see EquityPointDto). Hit it the same way
+  // every other live read does — getJson FAILS HARD on a non-OK response (no silent fixture fallback).
+  return getJson<EquityPointDto[]>('/api/equity');
 }
 
 export async function fetchChart(

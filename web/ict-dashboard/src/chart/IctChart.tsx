@@ -90,6 +90,12 @@ export function IctChart({
   // redelivered bar — appendCandle branch 2/3, where the LAST bar is unchanged) is distinguished from a
   // pure forming-bar-in-place update and re-fed via setData() instead of being missed by series.update().
   const lastLenRef = useRef<number | undefined>(undefined);
+  // Has the CURRENT series instance been populated with setData() yet? The incremental series.update()
+  // fast-path is only legal against an ALREADY-RENDERED series — a fresh (or recreated) empty series MUST
+  // take the full setData()+fitContent() path or lightweight-charts auto-scales to the single pushed bar's
+  // tiny range (the ~4-pip no-candles regression). This is reset to false whenever the series is (re)created
+  // below, so a remount / StrictMode double-invoke can never mistake an empty series for an incremental one.
+  const seriesRenderedRef = useRef(false);
 
   // Create the chart + candlestick series once.
   useEffect(() => {
@@ -110,19 +116,27 @@ export function IctChart({
     });
     chartRef.current = chart;
     seriesRef.current = series;
+    // A brand-new (empty) series — force the next candle effect down the full setData()+fitContent() path
+    // (and clear the stale last-bar/length/key trackers from the prior instance) so it can't be mistaken
+    // for an incremental append against a series that has no data yet.
+    seriesRenderedRef.current = false;
+    lastSeriesKeyRef.current = undefined;
+    lastBarTimeRef.current = undefined;
+    lastLenRef.current = undefined;
 
     return () => {
       chart.remove();
       chartRef.current = null;
       seriesRef.current = null;
+      seriesRenderedRef.current = false;
     };
   }, []);
 
-  // Feed candles. A full dataset replacement (initial load / symbol or timeframe switch) calls setData()
-  // + fitContent() once and re-applies the per-symbol price precision (JPY → 3, metals → 2, indices → 1,
-  // FX majors → 5; the wire carries no precision field). A single live append or forming-bar update uses
-  // series.update() so the operator's pan/zoom survives the tick (lightweight-charts update() upserts by
-  // time and does NOT touch the time scale).
+  // Feed candles. A full dataset replacement (initial/first load, a recreated series, or a symbol/timeframe
+  // switch) calls setData() + fitContent() once and re-applies the per-symbol price precision (JPY → 3,
+  // metals → 2, indices → 1, FX majors → 5; the wire carries no precision field). A single live append or
+  // forming-bar update against an already-rendered series uses series.update() so the operator's pan/zoom
+  // survives the tick (lightweight-charts update() upserts by time and does NOT touch the time scale).
   useEffect(() => {
     const series = seriesRef.current;
     if (!series) {
@@ -132,9 +146,12 @@ export function IctChart({
     const first = candles[0];
     const symbol = first?.symbol;
     const seriesKey = first ? `${first.symbol}|${first.timeframe}` : undefined;
-    const datasetReplaced = seriesKey !== lastSeriesKeyRef.current;
+    // A FULL render (setData + fitContent) is required when the series hasn't been rendered yet (first-ever
+    // data / a recreated empty series) OR the dataset identity changed (symbol|timeframe switch). Anything
+    // else is an in-place change to an already-rendered, same-identity series.
+    const needsFullRender = !seriesRenderedRef.current || seriesKey !== lastSeriesKeyRef.current;
 
-    if (symbol && datasetReplaced) {
+    if (symbol && needsFullRender) {
       const decimals = priceDecimals(symbol);
       series.applyOptions({
         priceFormat: { type: 'price', precision: decimals, minMove: 10 ** -decimals },
@@ -144,31 +161,35 @@ export function IctChart({
     const lastBar = candles[candles.length - 1];
     const lastTime = lastBar ? (toUtcTimestamp(lastBar.openTimeUtc) as number) : undefined;
 
-    // The incremental series.update() fast-path applies ONLY to a true last-bar move: a strict append of
-    // one-or-more newer bars (lastTime > last), OR a pure forming-bar-in-place update (lastTime == last AND
-    // the length is unchanged). A MID-SERIES insert/upsert (appendCandle branch 2/3 — an out-of-order /
-    // redelivered bar lands before the last one, so lastTime is unchanged but the length grew or a middle
-    // bar's content shifted) is NOT incremental: update() would only re-push the unchanged last bar and the
-    // inserted/edited middle bar would never reach lightweight-charts until a full reload. Those fall back to
-    // setData() WITHOUT fitContent() so the operator's pan/zoom survives (consistent with update()).
-    const sameSeries =
-      !datasetReplaced &&
-      lastBar !== undefined &&
-      lastTime !== undefined &&
-      lastBarTimeRef.current !== undefined;
-    const isPureAppend = sameSeries && lastTime! > lastBarTimeRef.current!;
-    const isFormingBar =
-      sameSeries && lastTime === lastBarTimeRef.current && candles.length === lastLenRef.current;
-    const isIncremental = isPureAppend || isFormingBar;
-
-    if (isIncremental && lastBar) {
-      series.update(toCandlestickData(lastBar));
-    } else if (!datasetReplaced && lastBar) {
-      // Mid-series insert/upsert (out-of-order / redelivered bar): re-feed without re-fitting so pan/zoom survives.
+    if (needsFullRender) {
+      // First data for this series, or a symbol/timeframe switch: render the WHOLE series and fit the time
+      // scale so all 500 candles + their overlays are visible (the restored initial fit). An empty candles
+      // array still resets the series cleanly and is not treated as "rendered" (it cannot fit nothing).
       series.setData(candles.map(toCandlestickData));
-    } else {
+      if (lastBar) {
+        chartRef.current?.timeScale().fitContent();
+        seriesRenderedRef.current = true;
+      }
+    } else if (lastBar && lastTime !== undefined && lastBarTimeRef.current !== undefined) {
+      // Already-rendered, same-identity series. The incremental series.update() fast-path applies ONLY to a
+      // true last-bar move: a strict append of one-or-more newer bars (lastTime > last), OR a pure
+      // forming-bar-in-place update (lastTime == last AND the length is unchanged). A MID-SERIES
+      // insert/upsert (appendCandle branch 2/3 — an out-of-order / redelivered bar lands before the last
+      // one, so lastTime is unchanged but the length grew or a middle bar's content shifted) is NOT
+      // incremental: update() would only re-push the unchanged last bar and the inserted/edited middle bar
+      // would never reach lightweight-charts. Those re-feed via setData() WITHOUT fitContent() so the
+      // operator's pan/zoom survives (consistent with update()).
+      const isPureAppend = lastTime > lastBarTimeRef.current;
+      const isFormingBar = lastTime === lastBarTimeRef.current && candles.length === lastLenRef.current;
+      if (isPureAppend || isFormingBar) {
+        series.update(toCandlestickData(lastBar));
+      } else {
+        series.setData(candles.map(toCandlestickData));
+      }
+    } else if (lastBar) {
+      // Same-identity series whose first data arrives here as a non-append edge (no prior last-bar time):
+      // render without re-fitting (defensive — the needsFullRender branch normally owns first data).
       series.setData(candles.map(toCandlestickData));
-      chartRef.current?.timeScale().fitContent();
     }
 
     lastSeriesKeyRef.current = seriesKey;
