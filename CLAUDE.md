@@ -939,8 +939,8 @@ gate publishes a crafted Grade-B `SetupConfirmed` + the driving `CandleIngested`
 reference `Reqnroll.Tools.MsBuild.Generation` DIRECTLY or no `.feature.cs` is generated; the DI plugin is NOT used —
 steps share state via the native `IObjectContainer`.)
 
-**🏁 ALL WORK PACKAGES COMPLETE (WP0–WP9) + two adversarial audit-hardening rounds — full green suite: build 0 warnings ·
-660 unit · 23 arch · 44 integration · 12 E2E (= 739 tests) · `dotnet format` clean.** The ICT 2022 Intraday FVG model is faithfully encoded end-to-end, the
+**🏁 ALL WORK PACKAGES COMPLETE (WP0–WP9) + THREE adversarial audit-hardening rounds (CONVERGED) — full green suite:
+build 0 warnings · 662 unit · 23 arch · 46 integration · 12 E2E (= 743 tests) · `dotnet format` clean.** The ICT 2022 Intraday FVG model is faithfully encoded end-to-end, the
 runnable backend is proven on 2.7 years of real EUR/USD, the React dashboard runs live on it, and the mandatory E2E gate
 guards the pipeline.
 
@@ -1001,6 +1001,17 @@ key Mediums:
   pipeline + a replay-feed E2E (both need the ~14k-candle warmup, so a fast deterministic fixture is hard — the bus-driven
   E2E + seeded ScanSessionTests cover the seam); JSONB back-compat for the pre-N-tier shape; DB-retry; unknown-symbol
   FX-coercion; the "focus chart on alert" cross-timeframe seek (needs `triggerTimeframe` on the alert/trade DTOs).
+
+**Round-3 audit — CONVERGED (workflow `wf_1069cd6a-49e`; issue #136 merged as PR #137).** A focused third round (regression
+of the round-2 fixes, deepest domain money/fidelity math, persistence/restart) found **4 confirmed, ALL Low (0 Critical/
+High/Medium)** — the severity trajectory (round 1 Critical/High-heavy → round 2 declining → round 3 all-Low) confirms the
+audit loop is **dry**. All 4 fixed anyway: a consecutive-failure circuit-breaker in `MarketDataIngestor` (a deterministic
+handler bug now surfaces at the host's Error boundary after N=50 failures instead of masked Warning noise + a falsely
+"successful" empty run); the mid-series live-candle render (`setData` fallback preserving pan/zoom — `series.update` only
+on a true last-bar move); accurate gap-through fidelity comments (the §5.4 gap/slippage worsening is a DEFERRED follow-on,
+not "applied downstream" — the fill is at the resting level); and `ArmedEntry`'s Setup JSONB now round-trips
+`StackedFartherBound` (was dropped — matters under the non-default `StrictFirstFvg`). **The system is now COMPLETE +
+audited-clean across 3 rounds; the remaining backlog is the documented OPTIONAL additive follow-ons only.**
 
 **To see it (2 terminals):** (1) `docker compose up -d postgres`; apply migrations; run the Host
 with the Replay env on `--urls http://localhost:5080 --no-launch-profile` pointed at a `data/*.csv`; (2)
