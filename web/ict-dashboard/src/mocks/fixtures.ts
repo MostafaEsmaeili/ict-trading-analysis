@@ -105,6 +105,8 @@ export const MOCK_OVERLAYS: ChartOverlay[] = [
     stop: 1.0689,
     targets: [1.0762, 1.079],
     rewardRatio: 2.6,
+    entryUtc: t(10), // entry confirmed on candle 10 — the marker pins here
+    symbol: MOCK_SYMBOL,
   },
 ];
 

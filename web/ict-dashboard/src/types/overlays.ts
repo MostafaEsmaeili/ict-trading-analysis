@@ -96,6 +96,14 @@ export interface TradeLevelsOverlay {
   stop: number;
   targets: number[];
   rewardRatio: number;
+  /**
+   * The confirming/entry candle's UTC instant (the setup's `detectedAtUtc`). A horizontal entry price
+   * line tells you the price but NOT *when* the trade enters; this is the time the chart pins the entry
+   * MARKER (arrowUp/arrowDown) to so the operator can see the exact entry candle. Undefined ⇒ no marker.
+   */
+  entryUtc?: string;
+  /** Source symbol — used only to format the entry marker's price label at the per-symbol precision. */
+  symbol?: string;
   /** Source setup id — lets a live re-delivery REPLACE (not stack) this setup's overlays. */
   setupId?: string;
 }
