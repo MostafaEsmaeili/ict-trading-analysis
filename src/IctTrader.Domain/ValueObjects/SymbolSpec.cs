@@ -40,13 +40,16 @@ public sealed record SymbolSpec
     public static SymbolSpec FxMajor(Symbol symbol) => new(symbol, 0.0001m, 0.00001m, 5, InstrumentClass.Fx);
 
     /// <summary>
-    /// The NASDAQ-100 index PRICE geometry (e.g. OANDA's <c>NAS100USD</c> CFD): one "pip" is one ICT HANDLE =
-    /// 1.0 index point (DERIVED — the 2022 Mentorship is a NASDAQ e-mini index mentorship and teaches indices in
+    /// The US index-CFD PRICE geometry (OANDA's <c>NAS100USD</c> / <c>SPX500USD</c> CFDs): one "pip" is one ICT
+    /// HANDLE = 1.0 index point (DERIVED — the 2022 Mentorship is an index e-mini mentorship and teaches indices in
     /// handles where a handle = 1.00 point; Ep1 L214-216/L314-317), so every §2.5 pip-denominated threshold reads
     /// as points on the index. <see cref="TickSize"/> = 0.1 is the OANDA CFD tick (CONVENTION); note this diverges
-    /// from ICT's NQ FUTURES tick of 0.25 (= one quarter handle), so a future tick-denominated rule must not assume
-    /// 0.1 equals ICT's tick. <see cref="InstrumentClass.Index"/> routes session math to the §2.5.7 index killzone
-    /// (AM 08:30–11:00) — the SOLE reason this factory exists.
+    /// from ICT's NQ/ES FUTURES tick (0.25 NQ / 0.25 ES = one quarter handle), so a future tick-denominated rule must
+    /// not assume 0.1 equals ICT's tick. <see cref="InstrumentClass.Index"/> routes session math to the §2.5.7 index
+    /// killzone (AM 08:30–11:00) — the SOLE reason this factory exists. NASDAQ + S&amp;P share this CFD geometry.
     /// </summary>
-    public static SymbolSpec Nas100(Symbol symbol) => new(symbol, 1.0m, 0.1m, 1, InstrumentClass.Index);
+    public static SymbolSpec Index(Symbol symbol) => new(symbol, 1.0m, 0.1m, 1, InstrumentClass.Index);
+
+    /// <summary>NASDAQ-100 index geometry — an alias of <see cref="Index"/> (kept for existing call sites/tests).</summary>
+    public static SymbolSpec Nas100(Symbol symbol) => Index(symbol);
 }

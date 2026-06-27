@@ -41,12 +41,15 @@ public sealed record ContractSpec
     public static ContractSpec FxMajor(Symbol symbol) => new(symbol, 10m, 0.01m, 0.01m);
 
     /// <summary>
-    /// The NASDAQ-100 index MONEY geometry (e.g. OANDA's <c>NAS100USD</c> CFD). The "lot" here is ONE CFD UNIT and
-    /// one "pip" is one index point (matching <see cref="SymbolSpec.Nas100"/>), so <see cref="ValuePerPip"/> = 1.0
-    /// USD per point per unit, with a 1-unit step and minimum. This deliberately does NOT inherit the FX 10/pip +
+    /// The US index-CFD MONEY geometry (OANDA's <c>NAS100USD</c> / <c>SPX500USD</c> CFDs). The "lot" here is ONE CFD
+    /// UNIT and one "pip" is one index point (matching <see cref="SymbolSpec.Index"/>), so <see cref="ValuePerPip"/> =
+    /// 1.0 USD per point per unit, with a 1-unit step and minimum. This deliberately does NOT inherit the FX 10/pip +
     /// 0.01-lot geometry — the index is a different vehicle (CONVENTION, OANDA CFD; ICT's own NQ e-mini is $20 per
     /// handle, a different broker number again — Ep1 L317). Because the money geometry is separate from
     /// <see cref="SymbolSpec"/>, the price-only detectors stay money-free; only the sizer/P&amp;L see the 1.0/unit.
     /// </summary>
-    public static ContractSpec Nas100(Symbol symbol) => new(symbol, 1m, 1m, 1m);
+    public static ContractSpec Index(Symbol symbol) => new(symbol, 1m, 1m, 1m);
+
+    /// <summary>NASDAQ-100 index money geometry — an alias of <see cref="Index"/> (kept for existing call sites/tests).</summary>
+    public static ContractSpec Nas100(Symbol symbol) => Index(symbol);
 }
