@@ -10,6 +10,8 @@
     <!-- IServiceCollection.AddSingleton for the chart read-model's DI registration extension (the handlers are
          AddMessaging-scanned; ChartCandleStore is the one explicit registration). -->
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.9" />
+    <!-- ILogger<MarketDataIngestor> so one bad/transient candle is logged and SKIPPED, never aborting the stream. -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.9" />
   </ItemGroup>
 
   <PropertyGroup>

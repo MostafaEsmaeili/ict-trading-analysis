@@ -54,7 +54,8 @@ public sealed class PaperTrade : AggregateRoot<Guid>
         PositionSize size,
         decimal pipSize,
         decimal valuePerPip,
-        DateTimeOffset openedAtUtc)
+        DateTimeOffset openedAtUtc,
+        DateTimeOffset? managedFromUtc = null)
         : base(id)
     {
         Guard.Against(id == Guid.Empty, "PaperTrade requires a non-empty id.");
@@ -63,6 +64,19 @@ public sealed class PaperTrade : AggregateRoot<Guid>
         Guard.Against(pipSize <= 0m, "PaperTrade requires a positive pip size.");
         Guard.Against(valuePerPip <= 0m, "PaperTrade requires a positive value-per-pip.");
         Guard.Against(openedAtUtc.Offset != TimeSpan.Zero, "PaperTrade.OpenedAtUtc must be UTC.");
+
+        // The management-eligibility edge: the OPEN time of the bar that produced the open (§4.1 no-look-ahead). For an
+        // immediate open this IS the confirming bar's open (== the fill time). For an armed-triggered open the fill is
+        // stamped at the trigger bar's CLOSE (= the next bar's open) for the §2.5.1-step-9 max-hold math, so the bar
+        // identity must be carried in SEPARATELY (the trigger bar's open) — otherwise the per-candle handler's strict
+        // "managed only from the bar after the open-bar" filter would skip the bar immediately after the trigger (M+1)
+        // and first manage on M+2, deferring a full bar's stop/runner evaluation. Defaults to the fill time when not
+        // supplied (the immediate / direct-construction case), where the two edges coincide.
+        var managedFrom = managedFromUtc ?? openedAtUtc;
+        Guard.Against(managedFrom.Offset != TimeSpan.Zero, "PaperTrade.ManagedFromUtc must be UTC.");
+        Guard.Against(
+            managedFrom > openedAtUtc,
+            "PaperTrade.ManagedFromUtc (the open-bar's open) cannot be after the fill time.");
 
         var initialRiskPerUnit = Math.Abs(plan.Entry.Value - plan.Stop.Value);
         Guard.Against(initialRiskPerUnit <= 0m, "PaperTrade stop must differ from entry.");
@@ -76,6 +90,7 @@ public sealed class PaperTrade : AggregateRoot<Guid>
         RemainingSize = size;
         CurrentStop = plan.Stop;
         OpenedAtUtc = openedAtUtc;
+        ManagedFromUtc = managedFrom;
         _lastActivityAtUtc = openedAtUtc;
         InitialRiskPerUnit = initialRiskPerUnit;
         Status = TradeStatus.Open;
@@ -125,6 +140,17 @@ public sealed class PaperTrade : AggregateRoot<Guid>
     public decimal ValuePerPipForPosition => _valuePerPipForPosition;
 
     public DateTimeOffset OpenedAtUtc { get; }
+
+    /// <summary>
+    /// The open-edge of the bar that PRODUCED the open — the instant after which per-candle management may begin
+    /// (plan §4.1 no-look-ahead). It is <see cref="OpenedAtUtc"/> for an immediate open (the confirming bar's open ==
+    /// the fill time), but the TRIGGER bar's open for an armed-triggered open (whose <see cref="OpenedAtUtc"/> is the
+    /// trigger bar's close). The module handler filters management eligibility on THIS edge so a triggered trade is
+    /// first managed on the bar after its trigger bar (M+1), exactly like an immediate open is first managed on N+1 —
+    /// never on the very bar whose data informed the entry. It is NOT used for the §2.5.1-step-9 max-hold/no-overnight
+    /// math (that stays measured from <see cref="OpenedAtUtc"/>, the true fill time).
+    /// </summary>
+    public DateTimeOffset ManagedFromUtc { get; }
 
     /// <summary>The original |entry − stop| in price units, frozen at open so R is always vs the original 1R.</summary>
     public decimal InitialRiskPerUnit { get; }

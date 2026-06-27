@@ -188,6 +188,15 @@ internal sealed class PaperTradeConfiguration : IEntityTypeConfiguration<PaperTr
             .HasColumnType("timestamptz")
             .IsRequired();
 
+        // The management-eligibility edge (the open-bar's open) — distinct from OpenedAtUtc (the fill time) for an
+        // armed-triggered open, so it MUST round-trip or the per-candle look-ahead filter would mis-time a reloaded
+        // trade (plan §4.1).
+        builder.Property(t => t.ManagedFromUtc)
+            .UsePropertyAccessMode(PropertyAccessMode.Field)
+            .HasColumnName("managed_from_utc")
+            .HasColumnType("timestamptz")
+            .IsRequired();
+
         // Private _lastActivityAtUtc — keeps the management timeline monotonic.
         builder.Property<DateTimeOffset>("_lastActivityAtUtc")
             .UsePropertyAccessMode(PropertyAccessMode.Field)

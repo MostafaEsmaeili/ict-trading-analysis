@@ -41,7 +41,9 @@ internal sealed class MarketDataIngestionHostedService(
         logger.LogInformation("Market-data ingestion starting on provider {Provider}.", feed.Provider);
         try
         {
-            await new MarketDataIngestor(feed, bus).IngestAsync(stoppingToken).ConfigureAwait(false);
+            // Pass the real ingestor logger so a per-candle skip (one bad/transient bar) is observable in production.
+            var ingestorLogger = services.GetRequiredService<ILogger<MarketDataIngestor>>();
+            await new MarketDataIngestor(feed, bus, ingestorLogger).IngestAsync(stoppingToken).ConfigureAwait(false);
             logger.LogInformation("Market-data ingestion complete on provider {Provider}.", feed.Provider);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
