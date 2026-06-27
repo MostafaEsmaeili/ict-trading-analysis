@@ -121,8 +121,14 @@ public sealed class PaperTradeFactory
     /// already counts this exposure. The account's existing <see cref="PaperAccount.Settle"/> finds the trade's id in
     /// the ledger and releases it exactly as for an immediately-opened trade — so the open-trade bookkeeping is
     /// byte-unchanged. The same-bar entry-then-stop straddle is resolved by the orchestrator (cut 2b), not here.
+    /// <para><paramref name="managedFromUtc"/> is the TRIGGER bar's OPEN time — the open-edge the per-candle handler
+    /// keys management eligibility on (plan §4.1) — so the triggered trade is first managed on the bar AFTER its
+    /// trigger bar (M+1), never on M+2. It is distinct from <paramref name="openedAtUtc"/> (the trigger bar's CLOSE =
+    /// the fill time, which the §2.5.1-step-9 max-hold math measures from). Defaults to the fill time when not supplied,
+    /// preserving the prior single-edge behavior for callers that do not drive the per-candle handler.</para>
     /// </summary>
-    public PaperTrade OpenArmed(ArmedEntry armedEntry, PaperAccount account, DateTimeOffset openedAtUtc)
+    public PaperTrade OpenArmed(
+        ArmedEntry armedEntry, PaperAccount account, DateTimeOffset openedAtUtc, DateTimeOffset? managedFromUtc = null)
     {
         ArgumentNullException.ThrowIfNull(armedEntry);
         ArgumentNullException.ThrowIfNull(account);
@@ -150,6 +156,7 @@ public sealed class PaperTradeFactory
             armedEntry.Size, // the frozen arm-time size, so the derived RiskBudget == the reserved budget (no drift)
             armedEntry.PipSize, // the money geometry the entry was sized with — opens at the identical geometry
             armedEntry.ValuePerPip,
-            openedAtUtc);
+            openedAtUtc,
+            managedFromUtc); // the trigger bar's OPEN, so management starts on M+1 (the fill time is the trigger close)
     }
 }

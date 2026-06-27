@@ -65,13 +65,59 @@ public class MarketDataIngestionTests
         captured.Closes.Should().Equal(1.10m, 1.11m);   // both, in chronological order
     }
 
-    private static ServiceProvider BuildBus(CapturedCandles captured)
+    [Fact]
+    public async Task One_candle_whose_publish_throws_does_not_abort_ingestion_of_the_good_candles_around_it()
+    {
+        // A transient/data-shape fault on ONE bar (here: a handler that throws on a sentinel "bad" candle) must NOT
+        // tear down a long-running stream — the offending bar is logged and skipped, and the surrounding good candles
+        // are still published. This mirrors the OANDA live-poll transient-error isolation (plan §6.3).
+        var captured = new CapturedCandles();
+        using var sp = BuildBus(captured, throwOnClose: 9.99m);
+        var feed = new ReplayMarketDataFeed(
+        [
+            Candle("EURUSD", T0, close: 1.10m),                 // good
+            Candle("EURUSD", T0.AddMinutes(5), close: 9.99m),   // the bad bar — its publish throws
+            Candle("EURUSD", T0.AddMinutes(10), close: 1.12m),  // good — must still arrive
+        ]);
+        var ingestor = new MarketDataIngestor(feed, sp.GetRequiredService<IMessageBus>());
+
+        // Ingestion completes WITHOUT propagating the per-candle fault (no exception escapes IngestAsync).
+        await ingestor.IngestAsync();
+
+        // The two good candles are still published, in order; only the bad bar is dropped.
+        captured.Closes.Should().Equal(1.10m, 1.12m);
+    }
+
+    private static ServiceProvider BuildBus(CapturedCandles captured, decimal? throwOnClose = null)
     {
         var services = new ServiceCollection();
         services.AddSingleton(captured);
+        if (throwOnClose is { } sentinel)
+        {
+            services.AddSingleton(new ThrowingMarker(sentinel));
+            services.AddScoped<IEventHandler<CandleIngested>, ThrowingCandleHandler>();
+        }
+
         services.AddScoped<IEventHandler<CandleIngested>, CapturingCandleHandler>();
         services.AddMessaging();
         return services.BuildServiceProvider();
+    }
+
+    private sealed record ThrowingMarker(decimal BadClose);
+
+    // Registered BEFORE the capturing handler, so a throw on the bad bar happens during the SAME PublishAsync the
+    // ingestor must isolate — proving the isolation is at the ingestor (one bad publish does not abort the stream).
+    private sealed class ThrowingCandleHandler(ThrowingMarker marker) : IEventHandler<CandleIngested>
+    {
+        public Task HandleAsync(CandleIngested @event, CancellationToken cancellationToken = default)
+        {
+            if (@event.Candle.Close == marker.BadClose)
+            {
+                throw new InvalidOperationException("Simulated transient downstream fault on one bar.");
+            }
+
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class CapturedCandles

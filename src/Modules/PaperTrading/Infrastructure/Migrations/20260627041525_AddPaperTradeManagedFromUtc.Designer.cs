@@ -3,6 +3,7 @@ using System;
 using IctTrader.PaperTrading.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IctTrader.PaperTrading.Infrastructure.Migrations
 {
     [DbContext(typeof(PaperTradingDbContext))]
-    partial class PaperTradingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260627041525_AddPaperTradeManagedFromUtc")]
+    partial class AddPaperTradeManagedFromUtc
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

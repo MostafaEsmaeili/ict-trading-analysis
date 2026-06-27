@@ -90,6 +90,12 @@ public sealed class PaperTradingCandleHandler(
             position.Trade?.ClearDomainEvents();
         }
 
+        // COMMIT-BEFORE-PUBLISH (durability). The settlement (closing trades + releasing reserved risk on the account)
+        // is committed to the database HERE, BEFORE any downstream PaperTradeOpened/PaperTradeClosed notification is
+        // published below. So if a downstream subscriber (Performance/Alerting) throws, the committed settlement is
+        // already durable — a notification fault can never lose or roll back a booked close. (This intentionally does
+        // NOT change the bus's throw-propagation semantics — per-handler fan-out isolation is a separate, deferred
+        // design decision; the only guarantee made here is commit ⟶ then publish, never the reverse.)
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         foreach (var openedEvent in opened)
@@ -107,14 +113,23 @@ public sealed class PaperTradingCandleHandler(
     /// reconstructs a <see cref="ManagedPosition"/> per aggregate — the DB-as-state warm-start set.
     ///
     /// <para><b>No same-bar look-ahead (plan §4.1).</b> A setup confirmed on candle N is opened/armed mid-dispatch by
-    /// <see cref="SetupConfirmedHandler"/> with <see cref="PaperTrade.OpenedAtUtc"/> / <see cref="ArmedEntry.ArmedAtUtc"/>
-    /// stamped at candle N's open. The Scanning handler fans out before this one on the SAME <see cref="CandleIngested"/>,
+    /// <see cref="SetupConfirmedHandler"/> with <see cref="ArmedEntry.ArmedAtUtc"/> / <see cref="PaperTrade.ManagedFromUtc"/>
+    /// stamped at candle N's OPEN. The Scanning handler fans out before this one on the SAME <see cref="CandleIngested"/>,
     /// so that just-created position is already persisted when this method reloads. Advancing it on candle N would let its
     /// entry limit fill — or its stop/runner hit — on the very bar that produced the signal: look-ahead bias, since live
     /// the order could not have been resting during the bar that generated it. So a position is eligible for management
-    /// only from the bar AFTER its arm/open bar — filter to those created STRICTLY BEFORE this candle's open. (This is a
-    /// different concern from the legitimate same-bar entry-then-exit re-feed INSIDE
-    /// <see cref="TradeOrchestrator.Advance"/>, which is left untouched.)</para></summary>
+    /// only from the bar AFTER its arm/open bar — filter to those whose OPEN-bar edge is STRICTLY BEFORE this candle's
+    /// open. (This is a different concern from the legitimate same-bar entry-then-exit re-feed INSIDE
+    /// <see cref="TradeOrchestrator.Advance"/>, which is left untouched.)</para>
+    ///
+    /// <para><b>Open trades key on <see cref="PaperTrade.ManagedFromUtc"/>, not <see cref="PaperTrade.OpenedAtUtc"/>.</b>
+    /// For an immediate open the two coincide (the confirming bar's open). For an armed-triggered open the fill time
+    /// (<see cref="PaperTrade.OpenedAtUtc"/>) is the trigger bar's CLOSE — i.e. the NEXT bar's open with a contiguous
+    /// feed — so filtering on it would skip the bar immediately after the trigger (M+1) and first manage on M+2,
+    /// deferring a full bar's stop/runner evaluation. <see cref="PaperTrade.ManagedFromUtc"/> carries the trigger bar's
+    /// OPEN, so the triggered trade is first managed on M+1, exactly as an immediate open is first managed on N+1. The
+    /// armed-entry branch already keys on <see cref="ArmedEntry.ArmedAtUtc"/> (an open-edge), so both branches use the
+    /// same convention.</para></summary>
     private async Task<IReadOnlyList<ManagedPosition>> LoadActivePositionsAsync(
         Symbol symbol, DateTimeOffset candleOpenUtc, CancellationToken cancellationToken)
     {
@@ -127,7 +142,7 @@ public sealed class PaperTradingCandleHandler(
         }
 
         var open = await _trades.GetOpenAsync(cancellationToken).ConfigureAwait(false);
-        foreach (var trade in open.Where(t => t.Symbol == symbol && t.OpenedAtUtc < candleOpenUtc))
+        foreach (var trade in open.Where(t => t.Symbol == symbol && t.ManagedFromUtc < candleOpenUtc))
         {
             positions.Add(ManagedPosition.Live(trade));
         }

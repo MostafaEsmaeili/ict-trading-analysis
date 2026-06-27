@@ -112,23 +112,59 @@ public class PaperTradingFlowTests
             Candle(Confirmed.AddMinutes(5), 1.0845m, 1.0850m, 1.0838m, 1.0842m)));
         harness.OpenedEvents.Should().BeEmpty();
 
-        // 3. A clean retrace (Low 1.0825 <= entry 1.0832) fills the limit and opens the trade.
+        // 3. A clean retrace (Low 1.0825 <= entry 1.0832) on the TRIGGER bar (07:10 = bar M) fills the limit and opens
+        //    the trade. Its fill time (OpenedAtUtc) is the trigger bar's CLOSE (07:15), but its management-eligibility
+        //    edge (ManagedFromUtc) is the trigger bar's OPEN (07:10).
         await bus.PublishAsync(new CandleIngested(
             Candle(Confirmed.AddMinutes(10), 1.0835m, 1.0840m, 1.0825m, 1.0830m)));
 
         harness.OpenedEvents.Should().ContainSingle();
         (await harness.Trades.GetOpenAsync()).Should().ContainSingle();
 
-        // 4. A later candle reaches the runner — the trade closes and settles. The trade opened at the FILL bar's
-        //    CLOSE (07:15 = 07:10 + M5), so under the no-same-bar-look-ahead rule it is first managed on the bar that
-        //    opens strictly after that (07:20), not the 07:15 bar (whose open coincides with the trade's open stamp).
+        // 4. The CONTIGUOUS next bar (07:15 = bar M+1) reaches the runner — the trade is FIRST managed here (the bar
+        //    immediately after the trigger bar), so it closes and settles on M+1, NOT a bar later. The eligibility edge
+        //    is the trigger bar's OPEN (07:10), which is strictly before this bar's open (07:15), so M+1 is the first
+        //    legitimately-manageable bar — no look-ahead on the trigger bar itself, no off-by-one deferral past it.
         await bus.PublishAsync(new CandleIngested(
-            Candle(Confirmed.AddMinutes(20), 1.0900m, 1.0925m, 1.0895m, 1.0915m)));
+            Candle(Confirmed.AddMinutes(15), 1.0900m, 1.0925m, 1.0895m, 1.0915m)));
 
         harness.ClosedEvents.Should().ContainSingle();
         harness.ClosedEvents.Single().Outcome.Should().Be(TradeCloseReason.TargetHit.ToString());
         harness.Account().OpenRisk.Amount.Should().Be(0m);
         harness.Account().Equity.Amount.Should().BeGreaterThan(10_000m);
+    }
+
+    [Fact]
+    public async Task Armed_triggered_trade_is_first_managed_on_the_bar_after_the_trigger_no_off_by_one()
+    {
+        using var harness = new Harness(EntryMode.Armed);
+        var bus = harness.Provider.GetRequiredService<IMessageBus>();
+
+        // 1. Arm a resting limit on candle N (07:00).
+        await bus.PublishAsync(new SetupConfirmed(BullishSetupDto()));
+        harness.ArmedEntries.Saved.Should().ContainSingle();
+
+        // 2. The TRIGGER bar (07:05 = bar M): its Low (1.0825) fills the limit (<= entry 1.0832) but does NOT reach the
+        //    stop (1.0800) or runner (1.0920), so the trade opens and survives. The same-bar re-feed manages bar M
+        //    legitimately (the bar that filled it), but no exit fires on it.
+        await bus.PublishAsync(new CandleIngested(
+            Candle(Confirmed.AddMinutes(5), 1.0835m, 1.0840m, 1.0825m, 1.0830m)));
+        harness.OpenedEvents.Should().ContainSingle();
+        (await harness.Trades.GetOpenAsync()).Should().ContainSingle("the trade opened on the trigger bar and survived");
+
+        // 3. Bar M+1 (07:10), CONTIGUOUS with the trigger bar: a wide bar whose Low pierces the stop (1.0795 <= 1.0800).
+        //    Under the corrected eligibility (keyed on the trigger bar's OPEN = 07:05, strictly before this bar's open
+        //    07:10) the trade IS managed here — it must stop out on M+1. The old off-by-one (keying on the fill time
+        //    07:10 == this bar's open) would skip M+1 and leave the trade open, deferring the stop a full bar to M+2.
+        await bus.PublishAsync(new CandleIngested(
+            Candle(Confirmed.AddMinutes(10), 1.0820m, 1.0825m, 1.0795m, 1.0805m)));
+
+        harness.ClosedEvents.Should().ContainSingle("the stop-out is evaluated on M+1, not deferred to M+2");
+        var closed = harness.ClosedEvents.Single();
+        closed.Outcome.Should().Be(TradeCloseReason.StopHit.ToString());
+        closed.Trade.RealizedR.Should().BeApproximately(-1m, 0.0001m);
+        harness.Account().OpenRisk.Amount.Should().Be(0m);
+        (await harness.Trades.GetOpenAsync()).Should().BeEmpty();
     }
 
     [Fact]

@@ -110,7 +110,10 @@ public sealed class TradeOrchestrator : ITradeOrchestrator
                     break;
 
                 case EntryActionKind.Open:
-                    position.AttachTrade(_factory.OpenArmed(armed, account, action.AtUtc));
+                    // action.AtUtc is the trigger bar's CLOSE (the fill time the max-hold math measures from); the
+                    // trigger bar's OPEN (candle.OpenTimeUtc) is carried as the management-eligibility edge so the
+                    // per-candle handler first manages this trade on the bar after the trigger bar (M+1), not M+2.
+                    position.AttachTrade(_factory.OpenArmed(armed, account, action.AtUtc, candle.OpenTimeUtc));
                     break;
 
                 case EntryActionKind.Close:
