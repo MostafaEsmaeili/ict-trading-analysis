@@ -58,18 +58,54 @@ public sealed class BacktestEngine
         _logger = logger ?? NullLogger<BacktestEngine>.Instance;
     }
 
-    /// <summary>Runs the backtest described by <paramref name="request"/>. Throws <see cref="ArgumentException"/> for an
-    /// invalid request and <see cref="FileNotFoundException"/> when no dataset exists for the symbol/timeframe.</summary>
+    /// <summary>Runs the backtest described by <paramref name="request"/>, loading the dataset from disk. Throws
+    /// <see cref="ArgumentException"/> for an invalid request and <see cref="FileNotFoundException"/> when no dataset
+    /// exists for the symbol/timeframe.</summary>
     public BacktestResponse Run(BacktestRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
+        var (symbol, style, timeframe) = ParseRequest(request);
+        return RunCore(request, symbol, style, timeframe, LoadCandles(symbol, timeframe));
+    }
 
+    /// <summary>Runs the backtest over a PRE-LOADED candle series — the optimizer's path, so one dataset is read from
+    /// disk once and reused across the many parameter combinations that share it (the from/to window is still applied
+    /// here, so the same loaded series serves any sub-period).</summary>
+    public BacktestResponse Run(BacktestRequest request, IReadOnlyList<Candle> candles)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(candles);
+        var (symbol, style, timeframe) = ParseRequest(request);
+        return RunCore(request, symbol, style, timeframe, candles);
+    }
+
+    /// <summary>Loads (and maps to the domain) the full recorded-history series for one symbol/timeframe — exposed so
+    /// the optimizer can read a dataset once and reuse it across combinations. Resamples up from M1 if the exact
+    /// timeframe was not fetched natively.</summary>
+    public IReadOnlyList<Candle> LoadCandles(string symbol, string timeframe)
+        => LoadCandles(ParseSymbol(symbol), ParseTimeframe(timeframe));
+
+    /// <summary>The entry timeframe a request resolves to (its explicit timeframe, else the style default) — exposed
+    /// so the optimizer can group combinations by the dataset they will read.</summary>
+    public Timeframe ResolveTimeframe(BacktestRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return request.Timeframe is null ? DefaultTimeframeFor(ParseStyle(request.Style)) : ParseTimeframe(request.Timeframe);
+    }
+
+    private (Symbol Symbol, TradeStyle Style, Timeframe Timeframe) ParseRequest(BacktestRequest request)
+    {
         var symbol = ParseSymbol(request.Symbol);
         var style = ParseStyle(request.Style);
         var timeframe = request.Timeframe is null ? DefaultTimeframeFor(style) : ParseTimeframe(request.Timeframe);
         ValidateRiskAndBalance(request);
+        return (symbol, style, timeframe);
+    }
 
-        var candles = LoadCandles(symbol, timeframe)
+    private BacktestResponse RunCore(
+        BacktestRequest request, Symbol symbol, TradeStyle style, Timeframe timeframe, IReadOnlyList<Candle> allCandles)
+    {
+        var candles = allCandles
             .Where(c => (request.FromUtc is null || c.OpenTimeUtc >= request.FromUtc)
                 && (request.ToUtc is null || c.OpenTimeUtc <= request.ToUtc))
             .ToList();

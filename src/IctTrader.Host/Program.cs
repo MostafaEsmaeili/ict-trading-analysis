@@ -217,6 +217,22 @@ api.MapPost("/backtest", async (BacktestRequest request, BacktestEngine engine) 
     })
     .WithName("RunBacktest");
 
+// Optimize (plan §15): sweep the backtest engine across symbols × styles × timeframes × risk percentages and return
+// a ranked leaderboard, so an operator can find the optimum settings per asset/timeframe/style. Each combination is
+// an isolated in-memory run; datasets are cached per (symbol, timeframe). A bad/oversized grid → 400. Advisory only.
+api.MapPost("/backtest/optimize", async (OptimizeRequest request, BacktestOptimizer optimizer, CancellationToken ct) =>
+    {
+        try
+        {
+            return Results.Ok(await optimizer.OptimizeAsync(request, ct).ConfigureAwait(false));
+        }
+        catch (ArgumentException ex)
+        {
+            return Results.BadRequest(new { error = ex.Message });
+        }
+    })
+    .WithName("OptimizeBacktest");
+
 // Advisory only — this NEVER routes to a broker (plan §6.3); the simulator is wired in WP4.
 api.MapPost("/paper-trades", (ExecutePaperTradeRequest request) =>
         TypedResults.Accepted($"/api/trades/{request.SetupId}"))

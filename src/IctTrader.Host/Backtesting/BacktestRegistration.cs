@@ -17,6 +17,7 @@ public static class BacktestRegistration
 
         services.AddOptions<BacktestOptions>().Bind(configuration.GetSection(BacktestOptions.SectionName));
         services.AddSingleton<BacktestEngine>();
+        services.AddSingleton<BacktestOptimizer>();
         return services;
     }
 }
