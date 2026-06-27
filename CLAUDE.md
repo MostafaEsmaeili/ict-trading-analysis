@@ -873,12 +873,69 @@ modular monolith; enabling `Ict:MarketData:Replay` + a CSV fixture + a Postgres 
 migrations) drives it end-to-end: **feed → `CandleIngested` → Scanning detectors+FSM → `SetupConfirmed` → rehydrate →
 paper trade opens/arms → candles advance → settles**, all on the in-memory bus, every decision in the pure §2.5 domain.
 
-**Still to come (follow-ons, all additive):** **SignalR push** (handlers → `IHubContext<TradingHub>` for
-`SetupDetected`/`TradeUpdated`/`CandleAppended`) + **bus-backed REST** (replace the stub endpoints with repo/query
-handlers); the **Alerting** + **Performance (WP6)** modules; the **WP9 Gherkin E2E** gate (the raw-candle→confirmation
-`BullishLondonKillzone` fixture); the tracked enrichments (the real `SetupId`/`Killzone` on the trade; the candle↔trade
-timeframe guard + demo-account write serialization + symbol-scoped repo queries); the §2.5.8 long-tail (SMT/Breaker,
-macros, weekly bias, HRLR, Power-3) + cost follow-ons (slippage, session-stepped spread, swap).
+**Overnight batch — runnable backend PROVEN on real OANDA data + live dashboard (PRs #93–#113, merged). 🏁** The
+runnable backend went from "composes + boots" to **producing real graded setups, paper trades, and performance on 2.7
+years of real EUR/USD M5**, surfaced on a live React dashboard. Shipped (each `pr-reviewer` + guardrail gated, several
+merged directly green per the operator's "don't wait for CodeRabbit, just merge and continue"):
+
+- **docker-compose + verified-running (#93).** `postgres:17-alpine`, container `icttrader-postgres`, **host port 55432**
+  (avoids local clashes), healthcheck. Apply migrations: `PAPERTRADING_CONNECTION_STRING=... dotnet ef database update
+  --project src/Modules/PaperTrading/Infrastructure --startup-project src/IctTrader.Host`.
+- **OANDA-practice read-only feed (#95).** `OandaMarketDataFeed : IMarketDataFeed` (`MarketData/Infrastructure/Feeds/`)
+  — read-only by SHAPE (only `/v3/instruments/{i}/candles` GETs, no order path), typed `HttpClient`, backfill +
+  optional resilient live poll (`from=<watermark>` gap-free), `OandaCandleParser` (RFC3339-ns→UTC, complete candles
+  only). `OandaFeedOptions` (`Ict:MarketData:Oanda`, fxPractice host default, token via env). **Provider selector**
+  `Ict:MarketData:Provider` = `Replay | Oanda`; `MarketDataIngestionHostedService` drives EITHER (renamed from
+  `ReplayScannerHostedService`). **The .NET process's outbound HTTPS is BLOCKED in the default Bash sandbox** — run
+  feed/DB commands with `dangerouslyDisableSandbox: true` (curl works; the .NET socket doesn't).
+- **bus-backed REST + Performance (WP6) + Alerting (#97/#99/#107/#109).** `/api/trades/active` (`GetActiveTradesQuery`),
+  `/api/performance` + `/api/equity` (pure `PerformanceCalculator` §5.3 R-based, `PerformanceState` singleton fed by
+  `PaperTradeClosed`), `/api/alerts` (**Alerting module** — bounded `AlertLog` fed by `SetupConfirmed`/`PaperTradeOpened`/
+  `PaperTradeClosed`, serving the §2.5 reason verbatim), `/api/chart/{symbol}` (**ChartCandleStore** per-(symbol,tf)
+  ring buffer fed by `CandleIngested` + **RecentSetupStore** fed by `SetupConfirmed` → candles + setup overlays). All
+  read-only projections; guardrail 7/7 each.
+- **SignalR live push (#111).** Six Host-resident `IEventHandler<T>` broadcasters bridge the bus → push-only
+  `TradingHub` (`CandleAppended`/`SetupDetected`/`TradeUpdated`/`PerformanceUpdated`), each log-and-swallow guarded.
+- **OANDA history fetcher (#100/#101) + one-shot fetch mode (#104/#106).** `Ict:MarketData:Oanda:FetchHistory=true`
+  runs the Host as a STANDALONE backward-paginating CSV exporter (`OandaHistoryFetcher` + `CandleCsvWriter` +
+  `HistoryFetchHostedService`) then stops. **Fetched 200k EURUSD-M5 + 200k GBPUSD-M5 candles (Oct 2023 → Jun 2026) to
+  `data/*.csv`** (gitignored). Two fetch-mode DI/bind fixes: branch `Program.cs` on `fetchHistoryMode` (#104), register
+  the bus singleton in fetch-mode so the bus-typed GET endpoints bind (#106).
+
+**🐛 CRITICAL scanner bug — config binder duplicated `ActiveStyles` (#113) — FIXED.** The .NET configuration binder
+**appends** bound array items onto a pre-populated collection initializer instead of replacing it, so
+`Ict:Scanning:ActiveStyles=["Intraday"]` bound onto the `[Intraday]` default became **`[Intraday, Intraday]`** — the
+candle handler fed every candle to the same per-(symbol,style) singleton scanner **twice**, corrupting its window/swing/
+FVG state so the FSM **never confirmed a setup in the running Host** (a 200k backtest produced 0; a direct `ScanSession`
+over the same data confirms 39). Fix: default `ActiveStyles`/`ActiveKillzones` to **empty** so config replaces, and
+apply the ICT default + de-dup via new **`ResolvedActiveStyles`/`ResolvedActiveKillzones`** accessors the scanner
+consumes (`CandleIngestedHandler` uses `ResolvedActiveStyles`). Added an operator-visible "Setup confirmed" log + 3
+binding-regression integration tests. **CONVENTION:** any operator-selected collection POCO bound from config must
+default EMPTY + resolve its business default in code (a non-empty initializer is silently prepended by the binder).
+
+**✅ REAL-DATA BACKTEST PROVEN.** `Ict:MarketData:Provider=Replay` + `Replay:Enabled=true` + `Replay:FixturePath=
+data/EURUSD-M5.csv` + Postgres drives the full chain on real data: **scan → confirm (graded B) → alert → arm → open →
+manage (T1 partial + stop-trail + time-exit) → close → settle → performance**. Mid-run sample: 75% win, +1.02R avg,
+trades closing TargetHit +2.50R / TimeExit +0.95R / breakeven, alerts carrying full §2.5 reasoning (sweep→MSS→FVG→OTE→
+draw, even an order-block confluence). **The React dashboard runs LIVE on this** (`web/ict-dashboard` with
+`VITE_USE_MOCKS=false`, Vite proxy → Host on `:5080`): real candlesticks + Alerts feed + Performance + equity curve
+(screenshot `ict-dashboard-live.png`, gitignored). To reproduce: `docker compose up -d postgres`; run the Host with the
+Replay env on `--urls http://localhost:5080 --no-launch-profile`; `cd web/ict-dashboard && VITE_USE_MOCKS=false npm run dev`.
+
+**Perf + chart notes (follow-ups):** the backtest is slow (~15-20 min for 200k) because the PaperTrading candle handler
+reloads active aggregates from the DB **every candle** (DB-as-state) — fine for correctness, a future batching/in-memory
+warm-cache would speed backtests. The chart shows only the **last ~1500 candles** (in-memory `ChartCandleStore`); candles
+are **not persisted**, so the chart cannot show overlays for HISTORICAL setups (months back) — a "focus chart on alert"
+needs **candle persistence (plan §7 `CandleEntity`) + a time-range `/api/chart?from=&to=`** to render old setups.
+
+**Still to come (follow-ons, all additive):** the **WP9 Gherkin E2E** gate (raw-candle→confirmation fixture); **candle
+persistence + historical/time-range chart** (so the centerpiece chart shows any setup's FVG/OTE/entry-stop-target
+overlays); the tracked enrichments (candle↔trade timeframe guard, symbol-scoped repo queries, per-instrument `SymbolSpec`
+into `EntryFillEvaluator` for EG-3, the `Ict:Detection:Fvg` binding into OTE/draw, `WindowCapacity ≥ DisplacementLegMaxBars`
+cross-check); the §2.5.8 long-tail (SMT/Breaker, macros, weekly bias, HRLR, Power-3, Sunday-gap) + cost follow-ons
+(slippage, session-stepped spread, swap); backtest-speed batching. **The fix to wiring the operator's killzone selection:
+`KillzoneEntryDetector` reads `KillzoneEntryOptions.ActiveKillzones` (its own section), so `Ict:Scanning:ActiveKillzones`
+does NOT currently change the detector's hunt-set — reconcile these two ActiveKillzones sources.**
 
 **Process cadence (per the operator):** keep the ICT gate strict (`ict-domain-expert` + guardrail + `pr-reviewer`,
 concurrent) but move faster — build directly from the locked design (skip the separate pre-spec when pinned), ship
@@ -886,17 +943,15 @@ bigger complete slices, and reserve the heavy ~600k-case adversarial driver for 
 numeric correctness, not ICT fidelity). Under Ultracode: settle subtle ICT calls with a single ict-domain-expert spec
 (or a design judge-panel for wide design spaces), implement via `ict-detector-engineer`, then adversarially verify.
 
-**Still to come — the §2.5 fidelity backlog is COMPLETE (all 11 register slices merged).** The NEXT PHASE is the runnable
-backend (WP7). Optional domain follow-ons that remain: **TGR-1/2 Slice B** (SD-as-primary/fallback draw,
+**The §2.5 fidelity backlog is COMPLETE (all 11 register slices merged) AND the runnable backend (WP7) is COMPLETE +
+PROVEN on real data** (see the overnight-batch milestone above: feed/scan/trade/persist/alert/perf/SignalR + the live
+dashboard). Optional domain follow-ons that remain: **TGR-1/2 Slice B** (SD-as-primary/fallback draw,
 `AllowSdAsPrimaryDraw` — touches `DrawOnLiquidityDetector` + the RR gate, fires only when no untapped opposite pool
 qualifies) and the §2.5.8 long-tail (SMT/Breaker, session macros, weekly bias, HRLR, Power-3, Sunday-gap) — all additive.
 
-The runnable backend: **WP7 host wiring** — Options binding **DONE (slice 1, PR #76)**: all 24 `Ict:*` POCOs bound +
-`ValidateOnStart`-gated via `IctOptionsRegistration.AddIctOptions`. Still to wire: the deferred
-`WindowCapacity ≥ DisplacementLegMaxBars` cross-check, the `Ict:Detection:Fvg` binding INTO the OTE/draw detectors, and the
-per-instrument `SymbolSpec` injected into `EntryFillEvaluator` for EG-3;
-**slice 2 (the scan loop)** = DI the `PaperTradingDbContext` + aggregate-scoped repositories + `TradeOrchestrator`;
-a Replay feed → the Scanning/PaperTrading bus handlers → SignalR + REST) and the **Alerting** module (unblocked by TGR-4);
-the **`Performance` calculator (WP6)**. Optional long-tail (§2.5.8, additive): **SMT/Breaker** detectors, session macros,
-weekly bias, HRLR/`NeutralCondition`, Power-of-Three/AMD, Sunday-gap; the **slippage**/**session-stepped spread**/**swap**
-cost follow-ons; lot-step **flooring** of the partial leg. **WP8 frontend scaffold — MERGED (PR #34, issue #30).**
+Remaining wiring/polish (all in the overnight-batch follow-ups above): the `WindowCapacity ≥ DisplacementLegMaxBars`
+cross-check, the `Ict:Detection:Fvg` binding INTO the OTE/draw detectors, the per-instrument `SymbolSpec` into
+`EntryFillEvaluator` (EG-3); **candle persistence + time-range chart** (plan §7) for historical setup overlays; the
+**WP9 Gherkin E2E** gate; backtest-speed batching; the two-`ActiveKillzones`-source reconciliation; and the §2.5.8
+long-tail + cost follow-ons (slippage / session-stepped spread / swap; lot-step flooring of the partial leg).
+**WP8 frontend scaffold — MERGED (PR #34, issue #30); now runs LIVE on real backend data.**
