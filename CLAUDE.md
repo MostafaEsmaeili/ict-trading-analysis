@@ -1013,6 +1013,16 @@ not "applied downstream" — the fill is at the resting level); and `ArmedEntry`
 `StackedFartherBound` (was dropped — matters under the non-default `StrictFirstFvg`). **The system is now COMPLETE +
 audited-clean across 3 rounds; the remaining backlog is the documented OPTIONAL additive follow-ons only.**
 
+**Post-audit render-verification fixes (issue #139 → PR #140).** Screenshotting the LIVE dashboard against the real
+backend surfaced two render-only bugs the audits' static review missed (the new error-UI correctly surfaced the first):
+the client `fetchEquityCurve` still threw the old "not available until WP7" stub even though `/api/equity` is wired (→
+Performance panel showed an error), and the chart auto-scaled to a ~4-pip window (the incremental-render refs weren't
+reset on series (re)create/StrictMode-remount, so the initial load was mis-detected as an incremental `update` instead
+of `setData`+`fitContent`). Both fixed + verified: the live dashboard renders real EUR/USD candles fitted to view, the
+setup's entry/stop/target/draw overlays, the §2.5 alerts feed, and the Performance + equity panels (screenshot
+`ict-dashboard-final.png`). **Lesson for the next session: after a frontend change, RENDER it live (screenshot) — a
+green typecheck/vitest does not catch a fit/scale or a stale-stub render bug.**
+
 **To see it (2 terminals):** (1) `docker compose up -d postgres`; apply migrations; run the Host
 with the Replay env on `--urls http://localhost:5080 --no-launch-profile` pointed at a `data/*.csv`; (2)
 `cd web/ict-dashboard && VITE_USE_MOCKS=false npm run dev` → `http://localhost:5173`. **NOTE: the .NET process's outbound
