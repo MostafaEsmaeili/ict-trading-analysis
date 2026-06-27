@@ -11,11 +11,14 @@ namespace IctTrader.Host.Calendar;
 /// NFP weeks) and replaces the store's set — bumping its revision so every per-symbol scanner re-loads it into its
 /// MarketContext and the §2.5.2 gate starts withholding <c>CalendarClear</c> on blacked-out days.
 ///
-/// <para>Resilient: a fetch failure is logged and retried next interval — the store keeps its last good set (or stays
-/// unloaded, so the gate stays fail-open). The loader only READS events; there is no order path (§6.3 guardrail).</para>
+/// <para>The source is resolved from a FRESH DI scope per refresh (mirroring <c>MarketDataIngestionHostedService</c>),
+/// so the FMP provider's typed <see cref="HttpClient"/> is not captured for the app lifetime — <c>IHttpClientFactory</c>
+/// can rotate its handler (no stale DNS/sockets on the long-lived loop). Resilient: a fetch failure is logged and
+/// retried next interval — the store keeps its last good set (or stays unloaded, so the gate stays fail-open). The
+/// loader only READS events; there is no order path (§6.3 guardrail).</para>
 /// </summary>
 internal sealed class EconomicCalendarLoaderHostedService(
-    IEconomicCalendarSource source,
+    IServiceScopeFactory scopeFactory,
     IEconomicCalendarStore store,
     TimeProvider timeProvider,
     IOptions<CalendarFeedOptions> options,
@@ -31,7 +34,7 @@ internal sealed class EconomicCalendarLoaderHostedService(
 
         logger.LogInformation(
             "Economic-calendar loader starting on provider {Provider} (refresh every {Hours}h).",
-            source.Provider,
+            _options.Provider,
             _options.RefreshHours);
 
         do
@@ -49,6 +52,10 @@ internal sealed class EconomicCalendarLoaderHostedService(
 
         try
         {
+            // Resolve the source per refresh so a typed-HttpClient provider (FMP) gets a fresh, factory-managed client.
+            await using var scope = scopeFactory.CreateAsyncScope();
+            var source = scope.ServiceProvider.GetRequiredService<IEconomicCalendarSource>();
+
             var events = await source.FetchAsync(from, to, ct).ConfigureAwait(false);
             store.Load(events);
             logger.LogInformation(
@@ -65,10 +72,7 @@ internal sealed class EconomicCalendarLoaderHostedService(
         catch (Exception ex)
         {
             // Keep the last good set (or stay unloaded → fail-open). Surface the failure; retry next tick.
-            logger.LogError(
-                ex,
-                "Economic-calendar refresh from {Provider} failed; keeping the previous calendar.",
-                source.Provider);
+            logger.LogError(ex, "Economic-calendar refresh failed; keeping the previous calendar.");
         }
     }
 
