@@ -1,5 +1,6 @@
 using FluentAssertions;
 using IctTrader.Domain.Configuration;
+using IctTrader.Domain.Detection;
 using IctTrader.Domain.Sessions;
 using IctTrader.Domain.Setups;
 using IctTrader.Domain.Styles;
@@ -40,7 +41,6 @@ public class OptionsValidationTests
     [Fact]
     public void Sd_projection_multiples_and_negative_fib_coefficients_must_be_in_contract()
     {
-        new SdProjectionOptions { Multiples = [] }.Validate().Should().NotBeEmpty();                 // empty
         new SdProjectionOptions { Multiples = [1.5m, 1.0m] }.Validate().Should().NotBeEmpty();       // not ascending
         new SdProjectionOptions { Multiples = [0m, 1.0m] }.Validate().Should().NotBeEmpty();         // non-positive
         new SdProjectionOptions
@@ -110,7 +110,7 @@ public class OptionsValidationTests
     {
         new RiskOptions { LossLadderPercents = [0.5m, 0.6m] }.Validate().Should().NotBeEmpty();   // not descending
         new RiskOptions { LossLadderPercents = [1.0m, 0.5m] }.Validate().Should().NotBeEmpty();   // first step not below base
-        new RiskOptions { LossLadderPercents = [] }.Validate().Should().NotBeEmpty();             // empty ladder
+        new RiskOptions { LossLadderPercents = [] }.Validate().Should().BeEmpty();                // empty = use the §2.5.5 default
         new RiskOptions { DipRecoveryFraction = 0m }.Validate().Should().NotBeEmpty();            // out of (0, 1]
         new RiskOptions { DipRecoveryFraction = 1.5m }.Validate().Should().NotBeEmpty();
         new RiskOptions { ConsecutiveWinsForLowestUnit = 0 }.Validate().Should().NotBeEmpty();    // must be >= 1
@@ -172,16 +172,15 @@ public class OptionsValidationTests
 
     [Fact]
     public void Active_killzones_must_be_a_subset_of_the_frozen_contract()
-        => new MarketContextOptions { ActiveKillzones = [Killzone.Pm] }.Validate().Should().NotBeEmpty();
+        => new KillzoneEntryOptions { ActiveKillzones = [Killzone.Pm] }.Validate().Should().NotBeEmpty();
 
     [Fact]
     public void Asian_is_a_selectable_low_priority_entry_killzone()
     {
         // FVG-SEM-3 (Ep10): Asian is selectable (in the frozen subset) but deprioritized = NOT in the default
-        // ActiveKillzones. Enabling [Asian] validates clean on BOTH the scanning and the entry-detector sets.
+        // resolved hunt-set. Enabling [Asian] validates clean and resolves to exactly Asian on the entry set.
         MarketContextOptions.SelectableKillzones.Should().Contain(Killzone.Asian);
-        new MarketContextOptions().ActiveKillzones.Should().NotContain(Killzone.Asian); // deprioritized by default
-        new MarketContextOptions { ActiveKillzones = [Killzone.Asian] }.Validate().Should().BeEmpty();
+        new KillzoneEntryOptions().ResolvedActiveKillzones.Should().NotContain(Killzone.Asian); // deprioritized by default
         new KillzoneEntryOptions { ActiveKillzones = [Killzone.Asian] }.Validate().Should().BeEmpty();
     }
 
@@ -246,7 +245,76 @@ public class OptionsValidationTests
     [Fact]
     public void Resolved_active_killzones_defaults_to_london_and_new_york_when_unconfigured()
     {
-        new MarketContextOptions().ResolvedActiveKillzones
+        new KillzoneEntryOptions().ResolvedActiveKillzones
             .Should().Equal(Killzone.LondonOpen, Killzone.NewYorkOpen);
     }
+
+    [Fact]
+    public void Configured_active_killzones_replace_the_default_and_are_not_duplicated()
+    {
+        // REGRESSION (binder-append): an operator narrowing the hunt-set to ONLY London Open must NOT silently
+        // still hunt New York. With the empty default + Resolved accessor, the configured set replaces cleanly.
+        new KillzoneEntryOptions { ActiveKillzones = [Killzone.LondonOpen] }
+            .ResolvedActiveKillzones.Should().Equal(Killzone.LondonOpen);
+    }
+
+    [Fact]
+    public void Resolved_active_killzones_deduplicates_a_binder_appended_set()
+    {
+        new KillzoneEntryOptions { ActiveKillzones = [Killzone.LondonOpen, Killzone.LondonOpen] }
+            .ResolvedActiveKillzones.Should().Equal(Killzone.LondonOpen);
+    }
+
+    [Fact]
+    public void Resolved_loss_ladder_replaces_and_falls_back_to_the_default()
+    {
+        // [12] binder-append: an operator's `[0.2, 0.1]` must NOT become `[0.5, 0.25, 0.2, 0.1]`.
+        new RiskOptions { LossLadderPercents = [0.2m, 0.1m] }.ResolvedLossLadderPercents
+            .Should().Equal(0.2m, 0.1m);
+        new RiskOptions().ResolvedLossLadderPercents.Should().Equal(0.5m, 0.25m); // unconfigured = §2.5.5 default
+    }
+
+    [Fact]
+    public void Resolved_sd_multiples_and_coefficients_replace_and_fall_back_to_the_default()
+    {
+        // [14] binder-append on Multiples + the nested NegativeFibOptions.Coefficients.
+        new SdProjectionOptions { Multiples = [3.0m, 4.0m] }.ResolvedMultiples.Should().Equal(3.0m, 4.0m);
+        new SdProjectionOptions().ResolvedMultiples.Should().Equal(1.0m, 1.5m, 2.0m);
+        new NegativeFibOptions { Coefficients = [0.5m] }.ResolvedCoefficients.Should().Equal(0.5m);
+        new NegativeFibOptions().ResolvedCoefficients.Should().Equal(0.27m, 0.62m, 1.0m);
+    }
+
+    [Fact]
+    public void Resolved_standing_conditions_honor_an_operator_removal()
+    {
+        // [15] binder-append: removing PremiumDiscountHalf (moving it to event-latching) must be honored, not
+        // silently re-added by a prepended default.
+        var configured = new[]
+        {
+            ConfluenceCondition.BiasAligned, ConfluenceCondition.KillzoneEntry, ConfluenceCondition.CalendarClear,
+        };
+
+        var resolved = new SetupCandidateOptions { StandingConditions = configured }.ResolvedStandingConditions;
+
+        resolved.Should().NotContain(ConfluenceCondition.PremiumDiscountHalf);
+        resolved.Should().BeEquivalentTo(configured);
+        new SetupCandidateOptions().ResolvedStandingConditions
+            .Should().BeEquivalentTo(SetupCandidateOptions.DefaultStandingConditions); // unconfigured = §2.5 default
+    }
+
+    [Fact]
+    public void Effective_required_conditions_replace_and_fall_back_to_the_default()
+    {
+        // [22] binder-append: an operator dropping CalendarClear must be honored, not re-appended.
+        var configured = new[] { ConfluenceCondition.KillzoneEntry, ConfluenceCondition.LiquiditySweep };
+
+        new ConfluenceOptions { RequiredConditions = configured }.EffectiveRequiredConditions
+            .Should().BeEquivalentTo(configured);
+        new ConfluenceOptions().EffectiveRequiredConditions
+            .Should().BeEquivalentTo(ConfluenceOptions.DefaultRequiredConditions);
+    }
+
+    [Fact]
+    public void An_undefined_entry_mode_is_rejected()
+        => new EntryManagementOptions { Mode = (EntryMode)99 }.Validate().Should().NotBeEmpty();
 }

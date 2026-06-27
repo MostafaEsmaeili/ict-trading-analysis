@@ -16,8 +16,19 @@ public sealed class ConfluenceOptions
     /// <summary>Per-condition weight 0..1 (§2.5.3). Conditions absent from the map are unweighted (e.g. hard gates).</summary>
     public IReadOnlyDictionary<ConfluenceCondition, decimal> Weights { get; init; } = DefaultWeights;
 
-    /// <summary>Conditions that MUST be matched for an A/B grade; any missing required ⇒ Reject (§2.5.2/§2.5.4).</summary>
-    public IReadOnlyList<ConfluenceCondition> RequiredConditions { get; init; } = DefaultRequiredConditions;
+    /// <summary>
+    /// Conditions that MUST be matched for an A/B grade; any missing required ⇒ Reject (§2.5.2/§2.5.4). Defaults to
+    /// EMPTY so the .NET config binder REPLACES rather than APPENDS to a pre-populated initializer (see
+    /// MarketContextOptions.cs for the documented rationale) — a non-empty default would be prepended to the
+    /// operator's set, so a relaxation (removing a required condition) would be silently ignored. Consume
+    /// <see cref="EffectiveRequiredConditions"/>, never this. (<see cref="Weights"/> is a dictionary, merged by key,
+    /// so it is not affected.)
+    /// </summary>
+    public IReadOnlyList<ConfluenceCondition> RequiredConditions { get; init; } = [];
+
+    /// <summary>The required set to enforce — the configured set, or the §2.5.2 defaults when none is configured.</summary>
+    public IReadOnlyList<ConfluenceCondition> EffectiveRequiredConditions =>
+        RequiredConditions.Count == 0 ? DefaultRequiredConditions : RequiredConditions;
 
     /// <summary>The score at or above which an all-required setup is promoted from B to A (§2.5.4 — the one
     /// score-driven grading gate; an all-required setup below it is still a tradeable B, TGR-4).</summary>
@@ -90,10 +101,8 @@ public sealed class ConfluenceOptions
             }
         }
 
-        if (RequiredConditions.Count == 0)
-        {
-            errors.Add("At least one RequiredCondition must be configured.");
-        }
+        // An empty CONFIGURED list is VALID — it means "use the §2.5.2 defaults" (applied by EffectiveRequiredConditions,
+        // which is non-empty by construction). So there is no "at least one" check on the raw property.
 
         if (!Enum.IsDefined(AlertMinimumGrade))
         {

@@ -60,7 +60,7 @@ public sealed class SetupScorer
             ? 0
             : (int)Math.Round(matchedWeight / applicableWeight * 100m, MidpointRounding.AwayFromZero);
 
-        var allRequiredMatched = _options.RequiredConditions.All(matched.Contains);
+        var allRequiredMatched = _options.EffectiveRequiredConditions.All(matched.Contains);
 
         return new ConfluenceScore(score, GradeFor(score, allRequiredMatched), allRequiredMatched);
     }

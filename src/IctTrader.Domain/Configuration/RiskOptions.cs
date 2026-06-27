@@ -29,8 +29,17 @@ public sealed class RiskOptions
     /// losses (1 loss → element 0, ≥count → the last element). §2.5.5 ladder = base 1% then <c>[0.5, 0.25]</c>; the last
     /// element is also the "lowest unit" the win-cycle drops to. 1% → 0.5% → 0.25% is Mentorship-verbatim (Ep41 "one
     /// percent… half of one percent… a quarter of one percent"); the rungs stay configurable per broker/operator.
+    /// <para>Defaults to EMPTY so the .NET config binder REPLACES rather than APPENDS to a pre-populated initializer
+    /// (see MarketContextOptions.cs for the documented rationale) — a non-empty default would silently prepend
+    /// <c>[0.5, 0.25]</c> to an operator's ladder. Consume <see cref="ResolvedLossLadderPercents"/>, never this.</para>
     /// </summary>
-    public IReadOnlyList<decimal> LossLadderPercents { get; init; } = [0.5m, 0.25m];
+    public IReadOnlyList<decimal> LossLadderPercents { get; init; } = [];
+
+    private static readonly IReadOnlyList<decimal> DefaultLossLadderPercents = [0.5m, 0.25m];
+
+    /// <summary>The ladder to consume — the configured rungs, or the §2.5.5 default when none is set.</summary>
+    public IReadOnlyList<decimal> ResolvedLossLadderPercents =>
+        LossLadderPercents.Count == 0 ? DefaultLossLadderPercents : LossLadderPercents;
 
     /// <summary>Consecutive wins after which risk drops to the lowest unit to protect a run's profits (§2.4 default 5).</summary>
     public int ConsecutiveWinsForLowestUnit { get; init; } = 5;
@@ -69,30 +78,27 @@ public sealed class RiskOptions
             errors.Add($"MinStopDistancePips must be positive but was {MinStopDistancePips}.");
         }
 
-        if (LossLadderPercents is null || LossLadderPercents.Count == 0)
+        // An empty CONFIGURED ladder is VALID — it means "use the §2.5.5 default" (applied by the resolved accessor).
+        // We validate the EFFECTIVE rungs so a genuine bad override is still caught with a message that matches what
+        // the operator wrote (no prepended default), while an unconfigured host stays valid.
+        var ladder = ResolvedLossLadderPercents;
+        for (var i = 0; i < ladder.Count; i++)
         {
-            errors.Add("LossLadderPercents must contain at least one reduction step.");
+            if (ladder[i] is <= 0m or > 100m)
+            {
+                errors.Add($"LossLadderPercents[{i}] must be within (0, 100] but was {ladder[i]}.");
+            }
+
+            if (i > 0 && ladder[i] >= ladder[i - 1])
+            {
+                errors.Add("LossLadderPercents must be strictly descending (each step below the previous).");
+            }
         }
-        else
+
+        if (ladder[0] >= BaseRiskPercent)
         {
-            for (var i = 0; i < LossLadderPercents.Count; i++)
-            {
-                if (LossLadderPercents[i] is <= 0m or > 100m)
-                {
-                    errors.Add($"LossLadderPercents[{i}] must be within (0, 100] but was {LossLadderPercents[i]}.");
-                }
-
-                if (i > 0 && LossLadderPercents[i] >= LossLadderPercents[i - 1])
-                {
-                    errors.Add("LossLadderPercents must be strictly descending (each step below the previous).");
-                }
-            }
-
-            if (LossLadderPercents[0] >= BaseRiskPercent)
-            {
-                errors.Add(
-                    $"The first loss-ladder step {LossLadderPercents[0]} must sit below BaseRiskPercent {BaseRiskPercent}.");
-            }
+            errors.Add(
+                $"The first loss-ladder step {ladder[0]} must sit below BaseRiskPercent {BaseRiskPercent}.");
         }
 
         if (ConsecutiveWinsForLowestUnit < 1)

@@ -14,8 +14,19 @@ public sealed class SdProjectionOptions
     /// <summary>Off by default — the SD tiers are computed/tested but not merged into the priced ladder until opted in.</summary>
     public bool Enabled { get; init; }
 
-    /// <summary>The SD multiples (the −1 / −1.5 / −2 SD set) — strictly ascending, positive.</summary>
-    public IReadOnlyList<decimal> Multiples { get; init; } = [1.0m, 1.5m, 2.0m];
+    /// <summary>
+    /// The SD multiples (the −1 / −1.5 / −2 SD set) — strictly ascending, positive. Defaults to EMPTY so the .NET
+    /// config binder REPLACES rather than APPENDS to a pre-populated initializer (see MarketContextOptions.cs for the
+    /// documented rationale). Consume <see cref="ResolvedMultiples"/> (via <see cref="EffectiveMultiples"/>), never this.
+    /// </summary>
+    public IReadOnlyList<decimal> Multiples { get; init; } = [];
+
+    /// <summary>The canonical −1 / −1.5 / −2 SD set, applied when no override is configured.</summary>
+    private static readonly IReadOnlyList<decimal> DefaultMultiples = [1.0m, 1.5m, 2.0m];
+
+    /// <summary>The SD multiples to project — the configured set, or the canonical default when none is configured.</summary>
+    public IReadOnlyList<decimal> ResolvedMultiples =>
+        Multiples.Count == 0 ? DefaultMultiples : Multiples;
 
     /// <summary>Reserved — whether to keep SD tiers that fall INSIDE the range draw. The Slice A.2 merge always drops
     /// inside-draw tiers (the ladder stays a clean monotone {T1, T2_range, deeper SD tiers}); honoring this flag is a
@@ -27,20 +38,23 @@ public sealed class SdProjectionOptions
 
     /// <summary>The multiples actually projected: the negative-fib coefficients when that variant is on, else the SD set.</summary>
     public IReadOnlyList<decimal> EffectiveMultiples =>
-        NegativeFibVariant.Enabled ? NegativeFibVariant.Coefficients : Multiples;
+        NegativeFibVariant.Enabled ? NegativeFibVariant.ResolvedCoefficients : ResolvedMultiples;
 
     public IReadOnlyList<string> Validate()
     {
         var errors = new List<string>();
 
-        ValidateAscendingPositive(Multiples, nameof(Multiples), max: null, errors);
+        // Validate the RESOLVED lists so an empty (unconfigured) override safely falls back to the canonical default
+        // and a genuine bad override is caught with a message that matches what the operator wrote (no prepended
+        // default). The resolved lists are non-empty by construction.
+        ValidateAscendingPositive(ResolvedMultiples, nameof(Multiples), max: null, errors);
 
         if (NegativeFibVariant.Enabled)
         {
             // The negative-fib coefficients are sub-unity-or-unity fib levels (≤ −1 SD), so the (0, 1] cap is
             // deliberate — unlike the unbounded SD Multiples. Do not relax it to allow > 1.
             ValidateAscendingPositive(
-                NegativeFibVariant.Coefficients,
+                NegativeFibVariant.ResolvedCoefficients,
                 $"{nameof(NegativeFibVariant)}.{nameof(NegativeFibOptions.Coefficients)}",
                 max: 1m,
                 errors);
@@ -79,6 +93,17 @@ public sealed class NegativeFibOptions
 {
     public bool Enabled { get; init; }
 
-    /// <summary>The negative-fib coefficients — when <see cref="Enabled"/>, projected on the same terminus axis.</summary>
-    public IReadOnlyList<decimal> Coefficients { get; init; } = [0.27m, 0.62m, 1.0m];
+    /// <summary>
+    /// The negative-fib coefficients — when <see cref="Enabled"/>, projected on the same terminus axis. Defaults to
+    /// EMPTY so the .NET config binder REPLACES rather than APPENDS to a pre-populated initializer (see
+    /// MarketContextOptions.cs for the documented rationale). Consume <see cref="ResolvedCoefficients"/>, never this.
+    /// </summary>
+    public IReadOnlyList<decimal> Coefficients { get; init; } = [];
+
+    /// <summary>The canonical −0.27 / −0.62 / −1.0 set, applied when no override is configured.</summary>
+    private static readonly IReadOnlyList<decimal> DefaultCoefficients = [0.27m, 0.62m, 1.0m];
+
+    /// <summary>The coefficients to project — the configured set, or the canonical default when none is configured.</summary>
+    public IReadOnlyList<decimal> ResolvedCoefficients =>
+        Coefficients.Count == 0 ? DefaultCoefficients : Coefficients;
 }

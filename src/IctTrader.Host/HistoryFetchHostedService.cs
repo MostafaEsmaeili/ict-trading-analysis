@@ -30,9 +30,9 @@ internal sealed class HistoryFetchHostedService(
         {
             logger.LogInformation(
                 "OANDA history fetch starting: {InstrumentCount} instrument(s) at {Granularity}, up to {MaxCandles} candles each, into '{OutputDirectory}'.",
-                options.Instruments.Count, options.Granularity, options.HistoryMaxCandles, options.HistoryOutputDirectory);
+                options.ResolvedInstruments.Count, options.Granularity, options.HistoryMaxCandles, options.HistoryOutputDirectory);
 
-            foreach (var instrument in options.Instruments)
+            foreach (var instrument in options.ResolvedInstruments)
             {
                 stoppingToken.ThrowIfCancellationRequested();
                 await FetchAndWriteAsync(instrument, stoppingToken).ConfigureAwait(false);

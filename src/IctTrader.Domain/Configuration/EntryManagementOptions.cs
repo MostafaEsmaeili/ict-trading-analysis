@@ -3,8 +3,8 @@ namespace IctTrader.Domain.Configuration;
 /// <summary>
 /// The §2.5.1-step-7 entry-arming policy (bound from <c>Ict:Execution:Entry</c>) — no magic numbers. It selects the
 /// entry <see cref="Mode"/> (the module orchestrator branches on it) and the no-chase max-wait backstop. The active
-/// killzone hunt-set the no-chase killzone-end rung tests against is reused from <c>Ict:Detection:Killzone</c>
-/// (<see cref="KillzoneEntryOptions.ActiveKillzones"/>) so the arm window and the entry window cannot drift apart.
+/// killzone hunt-set the no-chase killzone-end rung tests against is reused from <c>Ict:Scanning</c>
+/// (<see cref="KillzoneEntryOptions.ResolvedActiveKillzones"/>) so the arm window and the entry window cannot drift apart.
 /// </summary>
 public sealed class EntryManagementOptions
 {
@@ -40,6 +40,11 @@ public sealed class EntryManagementOptions
     public IReadOnlyList<string> Validate()
     {
         var errors = new List<string>();
+
+        if (!Enum.IsDefined(Mode))
+        {
+            errors.Add($"Mode must be a defined {nameof(EntryMode)} value but was {(int)Mode}.");
+        }
 
         if (MaxWaitMinutes <= 0)
         {

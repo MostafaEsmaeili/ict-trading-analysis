@@ -50,8 +50,23 @@ public sealed class OandaFeedOptions
     /// </summary>
     public string? Token { get; init; }
 
-    /// <summary>The instruments to read, in OANDA's underscore form (e.g. <c>EUR_USD</c>); at least one required.</summary>
-    public IReadOnlyList<string> Instruments { get; init; } = ["EUR_USD"];
+    /// <summary>
+    /// The instruments to read, in OANDA's underscore form (e.g. <c>EUR_USD</c>). Defaults to EMPTY so the .NET
+    /// config binder REPLACES rather than APPENDS to a pre-populated initializer (see MarketContextOptions.cs for the
+    /// documented rationale) — a non-empty default would silently still stream <c>EUR_USD</c> even when the operator
+    /// selects only <c>GBP_USD</c>, double-feeding a per-symbol scanner. Consume <see cref="ResolvedInstruments"/>.
+    /// </summary>
+    public IReadOnlyList<string> Instruments { get; init; } = [];
+
+    /// <summary>The OANDA default when no instrument is configured (the §2.5 reference major).</summary>
+    private static readonly IReadOnlyList<string> DefaultInstruments = ["EUR_USD"];
+
+    /// <summary>
+    /// The instruments actually read — the configured set de-duplicated, or the <c>EUR_USD</c> default when none is
+    /// configured. Consume this, never the raw <see cref="Instruments"/>.
+    /// </summary>
+    public IReadOnlyList<string> ResolvedInstruments =>
+        Instruments.Count == 0 ? DefaultInstruments : Instruments.Distinct(StringComparer.Ordinal).ToArray();
 
     /// <summary>The OANDA granularity (candle timeframe) to read (e.g. <c>M5</c>, <c>M15</c>, <c>H1</c>).</summary>
     public string Granularity { get; init; } = "M5";
@@ -102,11 +117,9 @@ public sealed class OandaFeedOptions
             errors.Add("Token is required and must be non-blank (supply it via config/environment).");
         }
 
-        if (Instruments is null || Instruments.Count == 0)
-        {
-            errors.Add("Instruments must contain at least one instrument.");
-        }
-        else if (Instruments.Any(string.IsNullOrWhiteSpace))
+        // An empty configured list is VALID — it means "use the EUR_USD default" (applied by ResolvedInstruments).
+        // A configured list with a blank entry is still a fail-fast misconfig.
+        if (Instruments.Any(string.IsNullOrWhiteSpace))
         {
             errors.Add("Instruments must not contain a blank entry.");
         }
