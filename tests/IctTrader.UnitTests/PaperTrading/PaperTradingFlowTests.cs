@@ -118,14 +118,51 @@ public class PaperTradingFlowTests
         harness.OpenedEvents.Should().ContainSingle();
         (await harness.Trades.GetOpenAsync()).Should().ContainSingle();
 
-        // 4. A later candle reaches the runner — the trade closes and settles.
+        // 4. A later candle reaches the runner — the trade closes and settles. The trade opened at the FILL bar's
+        //    CLOSE (07:15 = 07:10 + M5), so under the no-same-bar-look-ahead rule it is first managed on the bar that
+        //    opens strictly after that (07:20), not the 07:15 bar (whose open coincides with the trade's open stamp).
         await bus.PublishAsync(new CandleIngested(
-            Candle(Confirmed.AddMinutes(15), 1.0900m, 1.0925m, 1.0895m, 1.0915m)));
+            Candle(Confirmed.AddMinutes(20), 1.0900m, 1.0925m, 1.0895m, 1.0915m)));
 
         harness.ClosedEvents.Should().ContainSingle();
         harness.ClosedEvents.Single().Outcome.Should().Be(TradeCloseReason.TargetHit.ToString());
         harness.Account().OpenRisk.Amount.Should().Be(0m);
         harness.Account().Equity.Amount.Should().BeGreaterThan(10_000m);
+    }
+
+    [Fact]
+    public async Task A_setup_confirmed_on_candle_N_is_NOT_managed_on_that_same_bar_no_lookahead()
+    {
+        using var harness = new Harness(EntryMode.Immediate);
+        var bus = harness.Provider.GetRequiredService<IMessageBus>();
+
+        // 1. A setup confirmed on candle N opens a trade stamped at candle N's open (Confirmed). On the runnable Host
+        //    both the Scanning and PaperTrading handlers subscribe to the SAME CandleIngested; the trade is created
+        //    mid-dispatch and would otherwise be advanced on candle N itself. Open it first (the SetupConfirmed seam).
+        await bus.PublishAsync(new SetupConfirmed(BullishSetupDto()));
+        harness.OpenedEvents.Should().ContainSingle();
+        var openedDto = harness.OpenedEvents.Single().Trade;
+        openedDto.OpenedAtUtc.Should().Be(Confirmed);
+
+        // 2. Publish a CandleIngested whose open time EQUALS the confirming bar (candle N) — a wide bar that would hit
+        //    BOTH the stop (Low 1.0795 <= 1.0800) AND the runner (High 1.0925 >= 1.0920) if it were advanced. Because
+        //    the position was opened on THIS bar (OpenedAtUtc == candle.OpenTimeUtc, not strictly before), it must be
+        //    excluded from management — no fill/close on its own signal bar. Look-ahead bias is eliminated.
+        await bus.PublishAsync(new CandleIngested(
+            Candle(Confirmed, 1.0832m, 1.0925m, 1.0795m, 1.0850m)));
+
+        harness.ClosedEvents.Should().BeEmpty();                              // not closed on the confirming bar
+        harness.Account().OpenRisk.Amount.Should().BeGreaterThan(0m);          // reservation still held — trade open
+        (await harness.Trades.GetOpenAsync()).Should().ContainSingle();        // the trade is still open
+
+        // 3. The NEXT candle (N+1) finally manages it — here a clean runner closes it, proving it WAS eligible once
+        //    past its open bar (so the exclusion is the only thing that gated bar N, not a broken pipeline).
+        await bus.PublishAsync(new CandleIngested(
+            Candle(Confirmed.AddMinutes(5), 1.0900m, 1.0925m, 1.0895m, 1.0915m)));
+
+        harness.ClosedEvents.Should().ContainSingle();
+        harness.ClosedEvents.Single().Trade.Id.Should().Be(openedDto.Id);
+        (await harness.Trades.GetOpenAsync()).Should().BeEmpty();
     }
 
     [Fact]
@@ -152,6 +189,38 @@ public class PaperTradingFlowTests
         harness.Account().Equity.Amount.Should().BeLessThan(startingEquity); // the loss was booked
         harness.Account().OpenRisk.Amount.Should().Be(0m);                   // the reservation released
         (await harness.Trades.GetOpenAsync()).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task A_same_bar_open_then_close_publishes_an_OPEN_event_that_reports_Status_Open()
+    {
+        using var harness = new Harness(EntryMode.Armed);
+        var bus = harness.Provider.GetRequiredService<IMessageBus>();
+
+        // 1. Arm a resting limit on candle N.
+        await bus.PublishAsync(new SetupConfirmed(BullishSetupDto()));
+        harness.ArmedEntries.Saved.Should().ContainSingle();
+
+        // 2. A later candle (N+1, past the arm bar) whose Low both FILLS the limit (<= entry 1.0832) and pierces the
+        //    STOP (<= 1.0800): the entry triggers and the same-bar −1R straddle closes it in ONE advance — the
+        //    aggregate raises BOTH PaperTradeOpened and PaperTradeClosed and ends up Closed.
+        await bus.PublishAsync(new CandleIngested(
+            Candle(Confirmed.AddMinutes(5), 1.0835m, 1.0838m, 1.0795m, 1.0805m)));
+
+        // The open event must report a COHERENT open snapshot (Status=Open, no close fields), NOT the final Closed
+        // state — even though the aggregate is already Closed by the time the events are drained.
+        harness.OpenedEvents.Should().ContainSingle();
+        var opened = harness.OpenedEvents.Single().Trade;
+        opened.Status.Should().Be(TradeStatus.Open.ToString());
+        opened.ClosedAtUtc.Should().BeNull();
+        opened.RealizedR.Should().BeNull();
+
+        // The separate close event carries the realized outcome.
+        harness.ClosedEvents.Should().ContainSingle();
+        var closed = harness.ClosedEvents.Single();
+        closed.Trade.Status.Should().Be(TradeStatus.Closed.ToString());
+        closed.Trade.RealizedR.Should().BeApproximately(-1m, 0.0001m);
+        closed.Outcome.Should().Be(TradeCloseReason.StopHit.ToString());
     }
 
     // ---- Test harness: the real bus + module wired over in-memory fake repos (no Postgres) ----------------------
