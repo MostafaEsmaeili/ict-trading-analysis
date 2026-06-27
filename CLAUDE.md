@@ -939,10 +939,42 @@ gate publishes a crafted Grade-B `SetupConfirmed` + the driving `CandleIngested`
 reference `Reqnroll.Tools.MsBuild.Generation` DIRECTLY or no `.feature.cs` is generated; the DI plugin is NOT used —
 steps share state via the native `IObjectContainer`.)
 
-**🏁 ALL WORK PACKAGES COMPLETE (WP0–WP9) — full green suite: build 0 warnings · 640 unit · 23 arch · 33 integration ·
-12 E2E (= 708 tests) · `dotnet format` clean.** The ICT 2022 Intraday FVG model is faithfully encoded end-to-end, the
+**🏁 ALL WORK PACKAGES COMPLETE (WP0–WP9) — full green suite: build 0 warnings · 651 unit · 23 arch · 44 integration ·
+12 E2E (= 730 tests) · `dotnet format` clean.** The ICT 2022 Intraday FVG model is faithfully encoded end-to-end, the
 runnable backend is proven on 2.7 years of real EUR/USD, the React dashboard runs live on it, and the mandatory E2E gate
-guards the pipeline. **To see it (2 terminals):** (1) `docker compose up -d postgres`; apply migrations; run the Host
+guards the pipeline.
+
+**Adversarial correctness-audit + hardening pass (workflow `wf_219f6533-2ba`, merging fix PRs #119/#123/#124/#125 for
+issues #118/#120/#121/#122). 🔬** Under Ultracode I ran a 6-dimension adversarial audit of the COMPLETED system (config-
+wiring, wire-contract, scan-trade-loop, guardrail/persistence, numeric/money, options-validation) with per-finding
+skeptical verification: **28 findings examined, 23 confirmed real**, then fixed every High + Medium (+ most Low) via 4
+parallel gated worktree agents. The big ones:
+
+- **Same-bar look-ahead bias (HIGH, #118/#119):** a setup confirmed on candle N was opened AND advanced on candle N —
+  its limit could fill / stop / runner could hit on the very bar that produced the signal (look-ahead distorting every
+  paper-trade outcome + the Performance analytics). Fix: `PaperTradingCandleHandler` manages a position only from the
+  bar STRICTLY AFTER its arm/open (`ArmedAtUtc/OpenedAtUtc < candle.OpenTimeUtc`); the legitimate within-`Advance`
+  same-bar entry-then-exit re-feed is untouched. (Armed-trigger trades open at the fill bar's CLOSE, so they're first
+  managed one bar later — conservative, never look-ahead.)
+- **Config-binder duplication CLASS (HIGH, #120/#123):** the ActiveStyles append bug was systemic —
+  `KillzoneEntryOptions.ActiveKillzones`, `RiskOptions.LossLadderPercents`, `OandaFeedOptions.Instruments`,
+  `SdProjectionOptions.Multiples`/`NegativeFibOptions.Coefficients`, `SetupCandidateOptions.StandingConditions`,
+  `ConfluenceOptions.RequiredConditions` ALL had non-empty defaults bound from settable sections. Swept them all to the
+  empty-default + `Resolved*`/`Effective*` accessor pattern. **Also fixed the BROKEN selectable-killzone feature:** the
+  operator's `Ict:Scanning:ActiveKillzones` never reached the detector (it read a different unbound section) — now
+  `KillzoneEntryOptions` binds `Ict:Scanning` so the selection drives the `KillzoneEntryDetector` (dead
+  `MarketContextOptions.ActiveKillzones` removed).
+- **Dashboard R-unit rendering (HIGH, #121/#124):** the Performance panel rendered max-drawdown (R) as `%`, leaked the
+  `999999` profit-factor sentinel, scaled the equity axis for dollars not cumulative R, and the mocks encoded a different
+  unit model than the live backend (hiding it). Fixed + per-symbol price decimals (JPY 3 / metals 2 / FX 5).
+- **Wire + persistence (MEDIUM, #122/#125):** `PaperTradeDto.Direction` now emits Long/Short (was Bullish/Bearish);
+  the deterministic `SetupId` is threaded end-to-end so a redelivered/restart-streamed `SetupConfirmed` is a **no-op**
+  (idempotent — was opening duplicate trades); the `TradePlan` JSONB now persists the full **N-tier** `TargetLadder`
+  (SD tiers were dropped on round-trip).
+- **Deferred (Low, non-blocking):** the dead `Ict:Killzones`/`Ict:Time` appsettings sections (SymbolScanner hardcodes
+  `KillzoneSchedule.CreateDefault()` + NyClock uses the IANA id directly — the sections are unread; remove or wire
+  later); symbol-scoped repo queries (`GetOpen`/`GetActive` load all symbols then filter — harmless under the
+  single-symbol feed). The audit script is saved (resumable) for a future re-audit round. **To see it (2 terminals):** (1) `docker compose up -d postgres`; apply migrations; run the Host
 with the Replay env on `--urls http://localhost:5080 --no-launch-profile` pointed at a `data/*.csv`; (2)
 `cd web/ict-dashboard && VITE_USE_MOCKS=false npm run dev` → `http://localhost:5173`. **NOTE: the .NET process's outbound
 HTTPS + localhost-DB connections are BLOCKED in the default sandbox — run those with the sandbox disabled.**
