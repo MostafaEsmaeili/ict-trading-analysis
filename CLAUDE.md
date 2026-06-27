@@ -1171,3 +1171,46 @@ optimizer value always wins over the baked one.** Re-run the optimizer `leaveOut
 **Note (appsettings JSON comments):** `appsettings.json` uses `//` comments throughout — the .NET config provider
 allows them (the Host boots fine), but the IDE's strict-JSON linter flags them as errors. They are false positives;
 keep the established commented style (it documents every invented/derived number).
+
+**🏁 Live settings (UI, no-restart) + economic-calendar feed (plan §15; PRs #165/#167/#169, issues #164/#166/#168 —
+MERGED).** The operator can now SEE and TUNE the model from the dashboard, live, and the FOMC/NFP gate finally fires
+from real data. Suite **751 unit + 23 arch + ~50 integration + 12 E2E**, 0 warnings, format clean; frontend
+typecheck/lint clean + **73 vitest** + production build green. Each slice gated (guardrail 7/7; slice 3 also
+ict-domain-expert CONFORMANT + pr-reviewer APPROVE) and **render-verified live** (Playwright against the real Host).
+
+- **(slice 1, #165) Runtime-mutable settings store — live, no restart.** `IRuntimeSettings`/`RuntimeSettings`
+  (`Domain/Configuration/`): a thread-safe per-instrument override holder with a **monotonic `Revision`**, seeded once
+  from `Ict:Instruments`. `ConfigurableInstrumentRegistry` reads it LIVE on every `Resolve`; `SymbolScannerRegistry` +
+  `TradeOrchestratorRegistry` **evict their per-(symbol,style) caches on a revision change** so the next candle/backtest
+  rebuilds with the new options — no restart. `GET /api/settings` + `PUT /api/settings/instruments/{symbol}` (validated;
+  null body clears). **Proven live:** PUT EURUSD k=6 → a default backtest jumped 1→11 setups; cleared → back to 1.
+- **(slice 2, #167) Settings UI page** (`/settings`, react-router + nav). **Per-instrument overrides are editable +
+  live** — pick OR type any symbol (datalist from `InstrumentCatalog.KnownSymbols`), set/clear its k-of-n, its
+  required-condition subset (must include `DisplacementMss`), and its per-pair cost geometry; the keyed-uncontrolled
+  form never clobbers an in-progress edit; the mutation invalidates the settings query so the table re-reads live. A
+  **comprehensive read-only global concept view** (confluence required-set + k-of-n + per-condition weights + grade
+  thresholds + alert floor; risk base/portfolio-cap/hard-max + loss ladder + win-cycle + dip-recovery; execution
+  spread/commission; active killzones/styles), projected by the Host from the bound `Ict:*` options via the resolved/
+  effective accessors. Also **restored `npm run build`** (`tsc -b`), red since the read-API slice left 3 stale
+  `PaperTradeDto` test fixtures + a recharts `Formatter` type (the merge gates ran `tsc --noEmit`, which excludes tests).
+- **(slice 3, #169) Economic-calendar feed → the FOMC/NFP gate FIRES.** The §2.5.2 gate was complete but never fed
+  (`MarketContext.LoadCalendar` was test-only → fail-open). New `IEconomicCalendarStore`/`EconomicCalendarStore` (Domain,
+  revision-stamped) + `IEconomicCalendarSource` port; the `SymbolScanner` loads the store into its `MarketContext` on a
+  revision change (null store = byte-identical no-op → tests/backtests unaffected). Host sources behind
+  `Ict:Calendar:Provider`: **`Config`** (operator-supplied dates — offline default) + **`Fmp`** (Financial Modeling Prep
+  HTTP, read-only GET, key via env, parser unit-tested); a background loader (source resolved per-refresh from a DI
+  scope so the FMP `HttpClient` stays factory-managed) keeps the store current over a NY-date window around today; `GET
+  /api/calendar` + a Settings calendar panel show the events + §2.5.2 blackout days. **Gold-standard live proof:** a
+  backtest that produced **1 setup on 2024-02-14** produced **0** once that day was configured as FOMC — the gate
+  withheld `CalendarClear`. **CONVENTION:** a calendar source only WITHHOLDS trading (never causes an order) — read-only
+  by shape, no order path (guardrail 7/7).
+
+**New conventions this batch:** (1) any operator-tunable LIVE setting rides the revision-stamped store + cache-eviction
+seam (slice 1) — add a field + bump the revision, consumers rebuild on change. (2) The economic-calendar **loader window
+anchors to NY "today"**, so a HISTORICAL backtest needs a wider `Ict:Calendar:LookbackDays` to cover its period (a future
+enhancement could load events for the backtest's own range). (3) Global concept knobs are currently **view-only in the
+UI** (the per-instrument override is the live-editable surface, which already covers per-pair k-of-n/subset/costs);
+making specific global knobs (risk %, active killzones/styles) live-editable would extend the store + the scanner/
+orchestrator factory overlay — a clean follow-on. (4) `Ict:Calendar` is documented (commented, `Enabled:false`) in
+`appsettings.json` with `Fmp.ApiKey` sourced from env, never committed. **To enable the gate live:** set
+`Ict:Calendar:Enabled=true`, a provider, and (Config) the FOMC/NFP dates — or an FMP key.
