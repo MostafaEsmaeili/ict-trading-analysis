@@ -939,8 +939,8 @@ gate publishes a crafted Grade-B `SetupConfirmed` + the driving `CandleIngested`
 reference `Reqnroll.Tools.MsBuild.Generation` DIRECTLY or no `.feature.cs` is generated; the DI plugin is NOT used —
 steps share state via the native `IObjectContainer`.)
 
-**🏁 ALL WORK PACKAGES COMPLETE (WP0–WP9) — full green suite: build 0 warnings · 651 unit · 23 arch · 44 integration ·
-12 E2E (= 730 tests) · `dotnet format` clean.** The ICT 2022 Intraday FVG model is faithfully encoded end-to-end, the
+**🏁 ALL WORK PACKAGES COMPLETE (WP0–WP9) + two adversarial audit-hardening rounds — full green suite: build 0 warnings ·
+660 unit · 23 arch · 44 integration · 12 E2E (= 739 tests) · `dotnet format` clean.** The ICT 2022 Intraday FVG model is faithfully encoded end-to-end, the
 runnable backend is proven on 2.7 years of real EUR/USD, the React dashboard runs live on it, and the mandatory E2E gate
 guards the pipeline.
 
@@ -974,7 +974,35 @@ parallel gated worktree agents. The big ones:
 - **Deferred (Low, non-blocking):** the dead `Ict:Killzones`/`Ict:Time` appsettings sections (SymbolScanner hardcodes
   `KillzoneSchedule.CreateDefault()` + NyClock uses the IANA id directly — the sections are unread; remove or wire
   later); symbol-scoped repo queries (`GetOpen`/`GetActive` load all symbols then filter — harmless under the
-  single-symbol feed). The audit script is saved (resumable) for a future re-audit round. **To see it (2 terminals):** (1) `docker compose up -d postgres`; apply migrations; run the Host
+  single-symbol feed). The audit script is saved (resumable) for a future re-audit round.
+
+**Round-2 audit + fixes (workflow `wf_eb4c7e75-736`; issues #127/#128/#129/#130 merged as PRs #131/#132/#133/#134).**
+A second adversarial round (regression-of-the-fixes, concurrency, feed/security, resilience, domain-math, frontend depth,
+test-coverage) found 22 confirmed (1 High, 9 Medium, 12 Low) — severity DOWN from round 1, converging. Fixed the High +
+key Mediums:
+
+- **Entry-leg spread never booked (HIGH, #127/#131):** the orchestrated lifecycle charged only the EXIT crossing — net
+  P&L overstated by one entry-leg spread per trade (§5.4 violation). `ExitManager` now folds `ComputeEntryLeg` into the
+  two whole-position terminal closes (the T1 scale leg stays exit-only) so the round trip == `ExecutionCostModel.Compute`.
+  Also floors the T1 partial to the lot step. **(Supersedes the old "a clean open books no cost / entry spread rides the
+  deferred exit-leg line" note — that was WRONG; the entry crossing is now booked at close.)**
+- **Armed-trade off-by-one (MEDIUM, #128/#132):** a regression from the #118 look-ahead fix — a triggered armed trade
+  (stamped at the trigger bar's CLOSE = next bar's open) was first managed on M+2 not M+1. Added `PaperTrade.ManagedFromUtc`
+  (the trigger bar's OPEN — eligibility distinct from the fill-time `OpenedAtUtc`, +EF migration); the handler filters on
+  it. Immediate stays N+1; neither looks ahead on its signal bar. Also: `MarketDataIngestor` isolates per-candle publish
+  errors (one bad bar can't abort the stream); settlement commits BEFORE publishing its events.
+- **OANDA live-poll resilience (MEDIUM, #129/#133):** the poll now survives transient timeouts/parse errors (still
+  honoring cancellation; backfill stays fail-fast); `HistoryMaxCandles` is bounded.
+- **Dashboard live mode (MEDIUM, #130/#134):** live build now renders the host's chart overlays (was zero — `useOverlays`
+  hit an always-throwing stub), shows inline error states, **connects SignalR** (was poll-only dead code), and the candle
+  merge is bounded/ordered/de-duped with incremental chart updates + seek-on-focus.
+- **Deferred (Low/coverage, non-blocking):** the bus throw-propagation semantics (a core-handler throw still aborts the
+  dispatch — by-design fail-fast, broadcasters already guarded); a raw-candle→confirmation test through the real 14-detector
+  pipeline + a replay-feed E2E (both need the ~14k-candle warmup, so a fast deterministic fixture is hard — the bus-driven
+  E2E + seeded ScanSessionTests cover the seam); JSONB back-compat for the pre-N-tier shape; DB-retry; unknown-symbol
+  FX-coercion; the "focus chart on alert" cross-timeframe seek (needs `triggerTimeframe` on the alert/trade DTOs).
+
+**To see it (2 terminals):** (1) `docker compose up -d postgres`; apply migrations; run the Host
 with the Replay env on `--urls http://localhost:5080 --no-launch-profile` pointed at a `data/*.csv`; (2)
 `cd web/ict-dashboard && VITE_USE_MOCKS=false npm run dev` → `http://localhost:5173`. **NOTE: the .NET process's outbound
 HTTPS + localhost-DB connections are BLOCKED in the default sandbox — run those with the sandbox disabled.**
