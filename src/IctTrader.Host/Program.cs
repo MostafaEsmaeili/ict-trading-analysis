@@ -189,6 +189,43 @@ api.MapGet("/config", (
     })
     .WithName("GetConfig");
 
+// Live operator settings (plan §15): the per-instrument overrides (the editable tuning — k-of-n + required subset +
+// per-symbol costs) the operator changes at RUNTIME. A change bumps the runtime revision so the scanner/orchestrator
+// caches rebuild with the new options on the next candle — applied WITHOUT a restart. Read-only/advisory.
+api.MapGet("/settings", (IRuntimeSettings settings) =>
+        TypedResults.Ok(new SettingsDto(
+            settings.InstrumentOverrides.ToDictionary(kv => kv.Key, kv => InstrumentSettingsDto.From(kv.Value)))))
+    .WithName("GetSettings");
+
+// Set (or, with an empty body, clear) one symbol's live override. A clear reverts the symbol to the built-in catalog
+// default. The override is validated (k-of-n range; a required subset must include DisplacementMss) before it applies.
+api.MapPut("/settings/instruments/{symbol}", (string symbol, InstrumentSettingsDto? body, IRuntimeSettings settings) =>
+    {
+        try
+        {
+            if (body is null)
+            {
+                settings.SetInstrumentOverride(symbol, null);
+                return Results.NoContent();
+            }
+
+            var overrides = body.ToOverrides();
+            var errors = new InstrumentOverridesOptions { Overrides = { [symbol] = overrides } }.Validate();
+            if (errors.Count > 0)
+            {
+                return Results.BadRequest(new { error = string.Join("; ", errors) });
+            }
+
+            settings.SetInstrumentOverride(symbol, overrides);
+            return Results.NoContent();
+        }
+        catch (ArgumentException ex)
+        {
+            return Results.BadRequest(new { error = ex.Message });
+        }
+    })
+    .WithName("PutInstrumentSettings");
+
 // The recorded-history datasets available to backtest (plan §15) — one per <symbol>-<tf>.csv with its date range +
 // candle count, so the Backtest Lab can bound its period picker. Read-only directory scan.
 api.MapGet("/backtest/datasets", (BacktestEngine engine) =>

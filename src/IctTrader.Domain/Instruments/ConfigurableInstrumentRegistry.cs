@@ -1,28 +1,30 @@
+using IctTrader.Domain.Configuration;
 using IctTrader.Domain.ValueObjects;
 
 namespace IctTrader.Domain.Instruments;
 
 /// <summary>
-/// An <see cref="IInstrumentRegistry"/> decorator that overlays operator config (<c>Ict:Instruments</c>) on top of a
-/// built-in registry (the <see cref="InstrumentCatalog"/>). For a symbol with a configured override it merges the
-/// config's non-null fields onto the catalog's resolved per-class <see cref="InstrumentProfile.Overrides"/> — so a
-/// baked tuning result (e.g. NAS100 → 6-of-8) becomes the symbol's LIVE default while the catalog's built-in index
-/// geometry survives where config is silent. A symbol with no config entry passes through unchanged (byte-identical).
-/// Pure + thread-safe (immutable after construction); the lookup is case-insensitive on the dashboard symbol.
+/// An <see cref="IInstrumentRegistry"/> decorator that overlays the operator's LIVE per-instrument settings
+/// (<see cref="IRuntimeSettings.InstrumentOverrides"/>, seeded from <c>Ict:Instruments</c> and editable at runtime)
+/// on top of a built-in registry (the <see cref="InstrumentCatalog"/>). For a symbol with a configured override it
+/// merges the override's non-null fields onto the catalog's resolved per-class
+/// <see cref="InstrumentProfile.Overrides"/> — so a baked/edited tuning result (e.g. NAS100's required-condition
+/// subset) is the symbol's default, while the catalog's built-in index geometry survives where the override is silent.
+/// It reads the runtime store on EVERY resolve, so a freshly-built scanner/orchestrator picks up the current settings
+/// (the live-apply seam; the per-symbol caches evict on <see cref="IRuntimeSettings.Revision"/> so existing ones
+/// rebuild too). A symbol with no override passes through unchanged.
 /// </summary>
 public sealed class ConfigurableInstrumentRegistry : IInstrumentRegistry
 {
     private readonly IInstrumentRegistry _inner;
-    private readonly IReadOnlyDictionary<string, InstrumentOptionOverrides> _overrides;
+    private readonly IRuntimeSettings _settings;
 
-    public ConfigurableInstrumentRegistry(
-        IInstrumentRegistry inner, IReadOnlyDictionary<string, InstrumentOptionOverrides> overrides)
+    public ConfigurableInstrumentRegistry(IInstrumentRegistry inner, IRuntimeSettings settings)
     {
         ArgumentNullException.ThrowIfNull(inner);
-        ArgumentNullException.ThrowIfNull(overrides);
+        ArgumentNullException.ThrowIfNull(settings);
         _inner = inner;
-        // Case-insensitive so an operator's "nas100usd" matches the normalised "NAS100USD" symbol key.
-        _overrides = new Dictionary<string, InstrumentOptionOverrides>(overrides, StringComparer.OrdinalIgnoreCase);
+        _settings = settings;
     }
 
     public InstrumentProfile Resolve(Symbol symbol)
@@ -30,9 +32,10 @@ public sealed class ConfigurableInstrumentRegistry : IInstrumentRegistry
         ArgumentNullException.ThrowIfNull(symbol);
 
         var profile = _inner.Resolve(symbol);
-        if (!_overrides.TryGetValue(symbol.Value, out var configOverride))
+        // The store keys symbols case-insensitively, so the normalised Symbol.Value matches an operator's entry.
+        if (!_settings.InstrumentOverrides.TryGetValue(symbol.Value, out var configOverride))
         {
-            return profile; // no config for this symbol — the built-in catalog profile, unchanged
+            return profile; // no override for this symbol — the built-in catalog profile, unchanged
         }
 
         var merged = profile.Overrides.OverlayWith(configOverride);

@@ -7,6 +7,7 @@ using IctTrader.PaperTrading.Infrastructure;
 using IctTrader.PaperTrading.Infrastructure.Persistence;
 using IctTrader.Scanning.Application;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 namespace IctTrader.Host;
@@ -74,13 +75,18 @@ public static class ScanLoopRegistration
 
         services.AddPaperTradingPersistence();
 
-        // Per-instrument overrides (Ict:Instruments): a config-augmenting registry overlays the operator's per-symbol
-        // settings (the baked tuning results, e.g. NAS100 → 6-of-8) on the built-in catalog. Registered BEFORE the
-        // modules so their TryAddSingleton(InstrumentCatalog.Default) is a no-op and EVERY consumer — the scanner, the
-        // trade orchestrator, and the backtest engine — resolves THIS config-aware registry.
+        // Runtime settings (plan §15): the mutable per-instrument overrides the operator edits live. Seeded ONCE from
+        // Ict:Instruments, then updated via the settings API; its revision ticks on every change so the per-symbol
+        // scanner/orchestrator caches rebuild with the new options (live apply, no restart). Registered (TryAdd, so the
+        // modules' empty fallback is a no-op) BEFORE the modules so every consumer shares this seeded instance.
+        services.TryAddSingleton<IRuntimeSettings>(sp =>
+            new RuntimeSettings(sp.GetRequiredService<IOptions<InstrumentOverridesOptions>>().Value.Overrides));
+
+        // The config-augmenting registry overlays those LIVE per-instrument settings (e.g. NAS100's required subset) on
+        // the built-in catalog. Registered BEFORE the modules so their TryAddSingleton(InstrumentCatalog.Default) is a
+        // no-op and EVERY consumer — scanner, trade orchestrator, backtest engine — resolves THIS config-aware registry.
         services.AddSingleton<IInstrumentRegistry>(sp => new ConfigurableInstrumentRegistry(
-            InstrumentCatalog.Default,
-            sp.GetRequiredService<IOptions<InstrumentOverridesOptions>>().Value.Overrides));
+            InstrumentCatalog.Default, sp.GetRequiredService<IRuntimeSettings>()));
 
         services.AddScanningModule();
         services.AddPaperTradingModule();

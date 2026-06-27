@@ -13,10 +13,10 @@ namespace IctTrader.UnitTests.Instruments;
 public sealed class ConfigurableInstrumentRegistryTests
 {
     private static ConfigurableInstrumentRegistry RegistryWith(string symbol, int minRequired)
-        => new(InstrumentCatalog.Default, new Dictionary<string, InstrumentOptionOverrides>
+        => new(InstrumentCatalog.Default, new RuntimeSettings(new Dictionary<string, InstrumentOptionOverrides>
         {
             [symbol] = new() { MinRequiredConditions = minRequired },
-        });
+        }));
 
     [Fact]
     public void Config_override_merges_onto_the_catalog_profile_keeping_built_in_geometry()
@@ -66,6 +66,26 @@ public sealed class ConfigurableInstrumentRegistryTests
         // FX None leaves it strict (null), byte-identical.
         new ConfluenceOptions().WithInstrumentOverrides(InstrumentOptionOverrides.None)
             .MinRequiredConditions.Should().BeNull();
+    }
+
+    [Fact]
+    public void A_live_runtime_change_is_reflected_on_the_next_resolve_without_a_rebuild()
+    {
+        var store = new RuntimeSettings();
+        var registry = new ConfigurableInstrumentRegistry(InstrumentCatalog.Default, store);
+
+        registry.Resolve(new Symbol("NAS100USD")).Overrides.MinRequiredConditions
+            .Should().BeNull(); // catalog default (strict)
+
+        var before = store.Revision;
+        store.SetInstrumentOverride("NAS100USD", new() { MinRequiredConditions = 6 });
+        store.Revision.Should().BeGreaterThan(before); // a change ticks the revision (drives cache eviction)
+
+        registry.Resolve(new Symbol("NAS100USD")).Overrides.MinRequiredConditions
+            .Should().Be(6); // the SAME registry instance now reflects the live change
+
+        store.SetInstrumentOverride("NAS100USD", null); // clear → revert to the catalog default
+        registry.Resolve(new Symbol("NAS100USD")).Overrides.MinRequiredConditions.Should().BeNull();
     }
 
     [Fact]

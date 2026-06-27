@@ -1,3 +1,4 @@
+using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Instruments;
 using IctTrader.PaperTrading.Application.Trading;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,6 +31,9 @@ public static class PaperTradingModuleRegistration
         // The per-instrument catalog (§2.5.7 FX-vs-index resolution) — shared with Scanning, registered idempotently
         // (TryAdd) so module wiring order does not matter. The orchestrator factory resolves each symbol's profile.
         services.TryAddSingleton<IInstrumentRegistry>(InstrumentCatalog.Default);
+        // The live runtime-settings store the orchestrator registry watches for changes. TryAdd (empty fallback) so a
+        // standalone module/test resolves it; the Host registers the config-seeded one first, which wins.
+        services.TryAddSingleton<IRuntimeSettings>(_ => new RuntimeSettings());
         services.AddSingleton<ITradeOrchestratorFactory, TradeOrchestratorFactory>();
         services.AddSingleton<ITradeOrchestratorRegistry, TradeOrchestratorRegistry>();
         services.AddScoped<IPaperAccountProvider, PaperAccountProvider>();
