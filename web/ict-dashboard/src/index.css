@@ -589,6 +589,22 @@ select.input {
   align-items: flex-start;
 }
 
+/* Settings page: the read-only global concept settings laid out in responsive columns. */
+.settings__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+.settings__group h3 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-faint);
+}
+
 .form__field {
   display: flex;
   flex-direction: column;

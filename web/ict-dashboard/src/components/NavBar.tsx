@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------------
-// NavBar — the top navigation for the 4-page app (Live · Trades · Backtest · Optimizer, plan §15).
+// NavBar — the top navigation for the 5-page app (Live · Trades · Backtest · Optimizer · Settings, plan §15).
 // Lives in the shared header. The "Advisory · Paper only" guardrail badge + the NY clock stay visible
 // on every page (the defensive posture surfaced at the UI, §6.3). Read-only: no order/execute control.
 // ---------------------------------------------------------------------------------------------------
@@ -12,6 +12,7 @@ const LINKS: readonly { to: string; label: string }[] = [
   { to: '/trades', label: 'Trades' },
   { to: '/backtest', label: 'Backtest' },
   { to: '/optimizer', label: 'Optimizer' },
+  { to: '/settings', label: 'Settings' },
 ];
 
 export function NavBar(): React.JSX.Element {

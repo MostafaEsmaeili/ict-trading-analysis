@@ -83,7 +83,8 @@ describe('client live equity curve', () => {
       { atUtc: '2026-06-19T07:00:00Z', equity: 2.6 },
       { atUtc: '2026-06-19T08:00:00Z', equity: 1.4 },
     ];
-    const fetchSpy = vi.fn(async () => ({ ok: true, json: async () => points }));
+    // Typed arg so mock.calls[0][0] (the requested URL) is in-bounds under strict tuple checking.
+    const fetchSpy = vi.fn(async (_input?: unknown) => ({ ok: true, json: async () => points }));
     vi.stubGlobal('fetch', fetchSpy);
 
     const { fetchEquityCurve } = await liveClient();

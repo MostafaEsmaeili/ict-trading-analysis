@@ -3,7 +3,7 @@
 // merge into the same keys (see hub/useTradingHub). Mocks back every call until WP7 (api/client.ts).
 // ---------------------------------------------------------------------------------------------------
 
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   fetchAccountStatus,
   fetchActiveTrades,
@@ -15,13 +15,16 @@ import {
   fetchEquityCurve,
   fetchOverlays,
   fetchPerformance,
+  fetchSettings,
   runBacktest,
   runOptimize,
+  updateInstrumentSettings,
   type TradeFilters,
 } from './client';
 import type {
   BacktestRequest,
   BacktestResponse,
+  InstrumentSettingsDto,
   OptimizeRequest,
   OptimizeResponse,
 } from '../types/api';
@@ -107,6 +110,30 @@ export function useConfig() {
     queryKey: queryKeys.config(),
     queryFn: fetchConfig,
     refetchInterval: RECONCILE_MS,
+  });
+}
+
+/** The live settings snapshot — per-instrument overrides + the read-only global concept settings (§15). */
+export function useSettings() {
+  return useQuery({
+    queryKey: queryKeys.settings(),
+    queryFn: fetchSettings,
+    refetchInterval: RECONCILE_MS,
+  });
+}
+
+/**
+ * Set or clear one symbol's LIVE per-instrument override (PUT /api/settings/instruments/{symbol}). On
+ * success it invalidates the settings query so the table re-reads the applied state — the change is live
+ * (no restart), so the next backtest/scan already reflects it.
+ */
+export function useUpdateInstrumentSettings() {
+  const qc = useQueryClient();
+  return useMutation<void, Error, { symbol: string; body: InstrumentSettingsDto | null }>({
+    mutationFn: ({ symbol, body }) => updateInstrumentSettings(symbol, body),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.settings() });
+    },
   });
 }
 

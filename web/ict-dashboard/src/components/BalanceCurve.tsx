@@ -89,9 +89,11 @@ export function BalanceCurve({ equity }: BalanceCurveProps): React.JSX.Element {
                 color: palette.text,
                 fontSize: 12,
               }}
-              formatter={(v: number) =>
-                mode === 'balance' ? formatMoney(v) : `${v.toFixed(2)}R`
-              }
+              formatter={(value) => {
+                // Recharts' Formatter passes ValueType (number | string | array); coerce to a number.
+                const v = typeof value === 'number' ? value : Number(value);
+                return mode === 'balance' ? formatMoney(v) : `${v.toFixed(2)}R`;
+              }}
             />
             <Area
               type="monotone"

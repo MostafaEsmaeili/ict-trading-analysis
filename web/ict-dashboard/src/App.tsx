@@ -1,8 +1,8 @@
 // ---------------------------------------------------------------------------------------------------
 // App — composition root (plan §15). Provides the React Query client (the dashboard's server-state
-// owner, plan §9) and the router for the 4-page app: Live (/) · Trades (/trades) · Backtest (/backtest)
-// · Optimizer (/optimizer). The AppLayout shell holds the persistent nav + guardrail badge. Exported
-// separately from main.tsx so tests can mount it (MemoryRouter is injected in tests via `router`).
+// owner, plan §9) and the router for the 5-page app: Live (/) · Trades (/trades) · Backtest (/backtest)
+// · Optimizer (/optimizer) · Settings (/settings). The AppLayout shell holds the persistent nav +
+// guardrail badge. Exported separately from main.tsx so tests can mount it (MemoryRouter injected via `router`).
 // ---------------------------------------------------------------------------------------------------
 
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -12,6 +12,7 @@ import { Dashboard } from './Dashboard';
 import { TradesPage } from './pages/TradesPage';
 import { BacktestPage } from './pages/BacktestPage';
 import { OptimizerPage } from './pages/OptimizerPage';
+import { SettingsPage } from './pages/SettingsPage';
 import { createQueryClient } from './queryClient';
 
 // One client per app instance (created once, not per render).
@@ -27,6 +28,7 @@ export function App(): React.JSX.Element {
             <Route path="/trades" element={<TradesPage />} />
             <Route path="/backtest" element={<BacktestPage />} />
             <Route path="/optimizer" element={<OptimizerPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

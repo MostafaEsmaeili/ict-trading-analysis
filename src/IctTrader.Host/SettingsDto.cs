@@ -57,6 +57,43 @@ public sealed record InstrumentSettingsDto(
     }
 }
 
-/// <summary>The current live settings snapshot (plan §15). Slice 1 carries the per-instrument overrides; the global
-/// concept knobs + the economic calendar are added in the following slices.</summary>
-public sealed record SettingsDto(IReadOnlyDictionary<string, InstrumentSettingsDto> InstrumentOverrides);
+/// <summary>
+/// The global ICT concept settings the scanner is running under (plan §2.5.3/§2.5.4/§5.1/§5.4), projected
+/// READ-ONLY for the Settings page so the operator can SEE the whole model in the UI. These are bound from the
+/// <c>Ict:*</c> sections at startup; the live-editable surface is the per-instrument override (above), which
+/// already covers per-pair k-of-n, the required subset, and cost geometry. Enum members are STRINGS.
+/// </summary>
+public sealed record GlobalConceptSettingsDto(
+    // Confluence + grading (Ict:Confluence)
+    IReadOnlyList<string> RequiredConditions,
+    int? MinRequiredConditions,
+    IReadOnlyDictionary<string, decimal> Weights,
+    int GradeAThreshold,
+    int GradeBThreshold,
+    int GradeCThreshold,
+    string AlertMinimumGrade,
+    // Risk (Ict:Risk)
+    decimal BaseRiskPercent,
+    decimal MaxOpenPortfolioRiskPercent,
+    decimal HardMaxRiskPercent,
+    decimal MinStopDistancePips,
+    IReadOnlyList<decimal> LossLadderPercents,
+    int ConsecutiveWinsForLowestUnit,
+    decimal DipRecoveryFraction,
+    // Execution (Ict:Execution)
+    decimal SpreadBasePips,
+    decimal CommissionPerLotRoundTripUsd,
+    // Scanning (Ict:Scanning)
+    IReadOnlyList<string> ActiveKillzones,
+    IReadOnlyList<string> ActiveStyles);
+
+/// <summary>
+/// The current live settings snapshot (plan §15): the editable per-instrument overrides, the read-only global
+/// concept settings, and the set of confluence conditions a per-instrument required-subset may be drawn from
+/// (the §2.5.2 canonical required set — what the subset checkboxes offer). The economic calendar is added in slice 3.
+/// </summary>
+public sealed record SettingsDto(
+    IReadOnlyDictionary<string, InstrumentSettingsDto> InstrumentOverrides,
+    GlobalConceptSettingsDto Global,
+    IReadOnlyList<string> AvailableRequiredConditions,
+    IReadOnlyList<string> AvailableInstruments);

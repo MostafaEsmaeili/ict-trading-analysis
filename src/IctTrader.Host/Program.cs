@@ -1,6 +1,7 @@
 using IctTrader.Alerting.Application;
 using IctTrader.Alerting.Contracts;
 using IctTrader.Domain.Configuration;
+using IctTrader.Domain.Instruments;
 using IctTrader.Host;
 using IctTrader.Host.Backtesting;
 using IctTrader.Host.Hubs;
@@ -192,9 +193,42 @@ api.MapGet("/config", (
 // Live operator settings (plan §15): the per-instrument overrides (the editable tuning — k-of-n + required subset +
 // per-symbol costs) the operator changes at RUNTIME. A change bumps the runtime revision so the scanner/orchestrator
 // caches rebuild with the new options on the next candle — applied WITHOUT a restart. Read-only/advisory.
-api.MapGet("/settings", (IRuntimeSettings settings) =>
-        TypedResults.Ok(new SettingsDto(
-            settings.InstrumentOverrides.ToDictionary(kv => kv.Key, kv => InstrumentSettingsDto.From(kv.Value)))))
+api.MapGet("/settings", (
+        IRuntimeSettings settings,
+        IOptions<ConfluenceOptions> confluence,
+        IOptions<RiskOptions> risk,
+        IOptions<ExecutionCostOptions> execution,
+        IOptions<KillzoneEntryOptions> killzones,
+        IOptions<MarketContextOptions> scanning) =>
+    {
+        var c = confluence.Value;
+        var r = risk.Value;
+        var global = new GlobalConceptSettingsDto(
+            RequiredConditions: c.EffectiveRequiredConditions.Select(x => x.ToString()).ToArray(),
+            MinRequiredConditions: c.MinRequiredConditions,
+            Weights: c.Weights.ToDictionary(kv => kv.Key.ToString(), kv => kv.Value),
+            GradeAThreshold: c.GradeAThreshold,
+            GradeBThreshold: c.GradeBThreshold,
+            GradeCThreshold: c.GradeCThreshold,
+            AlertMinimumGrade: c.AlertMinimumGrade.ToString(),
+            BaseRiskPercent: r.BaseRiskPercent,
+            MaxOpenPortfolioRiskPercent: r.MaxOpenPortfolioRiskPercent,
+            HardMaxRiskPercent: r.HardMaxRiskPercent,
+            MinStopDistancePips: r.MinStopDistancePips,
+            LossLadderPercents: r.ResolvedLossLadderPercents,
+            ConsecutiveWinsForLowestUnit: r.ConsecutiveWinsForLowestUnit,
+            DipRecoveryFraction: r.DipRecoveryFraction,
+            SpreadBasePips: execution.Value.Spread.BasePips,
+            CommissionPerLotRoundTripUsd: execution.Value.Commission.PerLotRoundTripUsd,
+            ActiveKillzones: killzones.Value.ResolvedActiveKillzones.Select(k => k.ToString()).ToArray(),
+            ActiveStyles: scanning.Value.ResolvedActiveStyles.Select(s => s.ToString()).ToArray());
+
+        return TypedResults.Ok(new SettingsDto(
+            InstrumentOverrides: settings.InstrumentOverrides.ToDictionary(kv => kv.Key, kv => InstrumentSettingsDto.From(kv.Value)),
+            Global: global,
+            AvailableRequiredConditions: ConfluenceOptions.DefaultRequiredConditions.Select(x => x.ToString()).ToArray(),
+            AvailableInstruments: InstrumentCatalog.KnownSymbols));
+    })
     .WithName("GetSettings");
 
 // Set (or, with an empty body, clear) one symbol's live override. A clear reverts the symbol to the built-in catalog

@@ -184,6 +184,56 @@ export interface ConfigStatusDto {
   startingEquity: number;
 }
 
+// ---- Settings (plan §15 — live per-instrument tuning + concept-settings view) ----
+
+/**
+ * Mirrors Host.InstrumentSettingsDto — one symbol's LIVE override. Every field is optional; a null/omitted
+ * field inherits the built-in catalog default. `requiredConditions` is the subset (by member name) to
+ * require; `minRequiredConditions` is the k-of-n count.
+ */
+export interface InstrumentSettingsDto {
+  minRequiredConditions?: number | null;
+  requiredConditions?: string[] | null;
+  minStopDistancePips?: number | null;
+  spreadBasePips?: number | null;
+  commissionPerLotRoundTripUsd?: number | null;
+}
+
+/**
+ * Mirrors Host.GlobalConceptSettingsDto — the global ICT concept settings the scanner runs under, projected
+ * READ-ONLY (bound from `Ict:*` at startup). The live-editable surface is the per-instrument override.
+ */
+export interface GlobalConceptSettingsDto {
+  requiredConditions: string[];
+  minRequiredConditions: number | null;
+  weights: Record<string, number>;
+  gradeAThreshold: number;
+  gradeBThreshold: number;
+  gradeCThreshold: number;
+  alertMinimumGrade: string;
+  baseRiskPercent: number;
+  maxOpenPortfolioRiskPercent: number;
+  hardMaxRiskPercent: number;
+  minStopDistancePips: number;
+  lossLadderPercents: number[];
+  consecutiveWinsForLowestUnit: number;
+  dipRecoveryFraction: number;
+  spreadBasePips: number;
+  commissionPerLotRoundTripUsd: number;
+  activeKillzones: string[];
+  activeStyles: string[];
+}
+
+/** Mirrors Host.SettingsDto — the live settings snapshot the Settings page reads. */
+export interface SettingsDto {
+  instrumentOverrides: Record<string, InstrumentSettingsDto>;
+  global: GlobalConceptSettingsDto;
+  /** The confluence conditions a per-instrument required-subset may be drawn from (the §2.5.2 canonical set). */
+  availableRequiredConditions: string[];
+  /** The catalogued symbols the operator can pick to add an override (FX majors + NAS100USD); typing another is allowed. */
+  availableInstruments: string[];
+}
+
 // ---- Backtest / Optimizer (plan §15 §5/§6) ----
 
 /** Mirrors Host.BacktestDatasetDto — a CSV history dataset available to the Backtest Lab. */

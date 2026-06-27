@@ -18,6 +18,7 @@ import type {
   OptimizeResponse,
   PaperTradeDto,
   PerformanceSummaryDto,
+  SettingsDto,
   SetupDto,
 } from '../types/api';
 import type { ChartOverlay } from '../types/overlays';
@@ -308,6 +309,60 @@ export const MOCK_CONFIG: ConfigStatusDto = {
   spreadBasePips: 0.7,
   commissionPerLotRoundTripUsd: 6,
   startingEquity: 10000,
+};
+
+// The live settings snapshot: one baked per-instrument override (NAS100 → a relaxed 7-concept subset, the
+// tuned result) + the read-only global concept settings mirroring the §2.5.3/§5.1/§5.4 defaults. `let` so the
+// mock PUT handler can mutate the overrides in place (the offline app behaves like the live one).
+export const MOCK_SETTINGS: SettingsDto = {
+  instrumentOverrides: {
+    NAS100USD: {
+      minRequiredConditions: null,
+      requiredConditions: [
+        'BiasAligned', 'KillzoneEntry', 'LiquiditySweep', 'DisplacementMss',
+        'PremiumDiscountHalf', 'DrawTargetRrMet', 'CalendarClear',
+      ],
+      minStopDistancePips: null,
+      spreadBasePips: null,
+      commissionPerLotRoundTripUsd: null,
+    },
+  },
+  global: {
+    requiredConditions: [
+      'BiasAligned', 'KillzoneEntry', 'LiquiditySweep', 'DisplacementMss',
+      'FvgPresent', 'PremiumDiscountHalf', 'DrawTargetRrMet', 'CalendarClear',
+    ],
+    minRequiredConditions: null,
+    weights: {
+      KillzoneEntry: 1.0, LiquiditySweep: 0.95, DisplacementMss: 0.95, FvgPresent: 0.9,
+      BiasAligned: 0.85, PremiumDiscountHalf: 0.85, OteZone: 0.7, OrderBlockConfluence: 0.65,
+      DrawTargetRrMet: 0.65, SmtDivergence: 0.55, OpenPriceReference: 0.5, MacroTime: 0.45,
+      CleanPriceAction: 0.4, CalendarDriver: 0.35,
+    },
+    gradeAThreshold: 80,
+    gradeBThreshold: 65,
+    gradeCThreshold: 50,
+    alertMinimumGrade: 'B',
+    baseRiskPercent: 1,
+    maxOpenPortfolioRiskPercent: 5,
+    hardMaxRiskPercent: 4.5,
+    minStopDistancePips: 10,
+    lossLadderPercents: [0.5, 0.25],
+    consecutiveWinsForLowestUnit: 5,
+    dipRecoveryFraction: 0.5,
+    spreadBasePips: 0.7,
+    commissionPerLotRoundTripUsd: 6,
+    activeKillzones: ['LondonOpen', 'NewYorkOpen'],
+    activeStyles: ['Intraday'],
+  },
+  availableRequiredConditions: [
+    'BiasAligned', 'KillzoneEntry', 'LiquiditySweep', 'DisplacementMss',
+    'FvgPresent', 'PremiumDiscountHalf', 'DrawTargetRrMet', 'CalendarClear',
+  ],
+  availableInstruments: [
+    'AUDUSD', 'EURGBP', 'EURJPY', 'EURUSD', 'GBPJPY', 'GBPUSD',
+    'NAS100USD', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY', 'XAUUSD',
+  ],
 };
 
 export const MOCK_DATASETS: BacktestDatasetDto[] = [
