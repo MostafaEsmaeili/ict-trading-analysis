@@ -1,5 +1,6 @@
 using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Instruments;
+using IctTrader.Domain.Sessions;
 using IctTrader.Scanning.Application.Scanning;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -27,6 +28,10 @@ public static class ScanningModuleRegistration
         // The live runtime-settings store the scanner registry watches for changes. TryAdd (empty fallback) so a
         // standalone module/test resolves it; the Host registers the config-seeded one first, which wins.
         services.TryAddSingleton<IRuntimeSettings>(_ => new RuntimeSettings());
+        // The economic-calendar store the scanner loads into its MarketContext so the §2.5.2 gate fires. TryAdd
+        // (empty fallback, never loaded → the gate stays fail-open) so a standalone module/test resolves it; the
+        // Host registers the same singleton and a hosted loader populates it from the configured source.
+        services.TryAddSingleton<IEconomicCalendarStore, EconomicCalendarStore>();
         services.AddSingleton<ISymbolScannerFactory, SymbolScannerFactory>();
         services.AddSingleton<ISymbolScannerRegistry, SymbolScannerRegistry>();
         services.AddSingleton<RecentSetupStore>();

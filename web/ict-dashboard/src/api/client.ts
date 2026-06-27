@@ -19,6 +19,7 @@ import type {
   BacktestDatasetDto,
   BacktestRequest,
   BacktestResponse,
+  CalendarStatusDto,
   ChartResponse,
   ConfigStatusDto,
   EquityPointDto,
@@ -41,6 +42,7 @@ import {
   MOCK_DATASETS,
   MOCK_EQUITY_CURVE,
   MOCK_OVERLAYS,
+  MOCK_CALENDAR,
   MOCK_PERFORMANCE,
   MOCK_SETTINGS,
   mockBacktestResponse,
@@ -192,6 +194,13 @@ export async function updateInstrumentSettings(
     return;
   }
   return putNoContent(`/api/settings/instruments/${encodeURIComponent(symbol)}`, body);
+}
+
+export async function fetchCalendar(): Promise<CalendarStatusDto> {
+  if (USE_MOCKS) {
+    return MOCK_CALENDAR;
+  }
+  return getJson<CalendarStatusDto>('/api/calendar');
 }
 
 export async function fetchBacktestDatasets(): Promise<BacktestDatasetDto[]> {

@@ -1,9 +1,12 @@
+using System.Globalization;
 using IctTrader.Alerting.Application;
 using IctTrader.Alerting.Contracts;
 using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Instruments;
+using IctTrader.Domain.Sessions;
 using IctTrader.Host;
 using IctTrader.Host.Backtesting;
+using IctTrader.Host.Calendar;
 using IctTrader.Host.Hubs;
 using IctTrader.MarketData.Application.Chart;
 using IctTrader.MarketData.Contracts;
@@ -87,6 +90,11 @@ else
     // On-demand backtest engine (plan §15): an in-memory, deterministic run over recorded-history CSVs that REUSES
     // the pure §2.5 domain (scanner + orchestrator + account) — no bus, no DB. Pure analysis surface (§6.3).
     builder.Services.AddBacktesting(builder.Configuration);
+
+    // Economic-calendar feed (plan §2.5.8/§15): the shared event store + the configured read-only source + a
+    // background loader, so the §2.5.2 no-trade gate fires on real FOMC/NFP days. The scanner resolves the SAME
+    // store singleton and loads it into each MarketContext. Disabled by default (the gate then stays fail-open).
+    builder.Services.AddEconomicCalendar(builder.Configuration);
 }
 
 builder.Services.AddOpenApi();
@@ -259,6 +267,52 @@ api.MapPut("/settings/instruments/{symbol}", (string symbol, InstrumentSettingsD
         }
     })
     .WithName("PutInstrumentSettings");
+
+// The economic-calendar status (plan §2.5.8/§15): whether the feed is enabled + loaded, the source provider, and the
+// scheduled FOMC/NFP/CPI events in the NY-date window — each flagged if its date is a §2.5.2 no-trade day under the
+// current blackout policy, plus the full set of blackout dates so the dashboard can mark the no-trade days. The Host
+// projects it from the shared store + the gate options; read-only, routes nowhere near an order path (§6.3 guardrail).
+api.MapGet("/calendar", (
+        IEconomicCalendarStore store,
+        IOptions<CalendarFeedOptions> feed,
+        IOptions<CalendarOptions> gate,
+        TimeProvider timeProvider) =>
+    {
+        var nyClock = new NyClock(timeProvider);
+        var today = nyClock.NewYorkDate(nyClock.UtcNow);
+        var from = today.AddDays(-feed.Value.LookbackDays);
+        var to = today.AddDays(feed.Value.LookaheadDays);
+
+        var events = store.Events
+            .OrderBy(e => e.NyDate)
+            .ThenBy(e => e.Type)
+            .Select(e => new CalendarEventDto(
+                Date: e.NyDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                Type: e.Type.ToString(),
+                IsBlackout: CalendarBlackoutPolicy.IsBlackedOut(e.NyDate, store.Events, gate.Value)))
+            .ToArray();
+
+        // The no-trade days across the window (so the UI marks them even on dates with no event of their own — e.g.
+        // the day AFTER an FOMC, or the Wednesday/Thursday BEFORE an NFP).
+        var blackoutDates = new List<string>();
+        for (var d = from; d <= to; d = d.AddDays(1))
+        {
+            if (CalendarBlackoutPolicy.IsBlackedOut(d, store.Events, gate.Value))
+            {
+                blackoutDates.Add(d.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+            }
+        }
+
+        return TypedResults.Ok(new CalendarStatusDto(
+            Enabled: feed.Value.Enabled,
+            Loaded: store.IsLoaded,
+            Provider: feed.Value.Provider.ToString(),
+            FromDate: from.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            ToDate: to.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            Events: events,
+            BlackoutDates: blackoutDates));
+    })
+    .WithName("GetCalendar");
 
 // The recorded-history datasets available to backtest (plan §15) — one per <symbol>-<tf>.csv with its date range +
 // candle count, so the Backtest Lab can bound its period picker. Read-only directory scan.
