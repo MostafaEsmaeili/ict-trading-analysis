@@ -97,10 +97,19 @@ public sealed class OandaMarketDataFeed : IMarketDataFeed
             {
                 fresh = await FetchLiveTailAsync(lastYieldedByInstrument, cancellationToken).ConfigureAwait(false);
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex) when (
+                ex is HttpRequestException
+                    or System.Text.Json.JsonException
+                    or FormatException
+                || (ex is OperationCanceledException && !cancellationToken.IsCancellationRequested))
             {
-                // A transient feed error (429/5xx/network blip) must NOT tear down a long-running live stream —
-                // log it and retry on the next poll tick. (The backfill path above stays fail-fast.)
+                // A transient feed error must NOT tear down a long-running live stream — log it and retry on the
+                // next poll tick. The set is: an HTTP blip (429/5xx/network); an HttpClient request TIMEOUT
+                // (TaskCanceledException, an OperationCanceledException whose token is NOT our cancellationToken —
+                // hence the !IsCancellationRequested guard); a truncated/partial body (JsonException); or one
+                // malformed candle (FormatException). A genuine cooperative shutdown
+                // (cancellationToken.IsCancellationRequested) is EXCLUDED above and propagates, so a real stop
+                // still tears the loop down. (The backfill path stays fail-fast.)
                 _logger.LogWarning(ex, "OANDA live poll failed transiently; retrying after {PollSeconds}s.", _options.PollSeconds);
                 continue;
             }

@@ -1,7 +1,9 @@
+using System.Collections.Concurrent;
 using System.Net;
 using System.Text;
 using FluentAssertions;
 using IctTrader.MarketData.Infrastructure.Feeds;
+using Microsoft.Extensions.Time.Testing;
 
 namespace IctTrader.UnitTests.MarketData;
 
@@ -115,6 +117,140 @@ public class OandaMarketDataFeedTests
         await act.Should().ThrowAsync<OperationCanceledException>();
     }
 
+    // ---- Live-streaming poll path (watermark dedupe + transient-error survival, no real network) ----
+    //
+    // The live branch is reachable only with LiveStreaming=true; it is driven by Task.Delay(_timeProvider), so a
+    // FakeTimeProvider lets the test release each poll tick deterministically. A scripted transport returns a
+    // queue of per-request bodies (and can THROW a transient error) so we can prove (a) the from=<watermark>
+    // strictly-after filter drops the boundary candle (no duplicate/skipped bar) and (b) a transient failure is
+    // swallowed and the stream resumes.
+
+    [Fact]
+    public async Task Live_poll_dedupes_the_boundary_candle_and_survives_a_transient_error()
+    {
+        // Response #1 = the two-candle backfill (07:00, 07:05) → watermark becomes 07:05.
+        // Response #2 = first live poll (from=07:05): the boundary 07:05 PLUS a new 07:10 → only 07:10 survives.
+        // Response #3 = THROWS a transient HttpRequestException → swallowed, stream continues.
+        // Response #4 = next live poll (from=07:10): the boundary 07:10 PLUS a new 07:15 → only 07:15 survives.
+        var handler = new ScriptedHandler();
+        handler.EnqueueBody(TwoCandleJson);
+        handler.EnqueueBody(BoundaryPlusNewJson("2024-07-01T07:05:00.000000000Z", "2024-07-01T07:10:00.000000000Z"));
+        handler.EnqueueThrow(new HttpRequestException("transient 503"));
+        handler.EnqueueBody(BoundaryPlusNewJson("2024-07-01T07:10:00.000000000Z", "2024-07-01T07:15:00.000000000Z"));
+
+        var anchor = new DateTimeOffset(2024, 7, 1, 7, 5, 0, TimeSpan.Zero);
+        var fake = new FakeTimeProvider(anchor);
+        var opts = Options(liveStreaming: true);   // PollSeconds=60 (default) — advanced via the fake clock
+        var httpClient = new HttpClient(handler) { BaseAddress = new Uri(opts.BaseUrl) };
+        var feed = new OandaMarketDataFeed(httpClient, opts, fake);
+
+        var collected = new ConcurrentQueue<IctTrader.MarketData.Contracts.CandleDto>();
+        using var cts = new CancellationTokenSource();
+        var pump = Task.Run(async () =>
+        {
+            await foreach (var candle in feed.StreamCandlesAsync(cts.Token).ConfigureAwait(false))
+            {
+                collected.Enqueue(candle);
+            }
+        });
+
+        // The two backfill candles arrive before any poll tick.
+        await WaitForCountAsync(collected, 2);
+
+        // Release poll #1 (07:10), the transient poll #2 (swallowed), and poll #3 (07:15). Advancing the fake
+        // clock by one poll period at a time releases exactly one Task.Delay each.
+        var poll = TimeSpan.FromSeconds(opts.PollSeconds);
+        fake.Advance(poll);
+        await WaitForCountAsync(collected, 3);   // 07:10 (07:05 boundary dropped)
+
+        fake.Advance(poll);                       // poll #2 throws — swallowed, nothing yielded
+        fake.Advance(poll);                       // poll #3
+        await WaitForCountAsync(collected, 4);   // 07:15 (07:10 boundary dropped)
+
+        cts.Cancel();
+        var act = async () => await pump;
+        await act.Should().ThrowAsync<OperationCanceledException>("a real shutdown tears the live loop down");
+
+        var opens = collected.Select(c => c.OpenTimeUtc.UtcDateTime).ToList();
+        opens.Should().Equal(
+            new DateTime(2024, 7, 1, 7, 0, 0, DateTimeKind.Utc),
+            new DateTime(2024, 7, 1, 7, 5, 0, DateTimeKind.Utc),
+            new DateTime(2024, 7, 1, 7, 10, 0, DateTimeKind.Utc),
+            new DateTime(2024, 7, 1, 7, 15, 0, DateTimeKind.Utc));
+        opens.Should().OnlyHaveUniqueItems("the strictly-after watermark filter must drop the inclusive boundary candle");
+    }
+
+    [Fact]
+    public async Task Live_poll_pages_by_from_watermark_after_the_first_tick()
+    {
+        var handler = new ScriptedHandler();
+        handler.EnqueueBody(TwoCandleJson);   // backfill → watermark 07:05
+        handler.EnqueueBody(BoundaryPlusNewJson("2024-07-01T07:05:00.000000000Z", "2024-07-01T07:10:00.000000000Z"));
+
+        var fake = new FakeTimeProvider(new DateTimeOffset(2024, 7, 1, 7, 5, 0, TimeSpan.Zero));
+        var opts = Options(liveStreaming: true);
+        var httpClient = new HttpClient(handler) { BaseAddress = new Uri(opts.BaseUrl) };
+        var feed = new OandaMarketDataFeed(httpClient, opts, fake);
+
+        var collected = new ConcurrentQueue<IctTrader.MarketData.Contracts.CandleDto>();
+        using var cts = new CancellationTokenSource();
+        var pump = Task.Run(async () =>
+        {
+            await foreach (var candle in feed.StreamCandlesAsync(cts.Token).ConfigureAwait(false))
+            {
+                collected.Enqueue(candle);
+            }
+        });
+
+        await WaitForCountAsync(collected, 2);
+        fake.Advance(TimeSpan.FromSeconds(opts.PollSeconds));
+        await WaitForCountAsync(collected, 3);
+
+        cts.Cancel();
+        try { await pump; } catch (OperationCanceledException) { /* expected shutdown */ }
+
+        // The live poll (after a watermark exists) must request `from=<watermark>`, not a fixed `count=` tail.
+        handler.LastRequestUri.Should().NotBeNull();
+        handler.LastRequestUri!.Query.Should().Contain("from=").And.NotContain("count=");
+    }
+
+    /// <summary>Backfill 07:00/07:05 keyed body re-used as a two-candle response (the watermark seeder).</summary>
+    private static string BoundaryPlusNewJson(string boundaryIso, string newIso) => $$"""
+    {
+      "instrument": "EUR_USD",
+      "granularity": "M5",
+      "candles": [
+        {
+          "time": "{{boundaryIso}}",
+          "mid": { "o": "1.0836", "h": "1.0851", "l": "1.0835", "c": "1.0849" },
+          "volume": 210,
+          "complete": true
+        },
+        {
+          "time": "{{newIso}}",
+          "mid": { "o": "1.0849", "h": "1.0862", "l": "1.0847", "c": "1.0858" },
+          "volume": 198,
+          "complete": true
+        }
+      ]
+    }
+    """;
+
+    /// <summary>Polls the collection (the live pump runs on a background task) until it reaches <paramref name="count"/>.</summary>
+    private static async Task WaitForCountAsync<T>(ConcurrentQueue<T> collected, int count)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while (collected.Count < count)
+        {
+            if (DateTime.UtcNow > deadline)
+            {
+                throw new TimeoutException($"Expected {count} candles but only saw {collected.Count} within the timeout.");
+            }
+
+            await Task.Delay(5).ConfigureAwait(false);
+        }
+    }
+
     /// <summary>
     /// A fake transport that returns a fixed JSON body for every request and records the last request, so the
     /// test can assert the read-only GET shape without any network. The feed is read-only by SHAPE — this stub
@@ -134,6 +270,50 @@ public class OandaMarketDataFeedTests
                 Content = new StringContent(responseJson, Encoding.UTF8, "application/json"),
             };
             return Task.FromResult(response);
+        }
+    }
+
+    /// <summary>
+    /// A fake transport that serves a QUEUE of scripted per-request actions — each either returns a JSON body or
+    /// THROWS a transient exception — so a test can drive the live-poll watermark/dedupe and retry paths without
+    /// any network. It records the last request URI so the <c>from=&lt;watermark&gt;</c> paging can be asserted.
+    /// Read-only by SHAPE: it never simulates an order endpoint because the feed has no order path to exercise.
+    /// </summary>
+    private sealed class ScriptedHandler : HttpMessageHandler
+    {
+        private readonly ConcurrentQueue<Func<HttpResponseMessage>> _actions = new();
+
+        public Uri? LastRequestUri { get; private set; }
+
+        public void EnqueueBody(string json) =>
+            _actions.Enqueue(() => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(json, Encoding.UTF8, "application/json"),
+            });
+
+        public void EnqueueThrow(Exception exception) =>
+            _actions.Enqueue(() => throw exception);
+
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            LastRequestUri = request.RequestUri;
+
+            if (!_actions.TryDequeue(out var action))
+            {
+                // No more scripted responses — return an empty (no new candles) tail so a late extra poll is inert
+                // rather than throwing and masking the assertion under test.
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(
+                        """{ "instrument": "EUR_USD", "granularity": "M5", "candles": [] }""",
+                        Encoding.UTF8,
+                        "application/json"),
+                });
+            }
+
+            return Task.FromResult(action());
         }
     }
 }

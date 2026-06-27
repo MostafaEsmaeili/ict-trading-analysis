@@ -24,6 +24,14 @@ public sealed class OandaFeedOptions
     /// <summary>The fewest candles a history fetch (<see cref="FetchHistory"/>) may request.</summary>
     private const int MinHistoryMaxCandles = 1;
 
+    /// <summary>
+    /// The most candles a one-shot history fetch (<see cref="FetchHistory"/>) may request per instrument. The
+    /// backward-paginating fetcher accumulates every page in memory before writing the CSV, so an unbounded
+    /// budget (e.g. a config typo of extra zeroes) could exhaust memory. One million candles is ~9.5 years of M5
+    /// bars per instrument — far beyond any realistic backtest window — yet still a hard, defensible ceiling.
+    /// </summary>
+    private const int MaxHistoryMaxCandles = 1_000_000;
+
     /// <summary>The default local directory the one-shot history fetch writes its backtest CSVs into.</summary>
     private const string DefaultHistoryOutputDirectory = "data";
 
@@ -150,9 +158,11 @@ public sealed class OandaFeedOptions
                 errors.Add("HistoryOutputDirectory is required and must be non-blank when FetchHistory is true.");
             }
 
-            if (HistoryMaxCandles < MinHistoryMaxCandles)
+            if (HistoryMaxCandles is < MinHistoryMaxCandles or > MaxHistoryMaxCandles)
             {
-                errors.Add($"HistoryMaxCandles must be at least {MinHistoryMaxCandles} but was {HistoryMaxCandles}.");
+                errors.Add(
+                    $"HistoryMaxCandles must be within [{MinHistoryMaxCandles}, {MaxHistoryMaxCandles}] but was " +
+                    $"{HistoryMaxCandles}.");
             }
         }
 
