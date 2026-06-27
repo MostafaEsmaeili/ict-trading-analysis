@@ -204,6 +204,8 @@ export interface BacktestRequest {
   timeframe?: string;
   fromUtc?: string;
   toUtc?: string;
+  /** "k of n" required-condition relaxation; omit/undefined = strict all-required §2.5 model. */
+  minRequiredConditions?: number;
 }
 
 /**
@@ -225,6 +227,7 @@ export interface BacktestResponse {
   toUtc: string;
   startingBalance: number;
   riskPercent: number;
+  minRequiredConditions?: number | null;
   endingBalance: number;
   candlesProcessed: number;
   setupCount: number;
@@ -245,6 +248,8 @@ export interface OptimizeRequest {
   toUtc?: string;
   objective?: string;
   topN: number;
+  /** Sweep the "k of n" required-condition relaxation; omit = strict only (all required). */
+  minRequiredConditions?: number[];
 }
 
 /** One row of the optimizer leaderboard — a single (symbol,tf,style,risk%) combination's result. */
@@ -253,6 +258,7 @@ export interface OptimizerResultDto {
   timeframe: string;
   style: string;
   riskPercent: number;
+  minRequiredConditions?: number | null;
   tradeCount: number;
   winRate: number;
   averageR: number;

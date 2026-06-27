@@ -75,6 +75,9 @@ public sealed class SymbolScannerFactory : ISymbolScannerFactory
         };
     }
 
-    public SymbolScanner Create(Symbol symbol, TradeStyle style)
-        => new(symbol, style, _timeProvider, _options, _instruments);
+    public SymbolScanner Create(Symbol symbol, TradeStyle style, ConfluenceOptions? confluence = null)
+    {
+        var options = confluence is null ? _options : _options with { Confluence = confluence };
+        return new(symbol, style, _timeProvider, options, _instruments);
+    }
 }

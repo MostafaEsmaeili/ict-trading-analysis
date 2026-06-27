@@ -16,7 +16,8 @@ public sealed record OptimizeRequest(
     DateTimeOffset? FromUtc = null,
     DateTimeOffset? ToUtc = null,
     string? Objective = null,
-    int TopN = 25);
+    int TopN = 25,
+    IReadOnlyList<int>? MinRequiredConditions = null);
 
 /// <summary>One ranked combination's headline result — the parameters plus the key R-based metrics, ending balance,
 /// and the objective score it was ranked by.</summary>
@@ -25,6 +26,7 @@ public sealed record OptimizerResultDto(
     string Timeframe,
     string Style,
     decimal RiskPercent,
+    int? MinRequiredConditions,
     int TradeCount,
     decimal WinRate,
     decimal AverageR,

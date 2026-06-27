@@ -77,6 +77,7 @@ export function BacktestPage(): React.JSX.Element {
   );
   const [fromOverride, setFromOverride] = useState<string | null>(null);
   const [toOverride, setToOverride] = useState<string | null>(null);
+  const [minRequired, setMinRequired] = useState('');
 
   const [runs, setRuns] = useState<BacktestResponse[]>([]);
 
@@ -125,6 +126,7 @@ export function BacktestPage(): React.JSX.Element {
       ...(timeframe ? { timeframe } : {}),
       ...(fromDate ? { fromUtc: fromDateInput(fromDate) } : {}),
       ...(toDate ? { toUtc: fromDateInput(toDate) } : {}),
+      ...(minRequired ? { minRequiredConditions: Number(minRequired) } : {}),
     };
     runBacktest.mutate(req, {
       onSuccess: (run) => setRuns((prev) => [run, ...prev].slice(0, 5)),
@@ -240,6 +242,21 @@ export function BacktestPage(): React.JSX.Element {
                 step="any"
                 value={riskPercent}
                 onChange={(e) => setRiskPercent(Number(e.target.value))}
+              />
+            </label>
+
+            <label className="form__field">
+              <span>Min required (k of n)</span>
+              <input
+                type="number"
+                className="input"
+                aria-label="Min required conditions"
+                min={1}
+                max={8}
+                step={1}
+                placeholder="all"
+                value={minRequired}
+                onChange={(e) => setMinRequired(e.target.value)}
               />
             </label>
 

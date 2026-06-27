@@ -178,8 +178,12 @@ public class ScanLoopTests
             CalendarDriver = new CalendarDriverOptions(),
         };
 
-        public SymbolScanner Create(Symbol symbol, TradeStyle style)
-            => new(symbol, style, timeProvider, Options, InstrumentCatalog.Default, Seeders());
+        public SymbolScanner Create(
+            Symbol symbol, TradeStyle style, IctTrader.Domain.Configuration.ConfluenceOptions? confluence = null)
+            => new(
+                symbol, style, timeProvider,
+                confluence is null ? Options : Options with { Confluence = confluence },
+                InstrumentCatalog.Default, Seeders());
 
         private static ISetupDetector[] Seeders() =>
         [
