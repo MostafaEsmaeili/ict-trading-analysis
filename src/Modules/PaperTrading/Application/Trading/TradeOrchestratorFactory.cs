@@ -59,6 +59,7 @@ public sealed class TradeOrchestratorFactory : ITradeOrchestratorFactory
         ArgumentNullException.ThrowIfNull(symbol);
 
         var spec = SymbolSpec.FxMajor(symbol);
+        var contract = ContractSpec.FxMajor(symbol);
 
         var entryManager = new EntryManager(
             new EntryFillEvaluator(_entryManagement, spec),
@@ -74,7 +75,8 @@ public sealed class TradeOrchestratorFactory : ITradeOrchestratorFactory
             new ExecutionCostModel(_executionCost),
             _exitManagement,
             new NyClock(_timeProvider),
-            _tradeStyles);
+            _tradeStyles,
+            contract);
 
         var factory = new PaperTradeFactory(_risk, new RiskManager());
 

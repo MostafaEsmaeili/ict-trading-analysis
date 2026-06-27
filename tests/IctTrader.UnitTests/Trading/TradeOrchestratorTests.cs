@@ -51,7 +51,8 @@ public class TradeOrchestratorTests
             new ExecutionCostModel(new ExecutionCostOptions()),
             new ExitManagementOptions(),
             new NyClock(new FakeTimeProvider()),
-            new TradeStyleOptions());
+            new TradeStyleOptions(),
+            Contract);
 
         return new TradeOrchestrator(entryManager, exitManager, Factory, entryOptions);
     }
@@ -237,8 +238,9 @@ public class TradeOrchestratorTests
         Immediate.Advance(position, account, run, Close(run));
 
         position.Trade.Status.Should().Be(TradeStatus.Closed);
-        // 0.50 @ +1.375R (T1) + 0.50 @ +2.75R (runner) = +2.0625R blended, size-weighted vs the frozen 1R.
-        position.Trade.RealizedR!.Value.Should().BeApproximately(2.0625m, 0.0001m);
+        // The 0.31-lot size × PartialFraction 0.50 = 0.155, FLOORED to the 0.01 lot step ([15]) → a 0.15 partial leg +
+        // a 0.16 residual runner: (0.15 @ +1.375R + 0.16 @ +2.75R) / 0.31 = +2.08468R blended vs the frozen 1R.
+        position.Trade.RealizedR!.Value.Should().BeApproximately(2.08468m, 0.0001m);
         position.IsComplete.Should().BeTrue();
         account.OpenRisk.Amount.Should().Be(0m);            // a single terminal settle releases the whole reservation
         account.Equity.Amount.Should().BeGreaterThan(10_000m);
