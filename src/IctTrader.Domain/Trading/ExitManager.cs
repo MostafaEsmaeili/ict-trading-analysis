@@ -26,6 +26,7 @@ public sealed class ExitManager : IExitManager
     private readonly ExitManagementOptions _options;
     private readonly NyClock _nyClock;
     private readonly TradeStyleOptions _styleOptions;
+    private readonly ContractSpec _contractSpec;
 
     public ExitManager(
         IFillEvaluator fillEvaluator,
@@ -33,7 +34,8 @@ public sealed class ExitManager : IExitManager
         IExecutionCostModel costModel,
         ExitManagementOptions options,
         NyClock nyClock,
-        TradeStyleOptions styleOptions)
+        TradeStyleOptions styleOptions,
+        ContractSpec contractSpec)
     {
         ArgumentNullException.ThrowIfNull(fillEvaluator);
         ArgumentNullException.ThrowIfNull(stopTrailPolicy);
@@ -41,12 +43,14 @@ public sealed class ExitManager : IExitManager
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(nyClock);
         ArgumentNullException.ThrowIfNull(styleOptions);
+        ArgumentNullException.ThrowIfNull(contractSpec);
         _fillEvaluator = fillEvaluator;
         _stopTrailPolicy = stopTrailPolicy;
         _costModel = costModel;
         _options = options;
         _nyClock = nyClock;
         _styleOptions = styleOptions;
+        _contractSpec = contractSpec;
     }
 
     public ExitPlan Decide(PaperTrade trade, Candle candle, ExitContext context)
@@ -69,7 +73,10 @@ public sealed class ExitManager : IExitManager
         var fill = _fillEvaluator.Evaluate(trade, candle);
         if (fill.IsFill)
         {
-            var closeCosts = _costModel.ComputeExitLeg(trade, trade.RemainingSize);
+            // §5.4: book net of spread on BOTH legs. The open path books no cost, so the entry crossing is folded
+            // into this terminal close. A T1 scale (below) stays exit-only, so (scale exit) + (final exit + entry)
+            // sums to exactly one full entry + one full exit == ExecutionCostModel.Compute (leg-sum invariant).
+            var closeCosts = _costModel.ComputeExitLeg(trade, trade.RemainingSize) + _costModel.ComputeEntryLeg(trade);
             return new ExitPlan([ExitAction.Close(fill.ExitPrice!.Value, fill.CloseReason!.Value, closeCosts, at)]);
         }
 
@@ -79,7 +86,11 @@ public sealed class ExitManager : IExitManager
         //    the protective fill (above) and ABOVE discretionary management (below).
         if (TimeExitFires(trade, context))
         {
-            var timeExitCosts = _costModel.ComputeExitLeg(trade, trade.RemainingSize);
+            // Like the protective fill, the force-flatten is a whole-position terminal close, so it carries the
+            // once-per-trade entry crossing (§5.4 both legs). The leg-sum invariant holds whether or not a prior
+            // T1 scale (exit-only) was taken on an earlier bar.
+            var timeExitCosts =
+                _costModel.ComputeExitLeg(trade, trade.RemainingSize) + _costModel.ComputeEntryLeg(trade);
             return new ExitPlan(
                 [ExitAction.Close(new Price(candle.Close), TradeCloseReason.TimeExit, timeExitCosts, at)]);
         }
@@ -87,12 +98,12 @@ public sealed class ExitManager : IExitManager
         var actions = new List<ExitAction>();
 
         // 3. T1 scale-out — once, when a surviving bar reaches the partial target. Sized PartialFraction × the ORIGINAL
-        //    size (the §2.5.9 "take half of the position"), booked at the partial LEVEL. Apply-safety relies on the
-        //    validated PartialFraction ∈ (0,1) (ExitManagementOptions.Validate + ValidateOnStart) so the leg stays
-        //    strictly below RemainingSize; lot-step flooring of the leg is deferred with the multi-partial work.
-        if (trade.Lifecycle == TradeLifecycle.Open && ReachedPartial(trade, candle))
+        //    size (the §2.5.9 "take half of the position"), FLOORED to the contract lot step (mirroring PositionSizer),
+        //    booked at the partial LEVEL. Apply-safety relies on the validated PartialFraction ∈ (0,1)
+        //    (ExitManagementOptions.Validate + ValidateOnStart) so the leg stays strictly below RemainingSize.
+        if (trade.Lifecycle == TradeLifecycle.Open && ReachedPartial(trade, candle)
+            && TryFloorPartialLeg(trade, out var legSize))
         {
-            var legSize = new PositionSize(_options.PartialFraction * trade.Size.Lots);
             var legCosts = _costModel.ComputeExitLeg(trade, legSize);
             actions.Add(ExitAction.ScaleOut(
                 trade.Plan.Targets.Partial, legSize, legCosts, TradeCloseReason.TargetHit, at));
@@ -151,4 +162,28 @@ public sealed class ExitManager : IExitManager
         => trade.Direction == Direction.Bullish
             ? candle.High >= trade.Plan.Targets.Partial.Value
             : candle.Low <= trade.Plan.Targets.Partial.Value;
+
+    /// <summary>
+    /// Floors the T1 partial leg (<c>PartialFraction × Size</c>) DOWN to the contract lot step — the same flooring
+    /// <see cref="PositionSizer"/> applies to the opening size — so the leg is always on the lot grid and tradeable.
+    /// A partial is taken only when BOTH the floored leg AND the residual runner reach the minimum lot; otherwise no
+    /// partial is booked this bar (the runner stays whole and the stop/runner closes it in full later), so the
+    /// aggregate never sees a sub-minimum off-grid <see cref="PositionSize"/>. Reached only with no prior partial
+    /// (<see cref="TradeLifecycle.Open"/>), so <c>RemainingSize == Size</c> and the residual is measured off Size.
+    /// </summary>
+    private bool TryFloorPartialLeg(PaperTrade trade, out PositionSize legSize)
+    {
+        var rawLeg = _options.PartialFraction * trade.Size.Lots;
+        var flooredLeg = Math.Floor(rawLeg / _contractSpec.LotStep) * _contractSpec.LotStep;
+        var residual = trade.Size.Lots - flooredLeg;
+
+        if (flooredLeg >= _contractSpec.MinLot && residual >= _contractSpec.MinLot)
+        {
+            legSize = new PositionSize(flooredLeg);
+            return true;
+        }
+
+        legSize = default;
+        return false;
+    }
 }

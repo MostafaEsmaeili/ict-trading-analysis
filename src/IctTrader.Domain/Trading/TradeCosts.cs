@@ -28,4 +28,11 @@ public readonly record struct TradeCosts
 
     /// <summary>The total cost deducted from gross P&amp;L to book the net result.</summary>
     public Money Total => SpreadCost + Commission;
+
+    /// <summary>
+    /// Composes two cost lines component-wise (e.g. an entry crossing folded into an exit leg, mirroring how
+    /// <see cref="ExecutionCostModel.Compute"/> builds the round trip), so the round-trip leg-sum invariant holds.
+    /// </summary>
+    public static TradeCosts operator +(TradeCosts left, TradeCosts right)
+        => new(left.SpreadCost + right.SpreadCost, left.Commission + right.Commission);
 }

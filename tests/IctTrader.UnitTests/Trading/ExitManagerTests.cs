@@ -20,6 +20,7 @@ namespace IctTrader.UnitTests.Trading;
 public class ExitManagerTests
 {
     private static readonly Symbol Eurusd = new("EURUSD");
+    private static readonly ContractSpec Contract = ContractSpec.FxMajor(Eurusd);
     private static readonly DateTimeOffset Open = new(2024, 7, 1, 7, 0, 0, TimeSpan.Zero);
     private static readonly DateTimeOffset BarClose = new(2024, 7, 1, 7, 5, 0, TimeSpan.Zero);
     private static readonly ExitContext Context = new(BarClose);
@@ -34,7 +35,8 @@ public class ExitManagerTests
         new ExecutionCostModel(new ExecutionCostOptions()),
         new ExitManagementOptions(),
         NyClock,
-        new TradeStyleOptions());
+        new TradeStyleOptions(),
+        Contract);
 
     // entry 1.0832, stop 1.0800 (32-pip 1R), T1 1.0864 (= 1R away), runner 1.0920 (+2.75R); 0.30 lots, 10/pip.
     private static PaperTrade BullishTrade() => BullishTradeOpenedAt(Open);
@@ -47,6 +49,17 @@ public class ExitManagerTests
         return new PaperTrade(
             Guid.NewGuid(), Guid.NewGuid(), Eurusd, style, Timeframe.M5,
             plan, new PositionSize(0.30m), pipSize: 0.0001m, valuePerPip: 10m, openedAt);
+    }
+
+    // A bullish trade of a custom size (same plan geometry) — used to probe the partial-leg lot-step floor ([15]).
+    private static PaperTrade BullishTradeOf(decimal lots)
+    {
+        var plan = new TradePlan(
+            Direction.Bullish, new Price(1.0832m), new Price(1.0800m),
+            new TargetLadder(Direction.Bullish, new Price(1.0864m), new Price(1.0920m)));
+        return new PaperTrade(
+            Guid.NewGuid(), Guid.NewGuid(), Eurusd, TradeStyle.Intraday, Timeframe.M5,
+            plan, new PositionSize(lots), pipSize: 0.0001m, valuePerPip: 10m, Open);
     }
 
     // Short mirror: entry 1.0870, stop 1.0900 (30-pip 1R), T1 1.0840 (= 1R away), runner 1.0790.
@@ -106,6 +119,35 @@ public class ExitManagerTests
         plan.Actions[0].Kind.Should().Be(ExitActionKind.Close);
         plan.Actions[0].Reason.Should().Be(TradeCloseReason.TargetHit);
         plan.Actions[0].Price.Value.Should().Be(1.0920m);
+    }
+
+    [Fact]
+    public void A_whole_position_close_books_the_full_round_trip_spread_on_BOTH_legs()
+    {
+        // §5.4 regression ([1]): a clean open→runner books one ENTRY crossing + one EXIT crossing, not exit-only.
+        // 0.30 lots, value-per-pip-for-position = 3.0: spread = 2 × 0.7 × 3.0 = 4.20; commission = 6.0 × 0.30 = 1.80.
+        var plan = Manager.Decide(BullishTrade(), Bar(1.0900m, 1.0925m, 1.0890m, 1.0915m), Context);
+
+        var close = plan.Actions.Should().ContainSingle().Subject;
+        close.Costs.SpreadCost.Amount.Should().Be(4.20m);   // the FULL round-trip spread, not the 2.10 exit-only half
+        close.Costs.Commission.Amount.Should().Be(1.80m);   // round-turn commission on the whole position
+        close.Costs.Total.Amount.Should().Be(6.00m);
+    }
+
+    [Fact]
+    public void A_whole_position_close_costs_equal_the_round_trip_cost_model()
+    {
+        // The orchestrated close must cost EXACTLY what ExecutionCostModel.Compute charges for the no-partial path —
+        // so the live pipeline meets the §5.4 "net of spread on BOTH legs" guarantee the open path could not.
+        var trade = BullishTrade();
+        var expected = new ExecutionCostModel(new ExecutionCostOptions()).Compute(trade);
+
+        var plan = Manager.Decide(trade, Bar(1.0900m, 1.0925m, 1.0890m, 1.0915m), Context);
+
+        var close = plan.Actions.Should().ContainSingle().Subject;
+        close.Costs.SpreadCost.Amount.Should().Be(expected.SpreadCost.Amount);
+        close.Costs.Commission.Amount.Should().Be(expected.Commission.Amount);
+        close.Costs.Total.Amount.Should().Be(expected.Total.Amount);
     }
 
     [Fact]
@@ -177,6 +219,32 @@ public class ExitManagerTests
     }
 
     [Fact]
+    public void A_min_lot_trade_at_t1_takes_no_partial_and_keeps_the_runner_whole()
+    {
+        // [15] A 0.01-lot trade × PartialFraction 0.50 = 0.005, which floors to 0.00 (below the 0.01 lot step/min) —
+        // booking it would create a sub-minimum off-grid leg. Instead no partial is taken; the runner stays whole.
+        var trade = BullishTradeOf(0.01m);
+
+        var plan = Manager.Decide(trade, Bar(1.0850m, 1.0864m, 1.0840m, 1.0858m), Context);
+
+        plan.Actions.Should().NotContain(a => a.Kind == ExitActionKind.ScaleOut);
+        plan.Actions.Should().ContainSingle().Which.Kind.Should().Be(ExitActionKind.MoveStop); // only the trail rung
+    }
+
+    [Fact]
+    public void A_partial_leg_is_floored_to_the_lot_step()
+    {
+        // [15] A 0.03-lot trade × PartialFraction 0.50 = 0.015 → floors DOWN to 0.01 (one lot step), leaving a 0.02
+        // residual runner — both on the 0.01 grid and ≥ the 0.01 min lot, so the partial is taken at the floored size.
+        var trade = BullishTradeOf(0.03m);
+
+        var plan = Manager.Decide(trade, Bar(1.0850m, 1.0864m, 1.0840m, 1.0858m), Context);
+
+        var scale = plan.Actions.Should().Contain(a => a.Kind == ExitActionKind.ScaleOut).Which;
+        scale.LegSize!.Value.Lots.Should().Be(0.01m); // 0.015 floored to the lot step, not the raw 0.015
+    }
+
+    [Fact]
     public void A_quiet_bar_decides_nothing()
     {
         var plan = Manager.Decide(BullishTrade(), Bar(1.0835m, 1.0840m, 1.0830m, 1.0838m), Context);
@@ -206,6 +274,22 @@ public class ExitManagerTests
 
         trade.Status.Should().Be(TradeStatus.Closed);
         trade.RealizedR!.Value.Should().BeApproximately(1.875m, 0.0001m); // 0.5×(+1R) + 0.5×(+2.75R)
+    }
+
+    [Fact]
+    public void A_scale_out_then_runner_costs_the_same_total_as_a_single_full_close()
+    {
+        // §5.4 leg-sum invariant ([1]): a partial (exit-only) + the runner close (exit + folded entry) must total the
+        // SAME spread + commission a single full close charges, so a scaled trade is not over- or under-costed.
+        var scaled = BullishTrade();
+        Apply(scaled, Manager.Decide(scaled, Bar(1.0850m, 1.0864m, 1.0840m, 1.0858m), new ExitContext(Open.AddMinutes(5))));
+        Apply(scaled, Manager.Decide(scaled, Bar(1.0900m, 1.0925m, 1.0890m, 1.0915m), new ExitContext(Open.AddMinutes(10))));
+
+        var full = BullishTrade();
+        Apply(full, Manager.Decide(full, Bar(1.0900m, 1.0925m, 1.0890m, 1.0915m), Context));
+
+        scaled.Costs!.Value.Amount.Should().Be(full.Costs!.Value.Amount); // identical total costs
+        scaled.Costs!.Value.Amount.Should().Be(6.00m);                    // == ExecutionCostModel.Compute(0.30 lots)
     }
 
     [Fact]
@@ -443,7 +527,8 @@ public class ExitManagerTests
             new ExecutionCostModel(new ExecutionCostOptions()),
             new ExitManagementOptions { NoOvernightBoundary = NoOvernightBoundary.NyFxClose1700 },
             NyClock,
-            new TradeStyleOptions());
+            new TradeStyleOptions(),
+            Contract);
         var entry = new DateTimeOffset(2024, 7, 2, 3, 30, 0, TimeSpan.Zero);
         var barClose = new DateTimeOffset(2024, 7, 2, 3, 45, 0, TimeSpan.Zero); // same NY day, < max hold
         var trade = BullishTradeOpenedAt(entry);
