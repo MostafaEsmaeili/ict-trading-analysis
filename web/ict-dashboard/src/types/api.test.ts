@@ -2,21 +2,32 @@
 // the typed assignments below) AND the enum member-name unions must equal the exact backend names.
 import { describe, expect, it } from 'vitest';
 import type {
+  AccountStatusDto,
   AlertDto,
+  BacktestDatasetDto,
+  BacktestResponse,
   CandleDto,
+  ConfigStatusDto,
   Direction,
   Killzone,
+  OptimizeResponse,
   PaperTradeDto,
   PerformanceSummaryDto,
   SetupDto,
   SetupGrade,
+  TradeLifecycle,
   TradeStatus,
   TradeStyle,
 } from './api';
 import {
+  MOCK_ACCOUNT,
   MOCK_ACTIVE_TRADES,
   MOCK_ALERTS,
+  MOCK_BACKTEST,
   MOCK_CANDLES,
+  MOCK_CONFIG,
+  MOCK_DATASETS,
+  MOCK_OPTIMIZE,
   MOCK_PERFORMANCE,
   MOCK_SETUPS,
 } from '../mocks/fixtures';
@@ -54,19 +65,32 @@ describe('api DTO contract', () => {
     expect(Object.keys(trade).sort()).toEqual(
       [
         'closedAtUtc',
+        'closeReason',
+        'costs',
+        'currentStop',
         'direction',
         'entry',
+        'exitPrice',
+        'grossPnl',
+        'hasScaledOut',
         'id',
+        'isBreakevenArmed',
         'killzone',
+        'lifecycle',
+        'managedFromUtc',
+        'netPnl',
+        'netR',
         'openedAtUtc',
         'realizedR',
+        'riskBudget',
         'setupId',
         'size',
         'status',
         'stop',
         'style',
-        'symbol',
         'targets',
+        'symbol',
+        'timeframe',
       ].sort(),
     );
     expect(Object.keys(alert).sort()).toEqual(
@@ -91,5 +115,60 @@ describe('api DTO contract', () => {
     expect(styles).toEqual(['Scalp', 'Intraday', 'Swing', 'Position']);
     expect(grades).toContain('A');
     expect(statuses).toEqual(['Open', 'Closed']);
+  });
+
+  it('round-trips the §15 multi-page DTOs (account / config / datasets / backtest / optimize)', () => {
+    // Compile-time conformance: each fixture is assigned to its frozen interface.
+    const account: AccountStatusDto = MOCK_ACCOUNT;
+    const config: ConfigStatusDto = MOCK_CONFIG;
+    const datasets: BacktestDatasetDto[] = MOCK_DATASETS;
+    const backtest: BacktestResponse = MOCK_BACKTEST;
+    const optimize: OptimizeResponse = MOCK_OPTIMIZE;
+    const lifecycles: TradeLifecycle[] = ['Open', 'PartialTaken', 'Closed'];
+
+    expect(Object.keys(account).sort()).toEqual(
+      [
+        'consecutiveLosses',
+        'consecutiveWins',
+        'drawdownTrough',
+        'equity',
+        'maxOpenPortfolioRiskPercent',
+        'openRisk',
+        'openRiskCap',
+        'openTradeCount',
+        'peakEquity',
+        'riskUtilizationPercent',
+        'startingEquity',
+      ].sort(),
+    );
+    expect(Object.keys(config).sort()).toEqual(
+      [
+        'activeKillzones',
+        'activeStyles',
+        'baseRiskPercent',
+        'commissionPerLotRoundTripUsd',
+        'maxOpenPortfolioRiskPercent',
+        'provider',
+        'spreadBasePips',
+        'startingEquity',
+        'symbols',
+      ].sort(),
+    );
+    expect(datasets[0].candleCount).toBeTypeOf('number');
+
+    // The backtest response carries a PerformanceSummaryDto, a balance/ΣR equity curve and the trades.
+    expect(backtest.summary.tradeCount).toBeTypeOf('number');
+    expect(backtest.equity[0]).toHaveProperty('cumulativeR');
+    expect(backtest.equity[0]).toHaveProperty('equity');
+    expect(backtest.trades.length).toBe(backtest.tradeCount);
+
+    // The optimizer response ranks combinations and reports the explored count + objective.
+    expect(optimize.combinationCount).toBeGreaterThanOrEqual(optimize.results.length);
+    expect(optimize.objective).toBeTypeOf('string');
+    for (let i = 1; i < optimize.results.length; i += 1) {
+      expect(optimize.results[i].score).toBeLessThanOrEqual(optimize.results[i - 1].score);
+    }
+
+    expect(lifecycles).toContain('PartialTaken');
   });
 });

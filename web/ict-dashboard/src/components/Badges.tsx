@@ -4,7 +4,15 @@
 // ---------------------------------------------------------------------------------------------------
 
 import { directionTone, gradeColors, killzoneColors } from '../theme';
-import type { Direction, Killzone, SetupGrade, TradeDirection, TradeStyle } from '../types/api';
+import type {
+  Direction,
+  Killzone,
+  SetupGrade,
+  TradeCloseReason,
+  TradeDirection,
+  TradeStatus,
+  TradeStyle,
+} from '../types/api';
 
 // Frozen DTO unions at the contracts-v1 boundary (no bare `string` — enum drift fails typecheck).
 // A direction chip serves BOTH structure/setup direction (Bullish/Bearish) and a trade's side
@@ -63,6 +71,43 @@ export function GradeChip({ grade }: { grade: SetupGrade }): React.JSX.Element {
   return (
     <span className="chip" style={{ color: c.fg, background: c.bg }} title={`Grade: ${grade}`}>
       {grade}
+    </span>
+  );
+}
+
+/** A trade-status pill — Open amber (in-flight), Closed neutral (settled). */
+export function StatusPill({ status }: { status: TradeStatus }): React.JSX.Element {
+  const cls = status === 'Open' ? 'pill pill--open' : 'pill pill--closed';
+  return (
+    <span className={cls} title={`Status: ${status}`}>
+      {status}
+    </span>
+  );
+}
+
+/**
+ * A close-reason pill in its semantic colour: TargetHit green (win), StopHit red (loss),
+ * TimeExit amber (forced flat), Manual neutral. Null (an open trade) renders nothing.
+ */
+export function CloseReasonPill({
+  reason,
+}: {
+  reason: TradeCloseReason | null;
+}): React.JSX.Element | null {
+  if (!reason) {
+    return null;
+  }
+  const cls =
+    reason === 'TargetHit'
+      ? 'pill pill--win'
+      : reason === 'StopHit'
+        ? 'pill pill--loss'
+        : reason === 'TimeExit'
+          ? 'pill pill--time'
+          : 'pill pill--manual';
+  return (
+    <span className={cls} title={`Close: ${reason}`}>
+      {reason}
     </span>
   );
 }

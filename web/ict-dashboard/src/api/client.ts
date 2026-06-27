@@ -14,21 +14,34 @@
 // ---------------------------------------------------------------------------------------------------
 
 import type {
+  AccountStatusDto,
   AlertDto,
+  BacktestDatasetDto,
+  BacktestRequest,
+  BacktestResponse,
   ChartResponse,
+  ConfigStatusDto,
   EquityPointDto,
+  OptimizeRequest,
+  OptimizeResponse,
   PaperTradeDto,
   PerformanceSummaryDto,
 } from '../types/api';
 import type { ChartOverlay } from '../types/overlays';
 import { setupToOverlays } from '../chart/setupToOverlays';
 import {
+  MOCK_ACCOUNT,
   MOCK_ACTIVE_TRADES,
   MOCK_ALERTS,
+  MOCK_ALL_TRADES,
   MOCK_CANDLES,
+  MOCK_CONFIG,
+  MOCK_DATASETS,
   MOCK_EQUITY_CURVE,
   MOCK_OVERLAYS,
   MOCK_PERFORMANCE,
+  mockBacktestResponse,
+  mockOptimizeResponse,
 } from '../mocks/fixtures';
 
 export const API_BASE = import.meta.env.VITE_API_BASE ?? '';
@@ -47,6 +60,35 @@ async function getJson<T>(path: string): Promise<T> {
   return (await res.json()) as T;
 }
 
+/**
+ * POST a JSON body and parse the JSON response. On a non-OK status the body may carry an
+ * `{ error }` message (the backtest/optimize endpoints return 400/404 like that, plan §15 §5/§6) —
+ * surface that exact message so the form shows WHY (a down/invalid request must look different from a
+ * healthy one, §6.3). Falls back to the status code when no error body is present.
+ */
+async function postJson<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'POST',
+    headers: { accept: 'application/json', 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const detail = await readErrorDetail(res);
+    throw new Error(detail || `POST ${path} → ${res.status}`);
+  }
+  return (await res.json()) as T;
+}
+
+/** Best-effort read of an `{ error }` body from a non-OK response (empty string if absent/unparseable). */
+async function readErrorDetail(res: Response): Promise<string> {
+  try {
+    const parsed = (await res.json()) as { error?: string };
+    return typeof parsed?.error === 'string' ? parsed.error : '';
+  } catch {
+    return '';
+  }
+}
+
 export async function fetchAlerts(): Promise<AlertDto[]> {
   if (USE_MOCKS) {
     return MOCK_ALERTS;
@@ -59,6 +101,81 @@ export async function fetchActiveTrades(): Promise<PaperTradeDto[]> {
     return MOCK_ACTIVE_TRADES;
   }
   return getJson<PaperTradeDto[]>('/api/trades/active');
+}
+
+/** Filters for the full trades-history read (`GET /api/trades?status=&symbol=`). */
+export interface TradeFilters {
+  status?: 'Open' | 'Closed';
+  symbol?: string;
+}
+
+/**
+ * The full trades history (open + closed). `status`/`symbol` are server-side filters; omit both for
+ * everything. In mocks mode the same filter is applied to the fixtures so the offline app behaves like
+ * the live one. The richer client-side filtering (style / win-loss / sort) lives in the table.
+ */
+export async function fetchAllTrades(filters: TradeFilters = {}): Promise<PaperTradeDto[]> {
+  if (USE_MOCKS) {
+    return MOCK_ALL_TRADES.filter(
+      (t) =>
+        (!filters.status || t.status === filters.status) &&
+        (!filters.symbol || t.symbol === filters.symbol),
+    );
+  }
+  const params = new URLSearchParams();
+  if (filters.status) params.set('status', filters.status);
+  if (filters.symbol) params.set('symbol', filters.symbol);
+  const qs = params.toString();
+  return getJson<PaperTradeDto[]>(`/api/trades${qs ? `?${qs}` : ''}`);
+}
+
+export async function fetchAccountStatus(): Promise<AccountStatusDto> {
+  if (USE_MOCKS) {
+    return MOCK_ACCOUNT;
+  }
+  return getJson<AccountStatusDto>('/api/account');
+}
+
+export async function fetchConfig(): Promise<ConfigStatusDto> {
+  if (USE_MOCKS) {
+    return MOCK_CONFIG;
+  }
+  return getJson<ConfigStatusDto>('/api/config');
+}
+
+export async function fetchBacktestDatasets(): Promise<BacktestDatasetDto[]> {
+  if (USE_MOCKS) {
+    return MOCK_DATASETS;
+  }
+  return getJson<BacktestDatasetDto[]>('/api/backtest/datasets');
+}
+
+export async function runBacktest(req: BacktestRequest): Promise<BacktestResponse> {
+  if (USE_MOCKS) {
+    return mockBacktestResponse(
+      req.symbol,
+      req.style,
+      req.startingBalance,
+      req.riskPercent,
+      req.timeframe,
+    );
+  }
+  return postJson<BacktestResponse>('/api/backtest', req);
+}
+
+export async function runOptimize(req: OptimizeRequest): Promise<OptimizeResponse> {
+  if (USE_MOCKS) {
+    return mockOptimizeResponse(
+      req.symbols,
+      req.styles,
+      req.riskPercents,
+      req.startingBalance,
+      req.objective,
+      req.topN,
+      req.timeframes,
+    );
+  }
+  return postJson<OptimizeResponse>('/api/backtest/optimize', req);
 }
 
 export async function fetchPerformance(): Promise<PerformanceSummaryDto> {
