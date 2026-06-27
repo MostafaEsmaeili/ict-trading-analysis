@@ -74,6 +74,8 @@ public sealed record ScannerOptions
             Liquidity = Liquidity.WithInstrumentOverrides(overrides),
             Fvg = Fvg.WithInstrumentOverrides(overrides),
             DrawOnLiquidity = DrawOnLiquidity.WithInstrumentOverrides(overrides),
+            // The per-instrument k-of-n relaxation (e.g. NAS100 → 6-of-8); FX None leaves it strict (byte-identical).
+            Confluence = Confluence.WithInstrumentOverrides(overrides),
         };
     }
 }
