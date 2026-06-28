@@ -1490,3 +1490,26 @@ lots; adding gold + Dow `SymbolSpec`/`ContractSpec` profiles (like NAS100/SPX500
 trade/be tuned** (flagged in appsettings). **A profitable ~1–2-quality-setups/week followable stream is now the default
 across {EURUSD, NZDUSD, NAS100, USDJPY, USDCAD} — all positive-expectancy on 16–62-trade full-history samples.** Re-run
 `scratchpad/sweep_all.py` on refreshed data to retune.
+
+**📌 SESSION WRAP — current operating state (branch `claude/ict-mentorship-app-test-6y5mj7`, all gates green, pushed).**
+This session, on top of the completed §2.5 model + runnable backend, added (each ict-domain-expert spec'd → built →
+ict-conformance PASS → guardrail 7/7 → pr-reviewer; **784 unit + 23 arch**, 0 warnings, `dotnet format` clean; FE
+typecheck/lint/build + 78 vitest):
+1. **Daily Risk Guard** (`Ict:Risk:DailyGuard`, default off) — stop-after-N-losses + daily-loss-cap halt.
+2. **HTF daily-bias gate** (`Ict:Detection:Bias:RequireReferenceOpenAgreement`, default off) + **per-instrument override**
+   (`InstrumentOptionOverrides` → live Settings page).
+3. **Silver Bullet macro overlay** (`Ict:Scanning:SilverBullet`, default off) — narrows KillzoneEntry to the 10–11 NY macro.
+4. **Two web-research docs** — `docs/ict-web-research-2026.md` (ICT 2022 model) + the trade-frequency findings in this file.
+5. **Real OANDA backtests** (token now reachable; full 2018→2026 history fetched for 10 instruments) → **net-validated
+   per-instrument bake** in `Ict:Instruments`: NAS100 6-of-8, USD/JPY drop-FVG, USD/CAD 7-of-8, NZD/USD 7-of-8 (EURUSD/
+   GBPUSD/AUD strict). **Live default is a net-profitable ~1–2 setups/wk stream across 5 instruments.**
+
+**CONVENTIONS added this session:** (a) validate a per-pair tuning on the FULL 2018→2026 history before baking (2-yr
+windows produce flukes); (b) pick the per-pair config by **NET P&L after costs**, never gross PF (a gross PF > 1 can net-
+lose). **Env:** build/test via the `mcr.microsoft.com/dotnet/sdk:10.0` Docker image (.NET SDK hosts 403, `mcr`+`nuget`
+reachable; `dockerd` started manually with the proxy + restarted on idle); OANDA + GitHub push both work only via a
+user-supplied token (the read-only integration 403s). `data/*.csv` (the fetched history) + `scratchpad/*` stay local.
+
+**OPEN follow-on (CODE, not config):** add gold (XAU/USD) + Dow (US30) `SymbolSpec`/`ContractSpec` profiles to the
+pure-domain `InstrumentCatalog` (mirror NAS100/SPX500) — without them both mis-size on FX geometry and produce 0 trades,
+so they can't yet trade or be tuned. Then re-run `scratchpad/sweep_all.py` to bake their best config.
