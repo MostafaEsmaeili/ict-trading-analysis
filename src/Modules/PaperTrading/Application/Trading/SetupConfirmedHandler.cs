@@ -142,7 +142,11 @@ public sealed class SetupConfirmedHandler(
         var sum = 0m;
         foreach (var trade in closed)
         {
-            if (trade.ClosedAtUtc is { } closedAt && _nyClock.NewYorkDate(closedAt) == nyDate && trade.NetPnl is { } pnl)
+            // No-look-ahead (§4.1): on a replay/backfill the repo can hold trades closed LATER on the same NY day; a
+            // trade that closed AFTER this setup's confirm time must not count toward its daily tally. Require closedAt
+            // ≤ nowUtc in addition to the NY-date match so the guard stays consistent across replays and restarts.
+            if (trade.ClosedAtUtc is { } closedAt && closedAt <= nowUtc
+                && _nyClock.NewYorkDate(closedAt) == nyDate && trade.NetPnl is { } pnl)
             {
                 sum += pnl.Amount;
             }

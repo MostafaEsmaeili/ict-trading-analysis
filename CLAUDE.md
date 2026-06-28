@@ -1323,8 +1323,8 @@ run &` inside a script — that orphans it). Performance/alerts/chart read-model
 account + trades persist in Postgres), so after a redeploy they repopulate as the replay re-runs.
 
 **🏁 Senior-trader hardening — Daily Risk Guard + HTF daily-bias gate + ICT 2022 web research (this session, branch
-`claude/ict-mentorship-app-test-6y5mj7`, 2 local commits — NOT pushed, see env note).** Driven by the operator's "make it
-perfect as a senior forex trader" + a fresh external-web deep-research pass. Suite **776 unit + 23 arch**, 0 warnings,
+`claude/ict-mentorship-app-test-6y5mj7`, PUSHED — see the SESSION WRAP at the end for the final pushed state).** Driven by
+the operator's "make it perfect as a senior forex trader" + a fresh external-web deep-research pass. Suite **776 unit + 23 arch**, 0 warnings,
 `dotnet format` clean; guardrail **7/7 PASS**; both features spec'd by `ict-domain-expert` (transcript-cited) before build.
 
 - **Daily Risk Guard (§2.4/§2.5.5 circuit-breaker)** — the missing enforcement half of the loss model: the
@@ -1420,8 +1420,8 @@ years (2024-06→2026-06) of OANDA-practice mid candles for 8 datasets via a pag
 the in-memory `BacktestEngine` (Host in Docker, `/api/backtest`, no DB) at 1% risk, Intraday. **Baseline (live default
 config, all new features OFF):**
 
-| Asset | TF | setups | trades | win% | avgR | PF | maxDD |
-|---|---|---|---|---|---|---|---|
+| Asset | TF | setups | trades | win% | avgR | PF | maxDD | Notes |
+|---|---|---|---|---|---|---|---|---|
 | **NAS100USD** | M5 | 41 | 13 | 38% | **+0.46** | **1.83** | 3.0R | ⭐ best (baked drop-FVG 7-of-8) |
 | EURUSD | M15 | 12 | 4 | 50% | +0.13 | 1.31 | 1.0R | best FX (strict) |
 | GBPUSD | M15 | 12 | 2 | 50% | +0.01 | 1.07 | 0.4R | marginal |

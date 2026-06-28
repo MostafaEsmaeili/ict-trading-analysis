@@ -209,6 +209,10 @@ public class DailyBiasDetectorTests
         new DailyBiasOptions().WithInstrumentOverrides(
                 new IctTrader.Domain.Instruments.InstrumentOptionOverrides { RequireReferenceOpenAgreement = true })
             .RequireReferenceOpenAgreement.Should().BeTrue();
+        // The third state: a per-instrument explicit FALSE disables the gate even when the global default is ON.
+        new DailyBiasOptions { RequireReferenceOpenAgreement = true }.WithInstrumentOverrides(
+                new IctTrader.Domain.Instruments.InstrumentOptionOverrides { RequireReferenceOpenAgreement = false })
+            .RequireReferenceOpenAgreement.Should().BeFalse();
     }
 
     [Fact]
