@@ -102,6 +102,12 @@ builder.Services.AddSignalR();
 
 var app = builder.Build();
 
+// Single-origin deploy (plan §9): serve the built React dashboard (wwwroot) alongside the API + SignalR, so the whole
+// app runs from ONE host/port with no dev proxy or CORS (the SPA calls /api + /hubs relative to its own origin). This
+// is a no-op when wwwroot is absent (API-only dev mode); the SPA fallback below is mapped last so /api/* + /hubs/* win.
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 // Resolving the options eagerly triggers ValidateOnStart (fail fast), then we announce the posture.
 var defensive = app.Services.GetRequiredService<IOptions<DefensiveOptions>>().Value;
 app.Logger.LogInformation(
@@ -376,6 +382,11 @@ api.MapPost("/paper-trades", (ExecutePaperTradeRequest request) =>
     .WithName("CreatePaperTrade");
 
 app.MapHub<TradingHub>(TradingHub.Route);
+
+// SPA client-side routing: any non-API, non-hub, non-file request falls back to the dashboard's index.html so deep
+// links (/trades, /backtest, /settings, …) resolve. Mapped LAST, so the /api/* + /hubs/* endpoints take precedence;
+// a no-op (404) when wwwroot/index.html is absent (API-only mode).
+app.MapFallbackToFile("index.html");
 
 app.Run();
 
