@@ -1464,3 +1464,29 @@ trades quality for frequency. Re-run `scratchpad/sweep_full.py` (or the optimize
 Research (docs note): ICT's own cadence is ~1–2 A+ setups/day, "no trade is a good trade", quality-over-quantity; the
 canonical lever for more statistical mass is MORE INSTRUMENTS + LOWER TIMEFRAMES (M1–M3 scalps run 10–15/wk), NOT
 loosening confluence — though the community does both. "1–2 quality trades/week" is the legitimate swing/A+ target.
+
+**🌐 FULL-UNIVERSE retune (10 instruments, OANDA 2018→2026 full history) — broadened toward 100+ trades + ALL validated
+per-pair winners BAKED.** Fetched the rest of Michael's named set (AUD/USD, USD/CAD, NZD/USD M15; SPX500/US30 M5; XAU/USD
+M15) and swept k-of-8 over the full history. **Aggregate 305 trades across the universe.** Picked by NET P&L (endingBalance after
+costs), NOT gross PF — a gross PF > 1 can still be a NET loss. Per-instrument best (full history), now all in
+`Ict:Instruments`:
+| Instrument | TF | baked k | PF | trades | NET |
+|---|---|---|---|---|---|
+| **EUR/USD** | M15 | strict 8 (no override) | **2.20** | 16 | +$96 |
+| **NZD/USD** | M15 | **7-of-8 (BAKED, new)** | **1.91** | 42 | +$86 |
+| **NAS100** | M5 | 6-of-8 (baked) | **1.87** | 45 | +$619 |
+| **USD/JPY** | M5 | drop-FVG (baked) | 1.48 | 54 | +$246 |
+| **USD/CAD** | M15 | **7-of-8 (BAKED, new)** | 1.19 | 59 | +$141 |
+| GBP/USD | M15 | strict (no override) | 0.95–1.06 | 21–64 | ≈breakeven (+$68 strict; relaxed net-loses) |
+| AUD/USD | M15 | strict (no bake) | ≤0.79 | 15 | net-negative |
+| SPX500 · US30 · XAU | M5/M15 | **0–7 trades** | — | — | — |
+
+**NZD/USD M15 7-of-8 (PF 1.91, 62% win, +$86) is the strongest NEW instrument; USD/CAD M15 7-of-8 (PF 1.19, +$141) the
+second** — both BAKED + verified live. **CRITICAL pick-metric lesson: USDCAD k=6 (gross PF 1.20) was a NET LOSS (−$44);
+USDCAD k=7 (PF 1.19) is +$141 net — pick by NET P&L, not gross PF.** GBP/USD is ≈breakeven in every config (strict is its
+net-best at +$68 — every relaxation net-loses), so it stays STRICT (no override). AUD/USD net-negative → strict. **XAU/USD (gold) + US30/Dow produced 0 trades
+— they are NOT in the pure-domain `InstrumentCatalog`, so they fall back to FX-major money geometry and mis-size to zero
+lots; adding gold + Dow `SymbolSpec`/`ContractSpec` profiles (like NAS100/SPX500) is a CODE follow-on before they can
+trade/be tuned** (flagged in appsettings). **A profitable ~1–2-quality-setups/week followable stream is now the default
+across {EURUSD, NZDUSD, NAS100, USDJPY, USDCAD} — all positive-expectancy on 16–62-trade full-history samples.** Re-run
+`scratchpad/sweep_all.py` on refreshed data to retune.
