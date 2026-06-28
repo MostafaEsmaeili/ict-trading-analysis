@@ -1414,3 +1414,27 @@ guardrail + pr-reviewer run.
 
 **Env note (unchanged): build/test ran in the `mcr.microsoft.com/dotnet/sdk:10.0` Docker image (.NET SDK hosts 403);
 GitHub push works only via a user-supplied write token (the read-only integration 403s on push + MCP create_branch).**
+
+**📊 REAL OANDA BACKTEST (fetched THIS session — egress policy changed mid-session, OANDA went 403→reachable).** Fetched 2
+years (2024-06→2026-06) of OANDA-practice mid candles for 8 datasets via a paginating fetcher → `data/*.csv`, then drove
+the in-memory `BacktestEngine` (Host in Docker, `/api/backtest`, no DB) at 1% risk, Intraday. **Baseline (live default
+config, all new features OFF):**
+
+| Asset | TF | setups | trades | win% | avgR | PF | maxDD |
+|---|---|---|---|---|---|---|---|
+| **NAS100USD** | M5 | 41 | 13 | 38% | **+0.46** | **1.83** | 3.0R | ⭐ best (baked drop-FVG 7-of-8) |
+| EURUSD | M15 | 12 | 4 | 50% | +0.13 | 1.31 | 1.0R | best FX (strict) |
+| GBPUSD | M15 | 12 | 2 | 50% | +0.01 | 1.07 | 0.4R | marginal |
+| EURUSD | M5 | 34 | 18 | 44% | −0.07 | 0.81 | 3.4R | losing |
+| USDJPY | M5 | 75 | 4 | 25% | −0.50 | 0.34 | 3.0R | losing (baseline) |
+| AUDUSD/SPX500/XAUUSD | — | — | 0–3 | — | — | ≤1.25 or fluke | too few trades |
+
+**Features-ON run (DailyGuard + HTF-bias gate enabled) — the key validation:** **USDJPY M5 FLIPPED loser→winner: PF
+0.34→1.94, +0.40R, 29% win, +$341** (the bias gate removed the bad trades); **NAS100 held PF 1.83 with lower drawdown
+(3.0R→2.0R)**; **EURUSD was OVER-filtered (12→5 setups, survivors were losers) → keep it strict.** This is the exact
+"enable the HTF-bias gate PER-PAIR where it diverges meaningfully" thesis — and the per-instrument override built this
+session is the mechanism (turn it ON for USDJPY, OFF for EURUSD). **The "few trades" finding is emphatically confirmed:
+0–18 trades/asset over 2 years (high-precision/low-recall by design).** Small samples are noisy (AUDUSD PF 5–7 on 2–3
+trades = fluke; trust only ≥~10-trade combos: NAS100, EURUSD-M5). **Best setup per asset (real data): NAS100USD M5 7-of-8
+(PF 1.83) · USDJPY M5 7-of-8 + HTF-bias ON (PF 1.94) · EURUSD M15 strict (PF 1.31, best FX).** Re-run the optimizer over
+the wider 2018→2026 history for the canonical bake (this window is only 2yr); `data/` stays gitignored.
