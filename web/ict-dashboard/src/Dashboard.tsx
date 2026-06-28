@@ -16,11 +16,12 @@ import { AlertsFeed, type FocusTarget } from './components/AlertsFeed';
 import { ActivePaperTrades } from './components/ActivePaperTrades';
 import { ChartPanel } from './components/ChartPanel';
 import { LiveConfigPanel } from './components/LiveConfigPanel';
+import { MarketStatus } from './components/MarketStatus';
 import { PerformancePanel } from './components/PerformancePanel';
 import { useMarketSelection } from './hooks/useMarketSelection';
 import { useOverlayVisibility } from './hooks/useOverlayVisibility';
 import { useDashboardData } from './hooks/useDashboardData';
-import { useAccountStatus, useConfig } from './api/hooks';
+import { useAccountStatus, useConfig, useMarketStatus } from './api/hooks';
 
 export function Dashboard(): React.JSX.Element {
   // A `?symbol=` deep-link (off the Trades page) seeds the initial chart symbol once.
@@ -47,6 +48,7 @@ export function Dashboard(): React.JSX.Element {
 
   const configQ = useConfig();
   const accountQ = useAccountStatus();
+  const marketStatusQ = useMarketStatus();
 
   return (
     <div className="layout">
@@ -79,6 +81,13 @@ export function Dashboard(): React.JSX.Element {
       />
 
       <div className="layout__trades">
+        <MarketStatus
+          status={marketStatusQ.data}
+          fetchedAt={marketStatusQ.dataUpdatedAt || undefined}
+          isLoading={marketStatusQ.isLoading}
+          isError={marketStatusQ.isError}
+          error={marketStatusQ.error}
+        />
         <LiveConfigPanel
           config={configQ.data}
           account={accountQ.data}

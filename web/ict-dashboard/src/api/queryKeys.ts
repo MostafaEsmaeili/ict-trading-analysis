@@ -12,6 +12,7 @@ export const queryKeys = {
   allTrades: (status?: string, symbol?: string) => ['trades', 'all', status ?? '', symbol ?? ''] as const,
   account: () => ['account'] as const,
   config: () => ['config'] as const,
+  marketStatus: () => ['market-status'] as const,
   settings: () => ['settings'] as const,
   calendar: () => ['calendar'] as const,
   backtestDatasets: () => ['backtest', 'datasets'] as const,

@@ -178,16 +178,30 @@ api.MapGet("/equity", async (IMessageBus bus) =>
 // GetChartCandlesQueryHandler (the bounded per-series candle window, chronological) AND the Scanning module's
 // GetRecentSetupsQueryHandler (the recent confirmed setups to overlay, newest-first). Both are read-only
 // projections of read-only candle/setup events — serving a chart routes nowhere near an order path (§6.3).
-api.MapGet("/chart/{symbol}", async (string symbol, string? tf, string? style, IMessageBus bus) =>
+api.MapGet("/chart/{symbol}", async (string symbol, string? tf, string? style, IMessageBus bus, BacktestEngine history) =>
     {
         var timeframe = tf ?? ChartDefaults.Timeframe;
         var candles = await bus.QueryAsync(
             new GetChartCandlesQuery(symbol, timeframe, ChartDefaults.MaxCandles));
+        if (candles.Count == 0)
+        {
+            // No LIVE feed for this (symbol, timeframe) — serve the recorded CSV history so the chart renders for ANY
+            // asset/timeframe the operator selects (the live ring buffer only holds the actively-scanned series).
+            candles = ChartHistory.RecentCandles(history, symbol, timeframe, ChartDefaults.MaxCandles);
+        }
+
         var overlays = await bus.QueryAsync(
             new GetRecentSetupsQuery(symbol, ChartDefaults.MaxOverlays));
         return TypedResults.Ok(new ChartResponse(symbol, timeframe, style ?? ChartDefaults.Style, candles, overlays));
     })
     .WithName("GetChart");
+
+// Market-session status (plan §2.1/§4.8): whether the FX market is open now, the current ICT killzone/session, and
+// the next active killzone open (name + minutes) — all DST-aware NY time via NyClock. Read-only session math; the
+// Host projects it from TimeProvider + the resolved active killzones. Routes nowhere near an order path (§6.3).
+api.MapGet("/market-status", (TimeProvider timeProvider, IOptions<KillzoneEntryOptions> killzones) =>
+        TypedResults.Ok(MarketStatus.Compute(timeProvider, killzones.Value.ResolvedActiveKillzones)))
+    .WithName("GetMarketStatus");
 
 // The live operator config (plan §4.6) — the RESOLVED Ict:* options the scanner is running under (provider,
 // scanned symbols, active styles + killzones, base + portfolio risk, spread + commission, starting equity) — for

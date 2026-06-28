@@ -24,6 +24,7 @@ import type {
   ConfigStatusDto,
   EquityPointDto,
   InstrumentSettingsDto,
+  MarketStatusDto,
   OptimizeRequest,
   OptimizeResponse,
   PaperTradeDto,
@@ -41,6 +42,7 @@ import {
   MOCK_CONFIG,
   MOCK_DATASETS,
   MOCK_EQUITY_CURVE,
+  MOCK_MARKET_STATUS,
   MOCK_OVERLAYS,
   MOCK_CALENDAR,
   MOCK_PERFORMANCE,
@@ -163,6 +165,17 @@ export async function fetchConfig(): Promise<ConfigStatusDto> {
     return MOCK_CONFIG;
   }
   return getJson<ConfigStatusDto>('/api/config');
+}
+
+/**
+ * The live NY-session clock state (open/closed, current + next session, countdown) the Live-page Market
+ * Status widget reads. Polled ~30s; a status feed only REPORTS the session — it never places an order (§6.3).
+ */
+export async function fetchMarketStatus(): Promise<MarketStatusDto> {
+  if (USE_MOCKS) {
+    return MOCK_MARKET_STATUS;
+  }
+  return getJson<MarketStatusDto>('/api/market-status');
 }
 
 export async function fetchSettings(): Promise<SettingsDto> {

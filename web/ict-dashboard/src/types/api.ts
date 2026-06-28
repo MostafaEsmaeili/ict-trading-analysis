@@ -421,6 +421,28 @@ export interface ChartResponse {
   overlays: SetupDto[];
 }
 
+/**
+ * Mirrors IctTrader.Host.MarketStatusDto — `GET /api/market-status`. The live NY-session clock state the
+ * Live page surfaces: whether the FX market is open NOW (`marketOpen`), the current §2.1 session
+ * (`currentSession`, a {@link Killzone} member name — `None` outside every killzone), whether that session
+ * is an operator-selected active killzone (`inActiveKillzone`), and the NEXT session with a countdown
+ * (`nextSessionOpensInMinutes`, render via the Xh Ym formatter). `activeKillzones` is the operator's
+ * hunt-set. Times are pre-formatted strings (`nowNy` "HH:mm:ss" / "MMM d HH:mm", `nextSessionStartsNy`
+ * "Ddd HH:mm"); `nowUtc` is an ISO-8601 UTC instant. Read-only — a status feed never places an order (§6.3).
+ */
+export interface MarketStatusDto {
+  nowUtc: string;
+  nowNy: string;
+  dayOfWeekNy: string;
+  marketOpen: boolean;
+  currentSession: string;
+  inActiveKillzone: boolean;
+  nextSession: string | null;
+  nextSessionOpensInMinutes: number | null;
+  nextSessionStartsNy: string | null;
+  activeKillzones: string[];
+}
+
 /** Mirrors IctTrader.Host.ExecutePaperTradeRequest — advisory request to SIMULATE a trade (plan §6.3). */
 export interface ExecutePaperTradeRequest {
   setupId: string;
