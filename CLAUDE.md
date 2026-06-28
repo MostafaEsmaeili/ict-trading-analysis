@@ -1438,3 +1438,29 @@ session is the mechanism (turn it ON for USDJPY, OFF for EURUSD). **The "few tra
 trades = fluke; trust only ≥~10-trade combos: NAS100, EURUSD-M5). **Best setup per asset (real data): NAS100USD M5 7-of-8
 (PF 1.83) · USDJPY M5 7-of-8 + HTF-bias ON (PF 1.94) · EURUSD M15 strict (PF 1.31, best FX).** Re-run the optimizer over
 the wider 2018→2026 history for the canonical bake (this window is only 2yr); `data/` stays gitignored.
+
+**📊📊 FULL-HISTORY k-of-n VALIDATION (OANDA 2018→2026, ~210k M15 / ~600k M5 candles — the robust retune) + NAS100 bake
+updated. THE 2-YEAR FINDINGS WERE LARGELY FLUKES.** Fetched the full history for the 5 candidates and swept
+MinRequiredConditions (k of 8). With 16–166-trade samples the picture INVERTS the 2-yr window on every pair except NAS100:
+- **EURUSD M15 → STRICT 8-of-8 wins: PF 2.20, +0.32R, 62% win, 16 trades** (relaxed k=7 → PF 1.42, k=6 → 1.30 — the 2-yr
+  "k=6 better" was small-sample noise). **Keep strict** (the live default).
+- **NAS100USD M5 → 6-of-8 wins decisively: PF 1.87, +0.40R, 37% win, 46 trades, ~1.9 setups/wk, +$617** — beats BOTH
+  strict-8 AND the prior drop-FvgPresent 7-subset (both PF 1.62). **BAKED: `Ict:Instruments:Overrides:NAS100USD` changed
+  from the drop-FVG `RequiredConditions` list to `MinRequiredConditions: 6`** (validated live: a default NAS100 backtest
+  now runs k=6). The one robust relaxation win — more trades AND better quality (the k-saturation floor at 6 keeps it from
+  garbage; DisplacementMss always gates).
+- **USDJPY M5 → keeps the drop-FVG 7-subset: PF 1.48, +0.24R, 54 trades** (= strict-8 on full history; relaxing to k=6
+  HURTS → PF 1.14). The 2-yr "needs the HTF-bias gate / losing PF 0.34" was the small window — full history strict is
+  already positive. Comment updated to the honest PF 1.48 (the prior "PF 2.40" was a 3-yr subwindow).
+- **GBPUSD M15 → weak everywhere (PF 0.95 strict / 0.99 k=7 / 1.06 k=6), EURUSD M5 ~breakeven (0.99/1.09).** No bake.
+
+**LESSON (now a hard convention): a 2-year backtest is NOT enough to bake a per-pair tuning — validate on the FULL
+2018→2026 history (100+ or at least ~15+ trades) first; small windows produce PF flukes (the EURUSD/GBPUSD/USDJPY 2-yr
+"wins" all evaporated).** Strict §2.5 holds up well on the robust sample (EURUSD M15 PF 2.20); broad relaxation mostly
+trades quality for frequency. Re-run `scratchpad/sweep_full.py` (or the optimizer) on refreshed data to retune.
+
+**On "few trades" (operator's Q):** the strict all-8 AND-gate IS the cause; relaxing k DOES raise frequency (EURUSD M15
+0.15→0.59 setups/wk at k=6; NAS100 0.31→1.88/wk) but usually LOWERS PF on FX — only NAS100 gets more-trades-AND-better.
+Research (docs note): ICT's own cadence is ~1–2 A+ setups/day, "no trade is a good trade", quality-over-quantity; the
+canonical lever for more statistical mass is MORE INSTRUMENTS + LOWER TIMEFRAMES (M1–M3 scalps run 10–15/wk), NOT
+loosening confluence — though the community does both. "1–2 quality trades/week" is the legitimate swing/A+ target.
