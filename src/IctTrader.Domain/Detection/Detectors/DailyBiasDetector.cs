@@ -48,6 +48,11 @@ public sealed class DailyBiasDetector : ISetupDetector
             return DetectorResult.NoMatch; // bias set, but not corroborated by N directional closes
         }
 
+        if (_options.RequireReferenceOpenAgreement && !AgreesWithReferenceOpen(context, current, direction))
+        {
+            return DetectorResult.NoMatch; // HTF gate: confirming price is on the wrong side of the day's reference open
+        }
+
         var equilibrium = range.Equilibrium(_options.EquilibriumPercent);
         var evidence = new Dictionary<string, object>
         {
@@ -58,6 +63,22 @@ public sealed class DailyBiasDetector : ISetupDetector
 
         return DetectorResult.Match(
             direction, equilibrium, ReasonFragments.DailyBias(direction, positionPercent), evidence);
+    }
+
+    /// <summary>The HTF daily-bias gate (§2.5.10 strengthening): the confirming price must sit on the bias-correct side
+    /// of the day's reference open — bearish ABOVE (the Judas premium), bullish BELOW (discount). Mirrors
+    /// <see cref="OpenPriceReferenceDetector"/> EXACTLY (same <see cref="MarketContext.ReferenceOpen(bool)"/> source, same
+    /// strict &gt;/&lt;, exactly-at-open does NOT agree) so the gate and that confluence can never contradict. Fail-CLOSED
+    /// when no reference open is captured yet.</summary>
+    private static bool AgreesWithReferenceOpen(MarketContext context, Candle current, Direction direction)
+    {
+        var premium = direction == Direction.Bearish;
+        if (context.ReferenceOpen(premium) is not { } referenceOpen)
+        {
+            return false; // no midnight/macro open captured yet -> withhold (fail-closed on this opt-in gate)
+        }
+
+        return direction == Direction.Bearish ? current.Close > referenceOpen : current.Close < referenceOpen;
     }
 
     private bool IsConfirmedByConsecutiveCloses(MarketContext context, Candle current, Direction direction)

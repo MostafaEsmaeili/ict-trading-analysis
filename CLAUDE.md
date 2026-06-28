@@ -1321,3 +1321,58 @@ widget. 753 unit + 23 arch, 0 warnings, format clean; FE typecheck/lint clean, 7
 **CONVENTION (deploy / dev-server lifecycle):** launch the Host as a run_in_background task's MAIN command (not `dotnet
 run &` inside a script — that orphans it). Performance/alerts/chart read-models are IN-MEMORY (reset on Host restart; the
 account + trades persist in Postgres), so after a redeploy they repopulate as the replay re-runs.
+
+**🏁 Senior-trader hardening — Daily Risk Guard + HTF daily-bias gate + ICT 2022 web research (this session, branch
+`claude/ict-mentorship-app-test-6y5mj7`, 2 local commits — NOT pushed, see env note).** Driven by the operator's "make it
+perfect as a senior forex trader" + a fresh external-web deep-research pass. Suite **776 unit + 23 arch**, 0 warnings,
+`dotnet format` clean; guardrail **7/7 PASS**; both features spec'd by `ict-domain-expert` (transcript-cited) before build.
+
+- **Daily Risk Guard (§2.4/§2.5.5 circuit-breaker)** — the missing enforcement half of the loss model: the
+  `RiskManager` ladder sized DOWN but never HALTED. New pure `DailyRiskGuard`/`IDailyRiskGuard` (`Domain/Trading/`) stops
+  NEW entries for the rest of the NY day after N consecutive losses OR a realized daily-loss cap (Ep41 revenge/loser's-
+  cycle, Ep37 "stop pushing buttons", Ep18 "walk away"). NON-scoring (Σ=9.75 untouched), consulted by
+  `TradeOrchestrator.OnSetupConfirmed` → a halted day returns the new `ManagedPosition.None` (nothing armed/opened, no
+  risk reserved); it NEVER touches already-open/armed trades and adds no order path (guardrail-clean — only WITHHOLDS).
+  Loss = GROSS structural outcome (a cost-only scratch is a breakeven, mirroring `PaperAccount`); the cap is on NET
+  realized P&L; resets at 00:00 NY. The caller owns the per-day tally — wired into the live `SetupConfirmedHandler`
+  (repo `GetClosedAsync` filtered by NY date) AND the `BacktestEngine` (in-memory `closed` list). `DailyRiskGuardOptions`
+  (`Ict:Risk:DailyGuard`): **Enabled=false (config default → existing tests byte-identical), recommended-ON for
+  live/optimized**; thresholds are provenance-flagged community canon (N=3 = the 1%→0.5%→0.25% ladder exhausted; 2.0%
+  daily cap), not Mentorship-verbatim. The orchestrator's guard params are OPTIONAL (null tally → unguarded path
+  byte-identical), so all existing call sites compiled unchanged.
+
+- **HTF daily-bias gate (`DailyBiasOptions.RequireReferenceOpenAgreement`, default OFF)** — the web/community #1
+  win-rate filter ("a 5m entry must never contradict the daily bias"). The midnight-open agreement ALREADY existed as
+  the scored `OpenPriceReferenceDetector` (0.50); the spec's key insight = PROMOTE it into a gate, not add a new feed.
+  When ON, `DailyBiasDetector` ANDs `ReferenceOpen(premium)` agreement into the existing **`BiasAligned` (0.85)** match
+  (bearish wants price ABOVE the 00:00-NY/08:30 open, bullish BELOW) — reusing the SAME DST-correct state the scorer
+  reads, so the two can never contradict. STRENGTHENS the existing dealing-range bias (does NOT replace/duplicate);
+  Σ=9.75 intact (only WITHHOLDS the match); `ctx.Bias` is STILL set so the MSS lock / PD veto / Judas read are
+  unaffected; fail-CLOSED when no open is captured. Single-timeframe-safe (NO Daily feed). Settable globally via
+  `Ict:Detection:Bias`; **per-instrument exposure via `InstrumentOptionOverrides` + the live `RuntimeSettings` seam is
+  the documented follow-on.** Decisive recommendation before relying on it: measure (in a backtest) how often the
+  already-present `OpenPriceReference` confluence DIVERGES from the required gates — if ~0 it's redundant, if material it
+  genuinely tightens precision.
+
+- **External web research — `docs/ict-web-research-2026.md`** (NEW): a cited 5-angle WebSearch fan-out (≈55 queries,
+  WebFetch was egress-429'd so snippets sourced) on the ICT 2022 model, instruments/sessions/timeframes, risk +
+  management, A+ confluences, and a **balanced critique strand** (no independently verified ICT track record; edge comes
+  from selectivity + risk discipline, not the entry pattern; most public backtests are underpowered/regime-sensitive).
+  It confirms the engine's design intent (high-precision/low-recall ≈ ICT's "1–2 quality setups/day" norm) and ranks the
+  top quality levers: HTF daily-bias (built), risk discipline (built), LRLR-over-HRLR draws + SMT (follow-ons).
+
+**⚠️ ENVIRONMENT CONSTRAINTS this session (Claude Code on the web, read-only-GitHub sandbox):** (1) **OANDA + all free
+intraday data hosts (Yahoo, Stooq) are egress-policy 403-BLOCKED** — no fresh market data is reachable here, so NO new
+backtests were run this session; the per-asset findings below are from the PRIOR documented OANDA runs. (2) **The .NET
+SDK download hosts are 403** — the build/test loop runs inside the `mcr.microsoft.com/dotnet/sdk:10.0` **Docker** image
+(`--network host`, proxy + CA passed) since `mcr` + `nuget` ARE reachable; `dockerd` must be started manually with the
+proxy env. (3) **GitHub is READ-ONLY** — both `git push` (proxy 403) and the GitHub MCP `create_branch`/`push_files`
+(403 "Resource not accessible by integration") are denied, so the 2 commits are **LOCAL ONLY** (a patch is produced for
+the operator to apply + push). To finish: apply the patch on a machine with OANDA access + push perms, then run the
+optimizer to validate the HTF-bias gate + Daily Risk Guard on real data.
+
+**Per-asset best setups (from PRIOR documented OANDA full-history runs — NOT re-run this session):** EUR/USD → **M15
+Intraday, strict §2.5** (PF 1.97, best FX); USD/JPY → **M5, drop-FvgPresent 7-of-8** (PF 2.40, baked); NAS100 → **M5,
+drop-FvgPresent 7-of-8** (PF 1.80, baked, index AM killzone); GBP/USD → M15 strict (PF ~1.18, marginal); AUD/USD strict
+(PF 0.60, weak); SPX500/ES + XAU/USD sparse/secondary. All optima are **Intraday**; Swing/Position strict yield 0 trades.
+Recommended next: enable `Ict:Risk:DailyGuard` + (per-pair) `RequireReferenceOpenAgreement`, then re-run the optimizer.
