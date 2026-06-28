@@ -5,6 +5,7 @@ using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Detection;
 using IctTrader.Domain.Instruments;
 using IctTrader.Domain.Services;
+using IctTrader.Domain.Sessions;
 using IctTrader.Domain.Setups;
 using IctTrader.Domain.Styles;
 using IctTrader.Domain.Trading;
@@ -37,6 +38,8 @@ public sealed class BacktestEngine
     private readonly IInstrumentRegistry _instruments;
     private readonly RiskOptions _defaultRisk;
     private readonly ConfluenceOptions _defaultConfluence;
+    private readonly DailyRiskGuardOptions _dailyGuard;
+    private readonly NyClock _nyClock = new(TimeProvider.System);
     private readonly string _dataDirectory;
     private readonly ILogger<BacktestEngine> _logger;
 
@@ -50,6 +53,7 @@ public sealed class BacktestEngine
         IOptions<RiskOptions> defaultRisk,
         IOptions<ConfluenceOptions> defaultConfluence,
         IOptions<BacktestOptions> backtestOptions,
+        IOptions<DailyRiskGuardOptions> dailyGuard,
         ILogger<BacktestEngine>? logger = null)
     {
         _scannerFactory = scannerFactory ?? throw new ArgumentNullException(nameof(scannerFactory));
@@ -57,6 +61,7 @@ public sealed class BacktestEngine
         _instruments = instruments ?? throw new ArgumentNullException(nameof(instruments));
         _defaultRisk = (defaultRisk ?? throw new ArgumentNullException(nameof(defaultRisk))).Value;
         _defaultConfluence = (defaultConfluence ?? throw new ArgumentNullException(nameof(defaultConfluence))).Value;
+        _dailyGuard = (dailyGuard ?? throw new ArgumentNullException(nameof(dailyGuard))).Value;
         var dir = (backtestOptions ?? throw new ArgumentNullException(nameof(backtestOptions))).Value.DataDirectory;
         _dataDirectory = Path.IsPathRooted(dir) ? dir : Path.GetFullPath(dir);
         _logger = logger ?? NullLogger<BacktestEngine>.Instance;
@@ -148,7 +153,11 @@ public sealed class BacktestEngine
             if (setup is not null)
             {
                 setupCount++;
-                TryOpen(orchestrator, setup, account, profile, active);
+                // §2.4/§2.5.5 daily risk guard input: the account's net realized P&L over trades CLOSED earlier on this
+                // NY trading day (null when the guard is off → the unguarded path is byte-identical). The 00:00-NY reset
+                // is implicit — only trades whose close NY-date matches this bar's NY-date are summed.
+                var dayPnl = DayRealizedPnl(closed, candle.OpenTimeUtc);
+                TryOpen(orchestrator, setup, account, profile, active, dayPnl);
             }
 
             // MANAGE every position whose open/arm bar is STRICTLY BEFORE this bar (the no-look-ahead edge).
@@ -218,15 +227,38 @@ public sealed class BacktestEngine
         }
     }
 
+    /// <summary>The account's net realized P&amp;L over trades CLOSED on the same NY trading day as <paramref name="nowUtc"/>
+    /// — the §2.4/§2.5.5 daily risk guard input. Returns null when the guard is disabled so the unguarded path skips it
+    /// entirely (and stays byte-identical).</summary>
+    private Money? DayRealizedPnl(List<PaperTrade> closed, DateTimeOffset nowUtc)
+    {
+        if (!_dailyGuard.Enabled)
+        {
+            return null;
+        }
+
+        var nyDate = _nyClock.NewYorkDate(nowUtc);
+        var sum = 0m;
+        foreach (var trade in closed)
+        {
+            if (trade.ClosedAtUtc is { } closedAt && _nyClock.NewYorkDate(closedAt) == nyDate && trade.NetPnl is { } pnl)
+            {
+                sum += pnl.Amount;
+            }
+        }
+
+        return new Money(sum);
+    }
+
     private void TryOpen(
         TradeOrchestrator orchestrator, Setup setup, PaperAccount account, InstrumentProfile profile,
-        List<ManagedPosition> active)
+        List<ManagedPosition> active, Money? dayRealizedPnl)
     {
         try
         {
             var position = orchestrator.OnSetupConfirmed(
                 setup, account, profile.SymbolSpec, profile.ContractSpec, setup.ConfirmedAtUtc,
-                DeterministicSetupId(setup));
+                DeterministicSetupId(setup), dayRealizedPnl);
             active.Add(position);
         }
         catch (Exception ex)

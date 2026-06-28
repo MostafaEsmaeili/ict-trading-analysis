@@ -40,6 +40,25 @@ public class OptionsValidationTests
         new MacroTimeOptions().Validate().Should().BeEmpty();
         new CleanPriceActionOptions().Validate().Should().BeEmpty();
         new CalendarDriverOptions().Validate().Should().BeEmpty();
+        new DailyRiskGuardOptions().Validate().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void The_daily_risk_guard_defaults_are_off_and_transcript_honest()
+    {
+        var defaults = new DailyRiskGuardOptions();
+        defaults.Enabled.Should().BeFalse();                    // config-default OFF — existing backtests stay byte-identical
+        defaults.ConsecutiveLossHaltThreshold.Should().Be(3);   // the 1%→0.5%→0.25% ladder exhausted (Ep41)
+        defaults.DailyLossCapPercent.Should().Be(2.0m);         // ≈ the 1.75% disciplined-ladder loss, rounded
+        defaults.ResetAtNyDayRollover.Should().BeTrue();
+    }
+
+    [Fact]
+    public void A_daily_risk_guard_out_of_contract_is_rejected()
+    {
+        new DailyRiskGuardOptions { ConsecutiveLossHaltThreshold = 0 }.Validate().Should().NotBeEmpty(); // must be ≥ 1
+        new DailyRiskGuardOptions { DailyLossCapPercent = 0m }.Validate().Should().NotBeEmpty();         // must be > 0
+        new DailyRiskGuardOptions { DailyLossCapPercent = 25m }.Validate().Should().NotBeEmpty();        // beyond the 10% ceiling
     }
 
     [Fact]

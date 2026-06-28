@@ -59,3 +59,6 @@ data/
 
 # Built SPA served by the Host (single-origin deploy) — build artifact, not source
 src/IctTrader.Host/wwwroot/
+
+# Reqnroll build-time telemetry id (generated on E2E test build)
+tests/IctTrader.E2E/Reqnroll/

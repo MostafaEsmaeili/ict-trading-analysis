@@ -71,6 +71,7 @@ public static class IctOptionsRegistration
             .AddIctOptions<CalendarDriverOptions>(config, CalendarDriverOptions.SectionName, o => o.Validate())
             // Risk + execution
             .AddIctOptions<RiskOptions>(config, RiskOptions.SectionName, o => o.Validate())
+            .AddIctOptions<DailyRiskGuardOptions>(config, DailyRiskGuardOptions.SectionName, o => o.Validate())
             .AddIctOptions<ExecutionCostOptions>(config, ExecutionCostOptions.SectionName, o => o.Validate())
             .AddIctOptions<FillOptions>(config, FillOptions.SectionName, o => o.Validate())
             .AddIctOptions<ExitManagementOptions>(config, ExitManagementOptions.SectionName, o => o.Validate())

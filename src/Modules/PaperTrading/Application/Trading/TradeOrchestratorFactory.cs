@@ -32,6 +32,7 @@ public sealed class TradeOrchestratorFactory : ITradeOrchestratorFactory
     private readonly KillzoneEntryOptions _killzoneEntry;
     private readonly TradeStyleOptions _tradeStyles;
     private readonly RiskOptions _risk;
+    private readonly DailyRiskGuardOptions _dailyRiskGuard;
 
     public TradeOrchestratorFactory(
         TimeProvider timeProvider,
@@ -43,7 +44,8 @@ public sealed class TradeOrchestratorFactory : ITradeOrchestratorFactory
         IOptions<EntryManagementOptions> entryManagement,
         IOptions<KillzoneEntryOptions> killzoneEntry,
         IOptions<TradeStyleOptions> tradeStyles,
-        IOptions<RiskOptions> risk)
+        IOptions<RiskOptions> risk,
+        IOptions<DailyRiskGuardOptions> dailyRiskGuard)
     {
         ArgumentNullException.ThrowIfNull(timeProvider);
         ArgumentNullException.ThrowIfNull(instruments);
@@ -57,6 +59,7 @@ public sealed class TradeOrchestratorFactory : ITradeOrchestratorFactory
         _killzoneEntry = killzoneEntry.Value;
         _tradeStyles = tradeStyles.Value;
         _risk = risk.Value;
+        _dailyRiskGuard = dailyRiskGuard.Value;
     }
 
     public TradeOrchestrator Create(Symbol symbol, RiskOptions? risk = null)
@@ -96,7 +99,10 @@ public sealed class TradeOrchestratorFactory : ITradeOrchestratorFactory
         var factory = new PaperTradeFactory(resolvedRisk, new RiskManager());
 
         // The orchestrator shares the SAME resolved EntryManagementOptions the entry manager + entry-fill evaluator
-        // use (one source of truth for the entry mode + no-chase backstop + the close-proximity band).
-        return new TradeOrchestrator(entryManager, exitManager, factory, entryManagement);
+        // use (one source of truth for the entry mode + no-chase backstop + the close-proximity band). The §2.4/§2.5.5
+        // daily risk guard is wired in (default-off → inert): when the operator enables Ict:Risk:DailyGuard, the caller
+        // supplies the day's realized P&L to OnSetupConfirmed and a halted day suppresses new entries.
+        return new TradeOrchestrator(
+            entryManager, exitManager, factory, entryManagement, new DailyRiskGuard(), _dailyRiskGuard);
     }
 }
