@@ -56,3 +56,6 @@ data/
 # Playwright MCP temp artifacts + local screenshots
 .playwright-mcp/
 *.png
+
+# Built SPA served by the Host (single-origin deploy) — build artifact, not source
+src/IctTrader.Host/wwwroot/
