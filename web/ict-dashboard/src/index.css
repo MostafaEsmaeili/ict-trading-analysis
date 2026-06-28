@@ -1,6 +1,8 @@
 /* ----------------------------------------------------------------------------------------------------
  * Dark trading-desk theme (plan §9). Tokens mirror src/theme.ts. Tabular numerals everywhere a price
- * or R value is shown so columns of numbers align. Layout is a CSS grid that collapses below 1024px.
+ * or R value is shown so columns of numbers align. The Live layout is a responsive CSS grid: 3 columns
+ * on wide desks (alerts | chart | trades), reflowing to 2 columns < 1200px and a single stacked column
+ * < 860px. The chart panel always fills the available row height (the centerpiece, §9.1).
  * -------------------------------------------------------------------------------------------------- */
 
 :root {
@@ -85,6 +87,25 @@ body {
   padding: 10px 16px;
   background: var(--panel);
   border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+/* On narrow widths the header wraps gracefully: the nav takes the full second row, scrollable if needed. */
+@media (max-width: 720px) {
+  .app__header {
+    padding: 8px 12px;
+    row-gap: 8px;
+  }
+
+  .nav {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .app__brand small {
+    display: none;
+  }
 }
 
 .app__brand {
@@ -118,11 +139,16 @@ body {
   padding: 2px 10px;
 }
 
-/* ---- Three-panel grid (center chart, left alerts, right trades+perf). Collapses < 1024px. ---- */
+/* ---- Three-panel grid (center chart, left alerts, right trades+perf). Responsive: 3 → 2 → 1 col. ----
+ *
+ * WIDE (≥1200px): alerts | chart | trades on one full-height row. The explicit single 1fr ROW is
+ * load-bearing — without it the grid row auto-sizes to content and the chart panel's flex:1 surface has
+ * nothing to stretch against, so the chart looks short/empty. The row fills the layout height instead. */
 
 .layout {
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr) 360px;
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr) minmax(320px, 380px);
+  grid-template-rows: minmax(0, 1fr);
   grid-template-areas: 'alerts chart trades';
   gap: var(--gap);
   padding: var(--gap);
@@ -144,15 +170,59 @@ body {
   flex-direction: column;
   gap: var(--gap);
   min-height: 0;
+  overflow: auto;
 }
 
-@media (max-width: 1023px) {
+/* MEDIUM (860–1199px): chart + alerts share the top row, trades reflow to a full-width row beneath.
+ * The page scrolls (app__main owns the scroll); the chart keeps a generous fixed height so it stays the
+ * focus rather than collapsing. */
+@media (max-width: 1199px) {
+  .layout {
+    grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
+    grid-template-rows: minmax(420px, 60vh) auto;
+    grid-template-areas:
+      'chart alerts'
+      'trades trades';
+  }
+
+  .layout__trades {
+    flex-direction: row;
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  .layout__trades > * {
+    flex: 1 1 280px;
+  }
+}
+
+/* NARROW (<860px): a single stacked column — chart first (the centerpiece), then alerts, then the
+ * account/trades/perf cards. Each section keeps its own min-height so nothing collapses to a sliver. */
+@media (max-width: 859px) {
   .layout {
     grid-template-columns: 1fr;
+    grid-template-rows: auto;
     grid-template-areas:
       'chart'
       'alerts'
       'trades';
+  }
+
+  .layout__chart {
+    min-height: 60vh;
+  }
+
+  .layout__alerts {
+    min-height: 280px;
+  }
+
+  .layout__trades {
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .layout__trades > * {
+    flex: 0 0 auto;
   }
 }
 
@@ -361,12 +431,23 @@ table.tbl {
   font-size: 12px;
   font-family: inherit;
   cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.seg button:hover {
+  background: var(--panel-raised);
+  color: var(--text);
 }
 
 .seg button[aria-pressed='true'] {
   background: var(--accent);
   color: #061018;
   font-weight: 600;
+}
+
+.seg button[aria-pressed='true']:hover {
+  background: color-mix(in srgb, var(--accent) 88%, white);
+  color: #061018;
 }
 
 select.input {
@@ -377,14 +458,30 @@ select.input {
   padding: 4px 8px;
   font-family: var(--font-mono);
   font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.12s ease;
 }
 
-/* ---- Chart surface ---- */
+select.input:hover {
+  border-color: var(--accent);
+}
+
+/* ---- Chart surface ----
+ * The lightweight-charts container fills ALL the remaining panel height (flex:1 against the panel's
+ * head + legend), with a floor so a short viewport / stacked layout still shows a usable chart. The
+ * canvas autoSizes to this box (IctChart CHART_OPTIONS.autoSize), so a taller panel = a taller chart. */
 
 .chart-surface {
   position: relative;
-  flex: 1;
-  min-height: 320px;
+  flex: 1 1 auto;
+  min-height: 360px;
+  width: 100%;
+}
+
+/* The IctChart container IS a .chart-surface; make its lightweight-charts canvas fill the box exactly. */
+.chart-surface > .tv-lightweight-charts {
+  position: absolute;
+  inset: 0;
 }
 
 .chart-legend {
@@ -406,11 +503,27 @@ select.input {
   border-radius: 999px;
   padding: 2px 9px;
   cursor: pointer;
+  transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+
+.legend-toggle:hover {
+  color: var(--text);
+  background: var(--panel);
 }
 
 .legend-toggle[aria-pressed='true'] {
   color: var(--text);
   border-color: var(--accent);
+}
+
+/* A keyboard focus ring for every interactive control (mouse clicks stay clean via :focus-visible). */
+button:focus-visible,
+a:focus-visible,
+select:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-radius: 4px;
 }
 
 .legend-swatch {
@@ -436,16 +549,20 @@ select.input {
   padding: 6px 12px;
   border-radius: 6px;
   border: 1px solid transparent;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
 }
 
 .nav__link:hover {
   color: var(--text);
   background: var(--panel-raised);
+  border-color: var(--border-strong);
 }
 
-.nav__link--active {
+.nav__link--active,
+.nav__link--active:hover {
   color: #061018;
   background: var(--accent);
+  border-color: var(--accent);
 }
 
 .app__main {
@@ -469,6 +586,13 @@ select.input {
 
 .page .panel {
   overflow: visible;
+}
+
+/* Keep the page padding rhythm consistent with the tightened header on narrow widths. */
+@media (max-width: 720px) {
+  .page {
+    padding: 10px;
+  }
 }
 
 /* ---- Pills (status / close-reason) ---- */
@@ -652,10 +776,16 @@ input.input {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease, transform 0.06s ease;
 }
 
 .btn:hover {
   border-color: var(--accent);
+  background: var(--panel);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .btn--primary {
@@ -701,6 +831,12 @@ input.input {
   border-radius: 999px;
   padding: 3px 10px;
   cursor: pointer;
+  transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+
+.chip-toggle:hover {
+  color: var(--text);
+  border-color: var(--accent);
 }
 
 .chip-toggle--on {
@@ -828,4 +964,116 @@ input.input {
   flex-wrap: wrap;
   gap: 4px;
   justify-content: flex-end;
+}
+
+/* ---- Market Status widget (Live page §9) ---- */
+
+/* A subtle left accent bar tints the card by open/closed state so it reads at a glance. */
+.market-status {
+  border-left: 3px solid var(--border-strong);
+}
+
+.mkt {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mkt__state {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mkt__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.mkt__dot--open {
+  background: var(--long);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--long) 22%, transparent);
+  animation: mkt-pulse 2.4s ease-in-out infinite;
+}
+
+.mkt__dot--closed {
+  background: var(--short);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--short) 18%, transparent);
+}
+
+@keyframes mkt-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--long) 22%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--long) 0%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mkt__dot--open {
+    animation: none;
+  }
+}
+
+.mkt__label {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.mkt__day {
+  margin-left: auto;
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.mkt__session,
+.mkt__next,
+.mkt__kzs {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* Highlight the current session card when it is an operator-selected active killzone (we're hunting). */
+.mkt__session--active {
+  background: color-mix(in srgb, var(--pending) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pending) 35%, transparent);
+  border-radius: 6px;
+  padding: 7px 9px;
+  margin: -1px;
+}
+
+.mkt__session-value,
+.mkt__next-value {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.mkt__live {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--pending);
+}
+
+.mkt__countdown {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.mkt__next-at {
+  color: var(--text-faint);
+  font-size: 11px;
 }

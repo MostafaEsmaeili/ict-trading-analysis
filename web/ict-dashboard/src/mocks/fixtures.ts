@@ -16,6 +16,7 @@ import type {
   CandleDto,
   ConfigStatusDto,
   EquityPointDto,
+  MarketStatusDto,
   OptimizeResponse,
   PaperTradeDto,
   PerformanceSummaryDto,
@@ -298,6 +299,22 @@ export const MOCK_ACCOUNT: AccountStatusDto = {
   consecutiveWins: 2,
   consecutiveLosses: 0,
   openTradeCount: 2,
+};
+
+// The live NY-session clock state: the FX market open mid-New-York-session, inside an active killzone,
+// with London Open the next session ~9h out (540 min) — so the offline app exercises the OPEN indicator,
+// the highlighted active-killzone session, and the live countdown the widget derives.
+export const MOCK_MARKET_STATUS: MarketStatusDto = {
+  nowUtc: '2026-06-22T13:30:00Z',
+  nowNy: '09:30:00',
+  dayOfWeekNy: 'Monday',
+  marketOpen: true,
+  currentSession: 'NewYorkOpen',
+  inActiveKillzone: true,
+  nextSession: 'LondonOpen',
+  nextSessionOpensInMinutes: 540,
+  nextSessionStartsNy: 'Mon 02:00',
+  activeKillzones: ['LondonOpen', 'NewYorkOpen'],
 };
 
 export const MOCK_CONFIG: ConfigStatusDto = {

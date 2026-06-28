@@ -14,6 +14,7 @@ import {
   fetchChart,
   fetchConfig,
   fetchEquityCurve,
+  fetchMarketStatus,
   fetchOverlays,
   fetchPerformance,
   fetchSettings,
@@ -110,6 +111,19 @@ export function useConfig() {
   return useQuery({
     queryKey: queryKeys.config(),
     queryFn: fetchConfig,
+    refetchInterval: RECONCILE_MS,
+  });
+}
+
+/**
+ * The live NY-session clock state (open/closed, current + next session, countdown) — the Live-page Market
+ * Status widget. Polled on the same ~30s reconcile cadence; the widget interpolates the countdown locally
+ * once a second between polls so the "opens in Xh Ym" stays smooth.
+ */
+export function useMarketStatus() {
+  return useQuery({
+    queryKey: queryKeys.marketStatus(),
+    queryFn: fetchMarketStatus,
     refetchInterval: RECONCILE_MS,
   });
 }
