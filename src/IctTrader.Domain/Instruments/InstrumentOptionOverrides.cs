@@ -86,6 +86,13 @@ public sealed record InstrumentOptionOverrides
     /// 7-condition set here. A per-run backtest subset still wins. Sourced from config (<c>Ict:Instruments</c>).</summary>
     public IReadOnlyList<ConfluenceCondition>? RequiredConditions { get; init; }
 
+    /// <summary>The per-instrument HTF daily-bias gate (<c>DailyBiasOptions.RequireReferenceOpenAgreement</c>) — when set,
+    /// this symbol additionally requires the entry price to agree with the day's reference-open bias (the web #1
+    /// win-rate filter). <c>null</c> = inherit the global default (off). A TUNING value, not an ICT rule: sourced from
+    /// config (<c>Ict:Instruments</c>) / the live Settings store, so an operator can require it on the pairs where a
+    /// backtest shows the open-reference confluence meaningfully diverges from the gates, while keeping it off globally.</summary>
+    public bool? RequireReferenceOpenAgreement { get; init; }
+
     /// <summary>The no-override sentinel — FX carries this so its option POCOs are returned unchanged (byte-identical).</summary>
     public static InstrumentOptionOverrides None { get; } = new();
 
@@ -112,6 +119,7 @@ public sealed record InstrumentOptionOverrides
             UseMacroOpenReference = other.UseMacroOpenReference ?? UseMacroOpenReference,
             MinRequiredConditions = other.MinRequiredConditions ?? MinRequiredConditions,
             RequiredConditions = other.RequiredConditions ?? RequiredConditions,
+            RequireReferenceOpenAgreement = other.RequireReferenceOpenAgreement ?? RequireReferenceOpenAgreement,
         };
     }
 }

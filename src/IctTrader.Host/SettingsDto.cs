@@ -15,14 +15,16 @@ public sealed record InstrumentSettingsDto(
     IReadOnlyList<string>? RequiredConditions = null,
     decimal? MinStopDistancePips = null,
     decimal? SpreadBasePips = null,
-    decimal? CommissionPerLotRoundTripUsd = null)
+    decimal? CommissionPerLotRoundTripUsd = null,
+    bool? RequireReferenceOpenAgreement = null)
 {
     public static InstrumentSettingsDto From(InstrumentOptionOverrides overrides) => new(
         overrides.MinRequiredConditions,
         overrides.RequiredConditions?.Select(c => c.ToString()).ToArray(),
         overrides.MinStopDistancePips,
         overrides.SpreadBasePips,
-        overrides.CommissionPerLotRoundTripUsd);
+        overrides.CommissionPerLotRoundTripUsd,
+        overrides.RequireReferenceOpenAgreement);
 
     /// <summary>Maps to the domain override (parsing the condition names); throws <see cref="ArgumentException"/> on an
     /// unknown condition name.</summary>
@@ -33,6 +35,7 @@ public sealed record InstrumentSettingsDto(
         MinStopDistancePips = MinStopDistancePips,
         SpreadBasePips = SpreadBasePips,
         CommissionPerLotRoundTripUsd = CommissionPerLotRoundTripUsd,
+        RequireReferenceOpenAgreement = RequireReferenceOpenAgreement,
     };
 
     private static IReadOnlyList<ConfluenceCondition>? ParseConditions(IReadOnlyList<string>? names)

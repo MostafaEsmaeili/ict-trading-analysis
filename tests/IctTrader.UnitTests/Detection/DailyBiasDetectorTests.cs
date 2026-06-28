@@ -201,6 +201,17 @@ public class DailyBiasDetectorTests
     }
 
     [Fact]
+    public void Per_instrument_override_can_enable_the_gate_for_one_symbol()
+    {
+        // None (FX) leaves the global default (off) unchanged → byte-identical; a per-instrument override turns it on.
+        new DailyBiasOptions().WithInstrumentOverrides(IctTrader.Domain.Instruments.InstrumentOptionOverrides.None)
+            .RequireReferenceOpenAgreement.Should().BeFalse();
+        new DailyBiasOptions().WithInstrumentOverrides(
+                new IctTrader.Domain.Instruments.InstrumentOptionOverrides { RequireReferenceOpenAgreement = true })
+            .RequireReferenceOpenAgreement.Should().BeTrue();
+    }
+
+    [Fact]
     public void Gate_match_is_consistent_with_the_open_price_reference_confluence()
     {
         // Whenever the gate matches, the existing OpenPriceReference scorer matches the same direction on the same

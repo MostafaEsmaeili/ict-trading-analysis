@@ -48,6 +48,7 @@ public static class IctOptionsRegistration
             .AddIctOptions<ConfluenceOptions>(config, ConfluenceOptions.SectionName, o => o.Validate())
             .AddIctOptions<MarketContextOptions>(config, MarketContextOptions.SectionName, o => o.Validate())
             .AddIctOptions<SetupCandidateOptions>(config, SetupCandidateOptions.SectionName, o => o.Validate())
+            .AddIctOptions<SilverBulletOptions>(config, SilverBulletOptions.SectionName, o => o.Validate())
             .AddIctOptions<TradeStyleOptions>(config, TradeStyleOptions.SectionName, o => o.Validate())
             // Detection
             .AddIctOptions<DisplacementOptions>(config, DisplacementOptions.SectionName, o => o.Validate())

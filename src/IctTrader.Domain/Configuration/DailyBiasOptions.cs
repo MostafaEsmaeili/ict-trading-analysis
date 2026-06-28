@@ -1,3 +1,4 @@
+using IctTrader.Domain.Instruments;
 using IctTrader.Domain.MarketStructure;
 
 namespace IctTrader.Domain.Configuration;
@@ -34,6 +35,25 @@ public sealed class DailyBiasOptions
     /// and no reference open is captured yet it withholds (fail-CLOSED — the conservative choice for an opted-in gate).</para>
     /// </summary>
     public bool RequireReferenceOpenAgreement { get; init; }
+
+    /// <summary>
+    /// Returns a copy with the per-instrument HTF-bias-gate override applied where present (only
+    /// <see cref="RequireReferenceOpenAgreement"/> here). A <see cref="InstrumentOptionOverrides.None"/> / FX bundle
+    /// (null field) leaves every value unchanged, so the FX/global path stays byte-identical. All other bias knobs
+    /// (equilibrium, consecutive-close) are instrument-agnostic and unchanged.
+    /// </summary>
+    public DailyBiasOptions WithInstrumentOverrides(InstrumentOptionOverrides overrides)
+    {
+        ArgumentNullException.ThrowIfNull(overrides);
+        return new DailyBiasOptions
+        {
+            EquilibriumPercent = EquilibriumPercent,
+            RequireConsecutiveCloseConfirmation = RequireConsecutiveCloseConfirmation,
+            ConsecutiveCloseCount = ConsecutiveCloseCount,
+            RequireReferenceOpenAgreement =
+                overrides.RequireReferenceOpenAgreement ?? RequireReferenceOpenAgreement,
+        };
+    }
 
     public IReadOnlyList<string> Validate()
     {

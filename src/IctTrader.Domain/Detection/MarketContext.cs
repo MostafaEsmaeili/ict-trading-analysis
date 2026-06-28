@@ -63,6 +63,10 @@ public sealed class MarketContext
     /// <see cref="Session"/> — so an exclusion can classify from the FVG's own formation time, not the latest candle.</summary>
     public Killzone KillzoneAt(DateTimeOffset utc) => _killzoneClock.Classify(utc, InstrumentClass).Killzone;
 
+    /// <summary>The New-York time-of-day at a specific UTC, on the one DST-aware path (the Silver-Bullet macro overlay
+    /// reads this to test whether a candle falls inside an enabled macro window). Mirrors <see cref="KillzoneAt"/>.</summary>
+    public TimeOnly NewYorkTimeOfDay(DateTimeOffset utc) => _killzoneClock.NewYorkTimeOfDay(utc);
+
     /// <summary>The current daily bias; null means NEUTRAL (no trade).</summary>
     public Direction? Bias { get; private set; }
 

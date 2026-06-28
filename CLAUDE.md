@@ -1376,3 +1376,41 @@ Intraday, strict §2.5** (PF 1.97, best FX); USD/JPY → **M5, drop-FvgPresent 7
 drop-FvgPresent 7-of-8** (PF 1.80, baked, index AM killzone); GBP/USD → M15 strict (PF ~1.18, marginal); AUD/USD strict
 (PF 0.60, weak); SPX500/ES + XAU/USD sparse/secondary. All optima are **Intraday**; Swing/Position strict yield 0 trades.
 Recommended next: enable `Ict:Risk:DailyGuard` + (per-pair) `RequireReferenceOpenAgreement`, then re-run the optimizer.
+
+**🏁 Silver Bullet macro overlay + per-instrument HTF-bias-gate exposure (same session, same branch, all gates green).**
+Completing the operator's 4-item "make it perfect" set. Suite **784 unit + 23 arch**, 0 warnings, `dotnet format` clean;
+frontend typecheck + lint + **78 vitest** + production build green. Both ict-domain-expert spec'd; ict-conformance PASS;
+guardrail + pr-reviewer run.
+
+- **Silver Bullet macro overlay (`Ict:Scanning:SilverBullet`, default OFF)** — an OPT-IN, NON-classifying time-of-day
+  narrowing of the §2.5.2 `KillzoneEntry` RequiredCondition (NOT a new killzone — the frozen `Killzone` enum +
+  single-classification + `LondonClose`-already-10–11 made a `SilverBullet` member collide, so the spec chose an overlay).
+  New `SilverBulletOptions` (`ResolvedMacroWindows` default = the canonical 10:00–11:00 NY AM macro; 03–04 / 14–15 are
+  opt-in); `KillzoneEntryDetector` takes an optional 2nd ctor arg and, when Enabled, AND-requires
+  `context.NewYorkTimeOfDay(candle)` ∈ an enabled macro window (an INTERSECTION — never opens a disabled killzone), else
+  NoMatch + an `EvidenceKeys.SilverBulletMacro` evidence tag. **NO new `ConfluenceCondition` → Σ=9.75 untouched.** New
+  `MarketContext.NewYorkTimeOfDay` passthrough (the one DST-aware `NyClock` path). **PROVENANCE: the named "Silver Bullet"
+  is NOT in the 2022 Mentorship (only the idiom — Ep10/Ep19); Ep17 actually stops FX entries at 10:00 and treats 10–11 as
+  LondonClose (FX) / the tail of IndexAm 08:30–11:00 (index) — every SB window is flagged Primer/community.** For an INDEX
+  the overlay NARROWS IndexAm to the macro (10:00–10:40 after the existing 10:40 cutoff); for FX the 10–11 macro needs
+  `LondonClose` in the active hunt-set. Wired through `ScannerOptions` (new required field) / `SymbolScanner` /
+  `SymbolScannerFactory` / `IctOptionsRegistration` / `appsettings`. Default-off → byte-identical (the existing
+  single-arg `KillzoneEntryDetector` ctor is unchanged; existing tests untouched).
+
+- **Per-instrument HTF-bias-gate override** — `InstrumentOptionOverrides.RequireReferenceOpenAgreement` (bool?) +
+  `DailyBiasOptions.WithInstrumentOverrides` (mirrors `RiskOptions`), applied in `ScannerOptions.WithInstrumentOverrides`
+  (the seam already resolves MarketContext/Liquidity/Fvg/Draw/Confluence per-instrument — DailyBias now joins). So an
+  operator can require the HTF daily-bias agreement on the pairs where a backtest shows the `OpenPriceReference`
+  confluence diverges from the gates, while keeping it OFF globally (strict §2.5 default). Exposed end-to-end on the LIVE
+  surface: `Host/SettingsDto.cs` (`InstrumentSettingsDto.RequireReferenceOpenAgreement` + From/To mapping) → `GET/PUT
+  /api/settings/instruments/{symbol}` → the React Settings page (a "Require HTF daily-bias agreement" checkbox;
+  `types/api.ts` + `SettingsPage.tsx`). It rides the existing revision-stamped `RuntimeSettings` + cache-eviction seam, so
+  it's live (no restart). Bindable from `Ict:Instruments:Overrides:<sym>:RequireReferenceOpenAgreement` too.
+
+- **Per-asset tuned defaults (the 4th item) — VERIFIED, not re-baked.** The documented optima are already the live
+  defaults (`Ict:Instruments`: NAS100USD + USDJPY = drop-FvgPresent 7-of-8; EURUSD/GBPUSD = strict). No fresh OANDA data
+  was reachable this session to RE-tune, so no numbers were fabricated; the new per-instrument bias-gate knob is the
+  MECHANISM to bake a per-pair HTF-bias result once the operator re-runs the optimizer on real data.
+
+**Env note (unchanged): build/test ran in the `mcr.microsoft.com/dotnet/sdk:10.0` Docker image (.NET SDK hosts 403);
+GitHub push works only via a user-supplied write token (the read-only integration 403s on push + MCP create_branch).**

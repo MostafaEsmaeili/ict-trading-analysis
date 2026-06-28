@@ -295,6 +295,7 @@ function InstrumentOverrideForm({
   const [commission, setCommission] = useState(() =>
     initial?.commissionPerLotRoundTripUsd != null ? String(initial.commissionPerLotRoundTripUsd) : '',
   );
+  const [htfBias, setHtfBias] = useState<boolean>(() => initial?.requireReferenceOpenAgreement ?? false);
   const [localError, setLocalError] = useState('');
 
   function toggleCondition(c: string): void {
@@ -320,6 +321,8 @@ function InstrumentOverrideForm({
       minStopDistancePips: toNumberOrNull(minStop),
       spreadBasePips: toNumberOrNull(spread),
       commissionPerLotRoundTripUsd: toNumberOrNull(commission),
+      // Checked = require the HTF daily-bias agreement for this symbol; unchecked = inherit the global default (off).
+      requireReferenceOpenAgreement: htfBias ? true : null,
     };
     update.mutate({ symbol, body }, { onSuccess: onMutated });
   }
@@ -370,6 +373,17 @@ function InstrumentOverrideForm({
         value={commission}
         onChange={setCommission}
       />
+
+      <label className="form__field form__field--check">
+        <input
+          type="checkbox"
+          checked={htfBias}
+          onChange={(e) => setHtfBias(e.target.checked)}
+        />
+        <span title="Require the entry to agree with the day's reference-open bias (the HTF daily-bias filter) for this symbol. Unchecked inherits the global default.">
+          Require HTF daily-bias agreement
+        </span>
+      </label>
 
       <div className="form__actions">
         <button type="submit" className="btn btn--primary" disabled={update.isPending || !symbol}>

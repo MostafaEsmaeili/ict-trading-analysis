@@ -70,4 +70,81 @@ public class KillzoneEntryDetectorTests
     [Fact]
     public void Default_configuration_validates_clean()
         => new KillzoneEntryOptions().Validate().Should().BeEmpty();
+
+    // ---- Silver-Bullet macro overlay (opt-in, narrows the KillzoneEntry gate) --------------------------------
+
+    private static DetectorResult DetectSb(KillzoneEntryOptions options, SilverBulletOptions sb, DateTimeOffset openUtc)
+    {
+        var ctx = NewContext();
+        var candle = CandleAt(openUtc);
+        ctx.Append(candle);
+        return new KillzoneEntryDetector(options, sb).Detect(ctx, candle);
+    }
+
+    // EDT (UTC-4): 14:30 UTC = 10:30 NY (inside the 10:00–11:00 Silver Bullet, classifies as LondonClose for FX);
+    // 14:00 UTC = 10:00 NY (inclusive macro start); 12:30 UTC = 08:30 NY (inside NewYorkOpen, OUTSIDE the macro).
+    private static readonly DateTimeOffset SbMacro1030 = new(2024, 7, 1, 14, 30, 0, TimeSpan.Zero);
+    private static readonly DateTimeOffset SbMacroStart1000 = new(2024, 7, 1, 14, 0, 0, TimeSpan.Zero);
+    private static readonly DateTimeOffset NyOpen0830 = new(2024, 7, 1, 12, 30, 0, TimeSpan.Zero);
+
+    private static readonly SilverBulletOptions SbOn = new() { Enabled = true };
+    private static readonly KillzoneEntryOptions WithLondonClose =
+        new() { ActiveKillzones = [Killzone.LondonOpen, Killzone.NewYorkOpen, Killzone.LondonClose] };
+
+    [Fact]
+    public void Silver_bullet_defaults_are_off_and_the_canonical_10_to_11_macro()
+    {
+        var defaults = new SilverBulletOptions();
+        defaults.Enabled.Should().BeFalse();
+        defaults.ResolvedMacroWindows.Should().ContainSingle()
+            .Which.Should().Be(new SessionWindow(new TimeOnly(10, 0), new TimeOnly(11, 0)));
+        defaults.Validate().Should().BeEmpty();
+        new SilverBulletOptions { MacroWindows = null! }.Validate().Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public void Off_by_default_the_overlay_is_a_no_op()
+        // SB disabled: an in-killzone-but-off-macro candle (08:30 NY, NewYorkOpen) still matches — byte-identical.
+        => DetectSb(new KillzoneEntryOptions(), new SilverBulletOptions(), NyOpen0830).Matched.Should().BeTrue();
+
+    [Fact]
+    public void On_inside_the_macro_and_an_active_killzone_matches()
+    {
+        var result = DetectSb(WithLondonClose, SbOn, SbMacro1030);
+
+        result.Matched.Should().BeTrue();
+        result.Evidence.Should().ContainKey(EvidenceKeys.SilverBulletMacro);
+    }
+
+    [Fact]
+    public void On_the_inclusive_macro_start_matches()
+        => DetectSb(WithLondonClose, SbOn, SbMacroStart1000).Matched.Should().BeTrue();
+
+    [Fact]
+    public void On_inside_an_active_killzone_but_outside_the_macro_is_withheld()
+        // 08:30 NY is inside the default NewYorkOpen killzone but OUTSIDE the 10–11 macro -> the overlay NARROWS it out.
+        => DetectSb(new KillzoneEntryOptions(), SbOn, NyOpen0830).Should().Be(DetectorResult.NoMatch);
+
+    [Fact]
+    public void On_the_overlay_cannot_bypass_the_killzone_hunt_set()
+        // 10:30 NY is in the macro AND in LondonClose, but LondonClose is NOT in the default active set -> still NoMatch
+        // (AND-semantics: the SB narrows an active killzone, it never opens a disabled one).
+        => DetectSb(new KillzoneEntryOptions(), SbOn, SbMacro1030).Should().Be(DetectorResult.NoMatch);
+
+    [Fact]
+    public void On_with_multiple_macros_matches_inside_any_of_them()
+    {
+        var sb = new SilverBulletOptions
+        {
+            Enabled = true,
+            MacroWindows =
+            [
+                new SessionWindow(new TimeOnly(3, 0), new TimeOnly(4, 0)),
+                new SessionWindow(new TimeOnly(10, 0), new TimeOnly(11, 0)),
+                new SessionWindow(new TimeOnly(14, 0), new TimeOnly(15, 0)),
+            ],
+        };
+
+        DetectSb(WithLondonClose, sb, SbMacro1030).Matched.Should().BeTrue();
+    }
 }

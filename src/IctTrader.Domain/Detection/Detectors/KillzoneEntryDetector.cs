@@ -13,11 +13,14 @@ namespace IctTrader.Domain.Detection.Detectors;
 public sealed class KillzoneEntryDetector : ISetupDetector
 {
     private readonly KillzoneEntryOptions _options;
+    private readonly SilverBulletOptions _silverBullet;
 
-    public KillzoneEntryDetector(KillzoneEntryOptions options)
+    public KillzoneEntryDetector(KillzoneEntryOptions options, SilverBulletOptions? silverBullet = null)
     {
         ArgumentNullException.ThrowIfNull(options);
         _options = options;
+        // The Silver-Bullet macro overlay is OPTIONAL: when unwired (or disabled) the gate is byte-identical to today.
+        _silverBullet = silverBullet ?? new SilverBulletOptions();
     }
 
     public ConfluenceCondition? Condition => ConfluenceCondition.KillzoneEntry;
@@ -36,6 +39,20 @@ public sealed class KillzoneEntryDetector : ISetupDetector
         {
             [EvidenceKeys.Killzone] = session.Killzone.ToString(),
         };
+
+        // Silver-Bullet macro overlay (opt-in): NARROW the already-active killzone to an enabled macro window (an
+        // INTERSECTION, never a widening — the killzone check above still gates). For an index this trims IndexAm to
+        // the macro; for FX it trims LondonClose. Off by default → no-op. Adds no ConfluenceCondition weight (Σ=9.75).
+        if (_silverBullet.Enabled)
+        {
+            var nyTime = context.NewYorkTimeOfDay(current.OpenTimeUtc);
+            if (!_silverBullet.ContainsMacro(nyTime))
+            {
+                return DetectorResult.NoMatch; // in an active killzone, but OUTSIDE every enabled Silver-Bullet macro
+            }
+
+            evidence[EvidenceKeys.SilverBulletMacro] = nyTime.ToString("HH:mm");
+        }
 
         return DetectorResult.Match(
             direction: null, keyLevel: null, ReasonFragments.KillzoneEntry(session.Killzone), evidence);

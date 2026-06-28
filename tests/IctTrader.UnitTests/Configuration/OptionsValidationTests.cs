@@ -41,6 +41,7 @@ public class OptionsValidationTests
         new CleanPriceActionOptions().Validate().Should().BeEmpty();
         new CalendarDriverOptions().Validate().Should().BeEmpty();
         new DailyRiskGuardOptions().Validate().Should().BeEmpty();
+        new SilverBulletOptions().Validate().Should().BeEmpty();
     }
 
     [Fact]
