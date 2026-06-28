@@ -1296,3 +1296,28 @@ no restart) is where the operator dials per-instrument k-of-n / required-subset 
 **CONVENTION (web research under rate-limit):** the `deep-research` workflow uses WebFetch, which the platform sometimes
 429s ("Server is temporarily limiting requests"); when it returns 0 sources, fall back to a **WebSearch-only** research
 workflow (snippets are detailed enough to cite) — and the repo's own transcripts are the PRIMARY ICT source regardless.
+
+**🏁 Single-origin deploy + Live-page chart/market-status/responsive UX (issues #177/#179, PRs #178/#180 → merged).**
+The system is deployable as ONE self-contained instance at a single URL, with the Live chart rendering + a market-session
+widget. 753 unit + 23 arch, 0 warnings, format clean; FE typecheck/lint clean, 78 vitest, build green; render-verified at
+1480px + 760px.
+- **Single-origin deploy (#178):** `Program.cs` `UseDefaultFiles()/UseStaticFiles()` + `MapFallbackToFile("index.html")`
+  (last; `/api/*`+`/hubs/*` win) so the Host serves the built SPA + API + SignalR on ONE port (no proxy/CORS). `wwwroot`
+  is gitignored (build artifact). **DEPLOY:** `docker compose up -d postgres`; migrate; `cd web/ict-dashboard &&
+  VITE_USE_MOCKS=false npm run build` then copy `dist/*`→`src/IctTrader.Host/wwwroot/`; run the Host (Release,`--no-build`)
+  with `ConnectionStrings__PaperTrading` + `Ict__Backtest__DataDirectory=<repo>/data` + Replay on
+  `data/EURUSD-M15-live.csv` on `--urls http://localhost:5080` → whole app at **http://localhost:5080**. (Local only; no
+  cloud Dockerfile yet.) Also fixed: **fetch-history mode crashed** (slice-1/2/3 GET endpoints need services not in that
+  mode) — it now boots the fetcher and `app.Run(); return;` BEFORE mapping the API.
+- **Live chart renders for ANY selected asset/TF (#180):** `GET /api/chart/{symbol}` falls back to recorded CSV history
+  (`ChartHistory`) when the live ring buffer has no candles for that (symbol,tf) — the feed only fills the scanned series,
+  so the chart was blank otherwise. The chart panel now fills its row height (the `.layout` grid row stretches).
+- **Market-status (#180):** `GET /api/market-status` (`MarketStatus.Compute`) — FX open/closed (Sun 17:00→Fri 17:00 ET,
+  weekend-aware), current ICT killzone session, and the next ACTIVE killzone open **while the market is open** (name +
+  minutes + NY start; closed weekend → next TRADEABLE session, e.g. "LondonOpen Mon 02:00"), DST-aware via `NyClock`. A
+  Live-page widget shows OPEN/CLOSED + session + a live next-open countdown.
+- **Responsive UX (#180):** Live grid reflows 3→2→1 col (`<1200`/`<860px`), chart fills, header wraps, nav/control polish.
+
+**CONVENTION (deploy / dev-server lifecycle):** launch the Host as a run_in_background task's MAIN command (not `dotnet
+run &` inside a script — that orphans it). Performance/alerts/chart read-models are IN-MEMORY (reset on Host restart; the
+account + trades persist in Postgres), so after a redeploy they repopulate as the replay re-runs.
