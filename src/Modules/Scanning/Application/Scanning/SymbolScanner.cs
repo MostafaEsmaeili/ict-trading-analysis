@@ -91,7 +91,7 @@ public sealed class SymbolScanner
                 resolvedOptions.TradeStyles,
                 resolvedOptions.Fvg,
                 resolvedOptions.SdProjection),
-            new KillzoneEntryDetector(resolvedOptions.KillzoneEntry),
+            new KillzoneEntryDetector(resolvedOptions.KillzoneEntry, resolvedOptions.SilverBullet),
             new CalendarGateDetector(resolvedOptions.Calendar),
             new OpenPriceReferenceDetector(resolvedOptions.OpenPriceReference),
             new MacroTimeDetector(nyClock, resolvedOptions.MacroTime),

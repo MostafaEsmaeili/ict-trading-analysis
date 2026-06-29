@@ -31,6 +31,11 @@ public sealed class ManagedPosition
         return new ManagedPosition(null, trade);
     }
 
+    /// <summary>No position — the §2.4/§2.5.5 daily risk guard declined to admit the setup (the day is halted). Nothing
+    /// was armed or opened and no risk was reserved; the setup stays a Grade-A advisory we simply did not act on. The
+    /// module handler persists/publishes nothing for it (see <see cref="IsSuppressed"/>).</summary>
+    public static ManagedPosition None { get; } = new(null, null);
+
     /// <summary>The resting limit, if this position armed. After it triggers or is cancelled, the reference is kept so
     /// its terminal event can be read — inspect its <see cref="ArmedEntry.Status"/>, not the reference, for the state.</summary>
     public ArmedEntry? Armed { get; private set; }
@@ -43,7 +48,12 @@ public sealed class ManagedPosition
     /// cancelled unfilled (and never produced a trade). The module handler stops advancing the position once this holds.</summary>
     public bool IsComplete =>
         Trade is { Status: TradeStatus.Closed }
-        || (Trade is null && Armed is { Status: ArmedEntryStatus.Cancelled });
+        || (Trade is null && Armed is { Status: ArmedEntryStatus.Cancelled })
+        || IsSuppressed;
+
+    /// <summary>True when the daily risk guard suppressed the setup — neither an armed limit nor a trade exists. The
+    /// handler treats this as a no-op (nothing to persist, no aggregate event to publish).</summary>
+    public bool IsSuppressed => Armed is null && Trade is null;
 
     /// <summary>True while a resting limit is still waiting for its retrace this candle.</summary>
     internal bool HasRestingEntry => Armed is { Status: ArmedEntryStatus.Armed };

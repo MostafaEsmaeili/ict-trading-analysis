@@ -48,6 +48,7 @@ public static class IctOptionsRegistration
             .AddIctOptions<ConfluenceOptions>(config, ConfluenceOptions.SectionName, o => o.Validate())
             .AddIctOptions<MarketContextOptions>(config, MarketContextOptions.SectionName, o => o.Validate())
             .AddIctOptions<SetupCandidateOptions>(config, SetupCandidateOptions.SectionName, o => o.Validate())
+            .AddIctOptions<SilverBulletOptions>(config, SilverBulletOptions.SectionName, o => o.Validate())
             .AddIctOptions<TradeStyleOptions>(config, TradeStyleOptions.SectionName, o => o.Validate())
             // Detection
             .AddIctOptions<DisplacementOptions>(config, DisplacementOptions.SectionName, o => o.Validate())
@@ -71,6 +72,7 @@ public static class IctOptionsRegistration
             .AddIctOptions<CalendarDriverOptions>(config, CalendarDriverOptions.SectionName, o => o.Validate())
             // Risk + execution
             .AddIctOptions<RiskOptions>(config, RiskOptions.SectionName, o => o.Validate())
+            .AddIctOptions<DailyRiskGuardOptions>(config, DailyRiskGuardOptions.SectionName, o => o.Validate())
             .AddIctOptions<ExecutionCostOptions>(config, ExecutionCostOptions.SectionName, o => o.Validate())
             .AddIctOptions<FillOptions>(config, FillOptions.SectionName, o => o.Validate())
             .AddIctOptions<ExitManagementOptions>(config, ExitManagementOptions.SectionName, o => o.Validate())

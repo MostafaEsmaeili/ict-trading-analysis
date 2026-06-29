@@ -32,7 +32,8 @@ public sealed class SetupConfirmedHandler(
     IArmedEntryRepository armedEntries,
     IPaperTradingUnitOfWork unitOfWork,
     IMessageBus bus,
-    IOptions<ConfluenceOptions> grading)
+    IOptions<ConfluenceOptions> grading,
+    IOptions<DailyRiskGuardOptions> dailyGuard)
     : IEventHandler<SetupConfirmed>
 {
     private readonly ITradeOrchestratorRegistry _registry =
@@ -56,6 +57,13 @@ public sealed class SetupConfirmedHandler(
 
     private readonly ConfluenceOptions _grading =
         (grading ?? throw new ArgumentNullException(nameof(grading))).Value;
+
+    private readonly DailyRiskGuardOptions _dailyGuard =
+        (dailyGuard ?? throw new ArgumentNullException(nameof(dailyGuard))).Value;
+
+    // Used ONLY for §2.1 NY-date timezone conversion of trade close times — the "now" comes from the setup's
+    // ConfirmedAtUtc, never an ambient clock, so NewYorkDate is a pure conversion independent of the TimeProvider.
+    private readonly Domain.Sessions.NyClock _nyClock = new(TimeProvider.System);
 
     public async Task HandleAsync(SetupConfirmed @event, CancellationToken cancellationToken = default)
     {
@@ -81,11 +89,22 @@ public sealed class SetupConfirmedHandler(
         var symbolSpec = profile.SymbolSpec;
         var contractSpec = profile.ContractSpec;
 
+        // §2.4/§2.5.5 daily risk guard input (null when disabled): the account's net realized P&L over trades closed
+        // earlier on this NY trading day. A halted day makes OnSetupConfirmed return ManagedPosition.None below.
+        var dayRealizedPnl = await DayRealizedPnlAsync(setup.ConfirmedAtUtc, cancellationToken).ConfigureAwait(false);
+
         // The domain DECIDES: arm (reserve) or open (register) — both mutate the account ledger. The deterministic
         // seam id is threaded in so the opened/armed aggregate carries it (the idempotency key the guard above reads).
         var position = _registry
             .GetOrCreate(setup.Symbol)
-            .OnSetupConfirmed(setup, account, symbolSpec, contractSpec, setup.ConfirmedAtUtc, setupId);
+            .OnSetupConfirmed(setup, account, symbolSpec, contractSpec, setup.ConfirmedAtUtc, setupId, dayRealizedPnl);
+
+        if (position.IsSuppressed)
+        {
+            // The daily risk guard declined the day — nothing was armed/opened and no risk was reserved. The setup
+            // stays a graded advisory we simply did not act on; persist/publish nothing.
+            return;
+        }
 
         if (position.Trade is not null)
         {
@@ -106,5 +125,33 @@ public sealed class SetupConfirmedHandler(
         // Armed mode: a resting limit is reserved. No contract event yet — the open fires when a candle triggers it.
         await _armedEntries.AddAsync(position.Armed!, cancellationToken).ConfigureAwait(false);
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>The account's net realized P&amp;L over trades CLOSED on the same NY trading day as <paramref name="nowUtc"/>
+    /// (the §2.4/§2.5.5 daily risk guard input). Returns null when the guard is disabled so the unguarded path skips the
+    /// repo read entirely and stays byte-identical.</summary>
+    private async Task<Money?> DayRealizedPnlAsync(DateTimeOffset nowUtc, CancellationToken cancellationToken)
+    {
+        if (!_dailyGuard.Enabled)
+        {
+            return null;
+        }
+
+        var nyDate = _nyClock.NewYorkDate(nowUtc);
+        var closed = await _trades.GetClosedAsync(cancellationToken).ConfigureAwait(false);
+        var sum = 0m;
+        foreach (var trade in closed)
+        {
+            // No-look-ahead (§4.1): on a replay/backfill the repo can hold trades closed LATER on the same NY day; a
+            // trade that closed AFTER this setup's confirm time must not count toward its daily tally. Require closedAt
+            // ≤ nowUtc in addition to the NY-date match so the guard stays consistent across replays and restarts.
+            if (trade.ClosedAtUtc is { } closedAt && closedAt <= nowUtc
+                && _nyClock.NewYorkDate(closedAt) == nyDate && trade.NetPnl is { } pnl)
+            {
+                sum += pnl.Amount;
+            }
+        }
+
+        return new Money(sum);
     }
 }

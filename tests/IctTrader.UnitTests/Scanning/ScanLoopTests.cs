@@ -171,6 +171,7 @@ public class ScanLoopTests
             DrawOnLiquidity = new DrawOnLiquidityOptions(),
             SdProjection = new SdProjectionOptions(),
             KillzoneEntry = new KillzoneEntryOptions(),
+            SilverBullet = new SilverBulletOptions(),
             Calendar = new CalendarOptions(),
             TradeStyles = new TradeStyleOptions(),
             TargetLadder = new TargetLadderOptions(),

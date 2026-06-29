@@ -1,3 +1,4 @@
+using IctTrader.Domain.Instruments;
 using IctTrader.Domain.MarketStructure;
 
 namespace IctTrader.Domain.Configuration;
@@ -19,6 +20,40 @@ public sealed class DailyBiasOptions
     public bool RequireConsecutiveCloseConfirmation { get; init; }
 
     public int ConsecutiveCloseCount { get; init; } = 3;
+
+    /// <summary>
+    /// HTF daily-bias alignment (the web/community #1 win-rate filter — "a 5-minute entry must never contradict the
+    /// daily bias"). When ON, the required <see cref="IctTrader.Domain.Detection.ConfluenceCondition.BiasAligned"/>
+    /// match is ALSO gated on the confirming price being on the bias-correct side of the day's reference open (the
+    /// 00:00-NY midnight open, or the dual midnight/08:30 macro reference for an index) — bearish wants price ABOVE the
+    /// open (the Judas premium), bullish BELOW it. It reuses the SAME <see cref="IctTrader.Domain.Detection.MarketContext.ReferenceOpen(bool)"/>
+    /// the optional <see cref="IctTrader.Domain.Detection.ConfluenceCondition.OpenPriceReference"/> scorer reads, so the
+    /// two can never disagree — this STRENGTHENS the existing dealing-range bias rather than adding a parallel gate.
+    /// <para>OFF by default — a deliberate §2.5.10 strengthening (TIME-10-derived), opt-in + per-instrument tunable, so
+    /// the strict §2.5 default path stays byte-identical. It only WITHHOLDS the match (Σ=9.75 untouched); the detector
+    /// still SETS <c>ctx.Bias</c> regardless, so the MSS lock / PD veto / Judas read downstream are unaffected. When ON
+    /// and no reference open is captured yet it withholds (fail-CLOSED — the conservative choice for an opted-in gate).</para>
+    /// </summary>
+    public bool RequireReferenceOpenAgreement { get; init; }
+
+    /// <summary>
+    /// Returns a copy with the per-instrument HTF-bias-gate override applied where present (only
+    /// <see cref="RequireReferenceOpenAgreement"/> here). A <see cref="InstrumentOptionOverrides.None"/> / FX bundle
+    /// (null field) leaves every value unchanged, so the FX/global path stays byte-identical. All other bias knobs
+    /// (equilibrium, consecutive-close) are instrument-agnostic and unchanged.
+    /// </summary>
+    public DailyBiasOptions WithInstrumentOverrides(InstrumentOptionOverrides overrides)
+    {
+        ArgumentNullException.ThrowIfNull(overrides);
+        return new DailyBiasOptions
+        {
+            EquilibriumPercent = EquilibriumPercent,
+            RequireConsecutiveCloseConfirmation = RequireConsecutiveCloseConfirmation,
+            ConsecutiveCloseCount = ConsecutiveCloseCount,
+            RequireReferenceOpenAgreement =
+                overrides.RequireReferenceOpenAgreement ?? RequireReferenceOpenAgreement,
+        };
+    }
 
     public IReadOnlyList<string> Validate()
     {

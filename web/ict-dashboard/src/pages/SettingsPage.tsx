@@ -295,6 +295,15 @@ function InstrumentOverrideForm({
   const [commission, setCommission] = useState(() =>
     initial?.commissionPerLotRoundTripUsd != null ? String(initial.commissionPerLotRoundTripUsd) : '',
   );
+  // Tri-state (the DTO field is nullable): inherit the global default (null), require for this symbol (true), or
+  // explicitly disable it for this symbol (false) — collapsing false→null would silently drop a per-symbol opt-out.
+  const [htfBias, setHtfBias] = useState<'inherit' | 'required' | 'disabled'>(() =>
+    initial?.requireReferenceOpenAgreement == null
+      ? 'inherit'
+      : initial.requireReferenceOpenAgreement
+        ? 'required'
+        : 'disabled',
+  );
   const [localError, setLocalError] = useState('');
 
   function toggleCondition(c: string): void {
@@ -320,6 +329,8 @@ function InstrumentOverrideForm({
       minStopDistancePips: toNumberOrNull(minStop),
       spreadBasePips: toNumberOrNull(spread),
       commissionPerLotRoundTripUsd: toNumberOrNull(commission),
+      // inherit → null (use the global default); required → true; disabled → false (explicit per-symbol opt-out).
+      requireReferenceOpenAgreement: htfBias === 'inherit' ? null : htfBias === 'required',
     };
     update.mutate({ symbol, body }, { onSuccess: onMutated });
   }
@@ -370,6 +381,22 @@ function InstrumentOverrideForm({
         value={commission}
         onChange={setCommission}
       />
+
+      <label className="form__field">
+        <span title="Require the entry to agree with the day's reference-open bias (the HTF daily-bias filter) for this symbol. 'Inherit' uses the global Ict:Detection:Bias default.">
+          HTF daily-bias agreement
+        </span>
+        <select
+          className="input"
+          aria-label="HTF daily-bias agreement"
+          value={htfBias}
+          onChange={(e) => setHtfBias(e.target.value as 'inherit' | 'required' | 'disabled')}
+        >
+          <option value="inherit">Inherit global default</option>
+          <option value="required">Require for this symbol</option>
+          <option value="disabled">Disable for this symbol</option>
+        </select>
+      </label>
 
       <div className="form__actions">
         <button type="submit" className="btn btn--primary" disabled={update.isPending || !symbol}>

@@ -197,6 +197,8 @@ export interface InstrumentSettingsDto {
   minStopDistancePips?: number | null;
   spreadBasePips?: number | null;
   commissionPerLotRoundTripUsd?: number | null;
+  /** HTF daily-bias gate: require the entry to agree with the day's reference-open bias (per-instrument). */
+  requireReferenceOpenAgreement?: boolean | null;
 }
 
 /**

@@ -43,6 +43,10 @@ public sealed record ScannerOptions
 
     public required KillzoneEntryOptions KillzoneEntry { get; init; }
 
+    /// <summary>The opt-in Silver-Bullet macro overlay that narrows the KillzoneEntry gate (instrument-agnostic — it
+    /// passes through <see cref="WithInstrumentOverrides"/> unchanged; default-off → byte-identical).</summary>
+    public required SilverBulletOptions SilverBullet { get; init; }
+
     public required CalendarOptions Calendar { get; init; }
 
     public required TradeStyleOptions TradeStyles { get; init; }
@@ -74,6 +78,9 @@ public sealed record ScannerOptions
             Liquidity = Liquidity.WithInstrumentOverrides(overrides),
             Fvg = Fvg.WithInstrumentOverrides(overrides),
             DrawOnLiquidity = DrawOnLiquidity.WithInstrumentOverrides(overrides),
+            // The per-instrument HTF daily-bias gate (RequireReferenceOpenAgreement); FX None leaves it at the global
+            // default (off, byte-identical).
+            DailyBias = DailyBias.WithInstrumentOverrides(overrides),
             // The per-instrument k-of-n relaxation (e.g. NAS100 → 6-of-8); FX None leaves it strict (byte-identical).
             Confluence = Confluence.WithInstrumentOverrides(overrides),
         };

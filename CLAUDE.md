@@ -1321,3 +1321,195 @@ widget. 753 unit + 23 arch, 0 warnings, format clean; FE typecheck/lint clean, 7
 **CONVENTION (deploy / dev-server lifecycle):** launch the Host as a run_in_background task's MAIN command (not `dotnet
 run &` inside a script — that orphans it). Performance/alerts/chart read-models are IN-MEMORY (reset on Host restart; the
 account + trades persist in Postgres), so after a redeploy they repopulate as the replay re-runs.
+
+**🏁 Senior-trader hardening — Daily Risk Guard + HTF daily-bias gate + ICT 2022 web research (this session, branch
+`claude/ict-mentorship-app-test-6y5mj7`, PUSHED — see the SESSION WRAP at the end for the final pushed state).** Driven by
+the operator's "make it perfect as a senior forex trader" + a fresh external-web deep-research pass. Suite **776 unit + 23 arch**, 0 warnings,
+`dotnet format` clean; guardrail **7/7 PASS**; both features spec'd by `ict-domain-expert` (transcript-cited) before build.
+
+- **Daily Risk Guard (§2.4/§2.5.5 circuit-breaker)** — the missing enforcement half of the loss model: the
+  `RiskManager` ladder sized DOWN but never HALTED. New pure `DailyRiskGuard`/`IDailyRiskGuard` (`Domain/Trading/`) stops
+  NEW entries for the rest of the NY day after N consecutive losses OR a realized daily-loss cap (Ep41 revenge/loser's-
+  cycle, Ep37 "stop pushing buttons", Ep18 "walk away"). NON-scoring (Σ=9.75 untouched), consulted by
+  `TradeOrchestrator.OnSetupConfirmed` → a halted day returns the new `ManagedPosition.None` (nothing armed/opened, no
+  risk reserved); it NEVER touches already-open/armed trades and adds no order path (guardrail-clean — only WITHHOLDS).
+  Loss = GROSS structural outcome (a cost-only scratch is a breakeven, mirroring `PaperAccount`); the cap is on NET
+  realized P&L; resets at 00:00 NY. The caller owns the per-day tally — wired into the live `SetupConfirmedHandler`
+  (repo `GetClosedAsync` filtered by NY date) AND the `BacktestEngine` (in-memory `closed` list). `DailyRiskGuardOptions`
+  (`Ict:Risk:DailyGuard`): **Enabled=false (config default → existing tests byte-identical), recommended-ON for
+  live/optimized**; thresholds are provenance-flagged community canon (N=3 = the 1%→0.5%→0.25% ladder exhausted; 2.0%
+  daily cap), not Mentorship-verbatim. The orchestrator's guard params are OPTIONAL (null tally → unguarded path
+  byte-identical), so all existing call sites compiled unchanged.
+
+- **HTF daily-bias gate (`DailyBiasOptions.RequireReferenceOpenAgreement`, default OFF)** — the web/community #1
+  win-rate filter ("a 5m entry must never contradict the daily bias"). The midnight-open agreement ALREADY existed as
+  the scored `OpenPriceReferenceDetector` (0.50); the spec's key insight = PROMOTE it into a gate, not add a new feed.
+  When ON, `DailyBiasDetector` ANDs `ReferenceOpen(premium)` agreement into the existing **`BiasAligned` (0.85)** match
+  (bearish wants price ABOVE the 00:00-NY/08:30 open, bullish BELOW) — reusing the SAME DST-correct state the scorer
+  reads, so the two can never contradict. STRENGTHENS the existing dealing-range bias (does NOT replace/duplicate);
+  Σ=9.75 intact (only WITHHOLDS the match); `ctx.Bias` is STILL set so the MSS lock / PD veto / Judas read are
+  unaffected; fail-CLOSED when no open is captured. Single-timeframe-safe (NO Daily feed). Settable globally via
+  `Ict:Detection:Bias`; **per-instrument exposure via `InstrumentOptionOverrides` + the live `RuntimeSettings` seam is
+  the documented follow-on.** Decisive recommendation before relying on it: measure (in a backtest) how often the
+  already-present `OpenPriceReference` confluence DIVERGES from the required gates — if ~0 it's redundant, if material it
+  genuinely tightens precision.
+
+- **External web research — `docs/ict-web-research-2026.md`** (NEW): a cited 5-angle WebSearch fan-out (≈55 queries,
+  WebFetch was egress-429'd so snippets sourced) on the ICT 2022 model, instruments/sessions/timeframes, risk +
+  management, A+ confluences, and a **balanced critique strand** (no independently verified ICT track record; edge comes
+  from selectivity + risk discipline, not the entry pattern; most public backtests are underpowered/regime-sensitive).
+  It confirms the engine's design intent (high-precision/low-recall ≈ ICT's "1–2 quality setups/day" norm) and ranks the
+  top quality levers: HTF daily-bias (built), risk discipline (built), LRLR-over-HRLR draws + SMT (follow-ons).
+
+**⚠️ ENVIRONMENT CONSTRAINTS this session (Claude Code on the web, read-only-GitHub sandbox):** (1) **OANDA + all free
+intraday data hosts (Yahoo, Stooq) are egress-policy 403-BLOCKED** — no fresh market data is reachable here, so NO new
+backtests were run this session; the per-asset findings below are from the PRIOR documented OANDA runs. (2) **The .NET
+SDK download hosts are 403** — the build/test loop runs inside the `mcr.microsoft.com/dotnet/sdk:10.0` **Docker** image
+(`--network host`, proxy + CA passed) since `mcr` + `nuget` ARE reachable; `dockerd` must be started manually with the
+proxy env. (3) **GitHub is READ-ONLY** — both `git push` (proxy 403) and the GitHub MCP `create_branch`/`push_files`
+(403 "Resource not accessible by integration") are denied, so the 2 commits are **LOCAL ONLY** (a patch is produced for
+the operator to apply + push). To finish: apply the patch on a machine with OANDA access + push perms, then run the
+optimizer to validate the HTF-bias gate + Daily Risk Guard on real data.
+
+**Per-asset best setups (from PRIOR documented OANDA full-history runs — NOT re-run this session):** EUR/USD → **M15
+Intraday, strict §2.5** (PF 1.97, best FX); USD/JPY → **M5, drop-FvgPresent 7-of-8** (PF 2.40, baked); NAS100 → **M5,
+drop-FvgPresent 7-of-8** (PF 1.80, baked, index AM killzone); GBP/USD → M15 strict (PF ~1.18, marginal); AUD/USD strict
+(PF 0.60, weak); SPX500/ES + XAU/USD sparse/secondary. All optima are **Intraday**; Swing/Position strict yield 0 trades.
+Recommended next: enable `Ict:Risk:DailyGuard` + (per-pair) `RequireReferenceOpenAgreement`, then re-run the optimizer.
+
+**🏁 Silver Bullet macro overlay + per-instrument HTF-bias-gate exposure (same session, same branch, all gates green).**
+Completing the operator's 4-item "make it perfect" set. Suite **784 unit + 23 arch**, 0 warnings, `dotnet format` clean;
+frontend typecheck + lint + **78 vitest** + production build green. Both ict-domain-expert spec'd; ict-conformance PASS;
+guardrail + pr-reviewer run.
+
+- **Silver Bullet macro overlay (`Ict:Scanning:SilverBullet`, default OFF)** — an OPT-IN, NON-classifying time-of-day
+  narrowing of the §2.5.2 `KillzoneEntry` RequiredCondition (NOT a new killzone — the frozen `Killzone` enum +
+  single-classification + `LondonClose`-already-10–11 made a `SilverBullet` member collide, so the spec chose an overlay).
+  New `SilverBulletOptions` (`ResolvedMacroWindows` default = the canonical 10:00–11:00 NY AM macro; 03–04 / 14–15 are
+  opt-in); `KillzoneEntryDetector` takes an optional 2nd ctor arg and, when Enabled, AND-requires
+  `context.NewYorkTimeOfDay(candle)` ∈ an enabled macro window (an INTERSECTION — never opens a disabled killzone), else
+  NoMatch + an `EvidenceKeys.SilverBulletMacro` evidence tag. **NO new `ConfluenceCondition` → Σ=9.75 untouched.** New
+  `MarketContext.NewYorkTimeOfDay` passthrough (the one DST-aware `NyClock` path). **PROVENANCE: the named "Silver Bullet"
+  is NOT in the 2022 Mentorship (only the idiom — Ep10/Ep19); Ep17 actually stops FX entries at 10:00 and treats 10–11 as
+  LondonClose (FX) / the tail of IndexAm 08:30–11:00 (index) — every SB window is flagged Primer/community.** For an INDEX
+  the overlay NARROWS IndexAm to the macro (10:00–10:40 after the existing 10:40 cutoff); for FX the 10–11 macro needs
+  `LondonClose` in the active hunt-set. Wired through `ScannerOptions` (new required field) / `SymbolScanner` /
+  `SymbolScannerFactory` / `IctOptionsRegistration` / `appsettings`. Default-off → byte-identical (the existing
+  single-arg `KillzoneEntryDetector` ctor is unchanged; existing tests untouched).
+
+- **Per-instrument HTF-bias-gate override** — `InstrumentOptionOverrides.RequireReferenceOpenAgreement` (bool?) +
+  `DailyBiasOptions.WithInstrumentOverrides` (mirrors `RiskOptions`), applied in `ScannerOptions.WithInstrumentOverrides`
+  (the seam already resolves MarketContext/Liquidity/Fvg/Draw/Confluence per-instrument — DailyBias now joins). So an
+  operator can require the HTF daily-bias agreement on the pairs where a backtest shows the `OpenPriceReference`
+  confluence diverges from the gates, while keeping it OFF globally (strict §2.5 default). Exposed end-to-end on the LIVE
+  surface: `Host/SettingsDto.cs` (`InstrumentSettingsDto.RequireReferenceOpenAgreement` + From/To mapping) → `GET/PUT
+  /api/settings/instruments/{symbol}` → the React Settings page (a "Require HTF daily-bias agreement" checkbox;
+  `types/api.ts` + `SettingsPage.tsx`). It rides the existing revision-stamped `RuntimeSettings` + cache-eviction seam, so
+  it's live (no restart). Bindable from `Ict:Instruments:Overrides:<sym>:RequireReferenceOpenAgreement` too.
+
+- **Per-asset tuned defaults (the 4th item) — VERIFIED, not re-baked.** The documented optima are already the live
+  defaults (`Ict:Instruments`: NAS100USD + USDJPY = drop-FvgPresent 7-of-8; EURUSD/GBPUSD = strict). No fresh OANDA data
+  was reachable this session to RE-tune, so no numbers were fabricated; the new per-instrument bias-gate knob is the
+  MECHANISM to bake a per-pair HTF-bias result once the operator re-runs the optimizer on real data.
+
+**Env note (unchanged): build/test ran in the `mcr.microsoft.com/dotnet/sdk:10.0` Docker image (.NET SDK hosts 403);
+GitHub push works only via a user-supplied write token (the read-only integration 403s on push + MCP create_branch).**
+
+**📊 REAL OANDA BACKTEST (fetched THIS session — egress policy changed mid-session, OANDA went 403→reachable).** Fetched 2
+years (2024-06→2026-06) of OANDA-practice mid candles for 8 datasets via a paginating fetcher → `data/*.csv`, then drove
+the in-memory `BacktestEngine` (Host in Docker, `/api/backtest`, no DB) at 1% risk, Intraday. **Baseline (live default
+config, all new features OFF):**
+
+| Asset | TF | setups | trades | win% | avgR | PF | maxDD | Notes |
+|---|---|---|---|---|---|---|---|---|
+| **NAS100USD** | M5 | 41 | 13 | 38% | **+0.46** | **1.83** | 3.0R | ⭐ best (baked drop-FVG 7-of-8) |
+| EURUSD | M15 | 12 | 4 | 50% | +0.13 | 1.31 | 1.0R | best FX (strict) |
+| GBPUSD | M15 | 12 | 2 | 50% | +0.01 | 1.07 | 0.4R | marginal |
+| EURUSD | M5 | 34 | 18 | 44% | −0.07 | 0.81 | 3.4R | losing |
+| USDJPY | M5 | 75 | 4 | 25% | −0.50 | 0.34 | 3.0R | losing (baseline) |
+| AUDUSD/SPX500/XAUUSD | — | — | 0–3 | — | — | ≤1.25 or fluke | too few trades |
+
+**Features-ON run (DailyGuard + HTF-bias gate enabled) — the key validation:** **USDJPY M5 FLIPPED loser→winner: PF
+0.34→1.94, +0.40R, 29% win, +$341** (the bias gate removed the bad trades); **NAS100 held PF 1.83 with lower drawdown
+(3.0R→2.0R)**; **EURUSD was OVER-filtered (12→5 setups, survivors were losers) → keep it strict.** This is the exact
+"enable the HTF-bias gate PER-PAIR where it diverges meaningfully" thesis — and the per-instrument override built this
+session is the mechanism (turn it ON for USDJPY, OFF for EURUSD). **The "few trades" finding is emphatically confirmed:
+0–18 trades/asset over 2 years (high-precision/low-recall by design).** Small samples are noisy (AUDUSD PF 5–7 on 2–3
+trades = fluke; trust only ≥~10-trade combos: NAS100, EURUSD-M5). **Best setup per asset (real data): NAS100USD M5 7-of-8
+(PF 1.83) · USDJPY M5 7-of-8 + HTF-bias ON (PF 1.94) · EURUSD M15 strict (PF 1.31, best FX).** Re-run the optimizer over
+the wider 2018→2026 history for the canonical bake (this window is only 2yr); `data/` stays gitignored.
+
+**📊📊 FULL-HISTORY k-of-n VALIDATION (OANDA 2018→2026, ~210k M15 / ~600k M5 candles — the robust retune) + NAS100 bake
+updated. THE 2-YEAR FINDINGS WERE LARGELY FLUKES.** Fetched the full history for the 5 candidates and swept
+MinRequiredConditions (k of 8). With 16–166-trade samples the picture INVERTS the 2-yr window on every pair except NAS100:
+- **EURUSD M15 → STRICT 8-of-8 wins: PF 2.20, +0.32R, 62% win, 16 trades** (relaxed k=7 → PF 1.42, k=6 → 1.30 — the 2-yr
+  "k=6 better" was small-sample noise). **Keep strict** (the live default).
+- **NAS100USD M5 → 6-of-8 wins decisively: PF 1.87, +0.40R, 37% win, 46 trades, ~1.9 setups/wk, +$617** — beats BOTH
+  strict-8 AND the prior drop-FvgPresent 7-subset (both PF 1.62). **BAKED: `Ict:Instruments:Overrides:NAS100USD` changed
+  from the drop-FVG `RequiredConditions` list to `MinRequiredConditions: 6`** (validated live: a default NAS100 backtest
+  now runs k=6). The one robust relaxation win — more trades AND better quality (the k-saturation floor at 6 keeps it from
+  garbage; DisplacementMss always gates).
+- **USDJPY M5 → keeps the drop-FVG 7-subset: PF 1.48, +0.24R, 54 trades** (= strict-8 on full history; relaxing to k=6
+  HURTS → PF 1.14). The 2-yr "needs the HTF-bias gate / losing PF 0.34" was the small window — full history strict is
+  already positive. Comment updated to the honest PF 1.48 (the prior "PF 2.40" was a 3-yr subwindow).
+- **GBPUSD M15 → weak everywhere (PF 0.95 strict / 0.99 k=7 / 1.06 k=6), EURUSD M5 ~breakeven (0.99/1.09).** No bake.
+
+**LESSON (now a hard convention): a 2-year backtest is NOT enough to bake a per-pair tuning — validate on the FULL
+2018→2026 history (100+ or at least ~15+ trades) first; small windows produce PF flukes (the EURUSD/GBPUSD/USDJPY 2-yr
+"wins" all evaporated).** Strict §2.5 holds up well on the robust sample (EURUSD M15 PF 2.20); broad relaxation mostly
+trades quality for frequency. Re-run `scratchpad/sweep_full.py` (or the optimizer) on refreshed data to retune.
+
+**On "few trades" (operator's Q):** the strict all-8 AND-gate IS the cause; relaxing k DOES raise frequency (EURUSD M15
+0.15→0.59 setups/wk at k=6; NAS100 0.31→1.88/wk) but usually LOWERS PF on FX — only NAS100 gets more-trades-AND-better.
+Research (docs note): ICT's own cadence is ~1–2 A+ setups/day, "no trade is a good trade", quality-over-quantity; the
+canonical lever for more statistical mass is MORE INSTRUMENTS + LOWER TIMEFRAMES (M1–M3 scalps run 10–15/wk), NOT
+loosening confluence — though the community does both. "1–2 quality trades/week" is the legitimate swing/A+ target.
+
+**🌐 FULL-UNIVERSE retune (10 instruments, OANDA 2018→2026 full history) — broadened toward 100+ trades + ALL validated
+per-pair winners BAKED.** Fetched the rest of Michael's named set (AUD/USD, USD/CAD, NZD/USD M15; SPX500/US30 M5; XAU/USD
+M15) and swept k-of-8 over the full history. **Aggregate 305 trades across the universe.** Picked by NET P&L (endingBalance after
+costs), NOT gross PF — a gross PF > 1 can still be a NET loss. Per-instrument best (full history), now all in
+`Ict:Instruments`:
+| Instrument | TF | baked k | PF | trades | NET |
+|---|---|---|---|---|---|
+| **EUR/USD** | M15 | strict 8 (no override) | **2.20** | 16 | +$96 |
+| **NZD/USD** | M15 | **7-of-8 (BAKED, new)** | **1.91** | 42 | +$86 |
+| **NAS100** | M5 | 6-of-8 (baked) | **1.87** | 45 | +$619 |
+| **USD/JPY** | M5 | drop-FVG (baked) | 1.48 | 54 | +$246 |
+| **USD/CAD** | M15 | **7-of-8 (BAKED, new)** | 1.19 | 59 | +$141 |
+| GBP/USD | M15 | strict (no override) | 0.95–1.06 | 21–64 | ≈breakeven (+$68 strict; relaxed net-loses) |
+| AUD/USD | M15 | strict (no bake) | ≤0.79 | 15 | net-negative |
+| SPX500 · US30 · XAU | M5/M15 | **0–7 trades** | — | — | — |
+
+**NZD/USD M15 7-of-8 (PF 1.91, 62% win, +$86) is the strongest NEW instrument; USD/CAD M15 7-of-8 (PF 1.19, +$141) the
+second** — both BAKED + verified live. **CRITICAL pick-metric lesson: USDCAD k=6 (gross PF 1.20) was a NET LOSS (−$44);
+USDCAD k=7 (PF 1.19) is +$141 net — pick by NET P&L, not gross PF.** GBP/USD is ≈breakeven in every config (strict is its
+net-best at +$68 — every relaxation net-loses), so it stays STRICT (no override). AUD/USD net-negative → strict. **XAU/USD (gold) + US30/Dow produced 0 trades
+— they are NOT in the pure-domain `InstrumentCatalog`, so they fall back to FX-major money geometry and mis-size to zero
+lots; adding gold + Dow `SymbolSpec`/`ContractSpec` profiles (like NAS100/SPX500) is a CODE follow-on before they can
+trade/be tuned** (flagged in appsettings). **A profitable ~1–2-quality-setups/week followable stream is now the default
+across {EURUSD, NZDUSD, NAS100, USDJPY, USDCAD} — all positive-expectancy on 16–62-trade full-history samples.** Re-run
+`scratchpad/sweep_all.py` on refreshed data to retune.
+
+**📌 SESSION WRAP — current operating state (branch `claude/ict-mentorship-app-test-6y5mj7`, all gates green, pushed).**
+This session, on top of the completed §2.5 model + runnable backend, added (each ict-domain-expert spec'd → built →
+ict-conformance PASS → guardrail 7/7 → pr-reviewer; **784 unit + 23 arch**, 0 warnings, `dotnet format` clean; FE
+typecheck/lint/build + 78 vitest):
+1. **Daily Risk Guard** (`Ict:Risk:DailyGuard`, default off) — stop-after-N-losses + daily-loss-cap halt.
+2. **HTF daily-bias gate** (`Ict:Detection:Bias:RequireReferenceOpenAgreement`, default off) + **per-instrument override**
+   (`InstrumentOptionOverrides` → live Settings page).
+3. **Silver Bullet macro overlay** (`Ict:Scanning:SilverBullet`, default off) — narrows KillzoneEntry to the 10–11 NY macro.
+4. **Two web-research docs** — `docs/ict-web-research-2026.md` (ICT 2022 model) + the trade-frequency findings in this file.
+5. **Real OANDA backtests** (token now reachable; full 2018→2026 history fetched for 10 instruments) → **net-validated
+   per-instrument bake** in `Ict:Instruments`: NAS100 6-of-8, USD/JPY drop-FVG, USD/CAD 7-of-8, NZD/USD 7-of-8 (EURUSD/
+   GBPUSD/AUD strict). **Live default is a net-profitable ~1–2 setups/wk stream across 5 instruments.**
+
+**CONVENTIONS added this session:** (a) validate a per-pair tuning on the FULL 2018→2026 history before baking (2-yr
+windows produce flukes); (b) pick the per-pair config by **NET P&L after costs**, never gross PF (a gross PF > 1 can net-
+lose). **Env:** build/test via the `mcr.microsoft.com/dotnet/sdk:10.0` Docker image (.NET SDK hosts 403, `mcr`+`nuget`
+reachable; `dockerd` started manually with the proxy + restarted on idle); OANDA + GitHub push both work only via a
+user-supplied token (the read-only integration 403s). `data/*.csv` (the fetched history) + `scratchpad/*` stay local.
+
+**OPEN follow-on (CODE, not config):** add gold (XAU/USD) + Dow (US30) `SymbolSpec`/`ContractSpec` profiles to the
+pure-domain `InstrumentCatalog` (mirror NAS100/SPX500) — without them both mis-size on FX geometry and produce 0 trades,
+so they can't yet trade or be tuned. Then re-run `scratchpad/sweep_all.py` to bake their best config.

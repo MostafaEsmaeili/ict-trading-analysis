@@ -21,6 +21,7 @@ public static class EvidenceKeys
     public const string Killzone = "killzone";
     public const string LunchBlocked = "lunchBlocked";
     public const string NoNewEntry = "noNewEntry";
+    public const string SilverBulletMacro = "silverBulletMacro";
 
     // Fair value gap
     public const string GapTopPrice = "gapTopPrice";

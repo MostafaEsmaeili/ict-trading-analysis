@@ -29,12 +29,16 @@ public sealed class TradeOrchestrator : ITradeOrchestrator
     private readonly IExitManager _exitManager;
     private readonly PaperTradeFactory _factory;
     private readonly EntryManagementOptions _entryOptions;
+    private readonly IDailyRiskGuard? _dailyRiskGuard;
+    private readonly DailyRiskGuardOptions? _dailyRiskGuardOptions;
 
     public TradeOrchestrator(
         IEntryManager entryManager,
         IExitManager exitManager,
         PaperTradeFactory factory,
-        EntryManagementOptions entryOptions)
+        EntryManagementOptions entryOptions,
+        IDailyRiskGuard? dailyRiskGuard = null,
+        DailyRiskGuardOptions? dailyRiskGuardOptions = null)
     {
         ArgumentNullException.ThrowIfNull(entryManager);
         ArgumentNullException.ThrowIfNull(exitManager);
@@ -44,17 +48,31 @@ public sealed class TradeOrchestrator : ITradeOrchestrator
         _exitManager = exitManager;
         _factory = factory;
         _entryOptions = entryOptions;
+        // The §2.4/§2.5.5 circuit-breaker is OPTIONAL: when unwired (or its options omitted) the guard is never
+        // consulted, so the orchestrator behaves exactly as before — every existing call site stays byte-identical.
+        _dailyRiskGuard = dailyRiskGuard;
+        _dailyRiskGuardOptions = dailyRiskGuardOptions;
     }
 
     public ManagedPosition OnSetupConfirmed(
         Setup setup, PaperAccount account, SymbolSpec symbolSpec, ContractSpec contractSpec, DateTimeOffset atUtc,
-        Guid setupId = default)
+        Guid setupId = default, Money? dayRealizedPnl = null)
     {
         ArgumentNullException.ThrowIfNull(setup);
         ArgumentNullException.ThrowIfNull(account);
         ArgumentNullException.ThrowIfNull(symbolSpec);
         ArgumentNullException.ThrowIfNull(contractSpec);
         Guard.Against(atUtc.Offset != TimeSpan.Zero, "TradeOrchestrator.OnSetupConfirmed time must be UTC.");
+
+        // §2.4/§2.5.5 daily risk guard (Ep41/Ep37/Ep18 discipline): once the day is halted (a run of losses or the
+        // realized daily-loss cap), decline NEW entries for the rest of the NY day — the setup stays a graded advisory
+        // we simply don't act on, so NO ArmedEntry/PaperTrade is created and NO risk is reserved against the cap. The
+        // caller owns the per-NY-day realized-P&L tally (and its 00:00-NY reset); a null tally skips the guard.
+        if (_dailyRiskGuard is not null && _dailyRiskGuardOptions is not null && dayRealizedPnl.HasValue
+            && !_dailyRiskGuard.Evaluate(account.RiskState, dayRealizedPnl.Value, _dailyRiskGuardOptions).EntriesAllowed)
+        {
+            return ManagedPosition.None;
+        }
 
         // EntryMode.Immediate opens at the plan entry now (§5.1); the default Armed rests a limit at the OTE/FVG level
         // and reserves its risk, waiting for the retrace (§2.5.1 step 7). Both reserve against the same portfolio cap.

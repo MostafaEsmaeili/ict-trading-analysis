@@ -20,10 +20,17 @@ public interface ITradeOrchestrator
     /// Turns a confirmed advisory setup into a managed position per the configured <c>EntryMode</c>. The optional
     /// <paramref name="setupId"/> (the deterministic <c>SetupDto.Id</c>) becomes the opened/armed aggregate id, so a
     /// redelivered/restart-re-streamed setup maps to the SAME id and the seam stays idempotent; default mints a fresh id.
+    /// <para>
+    /// When a <see cref="IDailyRiskGuard"/> is wired and enabled, <paramref name="dayRealizedPnl"/> (the account's net
+    /// realized P&amp;L so far on the current NY trading day, computed by the caller who owns the per-day tally + its
+    /// 00:00-NY reset) lets the §2.4/§2.5.5 circuit-breaker decline the setup: a halted day returns
+    /// <see cref="ManagedPosition.None"/> — nothing armed/opened, no risk reserved. Passing <c>null</c> (the default)
+    /// skips the guard entirely, so the unguarded path is byte-identical.
+    /// </para>
     /// </summary>
     ManagedPosition OnSetupConfirmed(
         Setup setup, PaperAccount account, SymbolSpec symbolSpec, ContractSpec contractSpec, DateTimeOffset atUtc,
-        Guid setupId = default);
+        Guid setupId = default, Money? dayRealizedPnl = null);
 
     /// <summary>Advances the position one candle, applying every decided entry/exit action and settling on close.</summary>
     ManagedPosition Advance(ManagedPosition position, PaperAccount account, Candle candle, DateTimeOffset barCloseUtc);
