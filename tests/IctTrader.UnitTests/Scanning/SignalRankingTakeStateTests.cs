@@ -82,6 +82,26 @@ public sealed class SignalRankingTakeStateTests
         signal.BlockReason.Should().Be("AlreadyTaken");
     }
 
+    [Fact]
+    public void Signals_that_tie_on_every_rank_key_are_ordered_deterministically_by_id()
+    {
+        // Three setups identical on grade/score/RR/TF/DetectedAtUtc (a perfect tie) but distinct ids, ADDED in reverse
+        // id order. The ranked feed must be a TOTAL order — stable by the deterministic SetupDto.Id — regardless of the
+        // store's enumeration order (otherwise equal-priority signals' relative rank would be non-deterministic).
+        var (service, store) = Build(provider: null);
+        var a = new Guid("00000000-0000-0000-0000-000000000001");
+        var b = new Guid("00000000-0000-0000-0000-000000000002");
+        var c = new Guid("00000000-0000-0000-0000-000000000003");
+        store.Add(Setup() with { Id = c }, Now);
+        store.Add(Setup() with { Id = b }, Now);
+        store.Add(Setup() with { Id = a }, Now);
+
+        var ranked = service.Top(Now);
+
+        ranked.Select(r => r.Setup.Id).Should().Equal(a, b, c);
+        ranked.Select(r => r.Rank).Should().Equal(1, 2, 3); // ranks stamped in that stable order
+    }
+
     private sealed class StubProvider(SignalTakeState state) : ISignalTakeStateProvider
     {
         public SignalTakeState DescribeFor(SetupDto setup, DateTimeOffset nowUtc) => state;

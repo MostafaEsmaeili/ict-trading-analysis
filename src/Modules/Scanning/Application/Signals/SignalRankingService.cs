@@ -71,7 +71,12 @@ public sealed class SignalRankingService
             .Where(s => style is null || string.Equals(s.Style, style, StringComparison.OrdinalIgnoreCase))
             .Select(ToRankable)
             .Where(r => r.HasValue && r.Value.Grade >= floor)
-            .Select(r => r!.Value);
+            .Select(r => r!.Value)
+            // Strict determinism: pre-order the input by the deterministic SetupDto.Id so the ranker's STABLE OrderBy
+            // chain yields a TOTAL order even for two signals that tie on every rank key (grade/score/RR/TF/recency) —
+            // e.g. two different symbols confirmed on the same bar-close. Without this their relative rank would depend
+            // on the store's enumeration order (non-deterministic). The Id is the deterministic per-setup hash.
+            .OrderBy(r => r.Payload.Id);
 
         var ranked = _ranker.Rank(candidates);
 
