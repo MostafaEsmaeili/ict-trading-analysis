@@ -1706,6 +1706,17 @@ test gaps); treats implausibly-good results as BUGS and BLOCKs on look-ahead/gua
   TakeMiss)` captures the reason BEFORE pruning (present-but-stale → Expired, absent → NotFound); `POST
   /api/signals/{id}/take` maps Expired + AlreadyTaken → **409**, unknown → **404** (ict-domain-expert S2). Loop continues on
   SAFE gated items; market-on-confirmation awaits approval.
+- **Round 4 — DONE & COMMITTED (905 unit, 0 warnings, format clean).** Ranked-feed strict determinism: two signals tying
+  on every rank key had a non-deterministic relative order (the ranker's stable chain fell back to store-enumeration
+  order). `SignalRankingService` now pre-orders the ranker input by the deterministic `SetupDto.Id` → the feed + its
+  SignalR push are reproducible. (pr-reviewer nit; no struct change.)
+- **🌅 LOOP CONVERGED on safe items (rounds 1–4 done; 6 local commits on `feature/#183-product-overhaul`, NOT pushed).**
+  The remaining backlog is either ENRICHMENTS (candle↔trade timeframe guard, symbol-scoped repo queries — real but minor,
+  better done with operator context) or the **headline frequency fix (correct market-on-confirmation entry) which is GATED
+  ON OPERATOR APPROVAL** (they explicitly chose FVG-edge over it). Per the loop's stop rule (safe backlog dry → summarize),
+  the autonomous loop winds down here. **MORNING TO-DO for the operator:** (1) approve the correct market-on-confirmation
+  entry (the one real lever for more trades — see `docs/ict-frequency-research-2026.md` §8); (2) push the branch / update PR
+  #184 when ready; (3) optionally let the loop resume on the enrichment backlog.
 
 **CONVENTIONS reaffirmed/added this session:** (a) "default to live" is satisfied by the multi-granularity capability +
 the operator's env-var run, NOT by flipping the committed `Provider` (keeps tokenless CI/dev boots + Host-booting tests
