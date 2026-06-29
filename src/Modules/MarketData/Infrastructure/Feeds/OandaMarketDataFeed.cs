@@ -109,7 +109,8 @@ public sealed class OandaMarketDataFeed : IMarketDataFeed
                 // hence the !IsCancellationRequested guard); a truncated/partial body (JsonException); or one
                 // malformed candle (FormatException). A genuine cooperative shutdown
                 // (cancellationToken.IsCancellationRequested) is EXCLUDED above and propagates, so a real stop
-                // still tears the loop down. (The backfill path stays fail-fast.)
+                // still tears the loop down. (The backfill path has its own bounded transient retry; see
+                // FetchBackfillCandlesAsync — a backtest still fails fast after the retries are exhausted.)
                 _logger.LogWarning(ex, "OANDA live poll failed transiently; retrying after {PollSeconds}s.", _options.PollSeconds);
                 continue;
             }
@@ -123,15 +124,36 @@ public sealed class OandaMarketDataFeed : IMarketDataFeed
         }
     }
 
-    /// <summary>Backfills <see cref="OandaFeedOptions.HistoryCount"/> candles per instrument, merged chronologically.</summary>
+    /// <summary>
+    /// Backfills <see cref="OandaFeedOptions.HistoryCount"/> candles per instrument, merged chronologically. Each
+    /// instrument's fetch retries <i>transient</i> failures (<see cref="OandaFeedOptions.BackfillMaxAttempts"/>) so a
+    /// flaky-egress blip during startup cannot leave the feed permanently dead. When live-streaming, an instrument
+    /// that is still unreachable after its retries is logged and SKIPPED (the remaining instruments stream live — one
+    /// bad symbol must not blank the whole chart); a finite BACKTEST keeps fail-fast so a data gap can never silently
+    /// corrupt a reproducible run.
+    /// </summary>
     private async Task<IReadOnlyList<(string Instrument, CandleDto Candle)>> FetchBackfillAsync(
         CancellationToken cancellationToken)
     {
         var merged = new List<(string Instrument, CandleDto Candle)>();
         foreach (var instrument in _options.ResolvedInstruments)
         {
-            var candles = await FetchCandlesAsync(instrument, _options.HistoryCount, cancellationToken)
-                .ConfigureAwait(false);
+            CandleDto[] candles;
+            try
+            {
+                candles = await FetchBackfillCandlesAsync(instrument, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (_options.LiveStreaming && IsTransientFetchFailure(ex, cancellationToken))
+            {
+                _logger.LogWarning(
+                    ex,
+                    "OANDA backfill skipped {Instrument} after {MaxAttempts} transient failures; the remaining " +
+                    "instruments stream live and the poll will retry it.",
+                    instrument,
+                    _options.BackfillMaxAttempts);
+                continue;
+            }
+
             foreach (var candle in candles)
             {
                 merged.Add((instrument, candle));
@@ -139,6 +161,66 @@ public sealed class OandaMarketDataFeed : IMarketDataFeed
         }
 
         return SortChronologically(merged);
+    }
+
+    /// <summary>
+    /// Fetches one instrument's backfill, retrying ONLY transient failures up to
+    /// <see cref="OandaFeedOptions.BackfillMaxAttempts"/> with a fixed <see cref="OandaFeedOptions.BackfillRetryDelaySeconds"/>
+    /// pause (driven by the injected <see cref="TimeProvider"/> so tests stay clock-free). A non-transient error
+    /// (auth/4xx) throws on the first attempt — a bad token fails fast, not after N retries.
+    /// </summary>
+    private async Task<CandleDto[]> FetchBackfillCandlesAsync(string instrument, CancellationToken cancellationToken)
+    {
+        var delay = TimeSpan.FromSeconds(_options.BackfillRetryDelaySeconds);
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                return await FetchCandlesAsync(instrument, _options.HistoryCount, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (Exception ex) when (
+                attempt < _options.BackfillMaxAttempts && IsTransientFetchFailure(ex, cancellationToken))
+            {
+                _logger.LogWarning(
+                    ex,
+                    "OANDA backfill for {Instrument} failed transiently on attempt {Attempt}/{MaxAttempts}; " +
+                    "retrying in {DelaySeconds}s.",
+                    instrument,
+                    attempt,
+                    _options.BackfillMaxAttempts,
+                    _options.BackfillRetryDelaySeconds);
+                await Task.Delay(delay, _timeProvider, cancellationToken).ConfigureAwait(false);
+            }
+        }
+    }
+
+    /// <summary>
+    /// True for a <i>transient</i> fetch failure that is worth retrying: a transport-level error (connection
+    /// refused/reset, DNS) which surfaces as an <see cref="HttpRequestException"/> with no <c>StatusCode</c>; an
+    /// HTTP 408/429/5xx; or an <see cref="HttpClient"/> request timeout (an <see cref="OperationCanceledException"/>
+    /// whose token is NOT our <paramref name="cancellationToken"/>). A genuine cooperative cancellation and any
+    /// auth/4xx (a bad token, an unknown instrument) are NOT transient — the caller fails fast.
+    /// </summary>
+    private static bool IsTransientFetchFailure(Exception ex, CancellationToken cancellationToken)
+    {
+        if (ex is OperationCanceledException)
+        {
+            return !cancellationToken.IsCancellationRequested;
+        }
+
+        if (ex is HttpRequestException http)
+        {
+            if (http.StatusCode is null)
+            {
+                return true;   // a transport/connection error (refused, reset) carries no HTTP status
+            }
+
+            var status = (int)http.StatusCode.Value;
+            return status is 408 or 429 || status >= 500;
+        }
+
+        return false;
     }
 
     /// <summary>Polls a small tail per instrument and keeps only candles strictly after the per-instrument watermark.</summary>

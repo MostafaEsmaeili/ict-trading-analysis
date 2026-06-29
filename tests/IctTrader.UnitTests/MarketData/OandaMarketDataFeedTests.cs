@@ -214,6 +214,114 @@ public class OandaMarketDataFeedTests
         handler.LastRequestUri!.Query.Should().Contain("from=").And.NotContain("count=");
     }
 
+    // ---- Backfill resilience (transient retry + live per-instrument skip; backtest stays fail-fast) ----
+
+    [Fact]
+    public async Task Backfill_retries_a_transient_connection_failure_then_succeeds()
+    {
+        // Attempt 1 throws a transport-level error (an HttpRequestException with no HTTP status — what a refused
+        // connection looks like); attempt 2 returns the body. Zero retry delay keeps the test clock-free.
+        var handler = new FakeOandaHandler((_, call) =>
+            call == 0 ? throw new HttpRequestException("connection refused") : Ok(TwoCandleJson));
+        var opts = ResilienceOptions(liveStreaming: false, instruments: ["EUR_USD"]);
+        var feed = new OandaMarketDataFeed(ClientFor(handler, opts), opts, TimeProvider.System);
+
+        var candles = new List<IctTrader.MarketData.Contracts.CandleDto>();
+        await foreach (var candle in feed.StreamCandlesAsync(CancellationToken.None))
+        {
+            candles.Add(candle);
+        }
+
+        candles.Should().HaveCount(2, "the transient first attempt is retried and the second succeeds");
+        handler.CallCount("EUR_USD").Should().Be(2);
+    }
+
+    [Fact]
+    public async Task Backfill_skips_a_persistently_failing_instrument_when_live_streaming()
+    {
+        // EUR_USD always refuses; GBP_USD always returns one candle. A LIVE feed must stream the healthy instrument
+        // rather than die because one symbol is unreachable after its retries.
+        var handler = new FakeOandaHandler((instrument, _) =>
+            instrument == "EUR_USD"
+                ? throw new HttpRequestException("connection refused")
+                : Ok(OneCandleJson("GBP_USD", "2024-07-01T07:00:00.000000000Z", "1.2710")));
+        var opts = ResilienceOptions(liveStreaming: true, instruments: ["EUR_USD", "GBP_USD"]);
+        // A FakeTimeProvider we never advance, so the post-backfill poll loop sits in its first Task.Delay forever
+        // and we assert purely the backfill outcome.
+        var fake = new FakeTimeProvider(new DateTimeOffset(2024, 7, 1, 7, 0, 0, TimeSpan.Zero));
+        var feed = new OandaMarketDataFeed(ClientFor(handler, opts), opts, fake);
+
+        var collected = new ConcurrentQueue<IctTrader.MarketData.Contracts.CandleDto>();
+        using var cts = new CancellationTokenSource();
+        var pump = Task.Run(async () =>
+        {
+            await foreach (var candle in feed.StreamCandlesAsync(cts.Token).ConfigureAwait(false))
+            {
+                collected.Enqueue(candle);
+            }
+        });
+
+        await WaitForCountAsync(collected, 1);   // GBP_USD's backfill candle arrives; EUR_USD was skipped, no crash
+        cts.Cancel();
+        try { await pump; } catch (OperationCanceledException) { /* expected shutdown */ }
+
+        collected.Should().ContainSingle();
+        collected.Single().Symbol.Should().Be("GBPUSD");
+        handler.CallCount("EUR_USD").Should().Be(2, "the bad instrument exhausts its 2 attempts then is skipped");
+    }
+
+    [Fact]
+    public async Task Backfill_fails_fast_for_a_backtest_when_an_instrument_stays_unreachable()
+    {
+        // LiveStreaming off (a finite backtest): a transient failure that never clears must surface after the
+        // retries so a reproducible run never proceeds on partial/missing data.
+        var handler = new FakeOandaHandler((_, _) => throw new HttpRequestException("connection refused"));
+        var opts = ResilienceOptions(liveStreaming: false, instruments: ["EUR_USD"]);
+        var feed = new OandaMarketDataFeed(ClientFor(handler, opts), opts, TimeProvider.System);
+
+        var act = async () =>
+        {
+            await foreach (var _ in feed.StreamCandlesAsync(CancellationToken.None))
+            {
+                // should throw before yielding any candle
+            }
+        };
+
+        await act.Should().ThrowAsync<HttpRequestException>();
+        handler.CallCount("EUR_USD").Should().Be(2, "the backtest retries to the cap then fails fast");
+    }
+
+    private static OandaFeedOptions ResilienceOptions(bool liveStreaming, string[] instruments) => new()
+    {
+        BaseUrl = "https://api-fxpractice.oanda.com",
+        Token = "test-practice-token",
+        Instruments = instruments,
+        Granularity = "M5",
+        HistoryCount = 2,
+        LiveStreaming = liveStreaming,
+        PollSeconds = 60,
+        BackfillMaxAttempts = 2,
+        BackfillRetryDelaySeconds = 0,   // retry immediately so the test needs no clock advance
+    };
+
+    private static HttpClient ClientFor(HttpMessageHandler handler, OandaFeedOptions opts) =>
+        new(handler) { BaseAddress = new Uri(opts.BaseUrl) };
+
+    private static HttpResponseMessage Ok(string json) => new(HttpStatusCode.OK)
+    {
+        Content = new StringContent(json, Encoding.UTF8, "application/json"),
+    };
+
+    private static string OneCandleJson(string instrument, string timeIso, string close) => $$"""
+    {
+      "instrument": "{{instrument}}",
+      "granularity": "M5",
+      "candles": [
+        { "time": "{{timeIso}}", "mid": { "o": "{{close}}", "h": "{{close}}", "l": "{{close}}", "c": "{{close}}" }, "volume": 10, "complete": true }
+      ]
+    }
+    """;
+
     /// <summary>Backfill 07:00/07:05 keyed body re-used as a two-candle response (the watermark seeder).</summary>
     private static string BoundaryPlusNewJson(string boundaryIso, string newIso) => $$"""
     {
@@ -314,6 +422,43 @@ public class OandaMarketDataFeedTests
             }
 
             return Task.FromResult(action());
+        }
+    }
+
+    /// <summary>
+    /// A fake transport that responds per (instrument, 0-based-call-index) via a supplied delegate — the delegate
+    /// may return a body or throw — and records how many times each instrument was requested, so a test can drive
+    /// the backfill retry/skip paths and assert the attempt counts. The instrument is parsed from the request path
+    /// (<c>/v3/instruments/{X}/candles</c>). Read-only by SHAPE: it never simulates an order endpoint.
+    /// </summary>
+    private sealed class FakeOandaHandler(Func<string, int, HttpResponseMessage> respond) : HttpMessageHandler
+    {
+        private readonly ConcurrentDictionary<string, int> _lastCallIndex = new(StringComparer.Ordinal);
+
+        /// <summary>The number of times <paramref name="instrument"/> was requested.</summary>
+        public int CallCount(string instrument) => _lastCallIndex.TryGetValue(instrument, out var n) ? n + 1 : 0;
+
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            var instrument = ExtractInstrument(request.RequestUri!);
+            var callIndex = _lastCallIndex.AddOrUpdate(instrument, 0, static (_, previous) => previous + 1);
+            try
+            {
+                return Task.FromResult(respond(instrument, callIndex));
+            }
+            catch (Exception ex)
+            {
+                return Task.FromException<HttpResponseMessage>(ex);
+            }
+        }
+
+        private static string ExtractInstrument(Uri requestUri)
+        {
+            // AbsolutePath = /v3/instruments/{INSTRUMENT}/candles
+            var segments = requestUri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            return segments.Length >= 3 ? segments[2] : string.Empty;
         }
     }
 }

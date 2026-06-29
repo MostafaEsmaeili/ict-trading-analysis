@@ -1513,3 +1513,40 @@ user-supplied token (the read-only integration 403s). `data/*.csv` (the fetched 
 **OPEN follow-on (CODE, not config):** add gold (XAU/USD) + Dow (US30) `SymbolSpec`/`ContractSpec` profiles to the
 pure-domain `InstrumentCatalog` (mirror NAS100/SPX500) — without them both mis-size on FX geometry and produce 0 trades,
 so they can't yet trade or be tuned. Then re-run `scratchpad/sweep_all.py` to bake their best config.
+
+**🩺 Live-ops session — Postgres restart + OANDA live feed for ALL chart instruments + backfill resilience (branch
+`fix/oanda-live-multi-instrument-resilience`, UNCOMMITTED).** Operator reported the running dashboard 500ing on
+`/api/account` + `/api/trades/active` and a frozen "live" price. Diagnosed + fixed:
+- **The 500s = the dev Postgres was down.** `icttrader-postgres` (host port 55432) had `Exited (255)`; every DB-backed
+  query threw `Npgsql: connection refused` while the in-memory read-models (Performance/chart/market-status) stayed up
+  (exactly which endpoints 500'd). Fix: `docker start icttrader-postgres` — the running Host's Npgsql pool reconnected
+  on the next request (no Host restart needed). Account + trade history persisted intact.
+- **No live price = no feed running.** appsettings ships `Provider=Replay` + `Replay.Enabled=false`, so nothing
+  ingested and the chart served stale CSV-history fallback. Wired the **OANDA-practice live-poll** feed via env
+  (`Ict__MarketData__Provider=Oanda`, `LiveStreaming=true`, `Granularity=M5`, `HistoryCount=500`, `PollSeconds=30`,
+  `Instruments__0..4 = EUR_USD,GBP_USD,USD_JPY,XAU_USD,NAS100_USD` — the 5 chart-selectable symbols from
+  `ChartPanel.tsx SYMBOLS`). Token validated against `/v3/accounts` (practice acct `101-004-39667063-001`) and
+  persisted as a **User env var** `Ict__MarketData__Oanda__Token` (never committed). All 5 now stream today's M5 candles
+  live; the chart updates as each candle closes. **Caveat:** the feed streams ONE granularity (M5 = the chart default);
+  other chart TFs (M1/M15/H1) fall back to CSV history. Multi-TF-live would need a feed change.
+- **CODE FIX — OANDA backfill resilience** (the reported fragility: a single transient refusal during startup backfill
+  permanently killed ingestion; with 5 instruments over flaky egress it would fail almost every launch). Added to
+  `OandaMarketDataFeed`: **bounded transient retry** on the backfill fetch (`OandaFeedOptions.BackfillMaxAttempts`=5 /
+  `BackfillRetryDelaySeconds`=2, `Validate()`-gated) for connection-refused/408/429/5xx/timeout — **auth/4xx still fail
+  fast** (a bad token never loops); plus **per-instrument skip when `LiveStreaming`** (one unreachable symbol is logged +
+  skipped so the others keep streaming) while a **backtest stays fail-fast** (no silent data gaps). Pure classifier
+  `IsTransientFetchFailure`; the live POLL path is untouched (it already self-heals). 3 new unit tests. Build **0
+  warnings · 787 unit (+3) · `dotnet format` clean · defensive-guardrail-auditor 7/7 PASS** (still a read-only GET feed,
+  practice host only, no order path). appsettings gained a commented OANDA example block + the two retry knobs.
+
+**CONVENTIONS this session:** (a) **`dotnet test` (xUnit v2 / VSTest) must run under the DEFAULT Bash/PowerShell sandbox
+— NOT `dangerouslyDisableSandbox:true`**: the disable-wrapper breaks the test-host↔runner loopback IPC ("Failed to
+negotiate protocol" hang), but the default sandbox runs the suite fine (787 green in ~2s). The .NET Host's outbound
+HTTPS (OANDA) and localhost calls (the running app on :5080, Postgres on :55432) still DO need
+`dangerouslyDisableSandbox:true`. (b) To run the app live for all chart instruments: `docker start icttrader-postgres`;
+launch the Release Host as a `run_in_background` task's MAIN command with the OANDA env above + the
+`ConnectionStrings__PaperTrading` + `Ict__Backtest__DataDirectory` + `ASPNETCORE_URLS=http://localhost:5080`. (c) OANDA
+resolves to two Cloudflare edge IPs and one intermittently **refuses** connections (~1 in 5) on this network — the new
+backfill retry is what makes a multi-instrument live feed reliable through it. **TODO:** commit this branch (operator's
+"commit only when asked" convention — left uncommitted pending the go-ahead); consider promoting the same bounded-retry
+to the live-poll first tick and a multi-granularity live feed if multi-TF-live is wanted.
