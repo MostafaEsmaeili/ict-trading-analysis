@@ -21,6 +21,18 @@ public sealed class OandaFeedOptions
     /// <summary>The fastest live-poll cadence (one second) — the feed polls for newly-completed candles, not ticks.</summary>
     private const int MinPollSeconds = 1;
 
+    /// <summary>The fewest backfill attempts (1 = the historical no-retry behaviour).</summary>
+    private const int MinBackfillMaxAttempts = 1;
+
+    /// <summary>A sane ceiling on backfill attempts so a config typo can't wedge startup in a long retry storm.</summary>
+    private const int MaxBackfillMaxAttempts = 10;
+
+    /// <summary>The fewest seconds between backfill retries (0 = retry immediately — used by the unit tests).</summary>
+    private const int MinBackfillRetryDelaySeconds = 0;
+
+    /// <summary>A ceiling on the inter-retry delay so a typo can't stall the first candle for minutes.</summary>
+    private const int MaxBackfillRetryDelaySeconds = 60;
+
     /// <summary>The fewest candles a history fetch (<see cref="FetchHistory"/>) may request.</summary>
     private const int MinHistoryMaxCandles = 1;
 
@@ -93,6 +105,20 @@ public sealed class OandaFeedOptions
     /// </summary>
     public bool LiveStreaming { get; init; }
 
+    /// <summary>
+    /// The total number of attempts (including the first) the <b>backfill</b> makes for each instrument's candle
+    /// fetch before giving up, retrying only <i>transient</i> failures — a refused/reset connection, a request
+    /// timeout, HTTP 408/429, or a 5xx. Auth/4xx errors (a bad token) are NOT transient and fail fast on the first
+    /// attempt regardless. Defaults to 5: with intermittently-refusing egress, a single transient blip during
+    /// startup backfill would otherwise leave the live feed permanently dead (the live <i>poll</i> already
+    /// self-heals; the backfill did not). Backfilling many instruments multiplies the blip risk, so the retry is
+    /// what makes a multi-instrument live feed reliable.
+    /// </summary>
+    public int BackfillMaxAttempts { get; init; } = 5;
+
+    /// <summary>The seconds to wait between transient backfill retries (see <see cref="BackfillMaxAttempts"/>).</summary>
+    public int BackfillRetryDelaySeconds { get; init; } = 2;
+
     // ---- One-shot history-fetch mode (issue #100 — the read-only backtest CSV exporter) ----
 
     /// <summary>
@@ -148,6 +174,20 @@ public sealed class OandaFeedOptions
         if (PollSeconds < MinPollSeconds)
         {
             errors.Add($"PollSeconds must be at least {MinPollSeconds} but was {PollSeconds}.");
+        }
+
+        if (BackfillMaxAttempts is < MinBackfillMaxAttempts or > MaxBackfillMaxAttempts)
+        {
+            errors.Add(
+                $"BackfillMaxAttempts must be within [{MinBackfillMaxAttempts}, {MaxBackfillMaxAttempts}] but was " +
+                $"{BackfillMaxAttempts}.");
+        }
+
+        if (BackfillRetryDelaySeconds is < MinBackfillRetryDelaySeconds or > MaxBackfillRetryDelaySeconds)
+        {
+            errors.Add(
+                $"BackfillRetryDelaySeconds must be within [{MinBackfillRetryDelaySeconds}, " +
+                $"{MaxBackfillRetryDelaySeconds}] but was {BackfillRetryDelaySeconds}.");
         }
 
         // The history-fetch knobs only constrain the run when fetch mode is on (so a normal scan-loop host need not
