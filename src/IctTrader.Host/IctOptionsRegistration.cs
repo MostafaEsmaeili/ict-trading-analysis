@@ -1,4 +1,5 @@
 using IctTrader.Domain.Configuration;
+using IctTrader.MarketData.Infrastructure.Persistence;
 using Microsoft.Extensions.Options;
 
 namespace IctTrader.Host;
@@ -49,6 +50,7 @@ public static class IctOptionsRegistration
             .AddIctOptions<MarketContextOptions>(config, MarketContextOptions.SectionName, o => o.Validate())
             .AddIctOptions<SetupCandidateOptions>(config, SetupCandidateOptions.SectionName, o => o.Validate())
             .AddIctOptions<SilverBulletOptions>(config, SilverBulletOptions.SectionName, o => o.Validate())
+            .AddIctOptions<SignalRankingOptions>(config, SignalRankingOptions.SectionName, o => o.Validate())
             .AddIctOptions<TradeStyleOptions>(config, TradeStyleOptions.SectionName, o => o.Validate())
             // Detection
             .AddIctOptions<DisplacementOptions>(config, DisplacementOptions.SectionName, o => o.Validate())
@@ -79,5 +81,7 @@ public static class IctOptionsRegistration
             .AddIctOptions<StopTrailOptions>(config, StopTrailOptions.SectionName, o => o.Validate())
             .AddIctOptions<EntryManagementOptions>(config, EntryManagementOptions.SectionName, o => o.Validate())
             // Per-instrument overrides (the baked per-pair tuning results, e.g. NAS100 → 6-of-8)
-            .AddIctOptions<InstrumentOverridesOptions>(config, InstrumentOverridesOptions.SectionName, o => o.Validate());
+            .AddIctOptions<InstrumentOverridesOptions>(config, InstrumentOverridesOptions.SectionName, o => o.Validate())
+            // Candle persistence (plan §7 — the batched dual-write background writer)
+            .AddIctOptions<CandlePersistenceOptions>(config, CandlePersistenceOptions.SectionName, o => o.Validate());
 }

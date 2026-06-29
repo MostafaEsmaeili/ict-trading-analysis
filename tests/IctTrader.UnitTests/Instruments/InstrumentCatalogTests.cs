@@ -23,6 +23,8 @@ public class InstrumentCatalogTests
     private static readonly InstrumentCatalog Catalog = InstrumentCatalog.Default;
     private static readonly Symbol Eurusd = new("EURUSD");
     private static readonly Symbol Nas100 = new("NAS100USD");
+    private static readonly Symbol Us30 = new("US30USD");
+    private static readonly Symbol Xauusd = new("XAUUSD");
 
     // ---- Catalog resolution ----------------------------------------------------------------------------------
 
@@ -81,9 +83,98 @@ public class InstrumentCatalogTests
     }
 
     [Fact]
+    public void Us30_resolves_to_the_same_index_profile_as_nas100()
+    {
+        // US30 (Dow) is the third US index Michael names alongside NQ/ES — it shares the OANDA CFD point geometry,
+        // the §2.5.7 index killzone, and the 08:30 macro reference. The catalog recognises the index SET, so the
+        // profile (class + price/money geometry + overrides) is field-equal to NAS100's apart from the symbol.
+        var profile = Catalog.Resolve(Us30);
+
+        profile.InstrumentClass.Should().Be(InstrumentClass.Index);
+        profile.IsKnown.Should().BeTrue();
+        profile.SymbolSpec.PipSize.Should().Be(1.0m);        // 1 pip = 1 index point (a handle)
+        profile.SymbolSpec.TickSize.Should().Be(0.1m);
+        profile.SymbolSpec.Digits.Should().Be(1);
+        profile.ContractSpec.ValuePerPip.Should().Be(1m);     // $1 per point per unit, NOT FX 10/pip
+        profile.ContractSpec.LotStep.Should().Be(1m);
+        profile.ContractSpec.MinLot.Should().Be(1m);
+        profile.Overrides.Should().Be(Catalog.Resolve(Nas100).Overrides); // same index overrides (macro ref, point costs)
+    }
+
+    [Fact]
+    public void A_us30_candle_at_0845_ny_hunts_the_index_am_killzone_like_nas100()
+    {
+        // 2024-07-01 is EDT (UTC-4): 08:45 NY = 12:45 UTC. The catalog gives Index, so KillzoneClock routes to
+        // ClassifyIndex (AM 08:30–11:00) — exactly like NAS100, proving US30 hunts the index killzone, not FX's.
+        var clock = NewClock();
+        var at0845Ny = new DateTimeOffset(2024, 7, 1, 12, 45, 0, TimeSpan.Zero);
+
+        clock.Classify(at0845Ny, Catalog.Resolve(Us30).InstrumentClass).Killzone.Should().Be(Killzone.Am);
+    }
+
+    [Fact]
+    public void Xauusd_resolves_to_the_metal_profile_not_fx_major_geometry()
+    {
+        // Gold was WRONGLY in the FX-major set (pip 0.0001) → it mis-sized to zero lots. It is now a METAL profile:
+        // a gold "pip" = 0.1 (10 cents), tick 0.01 (OANDA XAU_USD 2-decimal quote). It KEEPS InstrumentClass.Fx on
+        // purpose so it hunts the FX London/NY killzones (ICT trades gold the same sessions) — no new enum value.
+        var profile = Catalog.Resolve(Xauusd);
+
+        profile.InstrumentClass.Should().Be(InstrumentClass.Fx);
+        profile.IsKnown.Should().BeTrue();
+        profile.SymbolSpec.PipSize.Should().Be(0.1m);
+        profile.SymbolSpec.TickSize.Should().Be(0.01m);
+        profile.SymbolSpec.Digits.Should().Be(2);
+
+        // No longer FX-major geometry — this is the bug the change fixes.
+        profile.SymbolSpec.PipSize.Should().NotBe(0.0001m);
+        profile.SymbolSpec.Should().NotBe(SymbolSpec.FxMajor(Xauusd));
+        profile.ContractSpec.ValuePerPip.Should().Be(0.1m);   // $0.10/oz per pip, 1-oz lot
+        profile.ContractSpec.LotStep.Should().Be(1m);
+        profile.ContractSpec.MinLot.Should().Be(1m);
+    }
+
+    [Fact]
+    public void A_xauusd_candle_at_0730_ny_hunts_the_fx_new_york_killzone_not_the_index_am()
+    {
+        // 07:30 NY = 11:30 UTC. Gold is InstrumentClass.Fx, so it classifies via ClassifyFx → NewYorkOpen (07:00–
+        // 10:00). For the INDEX the same instant is before the AM window (08:30) → None. The contrast proves gold
+        // hunts FX sessions, NOT the index AM killzone.
+        var clock = NewClock();
+        var at0730Ny = new DateTimeOffset(2024, 7, 1, 11, 30, 0, TimeSpan.Zero);
+
+        clock.Classify(at0730Ny, Catalog.Resolve(Xauusd).InstrumentClass).Killzone.Should().Be(Killzone.NewYorkOpen);
+        clock.Classify(at0730Ny, Catalog.Resolve(Nas100).InstrumentClass).Killzone.Should().Be(Killzone.None);
+    }
+
+    [Fact]
+    public void A_gold_trade_sizes_with_a_positive_lot_count()
+    {
+        // The bug this change fixes: when gold was FX-major (pip 0.0001), a realistic $5 gold stop read as 50,000
+        // pips, so the floored lot count collapsed to zero. With the metal geometry (pip 0.1) it sizes correctly.
+        var profile = Catalog.Resolve(Xauusd);
+
+        // Bullish plan: entry 3300.0, stop 3295.0 → $5 = 50-"pip" risk (pip = 0.1). 1% of 10,000 = 100 risk.
+        // moneyPerLot = 50 pips * 0.10/pip = 5; 100 / 5 = 20 oz (1-oz lot step). RiskBudget = 100.
+        var plan = new TradePlan(
+            Direction.Bullish, new Price(3_300.0m), new Price(3_295.0m),
+            new TargetLadder(Direction.Bullish, new Price(3_305.0m), new Price(3_320.0m)));
+
+        var sizing = PositionSizer.Size(
+            new Money(10_000m), new RiskPercent(1.0m), plan, profile.SymbolSpec, profile.ContractSpec,
+            new Pips(MetalMinStopPips));
+
+        sizing.StopDistance.Value.Should().Be(50m); // 50 gold pips, not 50,000 FX pips
+        sizing.Size.Lots.Should().BeGreaterThan(0m);  // the bug: this was 0 under FX-major geometry
+        sizing.Size.Lots.Should().Be(20m);            // 20 oz
+        sizing.RiskBudget.Amount.Should().Be(100m);
+    }
+
+    [Fact]
     public void Known_symbols_include_both_index_vehicles_and_the_fx_majors()
     {
         InstrumentCatalog.KnownSymbols.Should().Contain("NAS100USD").And.Contain("SPX500USD")
+            .And.Contain("US30USD").And.Contain("XAUUSD")
             .And.Contain("EURUSD").And.Contain("USDJPY");
     }
 
@@ -224,6 +315,9 @@ public class InstrumentCatalogTests
     }
 
     private const decimal IndexMinStopPoints = 10m;
+
+    // Gold min-stop floor in gold "pips" (pip = 0.1). 30 pips = $3 — below the 50-pip ($5) test stop, so it passes.
+    private const decimal MetalMinStopPips = 30m;
 
     private static KillzoneClock NewClock()
     {

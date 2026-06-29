@@ -41,6 +41,9 @@ public sealed class SignalRBroadcasterTests
     private static readonly PerformanceSummaryDto Summary = new(
         TradeCount: 3, WinRate: 0.66m, AverageR: 1.2m, ProfitFactor: 2.1m, Expectancy: 0.8m, MaxDrawdown: -1.5m);
 
+    private static readonly IReadOnlyList<RankedSignalDto> RankedSignals =
+        [new RankedSignalDto(Rank: 1, Score: 90, Setup: Setup)];
+
     [Fact]
     public async Task CandleIngestedBroadcaster_pushes_CandleAppended_with_the_candle()
     {
@@ -97,6 +100,17 @@ public sealed class SignalRBroadcasterTests
     }
 
     [Fact]
+    public async Task SignalsUpdatedBroadcaster_pushes_SignalsUpdated_with_the_ranked_top_n()
+    {
+        var (hub, capture) = FakeHub();
+        await new SignalsUpdatedBroadcaster(hub, NullLogger<SignalsUpdatedBroadcaster>.Instance)
+            .HandleAsync(new SignalsUpdated(RankedSignals));
+
+        capture.Method.Should().Be(TradingHub.SignalsUpdated);
+        capture.Args.Should().ContainSingle().Which.Should().BeSameAs(RankedSignals);
+    }
+
+    [Fact]
     public async Task A_thrown_push_is_swallowed_so_the_bus_dispatch_chain_is_never_broken()
     {
         // A transport failure (a faulty client connection) must NOT abort candle ingestion or settlement.
@@ -124,6 +138,7 @@ public sealed class SignalRBroadcasterTests
         services.GetServices<IEventHandler<PaperTradeOpened>>().Should().ContainSingle(h => h is PaperTradeOpenedBroadcaster);
         services.GetServices<IEventHandler<PaperTradeClosed>>().Should().ContainSingle(h => h is PaperTradeClosedBroadcaster);
         services.GetServices<IEventHandler<PerformanceUpdated>>().Should().ContainSingle(h => h is PerformanceUpdatedBroadcaster);
+        services.GetServices<IEventHandler<SignalsUpdated>>().Should().ContainSingle(h => h is SignalsUpdatedBroadcaster);
     }
 
     // ---- Hand-rolled SignalR fakes (Moq is not available in this repo) ----

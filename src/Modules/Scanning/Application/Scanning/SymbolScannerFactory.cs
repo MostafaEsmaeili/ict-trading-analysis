@@ -82,9 +82,9 @@ public sealed class SymbolScannerFactory : ISymbolScannerFactory
         };
     }
 
-    public SymbolScanner Create(Symbol symbol, TradeStyle style, ConfluenceOptions? confluence = null)
+    public SymbolScanner Create(Symbol symbol, Timeframe timeframe, TradeStyle style, ConfluenceOptions? confluence = null)
     {
         var options = confluence is null ? _options : _options with { Confluence = confluence };
-        return new(symbol, style, _timeProvider, options, _instruments, calendarStore: _calendarStore);
+        return new(symbol, timeframe, style, _timeProvider, options, _instruments, calendarStore: _calendarStore);
     }
 }

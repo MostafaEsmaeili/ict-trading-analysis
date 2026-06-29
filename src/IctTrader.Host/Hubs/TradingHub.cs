@@ -16,4 +16,7 @@ public sealed class TradingHub : Hub
     public const string TradeUpdated = nameof(TradeUpdated);
     public const string PerformanceUpdated = nameof(PerformanceUpdated);
     public const string CandleAppended = nameof(CandleAppended);
+
+    /// <summary>The ranked "best opportunities" signals feed changed — payload is the recomputed ranked top-N.</summary>
+    public const string SignalsUpdated = nameof(SignalsUpdated);
 }

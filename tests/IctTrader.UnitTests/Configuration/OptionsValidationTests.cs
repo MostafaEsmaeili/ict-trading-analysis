@@ -5,6 +5,7 @@ using IctTrader.Domain.Sessions;
 using IctTrader.Domain.Setups;
 using IctTrader.Domain.Styles;
 using IctTrader.Domain.Trading;
+using IctTrader.Domain.ValueObjects;
 
 namespace IctTrader.UnitTests.Configuration;
 
@@ -42,7 +43,33 @@ public class OptionsValidationTests
         new CalendarDriverOptions().Validate().Should().BeEmpty();
         new DailyRiskGuardOptions().Validate().Should().BeEmpty();
         new SilverBulletOptions().Validate().Should().BeEmpty();
+        new SignalRankingOptions().Validate().Should().BeEmpty();
     }
+
+    [Fact]
+    public void The_signal_ranking_defaults_are_sensible_and_alertable()
+    {
+        var defaults = new SignalRankingOptions();
+        defaults.MaxFeedSize.Should().Be(25);
+        defaults.RecencyCutoffMinutes.Should().Be(240);
+        defaults.MinGrade.Should().Be(SetupGrade.B);                            // the §2.5.4 alert floor
+        defaults.PriorityFor(Timeframe.H4).Should().BeGreaterThan(defaults.PriorityFor(Timeframe.M5)); // §4.7 ladder
+        defaults.PriorityFor(Timeframe.M1).Should().BeGreaterThan(SignalRankingOptions.DefaultTimeframePriority - 1);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(501)]
+    public void A_signal_ranking_max_feed_size_out_of_contract_is_rejected(int maxFeedSize)
+        => new SignalRankingOptions { MaxFeedSize = maxFeedSize }.Validate().Should().NotBeEmpty();
+
+    [Fact]
+    public void A_signal_ranking_recency_cutoff_below_one_is_rejected()
+        => new SignalRankingOptions { RecencyCutoffMinutes = 0 }.Validate().Should().NotBeEmpty();
+
+    [Fact]
+    public void A_non_alertable_signal_ranking_min_grade_is_rejected()
+        => new SignalRankingOptions { MinGrade = SetupGrade.C }.Validate().Should().NotBeEmpty();
 
     [Fact]
     public void The_daily_risk_guard_defaults_are_off_and_transcript_honest()

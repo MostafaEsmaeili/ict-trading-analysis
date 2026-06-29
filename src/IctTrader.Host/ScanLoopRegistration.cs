@@ -1,7 +1,10 @@
 using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Instruments;
 using IctTrader.MarketData.Application.Abstractions;
+using IctTrader.MarketData.Application.Chart;
+using IctTrader.MarketData.Application.Persistence;
 using IctTrader.MarketData.Infrastructure.Feeds;
+using IctTrader.MarketData.Infrastructure.Persistence;
 using IctTrader.PaperTrading.Application;
 using IctTrader.PaperTrading.Infrastructure;
 using IctTrader.PaperTrading.Infrastructure.Persistence;
@@ -75,6 +78,58 @@ public static class ScanLoopRegistration
 
         services.AddPaperTradingPersistence();
 
+        // The MarketData candle read-model context (plan §7 — a SEPARATE context so MarketData.Infrastructure
+        // never references PaperTrading.Infrastructure; the arch boundary stays clean). Both contexts connect
+        // to the SAME Postgres database (the shared ConnectionStrings:PaperTrading connection string); the
+        // candles table is created by its own AddCandles migration (dotnet ef migrations add AddCandles
+        // --project src/Modules/MarketData/Infrastructure --startup-project src/IctTrader.Host).
+        services.AddDbContext<MarketDataDbContext>(options =>
+            options.UseNpgsql(
+                configuration.GetConnectionString("PaperTrading"),
+                npgsql => npgsql.MigrationsAssembly(typeof(MarketDataDbContext).Assembly.FullName)));
+
+        // Candle persistence: repository + the batched dual-write background service (plan §7).
+        // The bounded channel is ALWAYS registered so AddMessaging's assembly-scan can resolve
+        // CandlePersistenceProjectionHandler regardless of the Enabled flag.  The background writer
+        // (CandlePersistenceHostedService) is started only when Enabled=true; when it is not running the
+        // channel fills up to BatchSize and silently drops old candles (DropOldest) — the scan dispatch is
+        // never blocked. Default Enabled=false so a Host with no retention need runs with zero DB I/O.
+        var persistenceOptions = configuration
+            .GetSection(CandlePersistenceOptions.SectionName)
+            .Get<CandlePersistenceOptions>() ?? new CandlePersistenceOptions();
+
+        // Bounded channel — always present; capacity = BatchSize so an idle (disabled) channel never grows.
+        var channel = System.Threading.Channels.Channel.CreateBounded<Domain.ValueObjects.Candle>(
+            new System.Threading.Channels.BoundedChannelOptions(persistenceOptions.BatchSize)
+            {
+                FullMode = System.Threading.Channels.BoundedChannelFullMode.DropOldest,
+                SingleReader = true,
+                SingleWriter = false,
+            });
+        services.AddSingleton(channel);
+
+        // The CandlePersistenceConfiguration bridges MaxRangeCandles into the Application-layer range query
+        // handler (GetChartRangeQueryHandler) without pulling IOptions into the Application project.
+        services.AddSingleton(new CandlePersistenceConfiguration(persistenceOptions.MaxRangeCandles));
+
+        if (persistenceOptions.Enabled)
+        {
+            services.AddMarketDataPersistence();
+
+            // The CandlePersistenceBatchOptions bridges BatchSize + FlushIntervalMs into the hosted service.
+            services.AddSingleton(new CandlePersistenceBatchOptions(
+                persistenceOptions.BatchSize, persistenceOptions.FlushIntervalMs));
+
+            services.AddHostedService<CandlePersistenceHostedService>();
+        }
+        else
+        {
+            // Register a no-op repository so the GetChartRangeQueryHandler (auto-discovered by AddMessaging)
+            // resolves even when persistence is disabled. It returns empty collections; the REST endpoint then
+            // falls back to the CSV history (ChartHistory).
+            services.AddScoped<Domain.Repositories.ICandleRepository, NoCandleRepository>();
+        }
+
         // Runtime settings (plan §15): the mutable per-instrument overrides the operator edits live. Seeded ONCE from
         // Ict:Instruments, then updated via the settings API; its revision ticks on every change so the per-symbol
         // scanner/orchestrator caches rebuild with the new options (live apply, no restart). Registered (TryAdd, so the
@@ -90,6 +145,12 @@ public static class ScanLoopRegistration
 
         services.AddScanningModule();
         services.AddPaperTradingModule();
+
+        // The PaperTrading-backed take-state enricher for the Scanning signals feed (plan §15 TAKE workflow). The Host
+        // references both modules, so the cross-module enrichment (effective Auto/Manual entry mode + the pending board +
+        // whether a trade exists) is wired here; the Scanning SignalRankingService resolves it through its port. Read-only.
+        services.AddSingleton<IctTrader.Scanning.Application.Signals.ISignalTakeStateProvider,
+            PaperTradingSignalTakeStateProvider>();
 
         // Bind the feed-provider selector (no magic strings) and wire the chosen READ-ONLY feed as IMarketDataFeed.
         services.AddOptions<MarketDataOptions>()

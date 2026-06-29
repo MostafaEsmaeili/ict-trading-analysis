@@ -126,3 +126,18 @@ internal sealed class PerformanceUpdatedBroadcaster(
         return HubBroadcast.SendSafelyAsync(_hub, _logger, TradingHub.PerformanceUpdated, @event.Summary, cancellationToken);
     }
 }
+
+/// <summary>Bridges each recomputed "best opportunities" ranked feed to the dashboard's signals panel (<see cref="TradingHub.SignalsUpdated"/>).</summary>
+internal sealed class SignalsUpdatedBroadcaster(
+    IHubContext<TradingHub> hub, ILogger<SignalsUpdatedBroadcaster> logger)
+    : IEventHandler<SignalsUpdated>
+{
+    private readonly IHubContext<TradingHub> _hub = hub ?? throw new ArgumentNullException(nameof(hub));
+    private readonly ILogger<SignalsUpdatedBroadcaster> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+    public Task HandleAsync(SignalsUpdated @event, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(@event);
+        return HubBroadcast.SendSafelyAsync(_hub, _logger, TradingHub.SignalsUpdated, @event.Top, cancellationToken);
+    }
+}

@@ -1,4 +1,5 @@
 using IctTrader.Domain.Configuration;
+using IctTrader.Domain.Styles;
 using IctTrader.MarketData.Contracts;
 using IctTrader.Scanning.Contracts;
 using IctTrader.SharedKernel.Messaging;
@@ -10,17 +11,20 @@ namespace IctTrader.Scanning.Application.Scanning;
 
 /// <summary>
 /// The Scanning module's bus seam (plan §3.0a/§4.1): it reacts to each <see cref="CandleIngested"/>, maps the
-/// wire candle to the domain, feeds it to the stateful per-(symbol, style) <see cref="SymbolScanner"/> for every
-/// operator-active style, and on a confirmed advisory <see cref="Domain.Setups.Setup"/> publishes a
-/// <see cref="SetupConfirmed"/> carrying its <see cref="SetupDto"/>. The handler ORCHESTRATES only — every
-/// decision (detection, confluence grading, pricing) lives in the pure domain the scanner wraps; the mapping is
-/// pure. The registry is a SINGLETON (the scan state persists across candles); this handler is the bus-scoped
-/// per-dispatch unit-of-work.
+/// wire candle to the domain, and routes it to the stateful per-(symbol, timeframe, style)
+/// <see cref="SymbolScanner"/> for every operator-active style whose canonical ENTRY timeframe matches the
+/// candle's granularity (the <see cref="StyleTimeframeMap"/>) — so a multi-granularity feed scans every active
+/// style on its own entry TF, and a candle whose TF no active style enters on is a no-op. On a confirmed advisory
+/// <see cref="Domain.Setups.Setup"/> it publishes a <see cref="SetupConfirmed"/> carrying its <see cref="SetupDto"/>.
+/// The handler ORCHESTRATES only — every decision (detection, confluence grading, pricing) lives in the pure
+/// domain the scanner wraps; the mapping is pure. The registry is a SINGLETON (the scan state persists across
+/// candles); this handler is the bus-scoped per-dispatch unit-of-work.
 /// </summary>
 public sealed class CandleIngestedHandler(
     ISymbolScannerRegistry registry,
     IMessageBus bus,
     IOptions<MarketContextOptions> scanningOptions,
+    StyleTimeframeMap styleTimeframeMap,
     ILogger<CandleIngestedHandler>? logger = null)
     : IEventHandler<CandleIngested>
 {
@@ -28,6 +32,8 @@ public sealed class CandleIngestedHandler(
     private readonly IMessageBus _bus = bus ?? throw new ArgumentNullException(nameof(bus));
     private readonly MarketContextOptions _scanning =
         (scanningOptions ?? throw new ArgumentNullException(nameof(scanningOptions))).Value;
+    private readonly StyleTimeframeMap _styleTimeframeMap =
+        styleTimeframeMap ?? throw new ArgumentNullException(nameof(styleTimeframeMap));
     private readonly ILogger<CandleIngestedHandler> _logger = logger ?? NullLogger<CandleIngestedHandler>.Instance;
 
     public async Task HandleAsync(CandleIngested @event, CancellationToken cancellationToken = default)
@@ -36,9 +42,11 @@ public sealed class CandleIngestedHandler(
 
         var candle = CandleDtoMapper.ToDomain(@event.Candle);
 
-        foreach (var style in _scanning.ResolvedActiveStyles)
+        // Route this candle to the active styles whose canonical entry TF is its granularity — the matrix cell.
+        // A TF no active style enters on yields an empty set, so the candle is simply not scanned (no-op).
+        foreach (var style in _styleTimeframeMap.StylesFor(candle.Timeframe, _scanning.ResolvedActiveStyles))
         {
-            var scanner = _registry.GetOrCreate(candle.Symbol, style);
+            var scanner = _registry.GetOrCreate(candle.Symbol, candle.Timeframe, style);
             var setup = scanner.OnCandle(candle);
             if (setup is null)
             {

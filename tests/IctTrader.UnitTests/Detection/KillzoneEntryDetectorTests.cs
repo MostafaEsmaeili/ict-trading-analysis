@@ -103,6 +103,31 @@ public class KillzoneEntryDetectorTests
     }
 
     [Fact]
+    public void Silver_bullet_exposes_the_three_named_macros_and_the_default_uses_the_ny_am_window()
+    {
+        SilverBulletOptions.LondonMacro.Should().Be(new SessionWindow(new TimeOnly(3, 0), new TimeOnly(4, 0)));
+        SilverBulletOptions.NewYorkAmMacro.Should().Be(new SessionWindow(new TimeOnly(10, 0), new TimeOnly(11, 0)));
+        SilverBulletOptions.NewYorkPmMacro.Should().Be(new SessionWindow(new TimeOnly(14, 0), new TimeOnly(15, 0)));
+        SilverBulletOptions.AllMacroWindows.Should().Equal(
+            SilverBulletOptions.LondonMacro, SilverBulletOptions.NewYorkAmMacro, SilverBulletOptions.NewYorkPmMacro);
+        new SilverBulletOptions().ResolvedMacroWindows.Should().ContainSingle()
+            .Which.Should().Be(SilverBulletOptions.NewYorkAmMacro);
+    }
+
+    [Fact]
+    public void On_inside_the_ny_pm_macro_with_pm_active_matches()
+    {
+        // The faithful "third daily shot": 14:30 NY is inside NewYorkPmMacro AND the FX Pm killzone — with Pm in the
+        // hunt-set the overlay confirms it (a 14:30 NY candle is 18:30 UTC in summer DST).
+        var sb = new SilverBulletOptions { Enabled = true, MacroWindows = [SilverBulletOptions.NewYorkPmMacro] };
+        var withPm = new KillzoneEntryOptions
+        {
+            ActiveKillzones = [Killzone.LondonOpen, Killzone.NewYorkOpen, Killzone.Pm],
+        };
+        DetectSb(withPm, sb, new DateTimeOffset(2024, 7, 1, 18, 30, 0, TimeSpan.Zero)).Matched.Should().BeTrue();
+    }
+
+    [Fact]
     public void Off_by_default_the_overlay_is_a_no_op()
         // SB disabled: an in-killzone-but-off-macro candle (08:30 NY, NewYorkOpen) still matches — byte-identical.
         => DetectSb(new KillzoneEntryOptions(), new SilverBulletOptions(), NyOpen0830).Matched.Should().BeTrue();

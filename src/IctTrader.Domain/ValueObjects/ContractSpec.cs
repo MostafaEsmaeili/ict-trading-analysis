@@ -52,4 +52,17 @@ public sealed record ContractSpec
 
     /// <summary>NASDAQ-100 index money geometry — an alias of <see cref="Index"/> (kept for existing call sites/tests).</summary>
     public static ContractSpec Nas100(Symbol symbol) => Index(symbol);
+
+    /// <summary>
+    /// The spot-metal MONEY geometry (OANDA's <c>XAU_USD</c> gold CFD). One "lot" is ONE OUNCE and one "pip" is
+    /// 0.1 (ten cents, matching <see cref="SymbolSpec.Metal"/>), so a 0.1 price move on one ounce is $0.10 →
+    /// <see cref="ValuePerPip"/> = 0.1 USD per pip per ounce, with a 1-ounce step and minimum. This deliberately
+    /// does NOT inherit the FX 10/pip + 0.01-lot geometry — gold was previously (wrongly) sized as an FX major,
+    /// which made a realistic $5 stop read as 50,000 pips and floored the position to ZERO lots.
+    ///
+    /// <para><b>Provenance.</b> Gold is absent from the 2022 NASDAQ Mentorship (a SECONDARY/event-driven vehicle),
+    /// so all three numbers are CONVENTION (the OANDA XAU_USD CFD spec) / INVENTED — $0.10/oz per pip with a 1-oz
+    /// step/min is the OANDA gold unit convention, NOT an ICT-stated number.</para>
+    /// </summary>
+    public static ContractSpec Metal(Symbol symbol) => new(symbol, 0.1m, 1m, 1m);
 }

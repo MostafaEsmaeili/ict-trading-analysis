@@ -10,6 +10,7 @@ using IctTrader.Domain.ValueObjects;
 using IctTrader.MarketData.Contracts;
 using IctTrader.Scanning.Application;
 using IctTrader.Scanning.Application.Scanning;
+using IctTrader.Scanning.Application.Signals;
 using IctTrader.Scanning.Contracts;
 using IctTrader.SharedKernel.Messaging;
 using Microsoft.Extensions.DependencyInjection;
@@ -118,6 +119,10 @@ public class ScanLoopTests
         // The handler reads Ict:Scanning:ActiveStyles from MarketContextOptions (default [Intraday]).
         services.AddSingleton<IOptions<MarketContextOptions>>(Options.Create(new MarketContextOptions()));
 
+        // The matrix router the handler uses to scan each active style on its canonical entry TF (default
+        // Intraday → M5). Built over the default Ict:TradeStyles policy via the classifier (no hardcoded TF).
+        services.AddSingleton(new StyleTimeframeMap(new TradeStyleClassifier(new TradeStyleOptions())));
+
         // The seeded scan: the registry is the real singleton; the factory prepends the proven structural seeders.
         services.AddSingleton<ISymbolScannerFactory>(new SeededScannerFactory(new FakeTimeProvider(London)));
         services.AddSingleton<IctTrader.Domain.Configuration.IRuntimeSettings>(
@@ -128,6 +133,16 @@ public class ScanLoopTests
         // SetupConfirmedChartProjectionHandler (it subscribes to the SetupConfirmed this loop publishes), so the
         // bus fans the confirmed setup out to it too — it needs the store the production AddScanningModule registers.
         services.AddSingleton<RecentSetupStore>();
+
+        // The signals feed read-model: the same assembly also carries the SetupConfirmedSignalFeedHandler (another
+        // SetupConfirmed subscriber the bus fans out to), so the feed services it depends on must resolve too.
+        var signalOptions = new SignalRankingOptions();
+        services.AddSingleton(new SignalFeedStore(signalOptions));
+        services.AddSingleton(new IctTrader.Domain.Confluence.SignalRanker(signalOptions));
+        services.AddSingleton(sp => new SignalRankingService(
+            sp.GetRequiredService<SignalFeedStore>(),
+            sp.GetRequiredService<IctTrader.Domain.Confluence.SignalRanker>(),
+            signalOptions));
 
         // Scan ONLY the Scanning.Application assembly for the production CandleIngestedHandler; the SetupConfirmed
         // sink is registered explicitly above (scanning the whole test assembly would pull in unrelated handlers).
@@ -182,9 +197,10 @@ public class ScanLoopTests
         };
 
         public SymbolScanner Create(
-            Symbol symbol, TradeStyle style, IctTrader.Domain.Configuration.ConfluenceOptions? confluence = null)
+            Symbol symbol, Timeframe timeframe, TradeStyle style,
+            IctTrader.Domain.Configuration.ConfluenceOptions? confluence = null)
             => new(
-                symbol, style, timeProvider,
+                symbol, timeframe, style, timeProvider,
                 confluence is null ? Options : Options with { Confluence = confluence },
                 InstrumentCatalog.Default, Seeders());
 

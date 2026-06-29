@@ -1,3 +1,4 @@
+using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Detection;
 using IctTrader.Domain.Instruments;
 
@@ -16,7 +17,8 @@ public sealed record InstrumentSettingsDto(
     decimal? MinStopDistancePips = null,
     decimal? SpreadBasePips = null,
     decimal? CommissionPerLotRoundTripUsd = null,
-    bool? RequireReferenceOpenAgreement = null)
+    bool? RequireReferenceOpenAgreement = null,
+    string? EntryMode = null)
 {
     public static InstrumentSettingsDto From(InstrumentOptionOverrides overrides) => new(
         overrides.MinRequiredConditions,
@@ -24,10 +26,11 @@ public sealed record InstrumentSettingsDto(
         overrides.MinStopDistancePips,
         overrides.SpreadBasePips,
         overrides.CommissionPerLotRoundTripUsd,
-        overrides.RequireReferenceOpenAgreement);
+        overrides.RequireReferenceOpenAgreement,
+        overrides.EntryMode?.ToString());
 
-    /// <summary>Maps to the domain override (parsing the condition names); throws <see cref="ArgumentException"/> on an
-    /// unknown condition name.</summary>
+    /// <summary>Maps to the domain override (parsing the condition names + the entry-mode member); throws
+    /// <see cref="ArgumentException"/> on an unknown condition name or an unknown <c>TradeEntryMode</c> member.</summary>
     public InstrumentOptionOverrides ToOverrides() => new()
     {
         MinRequiredConditions = MinRequiredConditions,
@@ -36,6 +39,7 @@ public sealed record InstrumentSettingsDto(
         SpreadBasePips = SpreadBasePips,
         CommissionPerLotRoundTripUsd = CommissionPerLotRoundTripUsd,
         RequireReferenceOpenAgreement = RequireReferenceOpenAgreement,
+        EntryMode = ParseEntryMode(EntryMode),
     };
 
     private static IReadOnlyList<ConfluenceCondition>? ParseConditions(IReadOnlyList<string>? names)
@@ -57,6 +61,23 @@ public sealed record InstrumentSettingsDto(
         }
 
         return parsed;
+    }
+
+    /// <summary>Parses the 3-state entry-mode wire value: null = inherit the global default; a defined member name =
+    /// the per-instrument Auto/Manual override; anything else throws. <c>Enum.IsDefined</c> rejects numeric strings.</summary>
+    private static TradeEntryMode? ParseEntryMode(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        if (Enum.TryParse<TradeEntryMode>(value.Trim(), ignoreCase: true, out var mode) && Enum.IsDefined(mode))
+        {
+            return mode;
+        }
+
+        throw new ArgumentException($"Unknown entry mode '{value}' (expected Auto or Manual).");
     }
 }
 
