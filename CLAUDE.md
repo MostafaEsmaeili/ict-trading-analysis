@@ -1698,6 +1698,14 @@ test gaps); treats implausibly-good results as BUGS and BLOCKs on look-ahead/gua
   (default Ote = byte-identical). **The honest levers for more trades: (a) breadth + lower TF (M1/M3), (b) the correct
   market-on-confirmation entry (round 2), NOT entry-depth tricks.** CONVENTION: backtest realism — verify a "more trades"
   lever ACTUALLY raises filled trades AND holds edge before trusting it; the judge re-derives suspicious metrics.
+- **Round 2 — DONE & COMMITTED.** Definitive entry-fill/frequency answer in `docs/ict-frequency-research-2026.md` §8. The
+  big fix (correct market-on-confirmation entry) is **GATED ON OPERATOR APPROVAL** (they explicitly chose FVG-edge over it),
+  so the loop does NOT build it autonomously — it's the strong recommendation for the morning.
+- **Round 3 — DONE & COMMITTED (904 unit, 0 warnings, format clean).** Take-status correctness: an EXPIRED take wrongly
+  returned 404 (the store pruned the stale pending before the lookup). `PendingOpportunityStore.TryTake(id, now, out
+  TakeMiss)` captures the reason BEFORE pruning (present-but-stale → Expired, absent → NotFound); `POST
+  /api/signals/{id}/take` maps Expired + AlreadyTaken → **409**, unknown → **404** (ict-domain-expert S2). Loop continues on
+  SAFE gated items; market-on-confirmation awaits approval.
 
 **CONVENTIONS reaffirmed/added this session:** (a) "default to live" is satisfied by the multi-granularity capability +
 the operator's env-var run, NOT by flipping the committed `Provider` (keeps tokenless CI/dev boots + Host-booting tests
