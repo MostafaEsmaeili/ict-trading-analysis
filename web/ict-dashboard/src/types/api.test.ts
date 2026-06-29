@@ -55,6 +55,7 @@ describe('api DTO contract', () => {
         'killzone',
         'reason',
         'rewardRatio',
+        'score',
         'stop',
         'style',
         'symbol',

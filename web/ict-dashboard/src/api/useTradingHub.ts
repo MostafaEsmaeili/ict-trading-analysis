@@ -15,7 +15,15 @@ import {
   mergeSetupOverlays,
   upsertTrade,
 } from './mergeDeltas';
-import type { AlertDto, CandleDto, PaperTradeDto, PerformanceSummaryDto, SetupDto } from '../types/api';
+import { notifyNewOpportunity } from '../notifications/triggers';
+import type {
+  AlertDto,
+  CandleDto,
+  PaperTradeDto,
+  PerformanceSummaryDto,
+  RankedSignalDto,
+  SetupDto,
+} from '../types/api';
 import type { ChartOverlay } from '../types/overlays';
 
 export interface UseTradingHubArgs {
@@ -29,6 +37,12 @@ export interface UseTradingHubArgs {
   style?: string;
   /** Optionally synthesize an alert from a detected setup (the host also emits AlertDto directly). */
   alertFromSetup?: (setup: SetupDto) => AlertDto;
+  /**
+   * Optional side-effect on every TradeUpdated push, called with the RAW trade BEFORE the active-trades
+   * merge drops a closed one — so a notification driver can observe an open→closed transition the
+   * filtered cache never shows. Kept as a pass-through so the merge behaviour is unchanged.
+   */
+  onTradeEvent?: (trade: PaperTradeDto) => void;
 }
 
 export function useTradingHub({
@@ -37,6 +51,7 @@ export function useTradingHub({
   timeframe,
   style = 'Intraday',
   alertFromSetup,
+  onTradeEvent,
 }: UseTradingHubArgs): void {
   const qc = useQueryClient();
 
@@ -60,6 +75,9 @@ export function useTradingHub({
         }
       },
       onTradeUpdated: (trade: PaperTradeDto) => {
+        // Notify off the RAW push first (the merge below drops a closed trade from the active set, so a
+        // close would otherwise be invisible to a cache-watching driver).
+        onTradeEvent?.(trade);
         qc.setQueryData<PaperTradeDto[]>(queryKeys.activeTrades(), (prev) => upsertTrade(prev, trade));
       },
       onPerformanceUpdated: (summary: PerformanceSummaryDto) => {
@@ -73,8 +91,27 @@ export function useTradingHub({
           appendCandle(prev, candle),
         );
       },
+      onSignalsUpdated: (signals: RankedSignalDto[]) => {
+        // The push carries the FULL ranked top-N — replace the cache (mirrors PerformanceUpdated). Before
+        // replacing, diff against the prior cache: any signal id that is NEW (a fresh opportunity) fires an
+        // `opportunity` toast via the reserved notifyNewOpportunity hook.
+        const prev = qc.getQueryData<RankedSignalDto[]>(queryKeys.signals()) ?? [];
+        const knownIds = new Set(prev.map((s) => s.setup.id));
+        for (const s of signals) {
+          if (!knownIds.has(s.setup.id)) {
+            notifyNewOpportunity({
+              symbol: s.setup.symbol,
+              title: `New signal — ${s.setup.symbol} ${s.setup.direction}`,
+              body: `Grade ${s.setup.grade} · score ${s.score} · ${s.setup.style} ${s.setup.triggerTimeframe} · RR ${s.setup.rewardRatio}`,
+              atUtc: s.setup.detectedAtUtc,
+              focus: { symbol: s.setup.symbol, atUtc: s.setup.detectedAtUtc },
+            });
+          }
+        }
+        qc.setQueryData<RankedSignalDto[]>(queryKeys.signals(), signals);
+      },
     });
 
     return dispose;
-  }, [hub, qc, symbol, timeframe, style, alertFromSetup]);
+  }, [hub, qc, symbol, timeframe, style, alertFromSetup, onTradeEvent]);
 }

@@ -29,6 +29,7 @@ import type {
   OptimizeResponse,
   PaperTradeDto,
   PerformanceSummaryDto,
+  RankedSignalDto,
   SettingsDto,
 } from '../types/api';
 import type { ChartOverlay } from '../types/overlays';
@@ -47,8 +48,10 @@ import {
   MOCK_CALENDAR,
   MOCK_PERFORMANCE,
   MOCK_SETTINGS,
+  MOCK_SIGNALS,
   mockBacktestResponse,
   mockOptimizeResponse,
+  mockTakeSignal,
 } from '../mocks/fixtures';
 
 export const API_BASE = import.meta.env.VITE_API_BASE ?? '';
@@ -125,6 +128,73 @@ export async function fetchActiveTrades(): Promise<PaperTradeDto[]> {
     return MOCK_ACTIVE_TRADES;
   }
   return getJson<PaperTradeDto[]>('/api/trades/active');
+}
+
+/** Server-side filters for the ranked signals read (`GET /api/signals?symbol=&style=&grade=&max=`). */
+export interface SignalFilters {
+  symbol?: string;
+  style?: string;
+  grade?: string;
+  max?: number;
+}
+
+/**
+ * The ranked live signals top-N (`GET /api/signals` → RankedSignalDto[]). The richer client-side filtering
+ * (timeframe / min-RR / hide-taken) lives in the feed; the server filters cut the matrix down first. In
+ * mocks mode the same symbol/style/grade/max filters apply to the fixture so the offline app behaves live.
+ */
+export async function fetchSignals(filters: SignalFilters = {}): Promise<RankedSignalDto[]> {
+  if (USE_MOCKS) {
+    let list = MOCK_SIGNALS.filter(
+      (s) =>
+        (!filters.symbol || s.setup.symbol === filters.symbol) &&
+        (!filters.style || s.setup.style === filters.style) &&
+        (!filters.grade || s.setup.grade === filters.grade),
+    );
+    if (filters.max != null) list = list.slice(0, filters.max);
+    return list;
+  }
+  const params = new URLSearchParams();
+  if (filters.symbol) params.set('symbol', filters.symbol);
+  if (filters.style) params.set('style', filters.style);
+  if (filters.grade) params.set('grade', filters.grade);
+  if (filters.max != null) params.set('max', String(filters.max));
+  const qs = params.toString();
+  return getJson<RankedSignalDto[]>(`/api/signals${qs ? `?${qs}` : ''}`);
+}
+
+/**
+ * The outcome of taking a signal (`POST /api/signals/{setupId}/take`):
+ *   - 200 → an opened PaperTradeDto (Immediate mode): `{ trade }`.
+ *   - 202 → no body (Armed — a limit is resting): `{ trade: null }`.
+ * A 404 (not pending) or 409 (already taken / expired, body `{ error }`) THROWS so the mutation surfaces
+ * the reason. Taking a signal opens a PAPER trade only — there is NO live order path (§6.3).
+ */
+export interface TakeSignalResult {
+  trade: PaperTradeDto | null;
+}
+
+export async function takeSignal(setupId: string): Promise<TakeSignalResult> {
+  if (USE_MOCKS) {
+    // mockTakeSignal throws on already-taken/blocked/unknown (the {error} path); else returns the open
+    // trade (Immediate) or null (Auto → Armed/202).
+    return { trade: mockTakeSignal(setupId) };
+  }
+  const res = await fetch(`${API_BASE}/api/signals/${encodeURIComponent(setupId)}/take`, {
+    method: 'POST',
+    headers: { accept: 'application/json' },
+  });
+  // 202 Accepted = Armed (a resting limit) — there is no body to parse.
+  if (res.status === 202) {
+    return { trade: null };
+  }
+  if (!res.ok) {
+    // 404 (not pending) / 409 (already taken or expired) carry an { error } message — surface it.
+    const detail = await readErrorDetail(res);
+    throw new Error(detail || `Take signal → ${res.status}`);
+  }
+  // 200 OK = Immediate — the opened paper trade is the body.
+  return { trade: (await res.json()) as PaperTradeDto };
 }
 
 /** Filters for the full trades-history read (`GET /api/trades?status=&symbol=`). */

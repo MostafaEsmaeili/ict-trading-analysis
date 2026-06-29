@@ -18,9 +18,13 @@ import {
   fetchOverlays,
   fetchPerformance,
   fetchSettings,
+  fetchSignals,
   runBacktest,
   runOptimize,
+  takeSignal,
   updateInstrumentSettings,
+  type SignalFilters,
+  type TakeSignalResult,
   type TradeFilters,
 } from './client';
 import type {
@@ -29,7 +33,11 @@ import type {
   InstrumentSettingsDto,
   OptimizeRequest,
   OptimizeResponse,
+  PaperTradeDto,
+  RankedSignalDto,
 } from '../types/api';
+import { upsertTrade } from './mergeDeltas';
+import { notifyTradeOpened } from '../notifications/triggers';
 import { queryKeys } from './queryKeys';
 
 const RECONCILE_MS = 30_000;
@@ -69,6 +77,52 @@ export function useActiveTrades() {
     queryKey: queryKeys.activeTrades(),
     queryFn: fetchActiveTrades,
     refetchInterval: RECONCILE_MS,
+  });
+}
+
+/**
+ * The ranked live signals top-N. SignalsUpdated pushes the full list onto the SAME key (queryKeys.signals)
+ * so the live socket and the 30s reconcile share one cache; the page applies the client-side filters over
+ * the cached data. Server filters (symbol/style/grade/max) are passed through to fetchSignals as needed.
+ */
+export function useSignals(filters: SignalFilters = {}) {
+  return useQuery({
+    queryKey: queryKeys.signals(),
+    queryFn: () => fetchSignals(filters),
+    refetchInterval: RECONCILE_MS,
+  });
+}
+
+/**
+ * Take a signal → open a PAPER trade (POST /api/signals/{setupId}/take). On success:
+ *   - flip the signal's `isTaken` (+ a synthetic AlreadyTaken block) in the signals cache so its Take
+ *     button disables immediately (optimistic-from-result, no separate optimistic write);
+ *   - on a 200 (Immediate) merge the opened trade into the active-trades cache + fire a tradeOpened toast;
+ *   - invalidate the account snapshot (reserved risk changed).
+ * A 202 (Armed — a resting limit) opens nothing yet, so it only flips the signal + invalidates the account.
+ * A 404/409 throws (the mutation's isError surfaces the `{ error }` reason). Paper only — no live order (§6.3).
+ */
+export function useTakeSignal() {
+  const qc = useQueryClient();
+  return useMutation<TakeSignalResult, Error, { setupId: string }>({
+    mutationFn: ({ setupId }) => takeSignal(setupId),
+    onSuccess: (result, { setupId }) => {
+      // Flip the taken signal in the ranked cache (Take disables, "taken" reason shows).
+      qc.setQueryData<RankedSignalDto[]>(queryKeys.signals(), (prev) =>
+        (prev ?? []).map((s) =>
+          s.setup.id === setupId
+            ? { ...s, isTaken: true, blockReason: s.blockReason ?? 'AlreadyTaken' }
+            : s,
+        ),
+      );
+      // 200 (Immediate) returns the opened trade → merge it live + toast it. 202 (Armed) has no trade body.
+      if (result.trade) {
+        const trade: PaperTradeDto = result.trade;
+        qc.setQueryData<PaperTradeDto[]>(queryKeys.activeTrades(), (prev) => upsertTrade(prev, trade));
+        notifyTradeOpened(trade);
+      }
+      void qc.invalidateQueries({ queryKey: queryKeys.account() });
+    },
   });
 }
 

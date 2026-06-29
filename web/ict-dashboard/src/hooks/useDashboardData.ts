@@ -16,14 +16,31 @@ import {
   usePerformance,
 } from '../api/hooks';
 import { useTradingHub } from '../api/useTradingHub';
-import { createTradingHub, type TradingHubLike } from '../api/tradingHub';
+import { createTradingHub, HubConnectionState, type TradingHubLike } from '../api/tradingHub';
 import { API_BASE, USE_MOCKS } from '../api/client';
+import { setHubHealth } from '../notifications/hubHealthStore';
+import type { HubHealth } from '../notifications/useSystemHealth';
+import { useTradeNotifications } from '../notifications/useTradeNotifications';
+import { useErrorNotifications } from '../notifications/useErrorNotifications';
 import type { Killzone, TradeStyle } from '../types/api';
 
 export interface DashboardDataArgs {
   symbol: string;
   timeframe: string;
   style: TradeStyle;
+}
+
+/** Map the SignalR connection state to our coarse HubHealth (Connected → green, else amber-ish). */
+function mapHubState(state: TradingHubLike['state']): HubHealth {
+  switch (state) {
+    case HubConnectionState.Connected:
+      return 'connected';
+    case HubConnectionState.Connecting:
+    case HubConnectionState.Reconnecting:
+      return 'connecting';
+    default:
+      return 'disconnected';
+  }
 }
 
 export function useDashboardData({ symbol, timeframe, style }: DashboardDataArgs) {
@@ -43,20 +60,40 @@ export function useDashboardData({ symbol, timeframe, style }: DashboardDataArgs
     [],
   );
 
+  // Hub health, polled from the connection state and published to the module store the global NavBar dot
+  // reads — so a Reconnecting/Disconnected socket surfaces as amber. In mocks mode there is no hub →
+  // 'disabled' (the dot reads healthy on data alone). The effect only SCHEDULES (no synchronous setState
+  // in the body): the first poll tick + the start() callback publish the state.
   useEffect(() => {
     if (!hub) {
+      setHubHealth('disabled');
       return;
     }
     // start()/stop() are async; the hook owns the lifecycle. A reconnect is handled by
     // withAutomaticReconnect inside createTradingHub. Ignore a start race on an unmount-before-connect.
+    setHubHealth('connecting');
     void hub.start().catch(() => undefined);
+
+    // Poll the connection state (signalr fires no public state event on this minimal surface) and map
+    // it to our coarse HubHealth, publishing to the store.
+    const publish = (): void => setHubHealth(mapHubState(hub.state));
+    const poll = window.setInterval(publish, 1000);
+
     return () => {
+      window.clearInterval(poll);
+      setHubHealth('disabled');
       void hub.stop().catch(() => undefined);
     };
   }, [hub]);
 
+  // Notification drivers — turn trade transitions into closable toasts and core query failures into
+  // sticky error toasts. Mounted here (alongside the queries they watch) so the Live page owns them.
+  // The trade driver's onTradeEvent is fed by the SignalR push (it sees a close the active cache drops).
+  const { onTradeEvent } = useTradeNotifications();
+  useErrorNotifications();
+
   // SignalR wiring — inert in mocks mode (no hub); live the hub above feeds deltas into the cache.
-  useTradingHub({ hub, symbol, timeframe, style });
+  useTradingHub({ hub, symbol, timeframe, style, onTradeEvent });
 
   // The killzone of the latest alert on the focused symbol (drives the chart-header killzone badge).
   const activeKillzone = useMemo<Killzone | null>(

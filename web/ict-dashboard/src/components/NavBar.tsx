@@ -1,14 +1,18 @@
 // ---------------------------------------------------------------------------------------------------
-// NavBar — the top navigation for the 5-page app (Live · Trades · Backtest · Optimizer · Settings, plan §15).
-// Lives in the shared header. The "Advisory · Paper only" guardrail badge + the NY clock stay visible
-// on every page (the defensive posture surfaced at the UI, §6.3). Read-only: no order/execute control.
+// NavBar — the top navigation for the 6-page app (Live · Signals · Trades · Backtest · Optimizer ·
+// Settings, plan §15). Lives in the shared header. The "Advisory · Paper only" guardrail badge + the NY
+// clock stay visible on every page (the defensive posture surfaced at the UI, §6.3). Read-only: no
+// order/execute control.
 // ---------------------------------------------------------------------------------------------------
 
 import { NavLink } from 'react-router-dom';
 import { useNyClock } from '../hooks/useNyClock';
+import { NotificationCenter } from '../notifications/NotificationCenter';
+import { SystemHealthIndicator } from '../notifications/SystemHealthIndicator';
 
 const LINKS: readonly { to: string; label: string }[] = [
   { to: '/', label: 'Live' },
+  { to: '/signals', label: 'Signals' },
   { to: '/trades', label: 'Trades' },
   { to: '/backtest', label: 'Backtest' },
   { to: '/optimizer', label: 'Optimizer' },
@@ -37,7 +41,9 @@ export function NavBar(): React.JSX.Element {
         ))}
       </nav>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="app__tools">
+        <SystemHealthIndicator />
+        <NotificationCenter />
         <span className="badge-advisory">Advisory · Paper only</span>
         <span className="app__clock">{clock}</span>
       </div>

@@ -18,6 +18,7 @@ import { ChartPanel } from './components/ChartPanel';
 import { LiveConfigPanel } from './components/LiveConfigPanel';
 import { MarketStatus } from './components/MarketStatus';
 import { PerformancePanel } from './components/PerformancePanel';
+import { TopSignalsPanel } from './components/TopSignalsPanel';
 import { useMarketSelection } from './hooks/useMarketSelection';
 import { useOverlayVisibility } from './hooks/useOverlayVisibility';
 import { useDashboardData } from './hooks/useDashboardData';
@@ -31,16 +32,18 @@ export function Dashboard(): React.JSX.Element {
   );
   const { visibility, toggleOverlay } = useOverlayVisibility();
 
-  // Focus-on-alert/trade: switch the symbol AND seek the chart to the clicked moment. The clicked DTOs
-  // (AlertDto/PaperTradeDto) carry no timeframe, so the operator's selected TF is kept; only the symbol
-  // + the seek instant change (a contract change would be needed to also switch to the setup's TF).
+  // Focus-on-alert/trade/signal: switch the symbol AND seek the chart to the clicked moment. Alerts/trades
+  // carry no timeframe/style so the operator's selection is kept; a SIGNAL's DTO does carry them, so a
+  // signal focus also switches the chart TF + style (target.timeframe / target.style when present).
   const [seekToUtc, setSeekToUtc] = useState<string | undefined>(undefined);
   const handleFocus = useCallback(
     (target: FocusTarget) => {
       setSymbol(target.symbol);
+      if (target.timeframe) setTimeframe(target.timeframe);
+      if (target.style) selectStyle(target.style);
       setSeekToUtc(target.atUtc);
     },
-    [setSymbol],
+    [setSymbol, setTimeframe, selectStyle],
   );
 
   const { candlesQ, overlaysQ, alertsQ, tradesQ, perfQ, equityQ, activeKillzone, triggerTimeframe } =
@@ -95,6 +98,7 @@ export function Dashboard(): React.JSX.Element {
           isError={configQ.isError || accountQ.isError}
           error={configQ.error ?? accountQ.error}
         />
+        <TopSignalsPanel onFocus={handleFocus} />
         <ActivePaperTrades
           trades={tradesQ.data ?? []}
           isLoading={tradesQ.isLoading}

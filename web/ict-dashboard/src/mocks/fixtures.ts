@@ -20,6 +20,7 @@ import type {
   OptimizeResponse,
   PaperTradeDto,
   PerformanceSummaryDto,
+  RankedSignalDto,
   SettingsDto,
   SetupDto,
 } from '../types/api';
@@ -126,6 +127,7 @@ export const MOCK_SETUPS: SetupDto[] = [
     killzone: 'LondonOpen',
     style: 'Intraday',
     grade: 'A',
+    score: 82,
     triggerTimeframe: 'M5',
     entry: 1.0724,
     stop: 1.0689,
@@ -384,6 +386,26 @@ export const MOCK_SETTINGS: SettingsDto = {
   ],
 };
 
+/**
+ * TEST-ONLY: restore MOCK_SETTINGS.instrumentOverrides to just the baked NAS100USD override (the mock PUT
+ * mutates it in place, so a test that saves an override must reset it to keep test isolation).
+ */
+export function __resetMockSettingsForTest(): void {
+  for (const key of Object.keys(MOCK_SETTINGS.instrumentOverrides)) {
+    delete MOCK_SETTINGS.instrumentOverrides[key];
+  }
+  MOCK_SETTINGS.instrumentOverrides.NAS100USD = {
+    minRequiredConditions: null,
+    requiredConditions: [
+      'BiasAligned', 'KillzoneEntry', 'LiquiditySweep', 'DisplacementMss',
+      'PremiumDiscountHalf', 'DrawTargetRrMet', 'CalendarClear',
+    ],
+    minStopDistancePips: null,
+    spreadBasePips: null,
+    commissionPerLotRoundTripUsd: null,
+  };
+}
+
 // The economic-calendar status: an enabled Config feed with an FOMC + an NFP in the window. The FOMC day and the day
 // after are §2.5.2 no-trade days; the NFP and the two days before it (Wed/Thu) are too — so the offline app shows the
 // same blackout-day behavior the live gate applies.
@@ -549,6 +571,197 @@ export const MOCK_PERFORMANCE_NO_LOSSES: PerformanceSummaryDto = {
   expectancy: 2.1,
   maxDrawdown: 0,
 };
+
+// ---------------------------------------------------------------------------------------------------
+// Ranked live signals (GET /api/signals → RankedSignalDto[]; SignalR SignalsUpdated). A ranked matrix
+// across the five chart-selectable instruments — mixed grades/scores, mixed Auto/Manual entry mode, one
+// already-taken, one blocked (Expired), and one with an imminent expiry — so the offline app exercises
+// the takeable / disabled-tooltip / Auto-chip / expiring states. Every signal WRAPS a SetupDto.
+// ---------------------------------------------------------------------------------------------------
+
+/** Build a SetupDto for a mock signal (keeps the matrix below terse + the fields byte-faithful). */
+function signalSetup(
+  id: string,
+  symbol: string,
+  direction: 'Bullish' | 'Bearish',
+  killzone: string,
+  style: SetupDto['style'],
+  grade: SetupDto['grade'],
+  score: number,
+  triggerTimeframe: string,
+  entry: number,
+  stop: number,
+  targets: number[],
+  rewardRatio: number,
+  reason: string,
+  minutesAgo: number,
+): SetupDto {
+  return {
+    id,
+    symbol,
+    direction,
+    killzone,
+    style,
+    grade,
+    score,
+    triggerTimeframe,
+    entry,
+    stop,
+    targets,
+    rewardRatio,
+    reason,
+    detectedAtUtc: new Date(Date.now() - minutesAgo * 60_000).toISOString(),
+    isAdvisoryOnly: true,
+  };
+}
+
+/** A mutable ranked-signals book the mock GET reads and the mock take flips IsTaken on (offline parity). */
+export const MOCK_SIGNALS: RankedSignalDto[] = [
+  {
+    rank: 1,
+    score: 84,
+    entryMode: 'Manual',
+    isTaken: false,
+    blockReason: null,
+    expiresAtUtc: new Date(Date.now() + 12 * 60_000).toISOString(), // expiring soon (~12m)
+    setup: signalSetup(
+      'sig-1111-1111-1111-111111111111',
+      'EURUSD', 'Bullish', 'LondonOpen', 'Intraday', 'A', 84, 'M15',
+      1.0724, 1.0689, [1.0762, 1.079], 2.6,
+      'Asian-low sweep → bullish MSS with displacement → FVG + OTE 0.705; draw to buy-side liquidity (RR 2.6).',
+      4,
+    ),
+  },
+  {
+    rank: 2,
+    score: 71,
+    entryMode: 'Auto',
+    isTaken: false,
+    blockReason: null,
+    expiresAtUtc: null,
+    setup: signalSetup(
+      'sig-2222-2222-2222-222222222222',
+      'NAS100USD', 'Bullish', 'NewYorkOpen', 'Intraday', 'B', 71, 'M5',
+      19850.0, 19805.0, [19905.0, 19980.0], 2.9,
+      'Index AM killzone: 08:30 macro sweep → MSS up → order-block confluence; draw above the session high.',
+      9,
+    ),
+  },
+  {
+    rank: 3,
+    score: 68,
+    entryMode: 'Manual',
+    isTaken: false,
+    blockReason: null,
+    expiresAtUtc: null,
+    setup: signalSetup(
+      'sig-3333-3333-3333-333333333333',
+      'GBPUSD', 'Bearish', 'NewYorkOpen', 'Scalp', 'B', 68, 'M5',
+      1.272, 1.2745, [1.2695, 1.2655], 3.1,
+      'Buy-side sweep → bearish MSS → OTE 0.70; draw to sell-side liquidity (RR 3.1).',
+      14,
+    ),
+  },
+  {
+    rank: 4,
+    score: 66,
+    entryMode: 'Manual',
+    isTaken: true, // already taken — Take disabled (AlreadyTaken-style)
+    blockReason: 'AlreadyTaken',
+    expiresAtUtc: null,
+    setup: signalSetup(
+      'sig-4444-4444-4444-444444444444',
+      'USDJPY', 'Bullish', 'NewYorkOpen', 'Intraday', 'B', 66, 'M5',
+      156.42, 156.05, [156.9, 157.6], 2.1,
+      'Liquidity sweep → MSS up → FVG retrace; draw to the prior-day high (RR 2.1).',
+      26,
+    ),
+  },
+  {
+    rank: 5,
+    score: 63,
+    entryMode: 'Manual',
+    isTaken: false,
+    blockReason: 'Expired', // a stale signal — not takeable
+    expiresAtUtc: new Date(Date.now() - 3 * 60_000).toISOString(),
+    setup: signalSetup(
+      'sig-5555-5555-5555-555555555555',
+      'XAUUSD', 'Bearish', 'LondonOpen', 'Intraday', 'B', 63, 'M15',
+      2342.5, 2349.0, [2330.0, 2318.0], 2.4,
+      'Buy-side sweep → bearish MSS → OTE; draw to sell-side liquidity (RR 2.4). Window elapsed.',
+      62,
+    ),
+  },
+];
+
+/**
+ * Mock take handler (POST /api/signals/{setupId}/take). Throws on an already-taken / blocked / unknown
+ * signal (the {error} surfacing path), otherwise flips IsTaken on the book and returns a synthetic OPEN
+ * PaperTradeDto (the 200/Immediate shape — the page merges it into the active-trades cache). Returns null
+ * for an Auto signal to emulate the 202/Armed (limit resting, no body) path.
+ */
+export function mockTakeSignal(setupId: string): PaperTradeDto | null {
+  const signal = MOCK_SIGNALS.find((s) => s.setup.id === setupId);
+  if (!signal) {
+    throw new Error('Signal is no longer pending (404).');
+  }
+  if (signal.isTaken || signal.blockReason) {
+    throw new Error(signal.blockReason === 'Expired' ? 'Signal expired (409).' : 'Signal already taken (409).');
+  }
+  signal.isTaken = true;
+  signal.blockReason = 'AlreadyTaken';
+
+  // Auto mode rests a limit (202, no body) — nothing opens immediately.
+  if (signal.entryMode === 'Auto') {
+    return null;
+  }
+
+  const su = signal.setup;
+  const tradeDirection: PaperTradeDto['direction'] = su.direction === 'Bullish' ? 'Long' : 'Short';
+  return {
+    id: `take-${su.id}`,
+    setupId: su.id,
+    symbol: su.symbol,
+    direction: tradeDirection,
+    status: 'Open',
+    style: su.style,
+    killzone: su.killzone,
+    entry: su.entry,
+    stop: su.stop,
+    targets: su.targets,
+    size: 0.4,
+    openedAtUtc: new Date().toISOString(),
+    closedAtUtc: null,
+    realizedR: null,
+    lifecycle: 'Open',
+    closeReason: null,
+    netR: null,
+    grossPnl: null,
+    costs: null,
+    netPnl: null,
+    hasScaledOut: false,
+    isBreakevenArmed: false,
+    riskBudget: 100,
+    timeframe: su.triggerTimeframe,
+    currentStop: su.stop,
+    exitPrice: null,
+    managedFromUtc: new Date().toISOString(),
+  };
+}
+
+/** TEST-ONLY: reset the mutable signals book between tests (the take flow flips IsTaken in place). */
+export function __resetMockSignalsForTest(): void {
+  MOCK_SIGNALS[0].isTaken = false;
+  MOCK_SIGNALS[0].blockReason = null;
+  MOCK_SIGNALS[1].isTaken = false;
+  MOCK_SIGNALS[1].blockReason = null;
+  MOCK_SIGNALS[2].isTaken = false;
+  MOCK_SIGNALS[2].blockReason = null;
+  MOCK_SIGNALS[3].isTaken = true;
+  MOCK_SIGNALS[3].blockReason = 'AlreadyTaken';
+  MOCK_SIGNALS[4].isTaken = false;
+  MOCK_SIGNALS[4].blockReason = 'Expired';
+}
 
 // Cumulative R from a zero baseline (running ΣR), matching EquityPointDto.equity on the wire.
 export const MOCK_EQUITY_CURVE: EquityPointDto[] = [

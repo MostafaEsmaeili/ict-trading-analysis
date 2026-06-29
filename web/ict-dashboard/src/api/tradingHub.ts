@@ -13,16 +13,25 @@ import {
   HubConnectionState,
   type HubConnection,
 } from '@microsoft/signalr';
-import type { AlertDto, CandleDto, PaperTradeDto, PerformanceSummaryDto, SetupDto } from '../types/api';
+import type {
+  AlertDto,
+  CandleDto,
+  PaperTradeDto,
+  PerformanceSummaryDto,
+  RankedSignalDto,
+  SetupDto,
+} from '../types/api';
 
 export const TRADING_HUB_ROUTE = '/hubs/trading';
 
-/** The four server→client push handler names (frozen — TradingHub.cs). */
+/** The server→client push handler names (frozen — TradingHub.cs). */
 export const HubEvents = {
   SetupDetected: 'SetupDetected',
   TradeUpdated: 'TradeUpdated',
   PerformanceUpdated: 'PerformanceUpdated',
   CandleAppended: 'CandleAppended',
+  /** The full ranked signals top-N (RankedSignalDto[]) — pushed whenever the live ranking changes. */
+  SignalsUpdated: 'SignalsUpdated',
 } as const;
 
 /** The minimal surface useTradingHub needs — lets tests substitute a fake (no real socket). */
@@ -41,6 +50,8 @@ export interface TradingHubHandlers {
   onPerformanceUpdated?: (summary: PerformanceSummaryDto) => void;
   onCandleAppended?: (candle: CandleDto) => void;
   onAlert?: (alert: AlertDto) => void;
+  /** The full ranked signals top-N replaced the cache (the signals feed re-renders from it). */
+  onSignalsUpdated?: (signals: RankedSignalDto[]) => void;
 }
 
 /**
@@ -83,12 +94,16 @@ export function bindTradingHub(hub: TradingHubLike, handlers: TradingHubHandlers
   if (handlers.onCandleAppended) {
     hub.on(HubEvents.CandleAppended, (c) => handlers.onCandleAppended?.(c as CandleDto));
   }
+  if (handlers.onSignalsUpdated) {
+    hub.on(HubEvents.SignalsUpdated, (s) => handlers.onSignalsUpdated?.(s as RankedSignalDto[]));
+  }
 
   return () => {
     hub.off(HubEvents.SetupDetected);
     hub.off(HubEvents.TradeUpdated);
     hub.off(HubEvents.PerformanceUpdated);
     hub.off(HubEvents.CandleAppended);
+    hub.off(HubEvents.SignalsUpdated);
   };
 }
 

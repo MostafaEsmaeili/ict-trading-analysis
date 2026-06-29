@@ -19,23 +19,42 @@ describe('Dashboard', () => {
     expect(screen.getByRole('region', { name: /active paper trades/i })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: /performance/i })).toBeInTheDocument();
 
-    // Defensive guardrail surfaced in the UI — there is no execute/order control anywhere.
+    // Defensive guardrail surfaced in the UI — there is no execute/order control anywhere, even with the
+    // new notification controls (bell + health dot + closable toasts) present.
     expect(screen.getByText(/advisory · paper only/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /execute|go live|place order|buy|sell/i })).toBeNull();
     expect(screen.queryByRole('link', { name: /execute|go live|place order|buy|sell/i })).toBeNull();
 
-    // The 4-page nav is present on every page (§15).
+    // The notification controls are present in the NavBar (the operator's #1 complaint fix).
+    expect(screen.getByRole('button', { name: /notifications/i })).toBeInTheDocument();
+    // The system-health dot is bound to backend state, NOT to any order/execute action.
+    expect(screen.getByRole('status', { name: /healthy|degraded|backend error/i })).toBeInTheDocument();
+
+    // The 6-page nav is present on every page (§15) — Signals lands after Live.
     const nav = screen.getByRole('navigation', { name: /primary/i });
     expect(nav).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Live' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Signals' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Trades' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Backtest' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Optimizer' })).toBeInTheDocument();
+
+    // The Top Signals panel is present in the Live right rail (the manual-take shortcut, §15).
+    expect(screen.getByRole('region', { name: /top signals/i })).toBeInTheDocument();
 
     // Mock data resolves through React Query into the panels.
     await waitFor(() => {
       expect(screen.getAllByText('EURUSD').length).toBeGreaterThan(0);
     });
+
+    // The Take control opens a PAPER trade — its label must avoid every forbidden verb (the guardrail
+    // holds even with the new take workflow on the Live page).
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: /take paper trade on/i }).length).toBeGreaterThan(0);
+    });
+    expect(
+      screen.queryByRole('button', { name: /execute|go live|place order|buy|sell/i }),
+    ).toBeNull();
     // Style filter exposes the four frozen styles.
     expect(screen.getByRole('group', { name: /trade style filter/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Intraday' })).toHaveAttribute('aria-pressed', 'true');

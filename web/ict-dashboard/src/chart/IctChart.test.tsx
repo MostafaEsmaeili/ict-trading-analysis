@@ -234,6 +234,7 @@ describe('IctChart entry markers', () => {
       killzone: 'LondonOpen',
       style: 'Intraday',
       grade: 'A',
+      score: 82,
       triggerTimeframe: 'M5',
       entry: 1.0919,
       stop: 1.0689,

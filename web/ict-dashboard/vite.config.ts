@@ -19,6 +19,12 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     css: false,
     include: ['src/**/*.test.{ts,tsx}'],
+    // The heavy mock-driven async tests (optimizer grid sweep, recharts/lightweight-charts mounts) resolve
+    // their React Query data over several ticks; the default 1000ms `waitFor`/test budget is marginal once
+    // the worker pool is under full parallel CPU contention (a DIFFERENT test would intermittently time out
+    // per run while passing in isolation). A generous timeout makes the parallel suite deterministic.
+    testTimeout: 15_000,
+    hookTimeout: 15_000,
     // Force the deterministic, offline mock data layer for the whole suite, independent of any local
     // `.env.local` (the operator may set VITE_USE_MOCKS=false there for live render-verification —
     // that must NOT make the unit suite hit the real host). client.test.ts overrides this per-test
