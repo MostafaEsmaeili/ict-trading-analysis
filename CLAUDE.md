@@ -1674,6 +1674,31 @@ optional full pr-reviewer over the branch; commit/push/PR per git-workflow; live
 + Take + dismissible notifs + redesigned Settings against the booted Host; optional Turtle Soup detector + a US30/gold data
 fetch + gold cost-model revisit.
 
+**🌙 OVERNIGHT IMPROVEMENT LOOP (operator: "add a pessimistic judge, backtest+criticize everything, update memory, do it
+again to make it much better — until morning"). Branch `feature/#183-product-overhaul` (PR #184).** A
+backtest→pessimistic-judge→fix→memory loop driving the system better each round; changes committed LOCALLY per round (NOT
+pushed without the operator). New **`pessimistic-judge` skill** (`.claude/skills/pessimistic-judge`): guilty-until-proven-
+innocent adversarial review (look-ahead/phantom fills, guardrail, ICT fidelity, money, overfit, determinism, config-binder,
+test gaps); treats implausibly-good results as BUGS and BLOCKs on look-ahead/guardrail/money.
+
+- **🐞 CRITICAL BUG FOUND (the operator's "22 trades in 3yr" complaint led here).** The scanner DETECTS plenty of setups
+  (NAS100 M5 k6 = 281) but only ~22 become trades (8% conversion) because the §2.5 entry is a RESTING LIMIT at the OTE/FVG
+  and price often never retraces there (faithful — ICT: "no fill is a valid outcome"). The non-default
+  **`EntryMode.Immediate` (`Ict:Execution:Entry:Mode=Immediate`) has a LOOK-AHEAD/phantom-fill BUG**: `TradeOrchestrator`
+  (line 81-82) opens at `plan.Entry` (the OTE) on the confirmation bar even though the market hasn't retraced there →
+  phantom favorable fills → IMPLAUSIBLE results (NAS100 PF **37**, USDJPY PF **88**, +800%). **NOT edge — disregard any
+  Immediate-mode numbers.** Default is **Armed** (the correct resting limit, no look-ahead) so the committed system + PR #184
+  are UNAFFECTED; Immediate is an off-by-default trap. **Round 2 fixes it = the real frequency lever** (open at the actual
+  next-bar price + recompute stop/target/RR = a correct, honest market-on-confirmation entry).
+- **Round 1 — DONE & COMMITTED (903 unit, 0 warnings, format clean).** Added opt-in `EntryFillZone {Ote(default),
+  ConsequentEncroachment, FvgNearEdge}` on the OTE resolver (`Ict:Detection:Ote:FillZone`) + `FairValueGap.NearEdge`.
+  **Empirical judge verdict (kept honest): a NO-HELP.** CE = the FVG midpoint the resolver ALREADY uses (a no-op);
+  FvgNearEdge barely moved conversion (8%→7% NAS100, 56%→56% EURUSD M5) and WORSENED edge (PF 1.78→1.25, 1.40→0.91). So
+  **entry DEPTH is not the bottleneck** — price often never retraces into the gap at all. The zones stay as harmless opt-ins
+  (default Ote = byte-identical). **The honest levers for more trades: (a) breadth + lower TF (M1/M3), (b) the correct
+  market-on-confirmation entry (round 2), NOT entry-depth tricks.** CONVENTION: backtest realism — verify a "more trades"
+  lever ACTUALLY raises filled trades AND holds edge before trusting it; the judge re-derives suspicious metrics.
+
 **CONVENTIONS reaffirmed/added this session:** (a) "default to live" is satisfied by the multi-granularity capability +
 the operator's env-var run, NOT by flipping the committed `Provider` (keeps tokenless CI/dev boots + Host-booting tests
 green). (b) Backend slices serialize their `dotnet build` (DLL-lock); parallelize only backend↔frontend (different

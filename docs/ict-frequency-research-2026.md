@@ -151,3 +151,43 @@ net-negative in every config → flagged for a future draw/cost model, not baked
 a discovery-mode recall ceiling (M5 + k=5 across all 7) ≈ **10.4/week** — but the FX legs net-lose at k=5, so
 that's a recall ceiling, **not** a profitable stream. This is ICT's own thesis in data: **breadth + lower TF
 raises the count; gutting confluence loses money.** Re-run the optimizer when more M5 history (or US30 data) is fetched.
+
+---
+
+## 8. The entry-FILL bottleneck — why so few TRADES, and how to get more (DEFINITIVE, empirical)
+
+The operator's complaint ("22 trades in 3 years is not realistic") traces to the **entry fill**, not the
+scan. NAS100 M5 k6 **detects 281 setups** but opens only **~22 trades (8%)** — because the §2.5 entry is a
+**resting LIMIT at the OTE/FVG** and price frequently **never retraces into the gap at all** (the displacement
+runs straight to target). This is FAITHFUL — ICT: *"no fill is a valid outcome… refusing a premium entry beats
+forcing a trade the market never offered you."*
+
+**What raises the trade count, and what it costs (all measured on our data, Armed/faithful fills):**
+
+| Lever | Trades | Edge | Verdict |
+|---|---|---|---|
+| Lower TF (EURUSD **M1** k5) | 42 (≈3×) | **PF 0.90 — LOSES** | more trades, negative edge |
+| Relax k-of-n (EURUSD M5 **k5**) | 39 | PF 1.16 (vs strict 1.97) | more trades, weaker edge |
+| Entry DEPTH (CE / FVG-near-edge) | ~same | PF **falls** (1.78→1.25) | **no help — depth isn't the bottleneck** |
+| Phantom "Immediate" (open at OTE now) | 203 | PF 37 / +800% | **A LOOK-AHEAD BUG — not real** |
+| **Breadth (more instruments)** | additive | edge preserved | **the only edge-preserving lever** |
+| **Correct market-on-confirmation** (NOT built) | most of the 281 | honest lower edge | **the real fix — needs building (see below)** |
+
+**The honest conclusion.** The strict §2.5 model is **high-precision / low-recall by design** — ~**2–3
+quality trades/week across the net-profitable basket**, which matches ICT's own "1–2 good trades/day, often
+zero." You cannot make it high-frequency by relaxing confluence or shifting entry depth without losing the
+edge. The two legitimate ways to MORE trades:
+1. **Breadth + lower TF + more sessions** (operating config) — run the full basket on M5 (+ M1/M3 in an opt-in
+   discovery mode) + the Silver Bullet windows. More trades, edge preserved per-pair where the backtest proves it.
+2. **A CORRECT market-on-confirmation entry (proposed, NOT yet built).** To convert the ~280 detected setups
+   into trades HONESTLY, enter at the **actual next-bar open** (a real, available price) on the MSS/displacement
+   confirmation — *not* waiting for the OTE retrace — with **stop/target/RR recomputed from that real fill**, and
+   **no look-ahead**. This is a real ICT variation (enter on confirmation) and would give many more trades at a
+   realistic, lower PF (~1.1–1.5, NOT 37). ⚠️ The existing `EntryMode.Immediate` is the BUGGY version (opens at
+   the OTE price the market never reached → phantom fills → PF 37); it must be **rebuilt** to fill at the real
+   bar price before it can be trusted. **This is the highest-value change for the frequency goal — recommended
+   as the next operator-approved slice.**
+
+**Anti-pattern (do not use):** the phantom `Immediate` mode, entry-depth tricks (CE/near-edge), or k=5 on FX —
+all either fake the result or lose money. The default **Armed** limit is correct and is what the committed
+system uses.
