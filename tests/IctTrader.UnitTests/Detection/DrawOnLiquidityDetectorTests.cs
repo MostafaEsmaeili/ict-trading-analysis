@@ -146,6 +146,51 @@ public class DrawOnLiquidityDetectorTests
     }
 
     [Fact]
+    public void Consequent_encroachment_prices_entry_stop_and_rr_from_the_fvg_midpoint()
+    {
+        // FillZone = ConsequentEncroachment: the entry is the selected FVG's CE (== its midpoint here, 1.0832); the
+        // stop is UNCHANGED (beyond the swept extreme 1.0810 - 10 pip buffer = 1.0800); RR recomputes entry->draw.
+        var ctx = ArrangeBullishFrame();
+        AddBuySidePool(ctx, 1.0920m);
+        var detector = new DrawOnLiquidityDetector(
+            new DrawOnLiquidityOptions(),
+            new OteOptions { FillZone = EntryFillZone.ConsequentEncroachment },
+            new TradeStyleOptions(),
+            new FvgOptions(),
+            new SdProjectionOptions());
+
+        var result = detector.Detect(ctx, Current);
+
+        result.Matched.Should().BeTrue();
+        var entry = (decimal)result.Evidence![EvidenceKeys.EntryPrice];
+        var stop = (decimal)result.Evidence[EvidenceKeys.StopPrice];
+        var target = (decimal)result.Evidence[EvidenceKeys.TargetPrice];
+        entry.Should().Be(1.0832m);  // FVG [1.0828, 1.0836] CE = 1.0832
+        stop.Should().Be(1.0800m);   // unchanged: swept low 1.0810 - 10 pip buffer
+        var expectedRr = Math.Abs(target - entry) / Math.Abs(entry - stop);
+        ((decimal)result.Evidence[EvidenceKeys.RewardRatio]).Should().Be(expectedRr);
+    }
+
+    [Fact]
+    public void A_setup_below_the_rr_floor_at_the_consequent_encroachment_entry_is_no_match()
+    {
+        // The RR-floor gate uses the CE geometry consistently: with a SHALLOWER CE entry the entry sits closer to
+        // the draw, so a draw that no longer clears the style floor at CE is faithfully a NoMatch (not a bug).
+        // Leg 1.0800->1.0900, swept low 1.0810, stop 1.0800 (risk vs CE = 0.0032). A draw at 1.0860 gives only
+        // 0.0028/0.0032 = 0.875R < the 2:1 floor.
+        var ctx = ArrangeBullishFrame();
+        AddBuySidePool(ctx, 1.0860m);
+        var detector = new DrawOnLiquidityDetector(
+            new DrawOnLiquidityOptions(),
+            new OteOptions { FillZone = EntryFillZone.ConsequentEncroachment },
+            new TradeStyleOptions(),
+            new FvgOptions(),
+            new SdProjectionOptions());
+
+        detector.Detect(ctx, Current).Should().Be(DetectorResult.NoMatch);
+    }
+
+    [Fact]
     public void Default_configuration_validates_clean()
         => new DrawOnLiquidityOptions().Validate().Should().BeEmpty();
 }

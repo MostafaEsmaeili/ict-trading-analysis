@@ -51,6 +51,24 @@ public sealed class FairValueGap
 
     public decimal Midpoint => Bottom.Value + (Size / 2m);
 
+    /// <summary>
+    /// The ICT <em>consequent encroachment</em> (CE) of the gap — its 50% midpoint, <c>(High + Low) / 2</c>. CE is
+    /// the canonical SHALLOW entry inside a fair-value gap: price reaches the gap's 50% more often than the deep
+    /// 62–79% OTE retrace, so it converts more setups into real fills (a slightly worse entry, no look-ahead). CE
+    /// equals <see cref="Midpoint"/> by construction; it is a distinct, named accessor so the entry-zone intent is
+    /// explicit at the call site. Provenance: CE is ICT-canon ("consequent encroachment") but Primer/community vs
+    /// the §2.5 70.5% deep-OTE default.
+    /// </summary>
+    public decimal ConsequentEncroachment => (Top.Value + Bottom.Value) / 2m;
+
+    /// <summary>
+    /// The NEAR (proximal) edge of the gap — the first level price taps as it retraces in: a BULLISH gap's
+    /// <see cref="Top"/> (price retraces DOWN into it) or a BEARISH gap's <see cref="Bottom"/> (retraces UP). It is
+    /// the SHALLOWEST entry inside the gap (shallower than <see cref="ConsequentEncroachment"/>/<see cref="Midpoint"/>),
+    /// so a resting limit here fills the most often at the worst entry price — the §2.5.1-step-7 "tap the gap" backup.
+    /// </summary>
+    public decimal NearEdge => Direction == Direction.Bullish ? Top.Value : Bottom.Value;
+
     public bool IsOpen => State == FvgState.Open;
 
     /// <summary>Records a retrace into the gap; voids the array once <paramref name="voidOnTouchCount"/> is reached.</summary>
