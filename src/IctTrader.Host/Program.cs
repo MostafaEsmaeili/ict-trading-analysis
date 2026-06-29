@@ -152,8 +152,8 @@ api.MapGet("/signals", async (string? symbol, string? style, string? grade, int?
 // The operator TAKEs a Manual-mode pending signal (plan §15 — "give me the opportunity to use that setup"): REST →
 // bus SendAsync → the PaperTrading TakeSetupCommandHandler, which opens ONE SIMULATED paper trade through the SAME
 // shared SetupTradeOpener the automatic flow uses (so a taken trade is byte-identical in sizing/cap/guardrail). On
-// success it echoes the opened PaperTradeDto (read back by the deterministic id); a not-pending/expired id → 404, an
-// already-taken id → 409. PAPER-ONLY — there is no broker/order path anywhere (§6.3 guardrail).
+// success it echoes the opened PaperTradeDto (read back by the deterministic id); an unknown id → 404, an
+// expired or already-taken id → 409. PAPER-ONLY — there is no broker/order path anywhere (§6.3 guardrail).
 api.MapPost("/signals/{setupId:guid}/take", async (Guid setupId, IMessageBus bus) =>
     {
         try
@@ -168,7 +168,9 @@ api.MapPost("/signals/{setupId:guid}/take", async (Guid setupId, IMessageBus bus
         }
         catch (TakeSetupException ex)
         {
-            return ex.Reason == TakeSetupFailure.AlreadyTaken
+            // AlreadyTaken / Expired are CONFLICTs (the opportunity existed but can't be taken now — already opened, or
+            // its entry window closed); a truly unknown id is a 404. The reason is echoed so the UI can tell them apart.
+            return ex.Reason is TakeSetupFailure.AlreadyTaken or TakeSetupFailure.Expired
                 ? Results.Conflict(new { error = ex.Message, reason = ex.Reason.ToString() })
                 : Results.NotFound(new { error = ex.Message, reason = ex.Reason.ToString() });
         }

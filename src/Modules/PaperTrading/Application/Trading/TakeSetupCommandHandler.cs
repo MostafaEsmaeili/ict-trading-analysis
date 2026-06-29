@@ -52,17 +52,17 @@ public sealed class TakeSetupCommandHandler(
             throw new TakeSetupException(TakeSetupFailure.AlreadyTaken);
         }
 
-        // Atomically claim the pending. A miss is either "never pending" or "expired" — distinguish for the right
-        // status (404 vs 404-Expired) by checking the raw map without the expiry filter would require exposing it; the
-        // store treats expired as gone, so we report NotFound when truly absent and Expired when it was present-but-stale.
+        // Atomically claim the pending. The store reports WHY a miss happened (captured before its lazy prune): a
+        // present-but-stale opportunity → Expired (409 — "the entry window closed / you waited too long"), a never-known
+        // id → NotFound (404). This gives the operator the honest reason instead of a blanket 404.
         var now = _timeProvider.GetUtcNow();
-        var taken = _pending.TryTake(setupId, now);
+        var taken = _pending.TryTake(setupId, now, out var miss);
         if (taken is null)
         {
-            // Distinguish a stale-but-known pending (Expired) from a never-known one (NotFound): TryTake already pruned
-            // it, so we cannot re-read it. We treat any miss as NotFound; the store's own expiry pruning means an
-            // expired id is simply absent. (Expired is exposed so a future store that retains tombstones can refine it.)
-            throw new TakeSetupException(TakeSetupFailure.NotFound);
+            throw new TakeSetupException(
+                miss == PendingOpportunityStore.TakeMiss.Expired
+                    ? TakeSetupFailure.Expired
+                    : TakeSetupFailure.NotFound);
         }
 
         // Open through the ONE shared simulated-open path — identical sizing/cap/guardrail to the automatic flow.

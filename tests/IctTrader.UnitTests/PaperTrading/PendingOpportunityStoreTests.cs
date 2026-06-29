@@ -166,6 +166,28 @@ public class PendingOpportunityStoreTests
     }
 
     [Fact]
+    public void TryTake_distinguishes_an_expired_pending_from_a_never_known_id()
+    {
+        var store = CreateStore(maxPendingMinutes: 60);
+        var pending = Pending(InKillzone);
+        store.Add(pending, InKillzone);
+
+        // Present but aged out → Expired (so the endpoint can answer 409, not a blanket 404).
+        var later = InKillzone.AddMinutes(61);
+        store.TryTake(pending.Id, later, out var expiredMiss).Should().BeNull();
+        expiredMiss.Should().Be(PendingOpportunityStore.TakeMiss.Expired);
+
+        // Never on the board → NotFound (404).
+        store.TryTake(Guid.NewGuid(), InKillzone, out var unknownMiss).Should().BeNull();
+        unknownMiss.Should().Be(PendingOpportunityStore.TakeMiss.NotFound);
+
+        // A live take still succeeds (and reports no miss).
+        var fresh = Pending(InKillzone);
+        store.Add(fresh, InKillzone);
+        store.TryTake(fresh.Id, InKillzone, out _).Should().NotBeNull();
+    }
+
+    [Fact]
     public void AgeExpiry_reports_detection_plus_window_when_pending_and_null_otherwise()
     {
         var store = CreateStore(maxPendingMinutes: 60);

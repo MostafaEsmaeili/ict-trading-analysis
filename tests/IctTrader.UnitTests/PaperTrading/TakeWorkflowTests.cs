@@ -173,7 +173,8 @@ public class TakeWorkflowTests
         harness.Clock.SetUtcNow(Confirmed.AddMinutes(5));
 
         var take = async () => await bus.SendAsync(new TakeSetupCommand(setup.Id));
-        await take.Should().ThrowAsync<TakeSetupException>().Where(e => e.Reason == TakeSetupFailure.NotFound);
+        // It was PRESENT then aged out → Expired (409), distinct from a never-known id → NotFound (404).
+        await take.Should().ThrowAsync<TakeSetupException>().Where(e => e.Reason == TakeSetupFailure.Expired);
         harness.Trades.Saved.Should().BeEmpty("an expired pending opens nothing");
     }
 

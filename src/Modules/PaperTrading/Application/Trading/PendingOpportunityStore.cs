@@ -68,24 +68,42 @@ public sealed class PendingOpportunityStore
         }
     }
 
+    /// <summary>Why a <see cref="TryTake"/> returned null: the id was present but aged/killzone-expired
+    /// (<see cref="Expired"/>) versus never on the board (<see cref="NotFound"/>) — so the take endpoint can answer
+    /// 409-Expired ("you waited too long / the window closed") distinctly from 404 ("no such opportunity").</summary>
+    internal enum TakeMiss
+    {
+        NotFound,
+        Expired,
+    }
+
     /// <summary>
     /// Atomically looks up a non-expired pending by id and REMOVES it (the take consumes it). Returns null when the id
-    /// is unknown OR has expired relative to <paramref name="nowUtc"/> (an expired pending is pruned and treated as
-    /// gone). Thread-safe — concurrent takes of the same id resolve to exactly one winner.
+    /// is unknown OR has expired relative to <paramref name="nowUtc"/>, with <paramref name="miss"/> distinguishing the
+    /// two (the reason is captured BEFORE the lazy prune, so a present-but-stale id reports <see cref="TakeMiss.Expired"/>
+    /// rather than being indistinguishable from absent). Thread-safe — concurrent takes of the same id resolve to one winner.
     /// </summary>
-    internal PendingOpportunity? TryTake(Guid id, DateTimeOffset nowUtc)
+    internal PendingOpportunity? TryTake(Guid id, DateTimeOffset nowUtc, out TakeMiss miss)
     {
         lock (_gate)
         {
+            // Capture the miss reason BEFORE pruning: present-but-expired vs never-known.
+            var existedButExpired = _byId.TryGetValue(id, out var existing) && IsExpired(existing, nowUtc);
+
             Prune(nowUtc);
             if (_byId.Remove(id, out var pending))
             {
+                miss = default;
                 return pending;
             }
 
+            miss = existedButExpired ? TakeMiss.Expired : TakeMiss.NotFound;
             return null;
         }
     }
+
+    /// <summary>Back-compat overload that discards the miss reason (existing callers/tests that only need the value).</summary>
+    internal PendingOpportunity? TryTake(Guid id, DateTimeOffset nowUtc) => TryTake(id, nowUtc, out _);
 
     /// <summary>Removes a pending by id (e.g. once it has been taken/opened on the auto-idempotency path). Thread-safe;
     /// a no-op when the id is absent.</summary>
