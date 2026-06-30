@@ -86,6 +86,8 @@ export interface SetupDto {
   killzone: string;
   style: string;
   grade: string;
+  /** The within-grade 0–100 weighted §2.5.4 score (the ScoreBar / signals ranking input). */
+  score: number;
   triggerTimeframe: string;
   entry: number;
   stop: number;
@@ -95,6 +97,28 @@ export interface SetupDto {
   detectedAtUtc: string;
   isAdvisoryOnly: boolean;
 }
+
+/**
+ * Mirrors Host.RankedSignalDto — a confirmed setup ranked into the live signals top-N. A WRAPPER around
+ * {@link SetupDto} (NOT a flat superset). `rank` is 1-based; `score` is the §2.5.4 0–100 score (also on the
+ * nested Setup). `entryMode` decides who pulls the trigger — "Auto" the engine arms/opens it itself,
+ * "Manual" the operator decides via the Take button. `isTaken` true once a paper trade was opened off this
+ * signal. `blockReason` null = takeable; a non-null value ("AlreadyTaken" | "Expired") means NOT takeable
+ * and is shown as the disabled-reason. `expiresAtUtc` is an ISO-8601 UTC instant or null (never expires).
+ * Read-only/advisory: taking a signal only opens a PAPER trade — there is no live order path (§6.3).
+ */
+export interface RankedSignalDto {
+  rank: number;
+  score: number;
+  setup: SetupDto;
+  entryMode: string;
+  isTaken: boolean;
+  blockReason: string | null;
+  expiresAtUtc: string | null;
+}
+
+/** The two per-instrument entry modes carried on RankedSignalDto / InstrumentSettingsDto (frozen names). */
+export type EntryMode = 'Auto' | 'Manual';
 
 /** Mirrors Scanning.Contracts.ScanStatusDto. */
 export interface ScanStatusDto {
@@ -199,6 +223,12 @@ export interface InstrumentSettingsDto {
   commissionPerLotRoundTripUsd?: number | null;
   /** HTF daily-bias gate: require the entry to agree with the day's reference-open bias (per-instrument). */
   requireReferenceOpenAgreement?: boolean | null;
+  /**
+   * Per-instrument entry mode for confirmed setups: "Auto" the engine arms/opens the paper trade itself,
+   * "Manual" only alerts/ranks it (the operator takes it via the Take button). null/omitted = inherit the
+   * global default. Still PAPER either way — there is never a live order (§6.3).
+   */
+  entryMode?: string | null;
 }
 
 /**

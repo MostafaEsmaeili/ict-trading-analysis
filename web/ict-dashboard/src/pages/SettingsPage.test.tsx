@@ -1,30 +1,54 @@
-// SettingsPage — live per-instrument tuning + the read-only global concept view (plan §15). The
+// SettingsPage — live per-instrument tuning + the read-only global concept view (plan §15), reorganised
+// into tabs (Quick setup · Instruments · Concept model · Discovery · Calendar) for a non-expert. The
 // per-instrument form is editable (k-of-n / required subset / per-pair costs); a required subset must
 // include DisplacementMss (the FSM direction lock). Read-only/advisory: no order/execute control (§6.3).
-import { describe, expect, it } from 'vitest';
+//
+// Content that now lives behind a tab is asserted AFTER activating that tab.
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { SettingsPage } from './SettingsPage';
 import { renderWithProviders } from '../test/renderWithProviders';
+import { __resetMockSettingsForTest } from '../mocks/fixtures';
+
+/** Click a settings tab by its label. */
+function openTab(label: RegExp): void {
+  fireEvent.click(screen.getByRole('tab', { name: label }));
+}
+
+// The mock PUT mutates MOCK_SETTINGS in place; reset between tests so a saved override doesn't leak.
+beforeEach(() => __resetMockSettingsForTest());
+afterEach(() => __resetMockSettingsForTest());
 
 describe('SettingsPage', () => {
-  it('renders the per-instrument form and the current-overrides table (the baked NAS100 override)', async () => {
+  it('renders the per-instrument form (the default Quick-setup tab) and the overrides table on Instruments', async () => {
     renderWithProviders(<SettingsPage />);
 
+    // The Quick-setup tab is the default landing — the form renders without switching tabs.
     await waitFor(() => {
       expect(screen.getByRole('form', { name: /instrument override form/i })).toBeInTheDocument();
     });
 
-    // The baked NAS100USD override (a 7-of-8 required subset) shows in the current-overrides table.
+    // The baked NAS100USD override (a 7-of-8 required subset) shows in the Instruments tab's table.
+    openTab(/instruments/i);
     const table = screen.getByRole('table', { name: /current overrides/i });
     expect(table).toHaveTextContent('NAS100USD');
     expect(table).toHaveTextContent('7 of 8');
   });
 
-  it('renders the read-only global concept settings (weights, risk, execution, scanning)', async () => {
+  it('renders the read-only global concept settings (weights, risk, execution) on the Concept-model tab in Advanced mode', async () => {
     renderWithProviders(<SettingsPage />);
 
+    // The weights table is Advanced-only — flip the mode switch, then open the Concept-model tab.
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /confluence & grading/i })).toBeInTheDocument();
+      expect(screen.getByRole('switch', { name: /advanced mode/i })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('switch', { name: /advanced mode/i }));
+    openTab(/concept model/i);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { name: /confluence weights/i }),
+      ).toBeInTheDocument();
     });
 
     // The weighted §2.5.3 universe is surfaced (the top weight is KillzoneEntry 1.00).
@@ -57,6 +81,31 @@ describe('SettingsPage', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /save override/i })).toBeInTheDocument();
     });
+    expect(
+      screen.queryByRole('button', { name: /execute|place order|buy|sell|go live/i }),
+    ).toBeNull();
+  });
+
+  it('the Discovery tab exposes a LIVE per-instrument Auto/Manual entry-mode control', async () => {
+    renderWithProviders(<SettingsPage />);
+
+    openTab(/discovery/i);
+
+    // The entry-mode control is a real, enabled combobox (no longer a disabled preview).
+    const select = (await screen.findByRole('combobox', { name: 'Entry mode' })) as HTMLSelectElement;
+    expect(select).toBeInTheDocument();
+    expect(select).toBeEnabled();
+    expect(select.value).toBe('inherit');
+
+    // Switching to Manual is accepted (the PUT mutation runs against the mock; the value reflects it).
+    fireEvent.change(select, { target: { value: 'Manual' } });
+    await waitFor(() => {
+      expect((screen.getByRole('combobox', { name: 'Entry mode' }) as HTMLSelectElement).value).toBe(
+        'Manual',
+      );
+    });
+
+    // Still no execute/order control on this tab.
     expect(
       screen.queryByRole('button', { name: /execute|place order|buy|sell|go live/i }),
     ).toBeNull();

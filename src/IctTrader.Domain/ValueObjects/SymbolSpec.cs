@@ -52,4 +52,19 @@ public sealed record SymbolSpec
 
     /// <summary>NASDAQ-100 index geometry — an alias of <see cref="Index"/> (kept for existing call sites/tests).</summary>
     public static SymbolSpec Nas100(Symbol symbol) => Index(symbol);
+
+    /// <summary>
+    /// The spot-metal PRICE geometry (OANDA's <c>XAU_USD</c> gold CFD). A gold "pip" is 0.1 (ten cents) and the
+    /// OANDA quote carries 2 decimals, so <see cref="TickSize"/> = 0.01 (CONVENTION — OANDA XAU_USD spec). Gold
+    /// keeps <see cref="InstrumentClass.Fx"/> ON PURPOSE: ICT trades gold on the SAME London/NY FX sessions
+    /// (gold is a USD-denominated spot vehicle, not a US-equity-index future), so it must route through
+    /// <c>ClassifyFx</c>, not the index AM killzone — and no new <see cref="InstrumentClass"/> value is added
+    /// (that would force an exhaustive-switch ripple for a vehicle that shares FX session math).
+    ///
+    /// <para><b>Provenance.</b> Gold does NOT appear in the 2022 NASDAQ e-mini Mentorship and is a SECONDARY,
+    /// event-driven vehicle in the wider ICT material, so EVERY number here is CONVENTION (the OANDA XAU_USD CFD
+    /// spec) / INVENTED — none is Mentorship-verbatim. The pip = 0.1 / tick = 0.01 / digits = 2 triple matches the
+    /// OANDA gold quote and the common "$0.10 = 1 pip" convention, NOT an ICT-stated value.</para>
+    /// </summary>
+    public static SymbolSpec Metal(Symbol symbol) => new(symbol, 0.1m, 0.01m, 2, InstrumentClass.Fx);
 }

@@ -6,6 +6,7 @@
 
 import { Outlet } from 'react-router-dom';
 import { NavBar } from './NavBar';
+import { ToastViewport } from '../notifications/ToastViewport';
 
 export function AppLayout(): React.JSX.Element {
   return (
@@ -14,6 +15,8 @@ export function AppLayout(): React.JSX.Element {
       <main className="app__main">
         <Outlet />
       </main>
+      {/* One toast overlay for the whole app — closable notices (the operator's #1 complaint). */}
+      <ToastViewport />
     </div>
   );
 }

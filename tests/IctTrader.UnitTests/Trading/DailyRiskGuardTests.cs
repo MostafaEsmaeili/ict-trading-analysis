@@ -45,17 +45,33 @@ public class DailyRiskGuardTests
 
     [Theory]
     [InlineData(2, true)]  // below the threshold of 3 — still trading (laddered down, but admitted)
-    [InlineData(3, false)] // reaches the threshold — halt
+    [InlineData(3, false)] // reaches the threshold — halt (the day is already red)
     [InlineData(4, false)] // beyond the threshold — halt
-    public void Consecutive_loss_threshold_is_inclusive(int losses, bool allowed)
+    public void Consecutive_loss_threshold_is_inclusive_on_a_red_day(int losses, bool allowed)
     {
-        var decision = Guard.Evaluate(State(losses), Money.Zero, Enabled(lossHalt: 3));
+        // The streak rung is DAY-SCOPED: it only halts once the day is also in the red (−50, below the 2% cap so the
+        // cap rung stays out and the streak reason is isolated). A flat day never trips it (see the deadlock test below).
+        var decision = Guard.Evaluate(State(losses), new Money(-50m), Enabled(lossHalt: 3));
 
         decision.EntriesAllowed.Should().Be(allowed);
         if (!allowed)
         {
             decision.Reason.Should().Be(DailyRiskHaltReason.ConsecutiveLosses);
         }
+    }
+
+    [Theory]
+    [InlineData(0)]  // flat day
+    [InlineData(120)] // green day
+    public void Consecutive_loss_halt_cannot_deadlock_a_fresh_or_green_day(decimal dayPnl)
+    {
+        // The streak (5) is LIFETIME and clears only on a win — so halting on it REGARDLESS of the day would block
+        // every entry forever (no entry → no win → halted). A fresh/green day (tally ≥ 0) MUST admit, giving a chance
+        // to win and clear the streak. This pins the deadlock fix.
+        var decision = Guard.Evaluate(State(consecutiveLosses: 5), new Money(dayPnl), Enabled(lossHalt: 3));
+
+        decision.EntriesAllowed.Should().BeTrue();
+        decision.Reason.Should().Be(DailyRiskHaltReason.None);
     }
 
     [Fact]

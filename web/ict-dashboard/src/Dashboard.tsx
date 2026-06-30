@@ -18,6 +18,8 @@ import { ChartPanel } from './components/ChartPanel';
 import { LiveConfigPanel } from './components/LiveConfigPanel';
 import { MarketStatus } from './components/MarketStatus';
 import { PerformancePanel } from './components/PerformancePanel';
+import { TopSignalsPanel } from './components/TopSignalsPanel';
+import { WinnerSignalCard } from './components/WinnerSignalCard';
 import { useMarketSelection } from './hooks/useMarketSelection';
 import { useOverlayVisibility } from './hooks/useOverlayVisibility';
 import { useDashboardData } from './hooks/useDashboardData';
@@ -31,16 +33,18 @@ export function Dashboard(): React.JSX.Element {
   );
   const { visibility, toggleOverlay } = useOverlayVisibility();
 
-  // Focus-on-alert/trade: switch the symbol AND seek the chart to the clicked moment. The clicked DTOs
-  // (AlertDto/PaperTradeDto) carry no timeframe, so the operator's selected TF is kept; only the symbol
-  // + the seek instant change (a contract change would be needed to also switch to the setup's TF).
+  // Focus-on-alert/trade/signal: switch the symbol AND seek the chart to the clicked moment. Alerts/trades
+  // carry no timeframe/style so the operator's selection is kept; a SIGNAL's DTO does carry them, so a
+  // signal focus also switches the chart TF + style (target.timeframe / target.style when present).
   const [seekToUtc, setSeekToUtc] = useState<string | undefined>(undefined);
   const handleFocus = useCallback(
     (target: FocusTarget) => {
       setSymbol(target.symbol);
+      if (target.timeframe) setTimeframe(target.timeframe);
+      if (target.style) selectStyle(target.style);
       setSeekToUtc(target.atUtc);
     },
-    [setSymbol],
+    [setSymbol, setTimeframe, selectStyle],
   );
 
   const { candlesQ, overlaysQ, alertsQ, tradesQ, perfQ, equityQ, activeKillzone, triggerTimeframe } =
@@ -51,8 +55,13 @@ export function Dashboard(): React.JSX.Element {
   const marketStatusQ = useMarketStatus();
 
   return (
-    <div className="layout">
-      <AlertsFeed
+    <div className="live-page">
+      {/* The HERO card — the single best opportunity right now (the #1 ranked signal), leading the Live
+          page as a full-width banner so it's the first thing the operator sees. Paper-only Take (§6.3). */}
+      <WinnerSignalCard onFocus={handleFocus} />
+
+      <div className="layout">
+        <AlertsFeed
         alerts={alertsQ.data ?? []}
         isLoading={alertsQ.isLoading}
         isError={alertsQ.isError}
@@ -95,6 +104,7 @@ export function Dashboard(): React.JSX.Element {
           isError={configQ.isError || accountQ.isError}
           error={configQ.error ?? accountQ.error}
         />
+        <TopSignalsPanel onFocus={handleFocus} />
         <ActivePaperTrades
           trades={tradesQ.data ?? []}
           isLoading={tradesQ.isLoading}
@@ -110,6 +120,7 @@ export function Dashboard(): React.JSX.Element {
           isError={perfQ.isError || equityQ.isError}
           error={perfQ.error ?? equityQ.error}
         />
+        </div>
       </div>
     </div>
   );

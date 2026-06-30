@@ -226,6 +226,12 @@ public sealed class HostScanLoopTests : IAsyncLifetime
     /// <summary>
     /// Hosts the real <c>Program</c>, overriding the PaperTrading connection string with the Testcontainers DB and
     /// pinning the replay feed OFF (the tests drive the bus directly, so the background scanner must stay idle).
+    ///
+    /// <para>These tests exercise the AUTOMATIC open mechanics, so the semi-auto TAKE workflow is pinned to
+    /// <c>Auto</c> (<c>Ict:PaperTrading:DefaultEntryMode=Auto</c>): appsettings.json now ships the running product's
+    /// <c>Manual</c> default (a confirmed setup PENDS for an operator take), which would otherwise stop these tests
+    /// from opening a trade. The Manual/Take path has its own dedicated tests; here we keep the auto-open assertions
+    /// intact by selecting Auto explicitly (a per-test override can still set Manual after this).</para>
     /// </summary>
     private sealed class HostFactory(string connectionString, (string Key, string Value)[] overrides)
         : WebApplicationFactory<Program>
@@ -234,6 +240,8 @@ public sealed class HostScanLoopTests : IAsyncLifetime
         {
             builder.UseSetting("ConnectionStrings:PaperTrading", connectionString);
             builder.UseSetting($"{ReplayFeedOptions.SectionName}:Enabled", "false");
+            // Pin the TAKE workflow to Auto so the auto-open assertions hold against the new Manual appsettings default.
+            builder.UseSetting("Ict:PaperTrading:DefaultEntryMode", "Auto");
             foreach (var (key, value) in overrides)
             {
                 builder.UseSetting(key, value);

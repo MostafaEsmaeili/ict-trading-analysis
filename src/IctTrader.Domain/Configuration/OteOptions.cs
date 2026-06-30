@@ -25,9 +25,23 @@ public sealed class OteOptions
 
     public decimal EffectiveUpperFib => UseEp41Variant ? Ep41UpperFib : UpperFib;
 
+    /// <summary>
+    /// Which price inside the selected entry array the resting limit rests at (plan §2.5.1 step 7). Default
+    /// <see cref="EntryFillZone.Ote"/> = the deep 62–79% OTE retrace (byte-identical). <see
+    /// cref="EntryFillZone.ConsequentEncroachment"/> rests the limit at the selected FVG's 50% (CE) — a shallower,
+    /// more-often-reached entry that raises the real fill rate at a slightly worse price (no look-ahead; still a
+    /// resting limit). Provenance: CE is ICT-canon but Primer/community vs the §2.5 70.5% deep-OTE default.
+    /// </summary>
+    public EntryFillZone FillZone { get; init; } = EntryFillZone.Ote;
+
     public IReadOnlyList<string> Validate()
     {
         var errors = new List<string>();
+
+        if (!Enum.IsDefined(FillZone))
+        {
+            errors.Add($"FillZone must be a valid {nameof(EntryFillZone)} value but was {(int)FillZone}.");
+        }
 
         if (LowerFib is < 0m or > 1m)
         {

@@ -332,6 +332,9 @@ public class PaperTradingFlowTests
             services.AddSingleton(Options.Create(new RiskOptions()));
             services.AddSingleton(Options.Create(new ConfluenceOptions()));
             services.AddSingleton(Options.Create(new PaperTradingOptions()));
+            services.AddSingleton(Options.Create(new PendingOpportunityOptions()));
+            // The daily-risk guard options the SetupTradeOpener now depends on (default-off → inert; byte-identical).
+            services.AddSingleton(Options.Create(new DailyRiskGuardOptions()));
 
             // The fake persistence (in-memory; scope-shared so a dispatch's reads see its own writes).
             services.AddScoped<IPaperAccountRepository>(_ => Accounts);

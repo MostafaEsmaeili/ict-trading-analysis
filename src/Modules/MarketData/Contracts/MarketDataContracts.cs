@@ -40,3 +40,17 @@ public sealed record ListFeedsQuery : IQuery<IReadOnlyList<FeedStatusDto>>;
 /// </summary>
 public sealed record GetChartCandlesQuery(string Symbol, string Timeframe, int Max)
     : IQuery<IReadOnlyList<CandleDto>>;
+
+/// <summary>
+/// A time-bounded historical candle range for <paramref name="Symbol"/> / <paramref name="Timeframe"/>,
+/// returned in CHRONOLOGICAL (oldest→newest) order (plan §7 / §9.1). Used by the extended
+/// <c>GET /api/chart/{symbol}?from=&amp;to=</c> endpoint to render historical setup overlays for setups
+/// older than the live ring-buffer window. At most <see cref="MaxRangeCandles"/> rows are returned.
+/// </summary>
+public sealed record GetChartRangeQuery(
+    string Symbol,
+    string Timeframe,
+    DateTimeOffset From,
+    DateTimeOffset To)
+    : IQuery<IReadOnlyList<CandleDto>>;
+

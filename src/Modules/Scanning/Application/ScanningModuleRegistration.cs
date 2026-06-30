@@ -1,9 +1,13 @@
 using IctTrader.Domain.Configuration;
+using IctTrader.Domain.Confluence;
 using IctTrader.Domain.Instruments;
 using IctTrader.Domain.Sessions;
+using IctTrader.Domain.Styles;
 using IctTrader.Scanning.Application.Scanning;
+using IctTrader.Scanning.Application.Signals;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace IctTrader.Scanning.Application;
 
@@ -12,11 +16,13 @@ namespace IctTrader.Scanning.Application;
 /// <see cref="ISymbolScannerFactory"/> (builds a scanner from the validated <c>Ict:*</c> options) and the
 /// <see cref="ISymbolScannerRegistry"/> (the live per-(symbol, style) cache) as SINGLETONS — the scan FSM state
 /// must persist across candles — plus the <see cref="RecentSetupStore"/> SINGLETON: the bounded recent-setup
-/// read-model the chart-overlay query handler reads (the §9.1 ICT Pattern Chart overlays). The bus handlers
-/// (<see cref="CandleIngestedHandler"/>, <see cref="SetupConfirmedChartProjectionHandler"/>,
-/// <see cref="GetRecentSetupsQueryHandler"/>) are NOT registered here: they are auto-discovered by
-/// <c>AddMessaging</c>'s assembly scan. The host calls <c>AddIctOptions</c> (the <c>IOptions&lt;T&gt;</c> set the
-/// factory depends on) and <c>AddMessaging</c> separately.
+/// read-model the chart-overlay query handler reads (the §9.1 ICT Pattern Chart overlays) — and the signals feed
+/// SINGLETONS (<see cref="SignalFeedStore"/>, <see cref="SignalRanker"/>, <see cref="SignalRankingService"/>): the
+/// cross-matrix "best opportunities" feed (plan §9). The bus handlers (<see cref="CandleIngestedHandler"/>,
+/// <see cref="SetupConfirmedChartProjectionHandler"/>, <see cref="GetRecentSetupsQueryHandler"/>,
+/// <see cref="SetupConfirmedSignalFeedHandler"/>, <see cref="GetSignalsQueryHandler"/>) are NOT registered here: they
+/// are auto-discovered by <c>AddMessaging</c>'s assembly scan. The host calls <c>AddIctOptions</c> (the
+/// <c>IOptions&lt;T&gt;</c> set the factory depends on) and <c>AddMessaging</c> separately.
 /// </summary>
 public static class ScanningModuleRegistration
 {
@@ -35,6 +41,28 @@ public static class ScanningModuleRegistration
         services.AddSingleton<ISymbolScannerFactory, SymbolScannerFactory>();
         services.AddSingleton<ISymbolScannerRegistry, SymbolScannerRegistry>();
         services.AddSingleton<RecentSetupStore>();
+        // The "best opportunities" signals feed (plan §9): the bounded cross-matrix store, the pure-domain ranker, and
+        // the read-side ranking service — all SINGLETONS so the feed survives across bus dispatches. They consume the
+        // validated Ict:Signals options the Host binds via AddIctOptions; a standalone module/test that did not bind
+        // them falls back to the verified defaults (Options.Create) so resolution never fails. The feed handlers
+        // (SetupConfirmedSignalFeedHandler, GetSignalsQueryHandler) are auto-discovered by AddMessaging's assembly scan.
+        services.AddSingleton(sp =>
+            new SignalFeedStore(sp.GetService<IOptions<SignalRankingOptions>>()?.Value ?? new SignalRankingOptions()));
+        services.AddSingleton(sp =>
+            new SignalRanker(sp.GetService<IOptions<SignalRankingOptions>>()?.Value ?? new SignalRankingOptions()));
+        services.AddSingleton(sp => new SignalRankingService(
+            sp.GetRequiredService<SignalFeedStore>(),
+            sp.GetRequiredService<SignalRanker>(),
+            sp.GetService<IOptions<SignalRankingOptions>>()?.Value ?? new SignalRankingOptions(),
+            // The PaperTrading-backed take-state enricher (plan §15). The Host registers the adapter; a standalone
+            // Scanning module/test resolves the no-op default so every signal stays in its takeable-unknown wire default.
+            sp.GetService<ISignalTakeStateProvider>()));
+        // The pure matrix router the CandleIngestedHandler uses to scan each active style on its canonical entry TF
+        // (plan §4.7). It resolves the per-style entry timeframe from the validated Ict:TradeStyles options via the
+        // TradeStyleClassifier domain service — no hardcoded TF.
+        services.AddSingleton(sp =>
+            new StyleTimeframeMap(
+                new TradeStyleClassifier(sp.GetRequiredService<IOptions<TradeStyleOptions>>().Value)));
         return services;
     }
 }

@@ -10,7 +10,10 @@ namespace IctTrader.MarketData.Infrastructure.Feeds;
 /// <summary>
 /// A <b>read-only</b> OANDA-practice market-data feed (plan §6). It reads completed candles from the OANDA v20
 /// REST API — first a historical backfill, then (when <see cref="OandaFeedOptions.LiveStreaming"/>) a poll for
-/// newly-completed candles — and streams them as <see cref="CandleDto"/>s in chronological order.
+/// newly-completed candles — and streams them as <see cref="CandleDto"/>s in chronological order. It fans out
+/// over every configured instrument × granularity (<see cref="OandaFeedOptions.ResolvedInstruments"/> ×
+/// <see cref="OandaFeedOptions.ResolvedGranularities"/>), so downstream scanners receive live candles on every
+/// timeframe at once — each <see cref="CandleDto"/> carries its own <c>Timeframe</c>, so per-TF routing is correct.
 /// <para>
 /// <b>Read-only is structural, not a flag (the NON-NEGOTIABLE guardrail):</b> this feed implements ONLY
 /// <see cref="IMarketDataFeed"/> (which has no write/order method) and issues ONLY HTTP <c>GET</c>s against the
@@ -61,24 +64,27 @@ public sealed class OandaMarketDataFeed : IMarketDataFeed
     public string Provider => ProviderName;
 
     /// <summary>
-    /// Streams completed candles in chronological order: a one-shot historical backfill across all configured
-    /// instruments (merged by open time), then — only when <see cref="OandaFeedOptions.LiveStreaming"/> is true —
-    /// an indefinite poll that yields each newly-completed candle once. With live streaming off this is a finite
-    /// historical stream (the backtest path) that completes after the backfill.
+    /// Streams completed candles in chronological order: a one-shot historical backfill across every configured
+    /// instrument × granularity (merged by open time), then — only when <see cref="OandaFeedOptions.LiveStreaming"/>
+    /// is true — an indefinite poll that yields each newly-completed candle once. With live streaming off this is a
+    /// finite historical stream (the backtest path) that completes after the backfill. The downstream ingestor
+    /// publishes these candles sequentially in this chronological order — the concurrency below is only in the HTTP
+    /// fetch, never in the yield order.
     /// </summary>
     public async IAsyncEnumerable<CandleDto> StreamCandlesAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        // The most-recent open time already yielded per OANDA instrument — the live-poll dedupe watermark. Keyed
-        // by the OANDA instrument (e.g. EUR_USD), the same key both fetch loops iterate, so a multi-instrument
-        // run cannot cross-contaminate watermarks.
-        var lastYieldedByInstrument = new Dictionary<string, DateTimeOffset>(StringComparer.Ordinal);
+        // The most-recent open time already yielded per (instrument, granularity) — the live-poll dedupe watermark.
+        // Keyed by the composite series (e.g. EUR_USD/M5), the same key every fetch loop iterates, so neither a
+        // multi-instrument NOR a multi-granularity run can cross-contaminate watermarks (M1 and M5 of the same pair
+        // advance independently).
+        var lastYieldedBySeries = new Dictionary<FeedSeries, DateTimeOffset>();
 
         var backfill = await FetchBackfillAsync(cancellationToken).ConfigureAwait(false);
-        foreach (var (instrument, candle) in backfill)
+        foreach (var (series, candle) in backfill)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            Watermark(lastYieldedByInstrument, instrument, candle);
+            Watermark(lastYieldedBySeries, series, candle);
             yield return candle;
         }
 
@@ -92,10 +98,10 @@ public sealed class OandaMarketDataFeed : IMarketDataFeed
         {
             await Task.Delay(pollDelay, _timeProvider, cancellationToken).ConfigureAwait(false);
 
-            IReadOnlyList<(string Instrument, CandleDto Candle)> fresh;
+            IReadOnlyList<(FeedSeries Series, CandleDto Candle)> fresh;
             try
             {
-                fresh = await FetchLiveTailAsync(lastYieldedByInstrument, cancellationToken).ConfigureAwait(false);
+                fresh = await FetchLiveTailAsync(lastYieldedBySeries, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex) when (
                 ex is HttpRequestException
@@ -115,68 +121,50 @@ public sealed class OandaMarketDataFeed : IMarketDataFeed
                 continue;
             }
 
-            foreach (var (instrument, candle) in fresh)
+            foreach (var (series, candle) in fresh)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                Watermark(lastYieldedByInstrument, instrument, candle);
+                Watermark(lastYieldedBySeries, series, candle);
                 yield return candle;
             }
         }
     }
 
     /// <summary>
-    /// Backfills <see cref="OandaFeedOptions.HistoryCount"/> candles per instrument, merged chronologically. Each
-    /// instrument's fetch retries <i>transient</i> failures (<see cref="OandaFeedOptions.BackfillMaxAttempts"/>) so a
-    /// flaky-egress blip during startup cannot leave the feed permanently dead. When live-streaming, an instrument
-    /// that is still unreachable after its retries is logged and SKIPPED (the remaining instruments stream live — one
-    /// bad symbol must not blank the whole chart); a finite BACKTEST keeps fail-fast so a data gap can never silently
-    /// corrupt a reproducible run.
+    /// Backfills <see cref="OandaFeedOptions.HistoryCount"/> candles per (instrument, granularity), fanned out
+    /// concurrently (bounded by <see cref="OandaFeedOptions.MaxConcurrentFetchesPerPoll"/>) and merged
+    /// chronologically. Each series' fetch retries <i>transient</i> failures
+    /// (<see cref="OandaFeedOptions.BackfillMaxAttempts"/>) so a flaky-egress blip during startup cannot leave the
+    /// feed permanently dead. When live-streaming, a series that is still unreachable after its retries is logged and
+    /// SKIPPED (the remaining series stream live — one bad instrument/timeframe must not blank the whole chart); a
+    /// finite BACKTEST keeps fail-fast so a data gap can never silently corrupt a reproducible run.
     /// </summary>
-    private async Task<IReadOnlyList<(string Instrument, CandleDto Candle)>> FetchBackfillAsync(
+    private async Task<IReadOnlyList<(FeedSeries Series, CandleDto Candle)>> FetchBackfillAsync(
         CancellationToken cancellationToken)
     {
-        var merged = new List<(string Instrument, CandleDto Candle)>();
-        foreach (var instrument in _options.ResolvedInstruments)
-        {
-            CandleDto[] candles;
-            try
-            {
-                candles = await FetchBackfillCandlesAsync(instrument, cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception ex) when (_options.LiveStreaming && IsTransientFetchFailure(ex, cancellationToken))
-            {
-                _logger.LogWarning(
-                    ex,
-                    "OANDA backfill skipped {Instrument} after {MaxAttempts} transient failures; the remaining " +
-                    "instruments stream live and the poll will retry it.",
-                    instrument,
-                    _options.BackfillMaxAttempts);
-                continue;
-            }
+        var perSeries = await FanOutAsync(
+            series => FetchBackfillCandlesAsync(series, cancellationToken),
+            isBackfill: true,
+            cancellationToken).ConfigureAwait(false);
 
-            foreach (var candle in candles)
-            {
-                merged.Add((instrument, candle));
-            }
-        }
-
-        return SortChronologically(merged);
+        return SortChronologically(Flatten(perSeries));
     }
 
     /// <summary>
-    /// Fetches one instrument's backfill, retrying ONLY transient failures up to
+    /// Fetches one series' backfill, retrying ONLY transient failures up to
     /// <see cref="OandaFeedOptions.BackfillMaxAttempts"/> with a fixed <see cref="OandaFeedOptions.BackfillRetryDelaySeconds"/>
     /// pause (driven by the injected <see cref="TimeProvider"/> so tests stay clock-free). A non-transient error
     /// (auth/4xx) throws on the first attempt — a bad token fails fast, not after N retries.
     /// </summary>
-    private async Task<CandleDto[]> FetchBackfillCandlesAsync(string instrument, CancellationToken cancellationToken)
+    private async Task<CandleDto[]> FetchBackfillCandlesAsync(FeedSeries series, CancellationToken cancellationToken)
     {
         var delay = TimeSpan.FromSeconds(_options.BackfillRetryDelaySeconds);
         for (var attempt = 1; ; attempt++)
         {
             try
             {
-                return await FetchCandlesAsync(instrument, _options.HistoryCount, cancellationToken)
+                return await FetchCandlesAsync(
+                        BuildCandlesUriCount(series, _options.HistoryCount), cancellationToken)
                     .ConfigureAwait(false);
             }
             catch (Exception ex) when (
@@ -184,9 +172,10 @@ public sealed class OandaMarketDataFeed : IMarketDataFeed
             {
                 _logger.LogWarning(
                     ex,
-                    "OANDA backfill for {Instrument} failed transiently on attempt {Attempt}/{MaxAttempts}; " +
+                    "OANDA backfill for {Instrument}/{Granularity} failed transiently on attempt {Attempt}/{MaxAttempts}; " +
                     "retrying in {DelaySeconds}s.",
-                    instrument,
+                    series.Instrument,
+                    series.Granularity,
                     attempt,
                     _options.BackfillMaxAttempts,
                     _options.BackfillRetryDelaySeconds);
@@ -223,38 +212,106 @@ public sealed class OandaMarketDataFeed : IMarketDataFeed
         return false;
     }
 
-    /// <summary>Polls a small tail per instrument and keeps only candles strictly after the per-instrument watermark.</summary>
-    private async Task<IReadOnlyList<(string Instrument, CandleDto Candle)>> FetchLiveTailAsync(
-        IReadOnlyDictionary<string, DateTimeOffset> lastYieldedByInstrument,
+    /// <summary>
+    /// Polls a small tail per (instrument, granularity), fanned out concurrently, and keeps only candles strictly
+    /// after the per-series watermark. A live poll never fails fast — its caller swallows transient errors — so the
+    /// fan-out here lets a transient error on one series surface to that caller (which skips the whole tick) without
+    /// the per-series skip the backfill uses.
+    /// </summary>
+    private async Task<IReadOnlyList<(FeedSeries Series, CandleDto Candle)>> FetchLiveTailAsync(
+        IReadOnlyDictionary<FeedSeries, DateTimeOffset> lastYieldedBySeries,
         CancellationToken cancellationToken)
     {
-        var fresh = new List<(string Instrument, CandleDto Candle)>();
+        var perSeries = await FanOutAsync(
+            series => FetchLiveTailForSeriesAsync(series, lastYieldedBySeries, cancellationToken),
+            isBackfill: false,
+            cancellationToken).ConfigureAwait(false);
+
+        return SortChronologically(Flatten(perSeries));
+    }
+
+    /// <summary>Polls one series' tail and returns only the candles strictly after its watermark.</summary>
+    private async Task<CandleDto[]> FetchLiveTailForSeriesAsync(
+        FeedSeries series,
+        IReadOnlyDictionary<FeedSeries, DateTimeOffset> lastYieldedBySeries,
+        CancellationToken cancellationToken)
+    {
+        var hasWatermark = lastYieldedBySeries.TryGetValue(series, out var lastOpen);
+
+        // Bound the tail by elapsed time (`from=<watermark>`), not a fixed count, so a slow poll never skips candles
+        // that completed and scrolled past — gap-free. `from` is inclusive, so the watermark candle returns and is
+        // dropped by the strictly-after filter. The very first poll (no watermark yet) takes a small count tail.
+        var candles = hasWatermark
+            ? await FetchCandlesAsync(BuildCandlesUriFrom(series, lastOpen), cancellationToken).ConfigureAwait(false)
+            : await FetchCandlesAsync(BuildCandlesUriCount(series, FirstPollCandleCount), cancellationToken).ConfigureAwait(false);
+
+        if (!hasWatermark)
+        {
+            return candles;
+        }
+
+        return [.. candles.Where(candle => candle.OpenTimeUtc > lastOpen)];
+    }
+
+    /// <summary>
+    /// Runs the supplied per-series fetch over every instrument × granularity CONCURRENTLY, bounded by a
+    /// <see cref="SemaphoreSlim"/>(<see cref="OandaFeedOptions.MaxConcurrentFetchesPerPoll"/>) so the burst against
+    /// the OANDA host stays capped however many series there are. The merged candles are re-sorted chronologically by
+    /// the caller, so the parallelism never affects yield order. When <paramref name="isBackfill"/> AND live-streaming,
+    /// a series unreachable after its transient retries is logged + SKIPPED (returns no candles); otherwise — a finite
+    /// backtest backfill, or any live poll — a transient failure propagates (the backtest fails fast; the live poll's
+    /// caller swallows it and retries the whole tick next poll).
+    /// </summary>
+    private async Task<IReadOnlyList<(FeedSeries Series, CandleDto[] Candles)>> FanOutAsync(
+        Func<FeedSeries, Task<CandleDto[]>> fetch,
+        bool isBackfill,
+        CancellationToken cancellationToken)
+    {
+        using var gate = new SemaphoreSlim(_options.MaxConcurrentFetchesPerPoll);
+
+        var tasks = new List<Task<(FeedSeries Series, CandleDto[] Candles)>>();
         foreach (var instrument in _options.ResolvedInstruments)
         {
-            var hasWatermark = lastYieldedByInstrument.TryGetValue(instrument, out var lastOpen);
-
-            // Bound the tail by elapsed time (`from=<watermark>`), not a fixed count, so a slow poll never skips
-            // candles that completed and scrolled past — gap-free. `from` is inclusive, so the watermark candle
-            // returns and is dropped by the strictly-after filter. The very first poll (no watermark yet) takes a
-            // small count tail.
-            var candles = hasWatermark
-                ? await FetchCandlesAsync(BuildCandlesUriFrom(instrument, lastOpen), cancellationToken).ConfigureAwait(false)
-                : await FetchCandlesAsync(BuildCandlesUriCount(instrument, FirstPollCandleCount), cancellationToken).ConfigureAwait(false);
-
-            foreach (var candle in candles)
+            foreach (var granularity in _options.ResolvedGranularities)
             {
-                if (!hasWatermark || candle.OpenTimeUtc > lastOpen)
-                {
-                    fresh.Add((instrument, candle));
-                }
+                var series = new FeedSeries(instrument, granularity);
+                tasks.Add(FetchOneSeriesAsync(series, fetch, gate, isBackfill, cancellationToken));
             }
         }
 
-        return SortChronologically(fresh);
+        return await Task.WhenAll(tasks).ConfigureAwait(false);
     }
 
-    private async Task<CandleDto[]> FetchCandlesAsync(string instrument, int count, CancellationToken cancellationToken)
-        => await FetchCandlesAsync(BuildCandlesUriCount(instrument, count), cancellationToken).ConfigureAwait(false);
+    private async Task<(FeedSeries Series, CandleDto[] Candles)> FetchOneSeriesAsync(
+        FeedSeries series,
+        Func<FeedSeries, Task<CandleDto[]>> fetch,
+        SemaphoreSlim gate,
+        bool isBackfill,
+        CancellationToken cancellationToken)
+    {
+        await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            return (series, await fetch(series).ConfigureAwait(false));
+        }
+        catch (Exception ex) when (isBackfill && _options.LiveStreaming && IsTransientFetchFailure(ex, cancellationToken))
+        {
+            // A LIVE backfill must stream the healthy series rather than die because one is unreachable after its
+            // retries. A finite backtest does NOT reach here (isBackfill && !LiveStreaming) so it fails fast.
+            _logger.LogWarning(
+                ex,
+                "OANDA backfill skipped {Instrument}/{Granularity} after {MaxAttempts} transient failures; the " +
+                "remaining series stream live and the poll will retry it.",
+                series.Instrument,
+                series.Granularity,
+                _options.BackfillMaxAttempts);
+            return (series, []);
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
 
     private async Task<CandleDto[]> FetchCandlesAsync(Uri requestUri, CancellationToken cancellationToken)
     {
@@ -266,36 +323,59 @@ public sealed class OandaMarketDataFeed : IMarketDataFeed
     }
 
     /// <summary>Builds the read-only candles GET for the latest <paramref name="count"/> candles (granularity + mid).</summary>
-    private Uri BuildCandlesUriCount(string instrument, int count)
-        => BuildCandlesUri(instrument, $"&count={count.ToString(CultureInfo.InvariantCulture)}");
+    private Uri BuildCandlesUriCount(FeedSeries series, int count)
+        => BuildCandlesUri(series, $"&count={count.ToString(CultureInfo.InvariantCulture)}");
 
     /// <summary>Builds the read-only candles GET for all candles since <paramref name="fromUtc"/> (inclusive).</summary>
-    private Uri BuildCandlesUriFrom(string instrument, DateTimeOffset fromUtc)
+    private Uri BuildCandlesUriFrom(FeedSeries series, DateTimeOffset fromUtc)
     {
         var from = fromUtc.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff'Z'", CultureInfo.InvariantCulture);
-        return BuildCandlesUri(instrument, $"&from={Uri.EscapeDataString(from)}");
+        return BuildCandlesUri(series, $"&from={Uri.EscapeDataString(from)}");
     }
 
-    private Uri BuildCandlesUri(string instrument, string selector)
+    private static Uri BuildCandlesUri(FeedSeries series, string selector)
     {
-        var path = string.Format(CultureInfo.InvariantCulture, CandlesPathFormat, Uri.EscapeDataString(instrument));
-        var query = $"?granularity={Uri.EscapeDataString(_options.Granularity)}{selector}&price={MidPricingComponent}";
+        var path = string.Format(CultureInfo.InvariantCulture, CandlesPathFormat, Uri.EscapeDataString(series.Instrument));
+        var query = $"?granularity={Uri.EscapeDataString(series.Granularity)}{selector}&price={MidPricingComponent}";
         return new Uri(path + query, UriKind.Relative);
     }
 
     private static void Watermark(
-        IDictionary<string, DateTimeOffset> watermarks,
-        string instrument,
+        IDictionary<FeedSeries, DateTimeOffset> watermarks,
+        FeedSeries series,
         CandleDto candle)
     {
-        if (!watermarks.TryGetValue(instrument, out var existing) || candle.OpenTimeUtc > existing)
+        if (!watermarks.TryGetValue(series, out var existing) || candle.OpenTimeUtc > existing)
         {
-            watermarks[instrument] = candle.OpenTimeUtc;
+            watermarks[series] = candle.OpenTimeUtc;
         }
     }
 
-    /// <summary>Stable-sorts by open time so the merged multi-instrument stream is chronological and reproducible.</summary>
-    private static IReadOnlyList<(string Instrument, CandleDto Candle)> SortChronologically(
-        List<(string Instrument, CandleDto Candle)> candles)
+    /// <summary>Flattens the per-series fetch results into (series, candle) pairs (order is re-sorted by the caller).</summary>
+    private static List<(FeedSeries Series, CandleDto Candle)> Flatten(
+        IReadOnlyList<(FeedSeries Series, CandleDto[] Candles)> perSeries)
+    {
+        var merged = new List<(FeedSeries Series, CandleDto Candle)>();
+        foreach (var (series, candles) in perSeries)
+        {
+            foreach (var candle in candles)
+            {
+                merged.Add((series, candle));
+            }
+        }
+
+        return merged;
+    }
+
+    /// <summary>Stable-sorts by open time so the merged multi-series stream is chronological and reproducible.</summary>
+    private static IReadOnlyList<(FeedSeries Series, CandleDto Candle)> SortChronologically(
+        List<(FeedSeries Series, CandleDto Candle)> candles)
         => candles.OrderBy(entry => entry.Candle.OpenTimeUtc).ToList();
+
+    /// <summary>
+    /// The composite live-poll/dedupe key — one OANDA instrument at one granularity (e.g. EUR_USD/M5). Keying the
+    /// watermark by the (instrument, granularity) pair lets the same pair's timeframes advance independently, so a
+    /// multi-granularity run never cross-contaminates watermarks.
+    /// </summary>
+    private readonly record struct FeedSeries(string Instrument, string Granularity);
 }

@@ -118,8 +118,53 @@ public class OteFibDetectorTests
     }
 
     [Fact]
+    public void The_default_fill_zone_is_the_canonical_ote()
+        => new OteOptions().FillZone.Should().Be(EntryFillZone.Ote);
+
+    [Fact]
+    public void The_default_ote_fill_zone_is_byte_identical()
+    {
+        // Default config (FillZone = Ote): the existing OTE-entry behaviour is unchanged — entry = the FVG midpoint.
+        var ctx = NewContext();
+        ctx.SetDisplacement(BullishLeg());
+        ctx.RegisterFvg(new FairValueGap(Direction.Bullish, Timeframe.M5, new Price(1.0825m), new Price(1.0835m), Base)); // mid 1.0830
+
+        var result = new OteFibDetector(new OteOptions { FillZone = EntryFillZone.Ote }, new FvgOptions())
+            .Detect(ctx, Candle());
+
+        result.Matched.Should().BeTrue();
+        result.KeyLevel.Should().Be(1.0830m); // byte-identical to the canonical OTE-entry test above
+    }
+
+    [Fact]
+    public void Consequent_encroachment_enters_at_the_fvg_midpoint_shallower_than_the_deep_ote()
+    {
+        // CE = the selected entry FVG's 50% (consequent encroachment), shallower (closer to the displacement
+        // extreme 1.0900) than the deep OTE fib sweet-spot on the leg (70.5% retrace == 1.08295), so price reaches
+        // it sooner — a real fill rather than the deeper, often-unfilled OTE.
+        var ctx = NewContext();
+        var leg = BullishLeg(); // 1.0800 -> 1.0900; sweet-spot 70.5% retrace == 1.08295
+        ctx.SetDisplacement(leg);
+        var fvg = new FairValueGap(Direction.Bullish, Timeframe.M5, new Price(1.0825m), new Price(1.0835m), Base); // CE 1.0830
+        ctx.RegisterFvg(fvg);
+
+        var result = new OteFibDetector(
+                new OteOptions { FillZone = EntryFillZone.ConsequentEncroachment }, new FvgOptions())
+            .Detect(ctx, Candle());
+
+        result.Matched.Should().BeTrue();
+        result.KeyLevel.Should().Be(fvg.ConsequentEncroachment); // == (1.0825 + 1.0835) / 2 == 1.0830
+        var deepOteSweetSpot = leg.Project(new OteOptions().SweetSpotFib); // 1.08295
+        result.KeyLevel.Should().BeGreaterThan(deepOteSweetSpot); // for a long, a higher entry is SHALLOWER (nearer 1.0900)
+    }
+
+    [Fact]
     public void Default_configuration_validates_clean()
         => new OteOptions().Validate().Should().BeEmpty();
+
+    [Fact]
+    public void An_unknown_fill_zone_fails_validation()
+        => new OteOptions { FillZone = (EntryFillZone)99 }.Validate().Should().NotBeEmpty();
 
     [Fact]
     public void The_ep41_variant_needs_a_compatible_sweet_spot()

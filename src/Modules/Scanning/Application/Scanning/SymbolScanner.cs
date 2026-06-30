@@ -11,22 +11,24 @@ using IctTrader.Domain.ValueObjects;
 namespace IctTrader.Scanning.Application.Scanning;
 
 /// <summary>
-/// A stateful per-(symbol, style) scanner: it owns the pure-domain scan machinery — the single-symbol mutable
-/// <see cref="MarketContext"/>, the PINNED canonical detector pipeline, the <see cref="SetupCandidate"/> FSM
-/// (wrapped by <see cref="ScanSession"/>), and the <see cref="SetupFactory"/> — and folds one candle at a time
+/// A stateful per-(symbol, timeframe, style) scanner: it owns the pure-domain scan machinery — the single-symbol
+/// mutable <see cref="MarketContext"/>, the PINNED canonical detector pipeline, the <see cref="SetupCandidate"/>
+/// FSM (wrapped by <see cref="ScanSession"/>), and the <see cref="SetupFactory"/> — and folds one candle at a time
 /// into a confirmed, priced advisory <see cref="Setup"/>. ALL decisions live in that domain; this type only
 /// assembles the recipe (the exact pinned order proven by <c>ScanSessionTests</c>) and orchestrates the call.
 ///
-/// <para><b>Single-symbol state:</b> <see cref="MarketContext"/> is mutable, single-symbol working memory, so
-/// ONE instance serves ONE (symbol, style) and candles MUST be fed in chronological order — the registry never
-/// shares an instance across symbols. Pure and deterministic: the same candle sequence yields the same setups
-/// (the injected <see cref="TimeProvider"/> only seeds the DST-aware NY clock — there is no ambient time read).</para>
+/// <para><b>Single-symbol, single-timeframe state:</b> <see cref="MarketContext"/> is mutable, single-symbol
+/// working memory, so ONE instance serves ONE (symbol, timeframe, style) and candles MUST be fed in chronological
+/// order AT THIS GRANULARITY — the registry never shares an instance across keys, and a mixed-TF feed would corrupt
+/// the window/FVG/MSS state. Pure and deterministic: the same candle sequence yields the same setups (the injected
+/// <see cref="TimeProvider"/> only seeds the DST-aware NY clock — there is no ambient time read).</para>
 /// </summary>
 public sealed class SymbolScanner
 {
     private readonly ScanSession _session;
     private readonly SetupFactory _factory;
     private readonly TradeStyle _style;
+    private readonly Timeframe _timeframe;
     private readonly IEconomicCalendarStore? _calendarStore;
 
     // The store revision last loaded into this scanner's MarketContext. The store starts at revision 0 and a load
@@ -35,6 +37,7 @@ public sealed class SymbolScanner
 
     public SymbolScanner(
         Symbol symbol,
+        Timeframe timeframe,
         TradeStyle style,
         TimeProvider timeProvider,
         ScannerOptions options,
@@ -48,6 +51,7 @@ public sealed class SymbolScanner
         ArgumentNullException.ThrowIfNull(instruments);
 
         Symbol = symbol;
+        _timeframe = timeframe;
         _style = style;
         _calendarStore = calendarStore;
 
@@ -116,14 +120,28 @@ public sealed class SymbolScanner
 
     public Symbol Symbol { get; }
 
+    /// <summary>The granularity this cell scans (plan §4.7) — the canonical entry timeframe of its style. Every
+    /// candle fed here must carry this timeframe; it stamps the confirmed <c>Setup.Timeframe</c> per cell.</summary>
+    public Timeframe Timeframe => _timeframe;
+
     /// <summary>The killzone classification of the most recently processed candle — read by the handler to stamp
     /// the <see cref="Domain.Setups.Setup"/>'s wire DTO with the session it confirmed in.</summary>
     public Killzone CurrentKillzone => _session.Context.Session.Killzone;
 
     /// <summary>Folds one candle into the scan and returns the priced advisory <see cref="Setup"/> when the FSM
-    /// confirms a graded setup for this style, otherwise null. Candles must arrive in chronological order.</summary>
+    /// confirms a graded setup for this style, otherwise null. Candles must arrive in chronological order and at
+    /// this cell's <see cref="Timeframe"/> — a foreign granularity would corrupt the single-TF FSM state.</summary>
     public Setup? OnCandle(Candle candle)
     {
+        // Defensive: this cell is single-timeframe working memory; routing a foreign granularity into it would
+        // silently corrupt the window/FVG/MSS state. The registry keys by timeframe so this never trips in the live
+        // loop — it fails fast if a future caller mis-routes a candle, rather than producing a wrong-TF setup.
+        if (candle.Timeframe != _timeframe)
+        {
+            throw new ArgumentException(
+                $"Candle timeframe {candle.Timeframe} does not match this scanner's {_timeframe} cell.", nameof(candle));
+        }
+
         RefreshCalendarIfChanged();
         var confirmation = _session.OnCandle(candle);
         return confirmation is null ? null : _factory.Create(confirmation, _style);

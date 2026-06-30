@@ -1,7 +1,7 @@
 // useTradingHub wiring test — proves the SignalR push → setQueryData merge respects the overlay cache
 // key's FULL identity (symbol AND timeframe). Regression guard for CodeRabbit #34: a setup confirmed on
 // a different timeframe must NOT pollute the current chart's overlays (key = symbol + timeframe).
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
@@ -11,7 +11,14 @@ import { queryKeys } from './queryKeys';
 import type { TradingHubLike } from './tradingHub';
 import { HubEvents } from './tradingHub';
 import type { ChartOverlay } from '../types/overlays';
-import type { CandleDto, PaperTradeDto, PerformanceSummaryDto, SetupDto } from '../types/api';
+import type {
+  CandleDto,
+  PaperTradeDto,
+  PerformanceSummaryDto,
+  RankedSignalDto,
+  SetupDto,
+} from '../types/api';
+import { __resetNotificationsForTest, getSnapshot } from '../notifications/notificationStore';
 
 function fakeHub() {
   const handlers = new Map<string, (...args: unknown[]) => void>();
@@ -33,6 +40,7 @@ function setup(triggerTimeframe: string): SetupDto {
     killzone: 'LondonOpen',
     style: 'Intraday',
     grade: 'A',
+    score: 82,
     triggerTimeframe,
     entry: 1.07,
     stop: 1.069,
@@ -165,5 +173,52 @@ describe('useTradingHub overlay merge', () => {
     expect(
       qc.getQueryData<CandleDto[]>(queryKeys.candles('EURUSD', 'M5', 'Intraday')),
     ).toHaveLength(1);
+  });
+});
+
+function rankedSignal(id: string, rank: number): RankedSignalDto {
+  return {
+    rank,
+    score: 80,
+    entryMode: 'Manual',
+    isTaken: false,
+    blockReason: null,
+    expiresAtUtc: null,
+    setup: { ...setup('M15'), id },
+  };
+}
+
+describe('useTradingHub SignalsUpdated', () => {
+  beforeEach(() => __resetNotificationsForTest());
+  afterEach(() => __resetNotificationsForTest());
+
+  it('replaces the signals cache with the pushed ranked top-N', () => {
+    const qc = new QueryClient();
+    const { hub, emit } = fakeHub();
+    renderHook(() => useTradingHub({ hub, symbol: 'EURUSD', timeframe: 'M5' }), {
+      wrapper: makeWrapper(qc),
+    });
+
+    qc.setQueryData<RankedSignalDto[]>(queryKeys.signals(), [rankedSignal('old', 1)]);
+    emit(HubEvents.SignalsUpdated, [rankedSignal('new-a', 1), rankedSignal('new-b', 2)]);
+
+    const list = qc.getQueryData<RankedSignalDto[]>(queryKeys.signals());
+    expect(list?.map((s) => s.setup.id)).toEqual(['new-a', 'new-b']);
+  });
+
+  it('fires an opportunity notification for a NEW signal id (vs the prior cache)', () => {
+    const qc = new QueryClient();
+    const { hub, emit } = fakeHub();
+    renderHook(() => useTradingHub({ hub, symbol: 'EURUSD', timeframe: 'M5' }), {
+      wrapper: makeWrapper(qc),
+    });
+
+    // Seed a known signal; pushing it again + a fresh one should toast ONLY the fresh one.
+    qc.setQueryData<RankedSignalDto[]>(queryKeys.signals(), [rankedSignal('known', 1)]);
+    emit(HubEvents.SignalsUpdated, [rankedSignal('known', 1), rankedSignal('fresh', 2)]);
+
+    const opportunities = getSnapshot().filter((n) => n.kind === 'opportunity');
+    expect(opportunities).toHaveLength(1);
+    expect(opportunities[0].title).toMatch(/new signal/i);
   });
 });

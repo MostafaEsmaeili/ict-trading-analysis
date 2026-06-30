@@ -98,6 +98,7 @@ public sealed class SymbolScannerCalendarTests
     private static SymbolScanner NewScanner(IEconomicCalendarStore? calendarStore, CalendarCaptureDetector capture) =>
         new(
             new Symbol("EURUSD"),
+            Timeframe.M5,
             TradeStyle.Intraday,
             new FakeTimeProvider(London),
             Options,

@@ -51,7 +51,11 @@ internal static class SetupDtoMapper
             RewardRatio: plan.RewardRatio.Value,
             Reason: setup.Reason.Text,
             DetectedAtUtc: detectedAtUtc,
-            IsAdvisoryOnly: setup.IsAdvisoryOnly);
+            IsAdvisoryOnly: setup.IsAdvisoryOnly,
+            // ADDITIVE: surface the 0–100 confluence score the FSM produced (carried on the Setup aggregate via
+            // SetupConfirmation.Score → SetupFactory). The Signals feed ranks on it within a grade. It is NOT a
+            // DeterministicId input — the id hashes the natural identity only, so adding the score never changes the id.
+            Score: setup.Score);
     }
 
     /// <summary>

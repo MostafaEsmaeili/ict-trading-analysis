@@ -1,3 +1,4 @@
+using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Detection;
 
 namespace IctTrader.Domain.Instruments;
@@ -93,6 +94,14 @@ public sealed record InstrumentOptionOverrides
     /// backtest shows the open-reference confluence meaningfully diverges from the gates, while keeping it off globally.</summary>
     public bool? RequireReferenceOpenAgreement { get; init; }
 
+    /// <summary>The per-instrument Auto-vs-Manual TAKE workflow (<see cref="Configuration.PaperTradingOptions.DefaultEntryMode"/>).
+    /// <c>null</c> = inherit the global default. When <see cref="Configuration.TradeEntryMode.Manual"/> a confirmed setup
+    /// for THIS symbol becomes a pending opportunity the operator must TAKE (it opens nothing automatically); when
+    /// <see cref="Configuration.TradeEntryMode.Auto"/> it opens automatically. A live, operator-editable preference
+    /// (config <c>Ict:Instruments</c> + the revision-stamped Settings store) — paper-only either way (§6.3). NOTE: this is
+    /// the WHO-acts switch, distinct from the §2.5.7 GEOMETRY scalars above; it overlays through the same merge.</summary>
+    public TradeEntryMode? EntryMode { get; init; }
+
     /// <summary>The no-override sentinel — FX carries this so its option POCOs are returned unchanged (byte-identical).</summary>
     public static InstrumentOptionOverrides None { get; } = new();
 
@@ -120,6 +129,7 @@ public sealed record InstrumentOptionOverrides
             MinRequiredConditions = other.MinRequiredConditions ?? MinRequiredConditions,
             RequiredConditions = other.RequiredConditions ?? RequiredConditions,
             RequireReferenceOpenAgreement = other.RequireReferenceOpenAgreement ?? RequireReferenceOpenAgreement,
+            EntryMode = other.EntryMode ?? EntryMode,
         };
     }
 }

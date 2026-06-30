@@ -7,6 +7,9 @@ export const queryKeys = {
   candles: (symbol: string, timeframe: string, style: string) =>
     ['candles', symbol, timeframe, style] as const,
   overlays: (symbol: string, timeframe: string) => ['overlays', symbol, timeframe] as const,
+  // Ranked live signals top-N (filters are applied client-side over this one cache, so the key is stable —
+  // SignalsUpdated pushes the full ranked list onto it, mirroring the other live-merge keys).
+  signals: () => ['signals'] as const,
   activeTrades: () => ['trades', 'active'] as const,
   // Full trades history, keyed by the (status, symbol) server filter so each filter caches distinctly.
   allTrades: (status?: string, symbol?: string) => ['trades', 'all', status ?? '', symbol ?? ''] as const,

@@ -133,7 +133,7 @@ public sealed class BacktestEngine
         }
 
         var profile = _instruments.Resolve(symbol);
-        var scanner = _scannerFactory.Create(symbol, style, perRunConfluence);
+        var scanner = _scannerFactory.Create(symbol, timeframe, style, perRunConfluence);
         var orchestrator = _orchestratorFactory.Create(symbol, perRunRisk);
         var account = new PaperAccount(
             Guid.NewGuid(), new Money(request.StartingBalance), perRunRisk.MaxOpenPortfolioRiskPercent);

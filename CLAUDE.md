@@ -1550,3 +1550,176 @@ resolves to two Cloudflare edge IPs and one intermittently **refuses** connectio
 backfill retry is what makes a multi-instrument live feed reliable through it. **TODO:** commit this branch (operator's
 "commit only when asked" convention — left uncommitted pending the go-ahead); consider promoting the same bounded-retry
 to the live-poll first tick and a multi-granularity live feed if multi-TF-live is wanted.
+
+**🚧 PRODUCT-OVERHAUL PROGRAM (in progress this session — operator: "make it better; live discovery/signals, manual
+take, live multi-TF feed, persist data, dismissible notifs, understandable settings, research more trades/week").**
+Approved 10-slice plan at `C:\Users\Mostafa\.claude\plans\we-did-a-lot-abundant-quilt.md` (deep per-area designs in
+sibling `…-agent-*.md` files). Built in sequenced vertical slices on branch `feature/slice1-instrument-profiles-silver-bullet`
+(UNCOMMITTED — "commit only when asked"). Backend slices serialize (one `dotnet build` at a time — DLL-lock); frontend
+runs in parallel (npm, disjoint `web/`). Each gated build 0-warnings + tests + format; guardrail/ict-conformance on the
+slices that touch feeds/trading. **Research deliverable DONE:** `docs/ict-frequency-research-2026.md` (WebSearch-only —
+WebFetch was 429'd; the key finding: a single instrument can't hit 5–15 setups/week — **breadth (basket) + M5 + the
+HTF-bias gate + per-pair k-of-n relaxation only where full-history net-P&L proves it** is the faithful way; never gut the
+sweep/MSS/displacement/killzone/bias core; faithful frequency adds we lack = Turtle Soup detector + the NY-PM Silver
+Bullet window).
+
+- **Slice 1 — DONE & VERIFIED (794 unit).** `InstrumentCatalog`: **US30USD** added as an index CFD (reuses Index
+  geometry + AM killzone + macro ref); **XAUUSD moved OFF FX-major to a new METAL profile** (`SymbolSpec.Metal` pip 0.1 /
+  tick 0.01 / 2-digit / InstrumentClass.Fx so it hunts FX London/NY; `ContractSpec.Metal` $0.10/oz per pip, 1-oz lot;
+  `MetalOverrides` — gold no longer mis-sizes to 0 lots, proven by a PositionSizer test). All gold/Dow numbers
+  CONVENTION/INVENTED-flagged. **NY-PM Silver Bullet is now a named first-class window** — `SilverBulletOptions.London/
+  NewYorkAm/NewYorkPmMacro` + `AllMacroWindows` (default still the single 10–11; appsettings shows the 3-window opt-in;
+  FX needs `Pm` in ActiveKillzones for 14–15).
+- **Slice 2 — DONE & VERIFIED (805 unit + 23 arch, 0 warnings, format clean).** **Multi-granularity OANDA live feed:**
+  `OandaFeedOptions.Granularities` (empty-default → REPLACES; resolves to `[Granularity]` when empty = byte-identical) +
+  `MaxConcurrentFetchesPerPoll` (default 6, range [1,24]); `OandaMarketDataFeed` watermark is now a `(Instrument,
+  Granularity)` composite and BOTH backfill + live-tail fan out over instruments×granularities bounded by a
+  `SemaphoreSlim`, merged + chronologically re-sorted (downstream ingest stays sequential). Read-only-by-shape +
+  resilience + the single-granularity `FetchHistory` path all preserved. **CI-safe: committed `Ict:MarketData:Provider`
+  stays `Replay`** (a tokenless boot must not fail-fast / break Host-booting tests); appsettings carries a ready-to-
+  uncomment OANDA live multi-granularity block (token only via `Ict__MarketData__Oanda__Token`). The operator runs live
+  via those env vars (as before) — "wire live not CSV" = the capability + the documented env run, not a committed flip.
+- **Slice 7 — DONE & VERIFIED (104 vitest, build+lint clean).** Dependency-free notification system under
+  `web/ict-dashboard/src/notifications/` (module-level store via `useSyncExternalStore`; `ToastViewport` with a close
+  button + pause-on-hover auto-dismiss; `NotificationCenter` bell + history; **errors STICKY** so a backend failure
+  can't auto-vanish). `SystemHealthIndicator`/`useSystemHealth` is DECOUPLED from the toast store (dismissing a toast
+  never hides a still-failing backend — tested). `AlertsFeed` rows are individually dismissible (✕, localStorage-backed
+  `useDismissedAlerts`) + "Clear all"; error rows keep no dismiss. Live right-rail switched from cramped flex-wrap to
+  `grid-template-columns: repeat(auto-fit, minmax(280px,1fr))`. Triggers: TradeUpdated open/close + sticky error toasts;
+  `notifyNewOpportunity(...)` reserved for the future `SignalsUpdated` (slice 8).
+- **Slice 9 — DONE & VERIFIED (121 vitest, build+lint clean).** `SettingsPage` rebuilt as a tab orchestrator (Quick
+  setup · Instruments · Concept model · Discovery · Calendar) + a Simple⇄Advanced localStorage toggle. New: `PresetPicker`
+  (Strict §2.5 / Balanced k=6 / Discovery k=4) that FILLS the per-instrument form with a vs-default diff; `InfoTip`
+  accessible glossary popovers (`src/settings/glossary.ts`); `OverrideField` showing the inherited global default + a
+  delta chip; extracted `InstrumentOverrideForm`/`GlobalConceptCard`/`EconomicCalendarCard`. **Wire contract UNCHANGED.**
+  Discovery tab is a clearly-badged PREVIEW (scan matrix off `ConfigStatusDto` + an Auto/Manual concept) with a commented
+  seam — the live scan-matrix + entry-mode editing wires when the backend discovery/entry-mode endpoints land (slice 6/8).
+- **Slice 3 — DONE & VERIFIED (823 unit +18, 23 arch, 0 warnings, format clean).** Candle persistence + time-range
+  chart. `ICandleRepository` (Domain, `GetRangeAsync`/`GetRecentAsync`/idempotent `AppendAsync`); a SEPARATE
+  `MarketDataDbContext` (NOT extending PaperTradingDbContext — arch boundary; 23/23 green) + `CandleEntity` +
+  `CandleConfiguration` (`candles` table, OHLCV `numeric(18,8)`, `timestamptz`, UNIQUE `(symbol,timeframe,open_time_utc)`,
+  no xmin) + design-time factory + `CandleRepository` (UPSERT via raw `INSERT … ON CONFLICT DO NOTHING`) + the
+  `AddCandles` migration. **Batched dual-write** (the bottleneck fix): `CandlePersistenceProjectionHandler` enqueues to a
+  bounded Channel, `CandlePersistenceHostedService` drains in batches in its own scope (DB outage never fails scan
+  dispatch); the in-memory `ChartCandleStore` stays synchronous. `GetChartRangeQuery` + `/api/chart/{symbol}?from=&to=`
+  (DB range when present; else ring buffer→DB recent→CSV). `CandlePersistenceOptions` (`Ict:MarketData:Persistence`,
+  default **Enabled=false**; `NoCandleRepository` no-op when off). 10 Testcontainers tests WRITTEN (Docker-gated — run
+  `dotnet test tests/IctTrader.IntegrationTests` with Docker; apply the migration first via `dotnet ef database update
+  --project src/Modules/MarketData/Infrastructure --startup-project src/IctTrader.Host`).
+- **Slice 4 — DONE & VERIFIED (836 unit +13, 23 arch, 0 warnings, format clean).** Full-matrix
+  (symbol,timeframe,style) scanning. New pure `IctTrader.Domain/Styles/StyleTimeframeMap.cs` —
+  `StylesFor(tf, activeStyles)` returns active styles whose `TradeStyleClassifier.ResolvePolicy(style).EntryTimeframe == tf`
+  (Scalp→M1, Intraday→M5, Swing→M15, Position→H4 from `Ict:TradeStyles`). `SymbolScannerRegistry` key →
+  `(Symbol, Timeframe, Style)`; factory/scanner carry the TF (so `Setup.Timeframe`/`TriggerTimeframe`/the id hash are
+  authoritative per cell); `CandleIngestedHandler` routes each candle by `StylesFor(candle.Timeframe, ResolvedActiveStyles)`.
+  Single-TF M5 + `[Intraday]` is BYTE-IDENTICAL (proven by the unchanged determinism `ScanLoopTests`). The revision
+  cache-eviction is unchanged. So scanning the "matrix" = enable more styles + more granularities (the feed) — each style
+  on its canonical entry TF, ICT-faithful.
+- **Slice 5 — DONE & VERIFIED (865 unit +29, 23 arch, 23 integration non-Docker, 0 warnings, format clean).** Signals
+  ranking + feed. Pure `IctTrader.Domain/Confluence/SignalRanker.cs` (Grade→Score→RR→TF-priority→recency, weights from
+  `SignalRankingOptions` `Ict:Signals`) + `SignalFeedStore`/`SignalRankingService` (Scanning.Application/Signals, bounded,
+  id-keyed, recency-pruned). Additive contracts: `SetupDto.Score` (the numeric 0–100 was ALREADY carried
+  SetupScorer→SetupConfirmation→Setup; just surfaced via `SetupDtoMapper`, NOT a `DeterministicId` input),
+  `RankedSignalDto(int Rank, int Score, SetupDto Setup)` (slice-6 extends with take-state via APPENDED optional params),
+  `GetSignalsQuery`, `SignalsUpdated`. `SetupConfirmedSignalFeedHandler` (add→rank→publish) + `GetSignalsQueryHandler`;
+  `GET /api/signals?symbol=&style=&grade=&max=`; `TradingHub.SignalsUpdated` + `SignalsUpdatedBroadcaster`.
+- **Slice 6 — DONE & GATED (895 unit +30, 23 arch, 44 integration non-Docker, 0 warnings, format clean;
+  defensive-guardrail-auditor 7/7 PASS, ict-domain-expert SHIP/CONFORMANT 5/5).** Manual "Take" semi-auto paper flow.
+  `TradeEntryMode { Auto, Manual }` (orthogonal to the limit-vs-immediate `EntryMode`); `PaperTradingOptions.DefaultEntryMode`
+  POCO default **Auto** (keeps code-constructed-options tests byte-identical) + `appsettings.json` default **Manual** (the
+  running product gives the Take workflow); per-instrument `InstrumentOptionOverrides.EntryMode` + `EffectiveEntryMode`.
+  **One extracted internal `SetupTradeOpener`** is the SOLE simulated-open path — both `SetupConfirmedHandler` (Auto) and
+  `TakeSetupCommandHandler` (Take) call it (byte-identical sizing, proven + a reflection guardrail test asserts no
+  order/broker/execute symbol). In-memory `PendingOpportunityStore` (bounded, id-keyed, expiry by age +
+  killzone-end reusing the SAME `KillzoneClock.IsActiveEntry` "don't-chase" math). `TakeSetupCommand` → rehydrate →
+  `SetupTradeOpener`, triple-idempotent on the deterministic id. `POST /api/signals/{setupId:guid}/take` (200 opened DTO /
+  202 armed / 404 / 409). Final wire shapes for the frontend: `RankedSignalDto(Rank, Score, Setup, EntryMode, IsTaken,
+  BlockReason, ExpiresAtUtc)` + `InstrumentSettingsDto.EntryMode` (3-state). **CONVENTION:** Manual mode is a LIVE-operator
+  workflow — NOT meaningful in replay, so the `BacktestEngine` stays Auto. Minor deferred: an expired take currently maps to
+  404 (not a distinct 409-Expired) — cosmetic.
+- **Slice 8 — DONE & VERIFIED (149 vitest +28, build+lint clean).** Frontend Signals view + manual Take. `types/api.ts`
+  mirrors the final wire: `SetupDto.score`, `RankedSignalDto` (WRAPPER: rank/score/setup/entryMode/isTaken/blockReason/
+  expiresAtUtc), `InstrumentSettingsDto.entryMode`. `SignalsPage` + `SignalsFeed` + `ScoreBar` (ranked, filterable
+  symbol/style/grade/tf/min-RR/hide-taken; row click focuses the chart switching symbol+TF+style); `TopSignalsPanel` on the
+  Live right rail. `useSignals` + `useTakeSignal` (200 opened DTO → merge active-trades + `notifyTradeOpened`; 202 armed;
+  404/409 surface `{error}`); SignalR `SignalsUpdated` → signals cache + new-id → `notifyNewOpportunity` toast (wires slice
+  7's reserved hook). Take button is "Take (paper)" / aria-label `Take paper trade on ${symbol}` — no execute/buy/sell
+  verb (guardrail assertion green). Settings Discovery Auto/Manual is now a LIVE 3-state per-instrument control bound to
+  `InstrumentSettingsDto.entryMode`. `/signals` route + nav.
+- **FULL BRANCH VERIFIED TOGETHER: backend 895 unit + 23 arch (0 warnings, format clean) + frontend 149 vitest (build+lint
+  clean).** Branch `feature/slice1-instrument-profiles-silver-bullet`: 69 files changed, +3352/−725 vs main, UNCOMMITTED.
+- **Slice 10 — DONE.** Optimizer retune over the fetched `data/*.csv` (7 instruments). **No new bakes warranted** — every
+  net-positive ≥15-trade winner is ALREADY the live default (NAS100 M5 k=6, USDJPY M5 drop-FvgPresent; EURUSD/GBPUSD/AUDUSD
+  strict). **Gold's FIRST valid run:** the new metal sizing works (11–27 trades vs 0 before) but it's net-negative in every
+  config → NOT baked (flagged for a future draw/cost model or native-tick data). **Setups/week:** net-profitable basket
+  (EURUSD M15 + NAS100 M5 + USDJPY M5) ≈ **2.83/wk**; discovery-mode recall ceiling (M5 + k=5 across all 7) ≈ **10.4/wk**
+  but the FX legs net-lose at k=5 → breadth+lower-TF raises COUNT, not by gutting confluence (confirms the research). Data
+  caveat: M15 = robust 8-yr (2018→2026); M5 = ~2.7-yr. Findings appended to `docs/ict-frequency-research-2026.md`
+  (`## Retune results (2026-06)`). No code/appsettings change from the retune.
+
+**🏁 PRODUCT-OVERHAUL PROGRAM COMPLETE — all 10 slices done, FULL suite green: backend 895 unit + 23 arch (0 warnings,
+`dotnet format` clean) · integration 79 (+1 skip, Testcontainers/Postgres) · E2E 12 (Reqnroll/Testcontainers) · frontend
+149 vitest (build+lint clean).** Branch `feature/slice1-instrument-profiles-silver-bullet`, ~71 files, UNCOMMITTED
+("commit only when asked"). **Two real bugs were caught by running the Docker-gated suites (which the slice agents could
+not run) and FIXED:** (1) `CandleRepository.AppendAsync` built EF placeholders as `{@p0}` — EF's `ExecuteSqlRawAsync` wants
+POSITIONAL `{0}` (the `{`-before-`@` threw `FormatException`); candle persistence was fully broken — fixed to `{0}` + a
+`timestamptz` CAST; (2) `TakeSignalEndpointTests` used a 2024-dated setup against the live wall clock → the pending was
+age/killzone-pruned before the take (404) — fixed to a current-dated setup + `Pending:ExpireOnKillzoneEnd=false` (the live
+Manual flow is sound; the test was time-fragile, per the ict-domain-expert's S1).
+
+**CONVENTION (added):** the Testcontainers integration + E2E suites RUN under the DEFAULT sandbox (Docker is reachable
+there; the disable-wrapper breaks the test-host IPC) — and they catch DB/SQL bugs that pure-unit + arch gates cannot, so
+RUN THEM before declaring a persistence/endpoint slice done (the slice agents lack Docker). **NEXT (when the operator asks):**
+optional full pr-reviewer over the branch; commit/push/PR per git-workflow; live render-verify (screenshot) the Signals page
++ Take + dismissible notifs + redesigned Settings against the booted Host; optional Turtle Soup detector + a US30/gold data
+fetch + gold cost-model revisit.
+
+**🌙 OVERNIGHT IMPROVEMENT LOOP (operator: "add a pessimistic judge, backtest+criticize everything, update memory, do it
+again to make it much better — until morning"). Branch `feature/#183-product-overhaul` (PR #184).** A
+backtest→pessimistic-judge→fix→memory loop driving the system better each round; changes committed LOCALLY per round (NOT
+pushed without the operator). New **`pessimistic-judge` skill** (`.claude/skills/pessimistic-judge`): guilty-until-proven-
+innocent adversarial review (look-ahead/phantom fills, guardrail, ICT fidelity, money, overfit, determinism, config-binder,
+test gaps); treats implausibly-good results as BUGS and BLOCKs on look-ahead/guardrail/money.
+
+- **🐞 CRITICAL BUG FOUND (the operator's "22 trades in 3yr" complaint led here).** The scanner DETECTS plenty of setups
+  (NAS100 M5 k6 = 281) but only ~22 become trades (8% conversion) because the §2.5 entry is a RESTING LIMIT at the OTE/FVG
+  and price often never retraces there (faithful — ICT: "no fill is a valid outcome"). The non-default
+  **`EntryMode.Immediate` (`Ict:Execution:Entry:Mode=Immediate`) has a LOOK-AHEAD/phantom-fill BUG**: `TradeOrchestrator`
+  (line 81-82) opens at `plan.Entry` (the OTE) on the confirmation bar even though the market hasn't retraced there →
+  phantom favorable fills → IMPLAUSIBLE results (NAS100 PF **37**, USDJPY PF **88**, +800%). **NOT edge — disregard any
+  Immediate-mode numbers.** Default is **Armed** (the correct resting limit, no look-ahead) so the committed system + PR #184
+  are UNAFFECTED; Immediate is an off-by-default trap. **Round 2 fixes it = the real frequency lever** (open at the actual
+  next-bar price + recompute stop/target/RR = a correct, honest market-on-confirmation entry).
+- **Round 1 — DONE & COMMITTED (903 unit, 0 warnings, format clean).** Added opt-in `EntryFillZone {Ote(default),
+  ConsequentEncroachment, FvgNearEdge}` on the OTE resolver (`Ict:Detection:Ote:FillZone`) + `FairValueGap.NearEdge`.
+  **Empirical judge verdict (kept honest): a NO-HELP.** CE = the FVG midpoint the resolver ALREADY uses (a no-op);
+  FvgNearEdge barely moved conversion (8%→7% NAS100, 56%→56% EURUSD M5) and WORSENED edge (PF 1.78→1.25, 1.40→0.91). So
+  **entry DEPTH is not the bottleneck** — price often never retraces into the gap at all. The zones stay as harmless opt-ins
+  (default Ote = byte-identical). **The honest levers for more trades: (a) breadth + lower TF (M1/M3), (b) the correct
+  market-on-confirmation entry (round 2), NOT entry-depth tricks.** CONVENTION: backtest realism — verify a "more trades"
+  lever ACTUALLY raises filled trades AND holds edge before trusting it; the judge re-derives suspicious metrics.
+- **Round 2 — DONE & COMMITTED.** Definitive entry-fill/frequency answer in `docs/ict-frequency-research-2026.md` §8. The
+  big fix (correct market-on-confirmation entry) is **GATED ON OPERATOR APPROVAL** (they explicitly chose FVG-edge over it),
+  so the loop does NOT build it autonomously — it's the strong recommendation for the morning.
+- **Round 3 — DONE & COMMITTED (904 unit, 0 warnings, format clean).** Take-status correctness: an EXPIRED take wrongly
+  returned 404 (the store pruned the stale pending before the lookup). `PendingOpportunityStore.TryTake(id, now, out
+  TakeMiss)` captures the reason BEFORE pruning (present-but-stale → Expired, absent → NotFound); `POST
+  /api/signals/{id}/take` maps Expired + AlreadyTaken → **409**, unknown → **404** (ict-domain-expert S2). Loop continues on
+  SAFE gated items; market-on-confirmation awaits approval.
+- **Round 4 — DONE & COMMITTED (905 unit, 0 warnings, format clean).** Ranked-feed strict determinism: two signals tying
+  on every rank key had a non-deterministic relative order (the ranker's stable chain fell back to store-enumeration
+  order). `SignalRankingService` now pre-orders the ranker input by the deterministic `SetupDto.Id` → the feed + its
+  SignalR push are reproducible. (pr-reviewer nit; no struct change.)
+- **🌅 LOOP CONVERGED on safe items (rounds 1–4 done; 6 local commits on `feature/#183-product-overhaul`, NOT pushed).**
+  The remaining backlog is either ENRICHMENTS (candle↔trade timeframe guard, symbol-scoped repo queries — real but minor,
+  better done with operator context) or the **headline frequency fix (correct market-on-confirmation entry) which is GATED
+  ON OPERATOR APPROVAL** (they explicitly chose FVG-edge over it). Per the loop's stop rule (safe backlog dry → summarize),
+  the autonomous loop winds down here. **MORNING TO-DO for the operator:** (1) approve the correct market-on-confirmation
+  entry (the one real lever for more trades — see `docs/ict-frequency-research-2026.md` §8); (2) push the branch / update PR
+  #184 when ready; (3) optionally let the loop resume on the enrichment backlog.
+
+**CONVENTIONS reaffirmed/added this session:** (a) "default to live" is satisfied by the multi-granularity capability +
+the operator's env-var run, NOT by flipping the committed `Provider` (keeps tokenless CI/dev boots + Host-booting tests
+green). (b) Backend slices serialize their `dotnet build` (DLL-lock); parallelize only backend↔frontend (different
+toolchains). (c) The manual "Take" (slice 6) MUST reuse a single extracted `SetupTradeOpener` (the one paper-only path)
+and add no executor symbol. (d) Bake per-pair tuning only on full-history ≥~15-trade samples picked by NET P&L (restated).

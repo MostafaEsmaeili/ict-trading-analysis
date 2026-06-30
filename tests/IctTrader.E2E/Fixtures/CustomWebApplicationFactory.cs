@@ -44,6 +44,12 @@ public sealed class CustomWebApplicationFactory(string connectionString, DateTim
         // Immediate so a confirmed setup opens a trade directly; the candle stream then manages it to a close.
         builder.UseSetting("Ict:Execution:Entry:Mode", "Immediate");
 
+        // The E2E gate proves the AUTOMATIC open→manage→close→perform pipeline, so pin the semi-auto TAKE workflow to
+        // Auto: appsettings.json now ships the running product's Manual default (a confirmed setup PENDS for an operator
+        // take), which would otherwise stop the pipeline before a trade opens. The Take path is covered by the unit/
+        // integration pyramid; this keeps the auto-pipeline scenario intact.
+        builder.UseSetting("Ict:PaperTrading:DefaultEntryMode", "Auto");
+
         builder.ConfigureTestServices(services =>
         {
             // Swap the system clock for a controllable fake (the Host registers TimeProvider.System as a singleton).

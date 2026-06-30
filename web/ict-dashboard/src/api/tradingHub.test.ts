@@ -25,6 +25,7 @@ describe('tradingHub', () => {
       TradeUpdated: 'TradeUpdated',
       PerformanceUpdated: 'PerformanceUpdated',
       CandleAppended: 'CandleAppended',
+      SignalsUpdated: 'SignalsUpdated',
     });
   });
 

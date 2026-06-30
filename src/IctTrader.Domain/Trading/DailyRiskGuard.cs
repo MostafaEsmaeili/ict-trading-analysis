@@ -60,8 +60,13 @@ public sealed class DailyRiskGuard : IDailyRiskGuard
         }
 
         // Rung 1: a run of consecutive losses (the account streak that also drives the loss-ladder) — "stop after the
-        // ladder is exhausted". Read, never re-derived; PaperAccount owns the streak's gross-outcome classification.
-        if (state.ConsecutiveLosses >= options.ConsecutiveLossHaltThreshold)
+        // ladder is exhausted" — but ONLY once the DAY is also in the red, so this is a per-NY-DAY circuit breaker that
+        // RESETS each day (the caller zeroes the day tally at 00:00 NY). The day-down gate is load-bearing: the streak
+        // (state.ConsecutiveLosses) is LIFETIME and only clears on a WIN, so halting on it UNCONDITIONALLY deadlocks the
+        // strategy after the threshold is hit (no entry admitted → no win possible → halted forever). Gating on a red day
+        // means a fresh day (tally 0) always admits the first entry — a chance to win and clear the streak — while a day
+        // that has already bled keeps the loser's-cycle shut (Ep41/Ep37/Ep18 "walk away for the day").
+        if (state.ConsecutiveLosses >= options.ConsecutiveLossHaltThreshold && dayRealizedPnl.Amount < 0m)
         {
             return DailyRiskGuardDecision.Halt(DailyRiskHaltReason.ConsecutiveLosses);
         }

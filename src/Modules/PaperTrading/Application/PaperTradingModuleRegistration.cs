@@ -1,5 +1,6 @@
 using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Instruments;
+using IctTrader.Domain.Sessions;
 using IctTrader.PaperTrading.Application.Trading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -38,12 +39,39 @@ public static class PaperTradingModuleRegistration
         services.AddSingleton<ITradeOrchestratorRegistry, TradeOrchestratorRegistry>();
         services.AddScoped<IPaperAccountProvider, PaperAccountProvider>();
 
+        // The ONE simulated-open path shared by the automatic SetupConfirmedHandler and the operator-driven
+        // TakeSetupCommandHandler — SCOPED because it drives the scoped repositories/account provider/unit of work
+        // (DB-as-state). Both handlers resolve it so Auto and Take are byte-identical in sizing/cap/guardrail.
+        services.AddScoped<SetupTradeOpener>();
+
+        // The in-memory Manual-mode pending-opportunity board — a SINGLETON so it survives across bus dispatches (it
+        // reserves no risk and persists nothing, so it is NOT in the DB-as-state position model). It needs the §2.5.7
+        // killzone schedule + the operator's hunt-set for killzone-end expiry, resolved from the validated options.
+        services.AddSingleton(sp =>
+        {
+            var pendingOptions =
+                sp.GetService<IOptions<PendingOpportunityOptions>>()?.Value ?? new PendingOpportunityOptions();
+            var timeProvider = sp.GetRequiredService<TimeProvider>();
+            var killzoneClock = new KillzoneClock(new NyClock(timeProvider), KillzoneSchedule.CreateDefault());
+            var activeKillzones =
+                (sp.GetService<IOptions<KillzoneEntryOptions>>()?.Value ?? new KillzoneEntryOptions())
+                .ResolvedActiveKillzones;
+            return new PendingOpportunityStore(pendingOptions, killzoneClock, activeKillzones);
+        });
+
         services
             .AddOptions<PaperTradingOptions>()
             .BindConfiguration(PaperTradingOptions.SectionName)
             .ValidateOnStart();
         services.AddSingleton<IValidateOptions<PaperTradingOptions>>(
             new PaperTradingOptionsValidator());
+
+        services
+            .AddOptions<PendingOpportunityOptions>()
+            .BindConfiguration(PendingOpportunityOptions.SectionName)
+            .ValidateOnStart();
+        services.AddSingleton<IValidateOptions<PendingOpportunityOptions>>(
+            new PendingOpportunityOptionsValidator());
 
         return services;
     }
@@ -58,6 +86,19 @@ public static class PaperTradingModuleRegistration
             return errors.Count == 0
                 ? ValidateOptionsResult.Success
                 : ValidateOptionsResult.Fail(errors.Select(e => $"{PaperTradingOptions.SectionName}: {e}"));
+        }
+    }
+
+    /// <summary>Fails startup with a section-qualified reason if the <c>Ict:PaperTrading:Pending</c> config is invalid —
+    /// delegating to <see cref="PendingOpportunityOptions.Validate"/>.</summary>
+    private sealed class PendingOpportunityOptionsValidator : IValidateOptions<PendingOpportunityOptions>
+    {
+        public ValidateOptionsResult Validate(string? name, PendingOpportunityOptions options)
+        {
+            var errors = options.Validate();
+            return errors.Count == 0
+                ? ValidateOptionsResult.Success
+                : ValidateOptionsResult.Fail(errors.Select(e => $"{PendingOpportunityOptions.SectionName}: {e}"));
         }
     }
 }

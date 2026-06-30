@@ -40,9 +40,25 @@ public sealed class SilverBulletOptions
     /// </summary>
     public IReadOnlyList<SessionWindow> MacroWindows { get; init; } = [];
 
+    /// <summary>The London Silver Bullet macro (03:00–04:00 NY). PROVENANCE-FLAGGED Primer/community, opt-in.</summary>
+    public static readonly SessionWindow LondonMacro = new(new TimeOnly(3, 0), new TimeOnly(4, 0));
+
+    /// <summary>The canonical New-York AM Silver Bullet macro (10:00–11:00 NY) — the highest-precision window
+    /// and the resolved default when none is configured. PROVENANCE-FLAGGED Primer/community.</summary>
+    public static readonly SessionWindow NewYorkAmMacro = new(new TimeOnly(10, 0), new TimeOnly(11, 0));
+
+    /// <summary>The New-York PM Silver Bullet macro (14:00–15:00 NY) — the faithful "third daily shot". For an FX
+    /// instrument it requires <see cref="IctTrader.Domain.Detection.Killzone.Pm"/> in the active hunt-set (14–15
+    /// classifies as the FX Pm killzone). PROVENANCE-FLAGGED Primer/community, opt-in.</summary>
+    public static readonly SessionWindow NewYorkPmMacro = new(new TimeOnly(14, 0), new TimeOnly(15, 0));
+
+    /// <summary>All three Silver-Bullet macros (London 03–04, NY AM 10–11, NY PM 14–15) — a convenience for an
+    /// operator/optimizer that wants to hunt the full Silver-Bullet schedule. Set <see cref="MacroWindows"/> to this
+    /// (and ensure the parent killzones are active) to enable every window.</summary>
+    public static readonly IReadOnlyList<SessionWindow> AllMacroWindows = [LondonMacro, NewYorkAmMacro, NewYorkPmMacro];
+
     /// <summary>The canonical AM Silver Bullet (10:00–11:00 NY) — the default when none is configured.</summary>
-    private static readonly IReadOnlyList<SessionWindow> DefaultMacroWindows =
-        [new SessionWindow(new TimeOnly(10, 0), new TimeOnly(11, 0))];
+    private static readonly IReadOnlyList<SessionWindow> DefaultMacroWindows = [NewYorkAmMacro];
 
     /// <summary>The macro windows to consume — the configured set, or the canonical 10:00–11:00 default when none is set.</summary>
     public IReadOnlyList<SessionWindow> ResolvedMacroWindows =>

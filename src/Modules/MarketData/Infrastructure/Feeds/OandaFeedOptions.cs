@@ -33,6 +33,18 @@ public sealed class OandaFeedOptions
     /// <summary>A ceiling on the inter-retry delay so a typo can't stall the first candle for minutes.</summary>
     private const int MaxBackfillRetryDelaySeconds = 60;
 
+    /// <summary>The fewest concurrent per-(instrument,granularity) fetches a poll/backfill may run (1 = serial).</summary>
+    private const int MinMaxConcurrentFetchesPerPoll = 1;
+
+    /// <summary>
+    /// A ceiling on the per-poll fetch concurrency so a config typo can't open an unbounded burst of GETs at the
+    /// OANDA host (each instrument×granularity is one GET). 24 is generous — e.g. 6 instruments × 4 granularities.
+    /// </summary>
+    private const int MaxMaxConcurrentFetchesPerPoll = 24;
+
+    /// <summary>The default per-poll fetch concurrency — enough to fan a handful of instruments × granularities out at once.</summary>
+    private const int DefaultMaxConcurrentFetchesPerPoll = 6;
+
     /// <summary>The fewest candles a history fetch (<see cref="FetchHistory"/>) may request.</summary>
     private const int MinHistoryMaxCandles = 1;
 
@@ -89,8 +101,43 @@ public sealed class OandaFeedOptions
     public IReadOnlyList<string> ResolvedInstruments =>
         Instruments.Count == 0 ? DefaultInstruments : Instruments.Distinct(StringComparer.Ordinal).ToArray();
 
-    /// <summary>The OANDA granularity (candle timeframe) to read (e.g. <c>M5</c>, <c>M15</c>, <c>H1</c>).</summary>
+    /// <summary>
+    /// The single OANDA granularity (candle timeframe) for the one-shot <see cref="FetchHistory"/> CSV exporter (it
+    /// writes one timeframe per run, <c>&lt;symbol&gt;-&lt;granularity&gt;.csv</c>) AND the fallback for the live/backtest
+    /// stream when <see cref="Granularities"/> is empty (so existing single-granularity config stays byte-identical).
+    /// Defaults to <c>M5</c>.
+    /// </summary>
     public string Granularity { get; init; } = "M5";
+
+    /// <summary>
+    /// The OANDA granularities the live/backtest stream reads CONCURRENTLY per instrument (e.g.
+    /// <c>["M1", "M5", "M15", "H1"]</c>) — so downstream scanners get live candles on every timeframe at once. Each
+    /// candle carries its own <c>Timeframe</c> (the parser maps OANDA <c>D</c>→<c>D1</c>/<c>W</c>→<c>W1</c>), so per-TF
+    /// routing is already correct. Defaults to EMPTY so the .NET config binder REPLACES rather than APPENDS to a
+    /// pre-populated initializer (the documented binder convention — see <see cref="Instruments"/>); when empty,
+    /// <see cref="ResolvedGranularities"/> falls back to the single <see cref="Granularity"/> so a one-granularity
+    /// configuration (and the <see cref="FetchHistory"/> path, which always uses the single one) stays byte-identical.
+    /// Consume <see cref="ResolvedGranularities"/>, never this raw list.
+    /// </summary>
+    public IReadOnlyList<string> Granularities { get; init; } = [];
+
+    /// <summary>
+    /// The granularities the stream actually reads: the configured <see cref="Granularities"/> de-duplicated when
+    /// non-empty, else a single-element list of <see cref="Granularity"/> (the byte-identical single-granularity
+    /// fallback). Consume this, never the raw <see cref="Granularities"/>. (The one-shot <see cref="FetchHistory"/>
+    /// exporter deliberately ignores this and uses the single <see cref="Granularity"/> — one timeframe per CSV run.)
+    /// </summary>
+    public IReadOnlyList<string> ResolvedGranularities =>
+        Granularities.Count == 0 ? [Granularity] : Granularities.Distinct(StringComparer.Ordinal).ToArray();
+
+    /// <summary>
+    /// The maximum number of per-(instrument, granularity) candle GETs the stream runs concurrently in each backfill
+    /// and each live poll (bounded by a <see cref="System.Threading.SemaphoreSlim"/>). Fanning out over instruments ×
+    /// granularities multiplies the request count, so this caps the burst against the OANDA host while still keeping a
+    /// multi-timeframe feed timely. The merged result is always re-sorted chronologically before yielding, so the
+    /// concurrency never affects ordering. Defaults to 6.
+    /// </summary>
+    public int MaxConcurrentFetchesPerPoll { get; init; } = DefaultMaxConcurrentFetchesPerPoll;
 
     /// <summary>The number of completed candles to backfill per instrument (OANDA caps a request at 5000).</summary>
     public int HistoryCount { get; init; } = 500;
@@ -164,6 +211,26 @@ public sealed class OandaFeedOptions
             errors.Add(
                 $"Granularity must be one of [{string.Join(", ", SupportedGranularities)}] (OANDA granularities that " +
                 $"map to a scanner timeframe) but was '{Granularity}'.");
+        }
+
+        // Validate the RESOLVED granularity set (the configured Granularities, or the single Granularity fallback) —
+        // every entry must map to a scanner timeframe, so a typo in the multi-granularity list fails fast at startup
+        // rather than at the first fetch. An empty configured list is VALID — it falls back to Granularity above.
+        foreach (var granularity in ResolvedGranularities)
+        {
+            if (string.IsNullOrWhiteSpace(granularity) || !SupportedGranularities.Contains(granularity, StringComparer.Ordinal))
+            {
+                errors.Add(
+                    $"Granularities entry '{granularity}' must be one of [{string.Join(", ", SupportedGranularities)}] " +
+                    "(OANDA granularities that map to a scanner timeframe).");
+            }
+        }
+
+        if (MaxConcurrentFetchesPerPoll is < MinMaxConcurrentFetchesPerPoll or > MaxMaxConcurrentFetchesPerPoll)
+        {
+            errors.Add(
+                $"MaxConcurrentFetchesPerPoll must be within [{MinMaxConcurrentFetchesPerPoll}, " +
+                $"{MaxMaxConcurrentFetchesPerPoll}] but was {MaxConcurrentFetchesPerPoll}.");
         }
 
         if (HistoryCount is < MinHistoryCount or > MaxHistoryCount)

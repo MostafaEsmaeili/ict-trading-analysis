@@ -63,8 +63,22 @@ public static class OteEntryResolver
             ? StackedFartherBound(context, leg.Direction, selectedFvg, policy.StackProximityPips)
             : null;
 
+        // EntryFillZone (plan §2.5.1 step 7): the default deep OTE rests the limit at the selected array level
+        // (an FVG's midpoint); the opt-in shallower zones rest it nearer the gap's proximal side so it fills more
+        // often (CE = the FVG's 50%, which equals the midpoint we already use; FvgNearEdge = the proximal edge —
+        // genuinely shallower). All apply only to an FVG array (an order-block level keeps OB.Open) and all remain
+        // RESTING LIMITS — never an open-at-confirmation/look-ahead path.
+        var entryLevel = chosen.Fvg is { } zoneFvg
+            ? options.FillZone switch
+            {
+                EntryFillZone.ConsequentEncroachment => zoneFvg.ConsequentEncroachment,
+                EntryFillZone.FvgNearEdge => zoneFvg.NearEdge,
+                _ => chosen.Level,
+            }
+            : chosen.Level;
+
         return new OteEntry(
-            chosen.Level, band, leg.Direction, leg.Timeframe, sweetSpot, chosen.Fvg, stackedFartherBound);
+            entryLevel, band, leg.Direction, leg.Timeframe, sweetSpot, chosen.Fvg, stackedFartherBound);
     }
 
     // Retrace the leg from its terminus back toward its origin by fraction f (works for both directions) — delegated

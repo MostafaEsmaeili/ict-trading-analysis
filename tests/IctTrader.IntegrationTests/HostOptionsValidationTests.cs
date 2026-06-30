@@ -35,6 +35,17 @@ public class HostOptionsValidationTests
         provider.GetRequiredService<IOptions<EntryManagementOptions>>().Value.UseCloseProximityEntry.Should().BeFalse();
         provider.GetRequiredService<IOptions<SdProjectionOptions>>().Value.Enabled.Should().BeFalse();
         provider.GetRequiredService<IOptions<ConfluenceOptions>>().Value.EffectiveRequiredConditions.Should().NotBeEmpty();
+        provider.GetRequiredService<IOptions<SignalRankingOptions>>().Value.MaxFeedSize.Should().Be(25);
+    }
+
+    [Fact]
+    public void A_signals_max_feed_size_override_out_of_range_fails_validation()
+    {
+        var provider = Build(("Ict:Signals:MaxFeedSize", "0")); // the feed must hold at least one signal
+
+        var act = () => provider.GetRequiredService<IOptions<SignalRankingOptions>>().Value;
+
+        act.Should().Throw<OptionsValidationException>().WithMessage("*Ict:Signals*");
     }
 
     [Fact]

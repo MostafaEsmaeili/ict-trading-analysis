@@ -291,6 +291,83 @@ public class OandaMarketDataFeedTests
         handler.CallCount("EUR_USD").Should().Be(2, "the backtest retries to the cap then fails fast");
     }
 
+    // ---- Multi-granularity fan-out (every instrument × granularity fetched, per-TF Timeframe, merged chronological) ----
+
+    [Fact]
+    public async Task Backfill_fans_out_over_every_instrument_and_granularity_with_the_correct_per_timeframe()
+    {
+        // Two instruments × two granularities = four series. Each series returns one candle whose `granularity`
+        // field (echoed by the parser into Timeframe) and open time differ, so we can assert (a) all four series were
+        // fetched, (b) each candle carries the correct per-TF Timeframe, and (c) the merge is chronological.
+        var handler = new SeriesHandler();
+        handler.Respond("EUR_USD", "M5", "2024-07-01T07:05:00.000000000Z", "1.0805");
+        handler.Respond("EUR_USD", "M15", "2024-07-01T07:15:00.000000000Z", "1.0815");
+        handler.Respond("GBP_USD", "M5", "2024-07-01T07:00:00.000000000Z", "1.2700");
+        handler.Respond("GBP_USD", "M15", "2024-07-01T07:10:00.000000000Z", "1.2710");
+
+        var opts = new OandaFeedOptions
+        {
+            BaseUrl = "https://api-fxpractice.oanda.com",
+            Token = "test-practice-token",
+            Instruments = ["EUR_USD", "GBP_USD"],
+            Granularities = ["M5", "M15"],
+            HistoryCount = 1,
+            LiveStreaming = false,
+        };
+        var feed = new OandaMarketDataFeed(ClientFor(handler, opts), opts, TimeProvider.System);
+
+        var candles = new List<IctTrader.MarketData.Contracts.CandleDto>();
+        await foreach (var candle in feed.StreamCandlesAsync(CancellationToken.None))
+        {
+            candles.Add(candle);
+        }
+
+        // Every (instrument, granularity) series was fetched exactly once.
+        handler.WasFetched("EUR_USD", "M5").Should().BeTrue();
+        handler.WasFetched("EUR_USD", "M15").Should().BeTrue();
+        handler.WasFetched("GBP_USD", "M5").Should().BeTrue();
+        handler.WasFetched("GBP_USD", "M15").Should().BeTrue();
+
+        candles.Should().HaveCount(4);
+        candles.Select(c => c.OpenTimeUtc).Should().BeInAscendingOrder("the merged multi-series stream is chronological");
+
+        // Each candle carries its own per-TF Timeframe (per-TF routing downstream is already correct).
+        candles.Should().ContainSingle(c => c.Symbol == "EURUSD" && c.Timeframe == "M5");
+        candles.Should().ContainSingle(c => c.Symbol == "EURUSD" && c.Timeframe == "M15");
+        candles.Should().ContainSingle(c => c.Symbol == "GBPUSD" && c.Timeframe == "M5");
+        candles.Should().ContainSingle(c => c.Symbol == "GBPUSD" && c.Timeframe == "M15");
+    }
+
+    [Fact]
+    public async Task Empty_granularities_streams_only_the_single_granularity_byte_identically()
+    {
+        // The byte-identical fallback: no Granularities ⇒ stream just the single Granularity (one fetch per instrument).
+        var handler = new SeriesHandler();
+        handler.Respond("EUR_USD", "M5", "2024-07-01T07:05:00.000000000Z", "1.0805");
+
+        var opts = new OandaFeedOptions
+        {
+            BaseUrl = "https://api-fxpractice.oanda.com",
+            Token = "test-practice-token",
+            Instruments = ["EUR_USD"],
+            Granularity = "M5",
+            Granularities = [],   // empty ⇒ fall back to the single Granularity
+            HistoryCount = 1,
+            LiveStreaming = false,
+        };
+        var feed = new OandaMarketDataFeed(ClientFor(handler, opts), opts, TimeProvider.System);
+
+        var candles = new List<IctTrader.MarketData.Contracts.CandleDto>();
+        await foreach (var candle in feed.StreamCandlesAsync(CancellationToken.None))
+        {
+            candles.Add(candle);
+        }
+
+        candles.Should().ContainSingle().Which.Timeframe.Should().Be("M5");
+        handler.WasFetched("EUR_USD", "M5").Should().BeTrue();
+        handler.WasFetched("EUR_USD", "M15").Should().BeFalse("no M15 series is configured");
+    }
+
     private static OandaFeedOptions ResilienceOptions(bool liveStreaming, string[] instruments) => new()
     {
         BaseUrl = "https://api-fxpractice.oanda.com",
@@ -460,5 +537,77 @@ public class OandaMarketDataFeedTests
             var segments = requestUri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
             return segments.Length >= 3 ? segments[2] : string.Empty;
         }
+    }
+
+    /// <summary>
+    /// A fake transport keyed by the (instrument, granularity) SERIES — the instrument from the path
+    /// (<c>/v3/instruments/{X}/candles</c>) and the granularity from the <c>?granularity=</c> query. Each registered
+    /// series returns a single-candle body whose echoed <c>granularity</c> field drives the parsed Timeframe, and it
+    /// records which series were fetched, so a test can assert the multi-granularity fan-out reaches every
+    /// instrument × granularity with the correct per-TF Timeframe. Read-only by SHAPE: no order endpoint is simulated.
+    /// </summary>
+    private sealed class SeriesHandler : HttpMessageHandler
+    {
+        private readonly ConcurrentDictionary<string, string> _bodyBySeries = new(StringComparer.Ordinal);
+        private readonly ConcurrentDictionary<string, byte> _fetched = new(StringComparer.Ordinal);
+
+        public void Respond(string instrument, string granularity, string timeIso, string close) =>
+            _bodyBySeries[Key(instrument, granularity)] = SeriesBody(instrument, granularity, timeIso, close);
+
+        public bool WasFetched(string instrument, string granularity) => _fetched.ContainsKey(Key(instrument, granularity));
+
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            var uri = request.RequestUri!;
+            var instrument = ExtractInstrument(uri);
+            var granularity = ExtractGranularity(uri);
+            var key = Key(instrument, granularity);
+            _fetched[key] = 0;
+
+            var json = _bodyBySeries.TryGetValue(key, out var body)
+                ? body
+                : EmptyBody(instrument, granularity);
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(json, Encoding.UTF8, "application/json"),
+            });
+        }
+
+        private static string Key(string instrument, string granularity) => $"{instrument}|{granularity}";
+
+        private static string ExtractInstrument(Uri requestUri)
+        {
+            var segments = requestUri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            return segments.Length >= 3 ? segments[2] : string.Empty;
+        }
+
+        private static string ExtractGranularity(Uri requestUri)
+        {
+            foreach (var pair in requestUri.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var parts = pair.Split('=', 2);
+                if (parts.Length == 2 && parts[0] == "granularity")
+                {
+                    return Uri.UnescapeDataString(parts[1]);
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static string SeriesBody(string instrument, string granularity, string timeIso, string close) => $$"""
+        {
+          "instrument": "{{instrument}}",
+          "granularity": "{{granularity}}",
+          "candles": [
+            { "time": "{{timeIso}}", "mid": { "o": "{{close}}", "h": "{{close}}", "l": "{{close}}", "c": "{{close}}" }, "volume": 10, "complete": true }
+          ]
+        }
+        """;
+
+        private static string EmptyBody(string instrument, string granularity) =>
+            $$"""{ "instrument": "{{instrument}}", "granularity": "{{granularity}}", "candles": [] }""";
     }
 }

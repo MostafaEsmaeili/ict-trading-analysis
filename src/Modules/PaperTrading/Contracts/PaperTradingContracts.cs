@@ -47,6 +47,24 @@ public sealed record PaperTradeDto(
 /// <summary>Requests a SIMULATED trade from a confirmed setup. Routes only to SimulatedTradeExecutor.</summary>
 public sealed record ExecutePaperTradeCommand(Guid SetupId) : ICommand;
 
+/// <summary>
+/// The operator TAKEs a Manual-mode pending opportunity (plan §15 — "give me the opportunity to use that setup"): open
+/// ONE SIMULATED paper trade from the pending setup identified by <paramref name="SetupId"/> (the deterministic seam
+/// id). It routes to the <c>TakeSetupCommandHandler</c>, which looks the pending up and opens it through the EXACT same
+/// simulated-open path the automatic flow uses (<c>SetupTradeOpener</c> → <c>SetupRehydrator</c> →
+/// <c>TradeOrchestrator</c> → <c>PaperTradeFactory</c>) — so a taken trade is byte-identical to an auto trade in
+/// sizing, the §2.5.10 portfolio cap, and the paper-only guardrail. IDEMPOTENT on the id: taking the same setup twice
+/// opens exactly one trade. Paper-only — there is NO broker/order path anywhere (§6.3 guardrail).
+/// <para>The opened trade carries the deterministic id, so the Host reads it back via
+/// <see cref="GetPaperTradeQuery"/> to return the <see cref="PaperTradeDto"/> to the operator (200); a not-pending /
+/// expired id maps to 404, an already-taken id to 409 (the handler throws a typed failure the endpoint maps).</para>
+/// </summary>
+public sealed record TakeSetupCommand(Guid SetupId) : ICommand;
+
+/// <summary>Reads a single paper trade by id (open or closed) — the Host uses it to echo the trade a
+/// <see cref="TakeSetupCommand"/> just opened. Read-only advisory projection (§6.3); returns null when absent.</summary>
+public sealed record GetPaperTradeQuery(Guid Id) : IQuery<PaperTradeDto?>;
+
 public sealed record PaperTradeOpened(PaperTradeDto Trade) : IEvent;
 
 public sealed record PaperTradeFilled(Guid TradeId, decimal Price, DateTimeOffset AtUtc) : IEvent;

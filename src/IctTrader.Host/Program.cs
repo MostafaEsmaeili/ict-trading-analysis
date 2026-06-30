@@ -11,6 +11,7 @@ using IctTrader.Host.Hubs;
 using IctTrader.MarketData.Application.Chart;
 using IctTrader.MarketData.Contracts;
 using IctTrader.PaperTrading.Application;
+using IctTrader.PaperTrading.Application.Trading;
 using IctTrader.PaperTrading.Contracts;
 using IctTrader.Performance.Application;
 using IctTrader.Performance.Contracts;
@@ -139,6 +140,43 @@ api.MapGet("/alerts", async (IMessageBus bus) =>
         TypedResults.Ok(await bus.QueryAsync(new GetRecentAlertsQuery(50))))
     .WithName("GetAlerts");
 
+// The ranked "best opportunities" signals feed (plan §9 — "the system suggests the best setup"): REST → bus
+// QueryAsync → the Scanning module's GetSignalsQueryHandler, which ranks the confirmed advisory setups across the
+// whole (symbol × timeframe × style) matrix by grade → score → reward-to-risk → timeframe → recency and returns the
+// filtered top-N. Optional filters: ?symbol= / ?style= (exact wire-name match), ?grade= (a floor — A or B), ?max=.
+// Read-only/advisory — surfacing a ranked setup routes nowhere near an order path (§6.3 guardrail).
+api.MapGet("/signals", async (string? symbol, string? style, string? grade, int? max, IMessageBus bus) =>
+        TypedResults.Ok(await bus.QueryAsync(new GetSignalsQuery(symbol, style, grade, max))))
+    .WithName("GetSignals");
+
+// The operator TAKEs a Manual-mode pending signal (plan §15 — "give me the opportunity to use that setup"): REST →
+// bus SendAsync → the PaperTrading TakeSetupCommandHandler, which opens ONE SIMULATED paper trade through the SAME
+// shared SetupTradeOpener the automatic flow uses (so a taken trade is byte-identical in sizing/cap/guardrail). On
+// success it echoes the opened PaperTradeDto (read back by the deterministic id); an unknown id → 404, an
+// expired or already-taken id → 409. PAPER-ONLY — there is no broker/order path anywhere (§6.3 guardrail).
+api.MapPost("/signals/{setupId:guid}/take", async (Guid setupId, IMessageBus bus) =>
+    {
+        try
+        {
+            await bus.SendAsync(new TakeSetupCommand(setupId));
+            var trade = await bus.QueryAsync(new GetPaperTradeQuery(setupId));
+            // The take opened/armed it; the trade is readable once it OPENED (Immediate) — Armed rests with no trade
+            // row yet, so a null read on success means "armed", reported as 202 Accepted (queued, not yet a trade).
+            return trade is null
+                ? Results.Accepted($"/api/trades/{setupId}")
+                : Results.Ok(trade);
+        }
+        catch (TakeSetupException ex)
+        {
+            // AlreadyTaken / Expired are CONFLICTs (the opportunity existed but can't be taken now — already opened, or
+            // its entry window closed); a truly unknown id is a 404. The reason is echoed so the UI can tell them apart.
+            return ex.Reason is TakeSetupFailure.AlreadyTaken or TakeSetupFailure.Expired
+                ? Results.Conflict(new { error = ex.Message, reason = ex.Reason.ToString() })
+                : Results.NotFound(new { error = ex.Message, reason = ex.Reason.ToString() });
+        }
+    })
+    .WithName("TakeSignal");
+
 // Real active-trades read-side (plan §4.1): REST → bus QueryAsync → the PaperTrading module's
 // GetActiveTradesQueryHandler, which projects every OPEN PaperTrade aggregate to its wire DTO. Advisory only —
 // the DTO carries no order field and routes nowhere (§6.3 guardrail).
@@ -174,20 +212,51 @@ api.MapGet("/equity", async (IMessageBus bus) =>
         TypedResults.Ok(await bus.QueryAsync(new GetEquityCurveQuery())))
     .WithName("GetEquityCurve");
 
-// Real ICT Pattern Chart read-side (plan §9.1): REST → bus QueryAsync → the MarketData module's
-// GetChartCandlesQueryHandler (the bounded per-series candle window, chronological) AND the Scanning module's
-// GetRecentSetupsQueryHandler (the recent confirmed setups to overlay, newest-first). Both are read-only
-// projections of read-only candle/setup events — serving a chart routes nowhere near an order path (§6.3).
-api.MapGet("/chart/{symbol}", async (string symbol, string? tf, string? style, IMessageBus bus, BacktestEngine history) =>
+// Real ICT Pattern Chart read-side (plan §9.1 + plan §7 time-range extension):
+//
+// Without ?from / ?to  → ring buffer (ChartCandlesQuery) → CSV history fallback (unchanged behaviour).
+// With    ?from / ?to  → DB range (GetChartRangeQuery) → CSV history fallback when persistence is off or
+//                        the range returns no rows (e.g. candles not yet persisted).
+//
+// Both paths return the same ChartResponse shape + setup overlays — the wire is compatible. Read-only
+// projections; routes nowhere near an order path (plan §6.3 guardrail).
+api.MapGet("/chart/{symbol}", async (
+        string symbol,
+        string? tf,
+        string? style,
+        DateTimeOffset? from,
+        DateTimeOffset? to,
+        IMessageBus bus,
+        BacktestEngine history) =>
     {
         var timeframe = tf ?? ChartDefaults.Timeframe;
-        var candles = await bus.QueryAsync(
-            new GetChartCandlesQuery(symbol, timeframe, ChartDefaults.MaxCandles));
-        if (candles.Count == 0)
+
+        IReadOnlyList<CandleDto> candles;
+
+        if (from.HasValue && to.HasValue)
         {
-            // No LIVE feed for this (symbol, timeframe) — serve the recorded CSV history so the chart renders for ANY
-            // asset/timeframe the operator selects (the live ring buffer only holds the actively-scanned series).
-            candles = ChartHistory.RecentCandles(history, symbol, timeframe, ChartDefaults.MaxCandles);
+            // Time-range path: serve historical candles from Postgres (plan §7).
+            candles = await bus.QueryAsync(
+                new GetChartRangeQuery(symbol, timeframe, from.Value, to.Value));
+
+            if (candles.Count == 0)
+            {
+                // Persistence disabled or no rows yet — fall back to CSV history tail for this symbol/TF.
+                candles = ChartHistory.RecentCandles(history, symbol, timeframe, ChartDefaults.MaxCandles);
+            }
+        }
+        else
+        {
+            // Recent-candles path: in-memory ring buffer (unchanged behaviour).
+            candles = await bus.QueryAsync(
+                new GetChartCandlesQuery(symbol, timeframe, ChartDefaults.MaxCandles));
+
+            if (candles.Count == 0)
+            {
+                // No LIVE feed for this (symbol, timeframe) — serve the recorded CSV history so the chart
+                // renders for ANY asset/timeframe the operator selects.
+                candles = ChartHistory.RecentCandles(history, symbol, timeframe, ChartDefaults.MaxCandles);
+            }
         }
 
         var overlays = await bus.QueryAsync(

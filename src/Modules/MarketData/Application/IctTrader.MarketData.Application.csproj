@@ -12,6 +12,10 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.9" />
     <!-- ILogger<MarketDataIngestor> so one bad/transient candle is logged and SKIPPED, never aborting the stream. -->
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.9" />
+    <!-- AddLogging() extension for the fallback registration in AddMarketDataReadModels (unit-test safety). -->
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.9" />
+    <!-- BackgroundService base class for CandlePersistenceHostedService (plan §7 batched dual-write). -->
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.9" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -24,6 +28,8 @@
     <!-- The unit tests exercise this module's internal chart read-model (ChartCandleStore) and bus wiring
          directly without widening the module's public surface, which stays Contracts-only (plan §3.0a). -->
     <InternalsVisibleTo Include="IctTrader.UnitTests" />
+    <!-- Integration tests drive the candle-persistence pipeline end-to-end. -->
+    <InternalsVisibleTo Include="IctTrader.IntegrationTests" />
   </ItemGroup>
 
 </Project>

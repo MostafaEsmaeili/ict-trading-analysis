@@ -16,6 +16,7 @@ function setup(id: string, triggerTimeframe: string): SetupDto {
     killzone: 'LondonOpen',
     style: 'Intraday',
     grade: 'A',
+    score: 82,
     triggerTimeframe,
     entry: 1.0724,
     stop: 1.0689,

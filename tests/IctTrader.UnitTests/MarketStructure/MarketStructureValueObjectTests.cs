@@ -32,6 +32,30 @@ public class MarketStructureValueObjectTests
     }
 
     [Fact]
+    public void Consequent_encroachment_is_the_fifty_percent_midpoint_of_the_gap()
+    {
+        // CE (ICT consequent encroachment) = the 50% of the FVG = (High + Low) / 2 — the canonical shallow entry.
+        var fvg = BullishFvg(); // [1.0832, 1.0840]
+        fvg.ConsequentEncroachment.Should().Be(1.0836m);
+        fvg.ConsequentEncroachment.Should().Be((fvg.Top.Value + fvg.Bottom.Value) / 2m);
+        fvg.ConsequentEncroachment.Should().Be(fvg.Midpoint); // CE == the gap midpoint by construction
+    }
+
+    [Fact]
+    public void Near_edge_is_the_proximal_edge_and_shallower_than_the_midpoint()
+    {
+        // The near edge is the FIRST level price taps on the retrace: a bullish gap's TOP, a bearish gap's BOTTOM.
+        var bullish = BullishFvg(); // [1.0832, 1.0840]
+        bullish.NearEdge.Should().Be(1.0840m);                 // = Top
+        bullish.NearEdge.Should().BeGreaterThan(bullish.Midpoint); // shallower (higher = less retrace) for a long
+
+        var bearish = new FairValueGap(
+            Direction.Bearish, Timeframe.M5, new Price(1.0832m), new Price(1.0840m), Utc);
+        bearish.NearEdge.Should().Be(1.0832m);                 // = Bottom
+        bearish.NearEdge.Should().BeLessThan(bearish.Midpoint);   // shallower (lower = less retrace) for a short
+    }
+
+    [Fact]
     public void Fvg_voids_on_the_configured_touch_count_and_can_mitigate()
     {
         var fvg = BullishFvg();
