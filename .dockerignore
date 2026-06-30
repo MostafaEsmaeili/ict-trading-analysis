@@ -1,0 +1,28 @@
+# Keep the Docker build context small + never ship secrets/build junk into the image.
+**/bin
+**/obj
+**/node_modules
+**/dist
+src/IctTrader.Host/wwwroot
+.git
+.github
+.vs
+.vscode
+.idea
+TestResults
+**/*.user
+
+# Secrets — never copy .env into the image (the OANDA token). .env.example is harmless but unused by the build.
+.env
+.env.*
+
+# Large recorded-history CSVs (534M) — mounted as a volume for backtests, not baked into the image.
+data
+
+# Local artifacts / docs that the build doesn't need.
+*.png
+scratchpad
+.playwright-mcp
+.claude
+docs
+.raw
