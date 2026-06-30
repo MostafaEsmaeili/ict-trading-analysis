@@ -225,7 +225,8 @@ describe('IctChart entry markers', () => {
   });
 
   // The setup's entry candle is candle index 10 in MOCK_CANDLES (its openTimeUtc). A LONG (Bullish)
-  // setup must produce an arrowUp entry marker BELOW the bar at exactly that time, coloured long-green.
+  // setup must produce an arrowUp entry marker pinned to that time AND anchored at the entry PRICE
+  // (position 'atPriceMiddle' + price), so the arrow lands on the Entry level line — coloured long-green.
   function longSetup(overrides: Partial<SetupDto> = {}): SetupDto {
     return {
       id: 'long-1',
@@ -260,13 +261,14 @@ describe('IctChart entry markers', () => {
     const entry = lastMarkers().find((m) => typeof m.text === 'string' && m.text.startsWith('Entry'));
     expect(entry).toBeDefined();
     expect(entry?.shape).toBe('arrowUp'); // long → up-arrow
-    expect(entry?.position).toBe('belowBar'); // long arrow sits below the bar
+    expect(entry?.position).toBe('atPriceMiddle'); // anchored at the entry PRICE, not the bar wick
+    expect(entry?.price).toBe(1.0919); // sits exactly on the entry level line
     // Pinned to the exact entry candle (detectedAtUtc), in UTC-seconds.
     expect(entry?.time).toBe(Math.floor(Date.parse(MOCK_CANDLES[10].openTimeUtc) / 1000));
     expect(entry?.text).toBe('Entry 1.09190'); // FX-major 5dp from the symbol
   });
 
-  it('a Short setup produces an arrowDown entry marker ABOVE the bar', () => {
+  it('a Short setup produces an arrowDown entry marker anchored at the entry price', () => {
     const vis = defaultOverlayVisibility();
     render(
       <IctChart
@@ -278,7 +280,8 @@ describe('IctChart entry markers', () => {
 
     const entry = lastMarkers().find((m) => typeof m.text === 'string' && m.text.startsWith('Entry'));
     expect(entry?.shape).toBe('arrowDown');
-    expect(entry?.position).toBe('aboveBar');
+    expect(entry?.position).toBe('atPriceMiddle'); // on the entry level, not above the bar
+    expect(entry?.price).toBe(1.075);
   });
 
   it('emits markers in ASCENDING time order across multiple setups', () => {

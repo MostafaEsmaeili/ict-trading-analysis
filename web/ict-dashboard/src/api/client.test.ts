@@ -41,14 +41,19 @@ async function liveClient() {
 }
 
 describe('client live overlays', () => {
-  it('maps host ChartResponse overlays to chart overlays, filtered to the timeframe', async () => {
+  it('maps only the MOST-RECENT same-timeframe setup (declutter), dropping older + wrong-TF setups', async () => {
     const response: ChartResponse = {
       symbol: 'EURUSD',
       timeframe: 'M5',
       style: 'Intraday',
       candles: [],
-      // Two M5 setups (kept) + one H1 setup (must be filtered out — wrong timeframe).
-      overlays: [setup('a', 'M5'), setup('b', 'M5'), setup('c', 'H1')],
+      // An OLDER M5 setup + a NEWER M5 setup + an H1 setup. Only the newest M5 ('b') is drawn: older
+      // M5 ('a') is decluttered away and the H1 ('c') is filtered out (wrong timeframe).
+      overlays: [
+        { ...setup('a', 'M5'), detectedAtUtc: '2026-06-19T05:00:00Z' },
+        { ...setup('b', 'M5'), detectedAtUtc: '2026-06-19T06:50:00Z' },
+        { ...setup('c', 'H1'), detectedAtUtc: '2026-06-19T07:00:00Z' },
+      ],
     };
     vi.stubGlobal(
       'fetch',
@@ -58,11 +63,9 @@ describe('client live overlays', () => {
     const { fetchOverlays } = await liveClient();
     const overlays = await fetchOverlays('EURUSD', 'M5', 'Intraday');
 
-    // setupToOverlays emits 2 overlays per setup (tradeLevels + drawOnLiquidity); 2 M5 setups → 4.
-    expect(overlays).toHaveLength(4);
-    expect(overlays.every((o) => 'setupId' in o && (o.setupId === 'a' || o.setupId === 'b'))).toBe(
-      true,
-    );
+    // setupToOverlays emits 2 overlays per setup (tradeLevels + drawOnLiquidity); only the newest M5 → 2.
+    expect(overlays).toHaveLength(2);
+    expect(overlays.every((o) => 'setupId' in o && o.setupId === 'b')).toBe(true);
   });
 
   it('FAILS HARD (throws) on a live fetch error — never silently serves fixtures', async () => {

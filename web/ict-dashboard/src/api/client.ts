@@ -364,5 +364,14 @@ export async function fetchOverlays(
     return MOCK_OVERLAYS;
   }
   const chart = await fetchChart(symbol, timeframe, style);
-  return chart.overlays.filter((s) => s.triggerTimeframe === timeframe).flatMap(setupToOverlays);
+  // Draw ONLY the most-recent setup's levels for the selected timeframe. Stacking every recent setup's
+  // entry/stop/T1/T2/draw lines (5-6 per setup) crowded the price axis into an unreadable ladder — one
+  // clean structure at a time is what the operator reads. MAX_CHART_SETUPS keeps this tunable.
+  const MAX_CHART_SETUPS = 1;
+  return chart.overlays
+    .filter((s) => s.triggerTimeframe === timeframe)
+    .slice()
+    .sort((a, b) => Date.parse(b.detectedAtUtc) - Date.parse(a.detectedAtUtc))
+    .slice(0, MAX_CHART_SETUPS)
+    .flatMap(setupToOverlays);
 }

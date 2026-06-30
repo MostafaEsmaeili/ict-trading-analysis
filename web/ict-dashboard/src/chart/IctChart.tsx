@@ -354,9 +354,12 @@ export function IctChart({
             line(tp, palette.long, `T${i + 1} · ${r.toFixed(1)}R`, LineStyle.Dashed, 2);
           });
 
-          // The entry POINT: an arrow at the exact entry bar (detectedAtUtc) so the operator sees WHEN the
-          // trade enters, not only the price. Long → green arrowUp BELOW the bar; Short → red arrowDown
-          // ABOVE. Dropped if the entry time is outside the loaded window or already drawn for this setup.
+          // The entry POINT: an arrow at the exact entry bar (detectedAtUtc) AND the exact entry price, so
+          // it lands ON the Entry level line — not at the bar's high/low. v5's price-anchored markers
+          // (`atPriceMiddle` + `price`) put the arrow at o.entry; a bar-relative position (aboveBar/belowBar)
+          // would float it at the candle's wick, which is what made the arrow look misplaced vs the level.
+          // Long → green arrowUp, Short → red arrowDown, both centred on the entry price. Dropped if the
+          // entry time is outside the loaded window or already drawn for this setup.
           if (o.entryUtc && inWindow(o.entryUtc)) {
             const key = o.setupId ?? `entry@${o.entryUtc}`;
             if (!entryMarkerKeys.has(key)) {
@@ -364,7 +367,8 @@ export function IctChart({
               const isLong = o.direction === 'Bullish';
               markers.push({
                 time: toUtcTimestamp(o.entryUtc) as UTCTimestamp,
-                position: isLong ? 'belowBar' : 'aboveBar',
+                position: 'atPriceMiddle',
+                price: o.entry,
                 color: isLong ? palette.long : palette.short,
                 shape: isLong ? 'arrowUp' : 'arrowDown',
                 text: `Entry ${o.entry.toFixed(priceDecimals(o.symbol ?? ''))}`,
