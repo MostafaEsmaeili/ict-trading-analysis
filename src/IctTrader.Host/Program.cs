@@ -17,6 +17,7 @@ using IctTrader.Performance.Application;
 using IctTrader.Performance.Contracts;
 using IctTrader.Scanning.Contracts;
 using IctTrader.SharedKernel.Messaging;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -127,6 +128,22 @@ if (fetchHistoryMode)
 {
     app.Run();
     return;
+}
+
+// Optional startup schema migration — a containerized / first-run convenience (plan §7). OFF by default so
+// CI, the test suites, and local dev keep applying migrations explicitly (`dotnet ef database update`); the
+// docker-compose `app` service sets Ict__Database__AutoMigrate=true so a fresh Postgres gets the schema on
+// boot with no manual step. Both write-model contexts share the one database. Schema only — no order path (§6.3).
+if (app.Configuration.GetValue<bool>("Ict:Database:AutoMigrate"))
+{
+    using var migrateScope = app.Services.CreateScope();
+    migrateScope.ServiceProvider
+        .GetRequiredService<IctTrader.PaperTrading.Infrastructure.Persistence.PaperTradingDbContext>()
+        .Database.Migrate();
+    migrateScope.ServiceProvider
+        .GetRequiredService<IctTrader.MarketData.Infrastructure.Persistence.MarketDataDbContext>()
+        .Database.Migrate();
+    app.Logger.LogInformation("AutoMigrate: applied PaperTrading + MarketData schema migrations.");
 }
 
 // Frozen REST surface (plan §11.1 #6). WP0 returns typed empty results so the OpenAPI document carries

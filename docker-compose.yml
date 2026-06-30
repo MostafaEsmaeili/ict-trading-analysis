@@ -1,10 +1,13 @@
-# Dev infrastructure for the ICT paper-trading backend (plan §3.1).
-# Postgres only — this project NEVER connects to a broker for order routing (the no-live-trading guardrail).
-# Usage:
-#   docker compose up -d postgres
-#   $env:PAPERTRADING_CONNECTION_STRING = "Host=localhost;Port=5432;Database=icttrader;Username=icttrader;Password=icttrader_dev"
-#   dotnet ef database update --project src/Modules/PaperTrading/Infrastructure --startup-project src/IctTrader.Host
-#   dotnet run --project src/IctTrader.Host
+# ICT Trading Desk — full app stack (Postgres + the analysis/paper-trading Host serving the SPA).
+# PAPER / READ-ONLY: this stack NEVER connects to a broker for order routing (the no-live-trading guardrail).
+#
+# Easiest run:
+#   docker compose up -d --build         # builds the image (SPA + .NET), starts Postgres + the app
+#   open http://localhost:5080           # the whole dashboard (API + SignalR + SPA, single origin)
+#
+# Live OANDA feed: copy .env.example -> .env and set Ict__MarketData__Oanda__Token (practice token). The
+# app service reads .env (token + live-feed config) automatically. Without .env it runs on the committed
+# defaults (Replay/backtest mode) — still boots, just no live feed.
 services:
   postgres:
     image: postgres:17-alpine
@@ -24,6 +27,37 @@ services:
       interval: 5s
       timeout: 5s
       retries: 15
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: icttrader-app
+    container_name: icttrader-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Optional .env (OANDA token + live-feed config). required:false → the app still runs without it
+    # (Replay/backtest mode). The `environment:` block below OVERRIDES any connstring/URL from .env, since
+    # inside the compose network the DB host is `postgres` (not localhost) and the app binds all interfaces.
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # Inside the compose network Postgres is reachable as `postgres` on its container port 5432.
+      ConnectionStrings__PaperTrading: "Host=postgres;Port=5432;Database=icttrader;Username=icttrader;Password=icttrader_dev"
+      # Create/update the schema on boot — no manual `dotnet ef database update` step needed in the container.
+      Ict__Database__AutoMigrate: "true"
+      ASPNETCORE_URLS: "http://+:5080"
+      ASPNETCORE_ENVIRONMENT: "Production"
+      # Recorded-history CSVs for the Backtest/Optimizer (mounted read-only below). The live feed doesn't need it.
+      Ict__Backtest__DataDirectory: "/app/data"
+    ports:
+      - "5080:5080"
+    volumes:
+      # Optional: expose the local recorded-history CSVs so the Backtest/Optimizer have datasets (read-only).
+      - ./data:/app/data:ro
+    restart: unless-stopped
 
 volumes:
   icttrader-pgdata:
