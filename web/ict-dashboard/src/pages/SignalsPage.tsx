@@ -12,6 +12,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSignals, useTakeSignal } from '../api/hooks';
 import { SignalsFeed } from '../components/SignalsFeed';
+import { WinnerSignalCard } from '../components/WinnerSignalCard';
 import { SYMBOLS, TIMEFRAMES, STYLES } from '../components/ChartPanel';
 import { errorMessage } from '../format-error';
 import type { FocusTarget } from '../components/AlertsFeed';
@@ -59,6 +60,10 @@ export function SignalsPage(): React.JSX.Element {
 
   return (
     <div className="page page--signals">
+      {/* The HERO card — the single best opportunity (the #1 ranked signal) leads the Signals page too.
+          A row click deep-links to Live with this symbol; Take opens a PAPER trade only (§6.3). */}
+      <WinnerSignalCard onFocus={handleFocus} />
+
       <section className="panel" aria-label="Signal filters">
         <header className="panel__head">
           <span>Filter signals</span>

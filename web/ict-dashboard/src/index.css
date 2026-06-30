@@ -2120,6 +2120,225 @@ input.input {
   flex-shrink: 0;
 }
 
+/* ---- Winner / Top-Signal HERO card (the single best opportunity, leading the Live + Signals pages) ----
+ *
+ * A grade-tinted accent border + glow (--winner-accent set inline from theme.gradeColors), larger type,
+ * tabular numerals on prices, and a prominent Take (paper) action. On a fresh top signal a subtle pulse
+ * reuses the mkt-pulse keyframe (disabled under prefers-reduced-motion). Paper-only — the only action is
+ * Take (paper); there is no execute/order control anywhere (§6.3). */
+
+/* The Live page wrapper: the hero banner stacks above the 3-panel grid (which still fills the rest). */
+.live-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  flex: 1;
+  min-height: 0;
+  padding: var(--gap) var(--gap) 0;
+}
+
+.live-page > .layout {
+  padding: 0 0 var(--gap);
+}
+
+.winner-card {
+  --winner-accent: var(--accent);
+  --winner-accent-bg: color-mix(in srgb, var(--accent) 16%, transparent);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: var(--radius);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--winner-accent) 7%, var(--panel-raised)),
+    var(--panel)
+  );
+  border: 1px solid color-mix(in srgb, var(--winner-accent) 55%, var(--border));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--winner-accent) 22%, transparent),
+    0 8px 28px color-mix(in srgb, var(--winner-accent) 14%, transparent);
+}
+
+/* A fresh top signal animates a brief grade-tinted glow (calmer than the constant market-dot pulse). */
+.winner-card--live {
+  animation: winner-pulse 2.6s ease-in-out 2;
+}
+
+.winner-card--empty {
+  align-items: stretch;
+  border-style: dashed;
+  border-color: var(--border-strong);
+  background: var(--panel);
+  box-shadow: none;
+  animation: none;
+}
+
+.winner-card__hero {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.winner-card__star {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.winner-card__title {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--winner-accent);
+}
+
+.winner-card__rank {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.winner-card__advisory {
+  margin-left: auto;
+}
+
+.winner-card__empty-msg {
+  margin: 2px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* The clickable card body (focus the chart) — reset native button chrome, full width, left aligned. */
+.winner-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.winner-card__body:hover .winner-card__symbol {
+  color: var(--winner-accent);
+}
+
+.winner-card__id {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.winner-card__symbol {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.winner-card__levels {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px 14px;
+  font-size: 14px;
+}
+
+.winner-card__level {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.winner-card__level strong {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.winner-card__level-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-faint);
+}
+
+.winner-card__arrow {
+  color: var(--text-faint);
+  font-size: 14px;
+}
+
+.winner-card__rr {
+  margin-left: auto;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--winner-accent);
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--winner-accent-bg);
+}
+
+.winner-card__reason {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.winner-card__take-error {
+  text-align: left;
+  padding: 0;
+}
+
+/* The hero Take (paper) button is larger + full-width-on-narrow so it reads as THE call to action. */
+.winner-card__action {
+  display: flex;
+}
+
+.winner-card__action .btn--take {
+  padding: 9px 22px;
+  font-size: 13px;
+}
+
+.winner-card__action .chip--auto {
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+@keyframes winner-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--winner-accent) 22%, transparent),
+      0 8px 28px color-mix(in srgb, var(--winner-accent) 14%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--winner-accent) 45%, transparent),
+      0 8px 34px color-mix(in srgb, var(--winner-accent) 28%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .winner-card--live {
+    animation: none;
+  }
+}
+
+@media (max-width: 859px) {
+  .winner-card__symbol {
+    font-size: 19px;
+  }
+  .winner-card__action .btn--take {
+    width: 100%;
+  }
+}
+
 /* The signals filter bar checkbox field aligns its control under the label. */
 .filterbar__field--check {
   justify-content: flex-end;

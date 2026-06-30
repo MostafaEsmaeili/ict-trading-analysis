@@ -19,6 +19,7 @@ import { LiveConfigPanel } from './components/LiveConfigPanel';
 import { MarketStatus } from './components/MarketStatus';
 import { PerformancePanel } from './components/PerformancePanel';
 import { TopSignalsPanel } from './components/TopSignalsPanel';
+import { WinnerSignalCard } from './components/WinnerSignalCard';
 import { useMarketSelection } from './hooks/useMarketSelection';
 import { useOverlayVisibility } from './hooks/useOverlayVisibility';
 import { useDashboardData } from './hooks/useDashboardData';
@@ -54,8 +55,13 @@ export function Dashboard(): React.JSX.Element {
   const marketStatusQ = useMarketStatus();
 
   return (
-    <div className="layout">
-      <AlertsFeed
+    <div className="live-page">
+      {/* The HERO card — the single best opportunity right now (the #1 ranked signal), leading the Live
+          page as a full-width banner so it's the first thing the operator sees. Paper-only Take (§6.3). */}
+      <WinnerSignalCard onFocus={handleFocus} />
+
+      <div className="layout">
+        <AlertsFeed
         alerts={alertsQ.data ?? []}
         isLoading={alertsQ.isLoading}
         isError={alertsQ.isError}
@@ -114,6 +120,7 @@ export function Dashboard(): React.JSX.Element {
           isError={perfQ.isError || equityQ.isError}
           error={perfQ.error ?? equityQ.error}
         />
+        </div>
       </div>
     </div>
   );

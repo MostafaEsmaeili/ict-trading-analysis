@@ -2,7 +2,7 @@
 // deep-links to Live with the signal's symbol. Read-only/advisory: the Take control opens a PAPER trade
 // only — there is no execute/order control (§6.3).
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { render } from '@testing-library/react';
@@ -38,9 +38,18 @@ afterEach(() => {
   __resetMockSignalsForTest();
 });
 
+/**
+ * The SignalsFeed list region (aria-label "Signals feed"). Scoping the row queries here EXCLUDES the
+ * WinnerSignalCard hero (region "Top signal") that also leads the page — the filter/feed assertions are
+ * about the list, so they must not double-count the hero's #1 (which mirrors the top feed row).
+ */
+function feed(): HTMLElement {
+  return screen.getByRole('region', { name: /signals feed/i });
+}
+
 /** A signal ROW is a "Focus chart on <symbol>" button — distinct from the symbol-filter <option>. */
 function signalSymbols(): string[] {
-  return screen
+  return within(feed())
     .queryAllByRole('button', { name: /focus chart on/i })
     .map((b) => b.getAttribute('aria-label')?.replace(/focus chart on /i, '').trim() ?? '');
 }
@@ -100,7 +109,7 @@ describe('SignalsPage', () => {
     renderSignals();
     await waitFor(() => expect(signalSymbols()).toContain('EURUSD'));
 
-    fireEvent.click(screen.getByRole('button', { name: /focus chart on EURUSD/i }));
+    fireEvent.click(within(feed()).getByRole('button', { name: /focus chart on EURUSD/i }));
     expect(await screen.findByTestId('live-probe')).toHaveTextContent('symbol=EURUSD');
   });
 
