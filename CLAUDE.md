@@ -1786,3 +1786,39 @@ to `main`). The product overhaul is shipped and PROVEN live.**
      armed_entries, paper_accounts`** (via `docker exec icttrader-postgres psql`) for a clean takeable demo.
   5. `dotnet test` runs under the DEFAULT sandbox; the Host/curl/Postgres/OANDA all need `dangerouslyDisableSandbox:true`
      (restated — still true). The Vite dev server + the Host both launch as a `run_in_background` task's MAIN command.
+
+**🟢 LIVE OANDA feed — ALL assets × ALL timeframes (operator: "no csv anymore (just for backtest), live data on all
+asset on all timeframe"). RUNNING + PROVEN.** Switched the running Host from CSV Replay to the live OANDA practice feed
+via env overrides only (committed `Provider` stays `Replay` for CI). A `live-feed-config-recipe` workflow mapped the
+exact config (feed options, the 14-asset catalog, granularity allowlist, scan/chart per-TF, guardrail) before booting.
+- **Feed config (env only; token from the Windows User env var `Ict__MarketData__Oanda__Token`):**
+  `Ict__MarketData__Provider=Oanda` · `Oanda__LiveStreaming=true` · **`Oanda__Instruments__0..13`** = the 14 catalog
+  instruments in OANDA underscore form (EUR_USD, GBP_USD, USD_JPY, AUD_USD, USD_CHF, USD_CAD, NZD_USD, EUR_GBP, EUR_JPY,
+  GBP_JPY, NAS100_USD, SPX500_USD, US30_USD, XAU_USD) · **`Oanda__Granularities__0..6`** = **M1,M5,M15,M30,H1,H4,D** (use
+  `D` not `D1` — the allowlist is `M1,M5,M15,M30,H1,H4,D,W`; parser maps D→D1; `W` omitted as poll-waste) ·
+  `Oanda__MaxConcurrentFetchesPerPoll=6` · `Oanda__HistoryCount=1000` · `Oanda__PollSeconds=60` ·
+  **`Ict__MarketData__Persistence__Enabled=true`** (batched candle dual-write → time-range chart) ·
+  **`Ict__Scanning__ActiveStyles__0..3 = Scalp,Intraday,Swing,Position`** (so all four scanned entry-TFs M1/M5/M15/H4 run)
+  · `Ict__PaperTrading__DefaultEntryMode=Manual` · `ConnectionStrings__PaperTrading=…` (REQUIRED — ingestion persists) ·
+  `ASPNETCORE_URLS=http://localhost:5080` · launch the **built Release DLL** with `--contentRoot <repo>/src/IctTrader.Host`.
+- **Proven (06-30):** provider Oanda, all 14 symbols + 4 styles in `/api/config`; OANDA returns live candles (EURUSD M5
+  last = now); the chart matrix shows **today's** candles for every sampled asset across M1/M5/M15/H4 (+ H1/H4/D1); the
+  scanner confirmed setups on LIVE data across assets/styles/TFs incl. **Grade-A NAS100USD Intraday** + **Grade-A GBPJPY
+  Swing**; `/api/signals` ranked live across USDJPY(Scalp M1)/XAUUSD(Scalp M1)/EURUSD(Swing M15)/NAS100(Intraday M5), all
+  **Manual + takeable**; dashboard health **LIVE** (SignalR same-origin), **OANDA** badge on Account & Config. Screenshots
+  `live-oanda-dashboard.png` + `live-oanda-gbpjpy-h4.png`.
+- **Chart now covers ALL live assets/TFs (committed `90e09f1`):** `ChartPanel.tsx` `SYMBOLS` → all 14 catalog instruments
+  (NAS100/SPX500/US30 + Gold labels), `TIMEFRAMES` → M1/M5/M15/M30/H1/H4/D1. Proven by charting GBPJPY on H4 live. FE
+  gates green (tsc + build + 162 vitest; the 3 ChartPanel `react-refresh` lint warnings are pre-existing).
+- **OANDA mechanics learned this run:** (a) the multi-series feed **backfills ALL `instruments × granularities`
+  (14×7=98 series, HistoryCount each) FIRST, then starts the live poll** — so until backfill completes a series shows its
+  backfill-end time (or CSV-fallback for an as-yet-unfilled ring), advancing to "now" once the poll begins. (b) Candle
+  **persistence is a bounded channel (BatchSize 200, DropOldest)** — the heavy backfill burst overflows it, so the DB lags
+  during backfill (the in-memory ring is the live truth); steady-state poll trickle persists fine. (c) Transient OANDA
+  edge failures (`000`/SocketException 10054) are normal (~1 in 5) and handled by the feed's bounded backfill retry +
+  per-series live skip — a healthy series keeps streaming. (d) **98 GETs/poll** at PollSeconds=60 is within practice
+  limits; trim instruments/granularities or raise PollSeconds if 429s appear. **Guardrail: read-only by shape — only
+  `/v3/instruments/{i}/candles` GETs, practice host, no order path (verified by the recipe workflow).**
+- **NOTE — chart selector expansion is committed on PR #185 but NOT yet built into a redeployed `wwwroot` by default;**
+  the running demo serves the rebuilt SPA from `src/IctTrader.Host/wwwroot` (gitignored). After pulling, rebuild the SPA
+  (`VITE_USE_MOCKS=false npm run build` → copy `dist/*`→`wwwroot`) to serve it single-origin.
