@@ -1718,8 +1718,71 @@ test gaps); treats implausibly-good results as BUGS and BLOCKs on look-ahead/gua
   entry (the one real lever for more trades — see `docs/ict-frequency-research-2026.md` §8); (2) push the branch / update PR
   #184 when ready; (3) optionally let the loop resume on the enrichment backlog.
 
+**🌅 "Go balanced" session (operator chose the balanced model + asked for a backtest, a best-pairs guide, and the two
+fixes). Committed on `feature/#183-product-overhaul`, since PUSHED + MERGED (PR #184 → `main`); OANDA reachable this session.**
+- **🐞 CRITICAL FIX — Daily Risk Guard deadlock (committed `4f0e146`, 907 unit green).** The guard halted on the LIFETIME
+  consecutive-loss streak (clears only on a win) → after 3 losses it blocked EVERY entry forever (no entry → no win →
+  permanent halt). A guard-ON backtest exposed it (EURUSD M15 15→5, NAS100 M5 22→8). Fix: `DailyRiskGuard` Rung 1 now
+  ALSO requires the NY DAY to be in the red → a per-day circuit breaker that RESETS each day (fresh day always admits the
+  first entry). Confirmed: guard-ON now matches guard-OFF at low frequency. The daily-loss-cap rung was already day-scoped.
+- **Data fetched (OANDA practice, token from the User env scope via PowerShell):** NZD/USD + USD/CAD at M15 and M5
+  (250k candles each, → `data/`, gitignored). The one-shot fetcher writes to `src/IctTrader.Host/data/` — MOVE the CSVs to
+  the repo `data/` after fetching.
+- **Full-history sweep (pair × M5/M15 × k, fixed guard ON) → the PROFITABLE setups (= `docs/ict-best-setups-guide.md`):**
+  NAS100 M5 6-of-8 (PF 1.78, +$633) · USD/JPY M5 drop-FVG (PF 2.40, +$462) · EUR/USD **M5** strict (PF 1.64, +$188, more
+  active than M15) · EUR/USD M15 strict (PF 1.97, +$14) · NZD/USD M15 7-of-8 (PF 1.88, +$114). **Net-negative → drop:**
+  GBP/USD (flat), AUD/USD, **USD/CAD (override REMOVED `…`)**, gold, SPX500 (sparse). **Aggregate ≈ 0.5 trades/week** — the
+  honest balanced cadence (profitable but selective; faster/looser loses the edge).
+- **Decisions:** (a) DONE — USD/CAD override dropped from `Ict:Instruments` (net-neg full history); kept NAS100/USDJPY/NZDUSD
+  bakes + EUR/USD strict. (b) DONE — NZD/USD + USD/CAD data fetched; USD/CAD still net-neg, NZD/USD M15 confirmed +.
+  Market-on-confirmation: the operator REJECTED it ("not entering fast") after seeing it's the quality-sacrificing extreme;
+  the half-built partial was REVERTED. **CONVENTION:** the OANDA one-shot fetcher writes to the Host-relative `data/`, not
+  `Ict:Backtest:DataDirectory` — move the CSVs. Re-run `scratchpad`/the sweep on refreshed data to retune (samples 10–60 trades).
+
 **CONVENTIONS reaffirmed/added this session:** (a) "default to live" is satisfied by the multi-granularity capability +
 the operator's env-var run, NOT by flipping the committed `Provider` (keeps tokenless CI/dev boots + Host-booting tests
 green). (b) Backend slices serialize their `dotnet build` (DLL-lock); parallelize only backend↔frontend (different
 toolchains). (c) The manual "Take" (slice 6) MUST reuse a single extracted `SetupTradeOpener` (the one paper-only path)
 and add no executor symbol. (d) Bake per-pair tuning only on full-history ≥~15-trade samples picked by NET P&L (restated).
+
+**🏁 "Push, merge, run it, show the winner signal" session (operator's `feature/#183-product-overhaul` → PR #184 → MERGED
+to `main`). The product overhaul is shipped and PROVEN live.**
+- **Winner-signal hero card (committed `af77fa4`, frontend gates green — 162 vitest, tsc build + eslint clean).** A
+  prominent full-width **⭐ TOP SIGNAL #1** banner at the top of BOTH the Live page and the Signals page, featuring the #1
+  ranked opportunity (`useSignals().data?.[0]`): symbol + direction + grade chip + score bar + entry/stop/targets + RR +
+  the one-line §2.5 reason + the single paper-only action (the shared `TakeControl` → "Take (paper)", which mirrors the
+  feed's Auto/blocked/taken/pending states). `web/ict-dashboard/src/components/WinnerSignalCard.tsx` (+ test); wired into
+  `Dashboard.tsx` (Live) + `SignalsPage.tsx`; `.winner-card` styles in `index.css`. Paper-only (no execute/order control;
+  Dashboard no-execute test still green).
+- **PR #184 PUSHED + MERGED** (12 commits → `main` via merge commit `b6e0db0`); local `main` fast-forwarded. The whole
+  product overhaul (multi-TF feed, persistence, full-matrix scanning, signals ranking + feed, manual Take, dismissible
+  notifications, Live/Settings UX, the hero) is now on `main`. (Merged with CodeRabbit's advisory review still PENDING per
+  the operator's standing "merge and continue".)
+- **PROVEN LIVE end-to-end on real EUR/USD (screenshots `winner-signal-takeable.png` = the faithful run, +
+  `winner-signal-live.png`).** Booted the Release Host on real Postgres (port 55432, both migrations applied incl. the new
+  `AddCandles`) driving the `data/EURUSD-M15-live.csv` Replay (62k M5… **M15** bars, 2024→2026); the dashboard built
+  `VITE_USE_MOCKS=false` → `wwwroot`, served **single-origin** at `:5080`. Result: the Scanning FSM confirmed a **Grade-A**
+  EURUSD Swing setup (score 91, RR 3.0, sweep→MSS→FVG→OB→OTE→draw + 08:30-macro + clean-displacement confluence) and it
+  rendered as the hero with a **clickable "Take (paper)"** button; health chip **LIVE** (green), account clean ($10k, 0
+  open trades — Manual default opened nothing automatically). **The operator can SEE and TAKE the winner signal.**
+- **⚠️ RUN-ENVIRONMENT LEARNINGS (load-bearing for the next live run — these bit this session):**
+  1. **Run the Host with the project as ContentRoot, or `appsettings.json` + `wwwroot` DON'T load.** `dotnet
+     bin/Release/net10.0/IctTrader.Host.dll` defaults ContentRoot to the CWD; from the repo root it looks for
+     `<repo>/appsettings.json` (absent) → the app runs on POCO defaults (e.g. `DefaultEntryMode` falls back to **Auto**, NOT
+     the committed **Manual**; per-pair bakes don't apply) and `MapFallbackToFile` 404s the SPA. **Fix:** pass
+     `--contentRoot "<repo>/src/IctTrader.Host"` (no `cd` needed) — then appsettings (Manual + bakes) AND single-origin
+     `wwwroot` both resolve. Single-origin ALSO fixes the SignalR "DEGRADED" health chip (the Vite `:5173` ws-proxy
+     negotiate is flaky; same-origin `:5080` connects clean).
+  2. **Full-matrix scanning (WS-C) means the active STYLE's entry-TF must match the fixture's TF.** A replay of **M15**
+     data with the default `[Intraday]` (entry TF = **M5**) scans NOTHING (`StyleTimeframeMap.StylesFor(M15,[Intraday])=∅`)
+     → 0 setups. For an M15 fixture set `Ict__Scanning__ActiveStyles__0=Swing` (Swing→M15). (M5 fixture → Intraday.)
+  3. **A HISTORICAL replay's setups are time-skewed vs the wall clock**, so the recency/expiry windows prune them. For a
+     demo on old data, widen `Ict__Signals__RecencyCutoffMinutes` (else the signals feed is empty) AND
+     `Ict__PaperTrading__Pending__MaxPendingMinutes` + set `Ict__PaperTrading__Pending__ExpireOnKillzoneEnd=false` (else
+     every signal shows `blockReason=Expired` and the Take button is disabled). These are DEMO overrides only — live data
+     is current-dated, so the committed 240-min defaults are correct in production.
+  4. The deterministic `SetupDto.Id` means re-replaying the SAME fixture re-confirms the SAME ids; if a prior run
+     auto-opened trades (Auto), those ids read `isTaken/AlreadyTaken` on the next run — **TRUNCATE `paper_trades,
+     armed_entries, paper_accounts`** (via `docker exec icttrader-postgres psql`) for a clean takeable demo.
+  5. `dotnet test` runs under the DEFAULT sandbox; the Host/curl/Postgres/OANDA all need `dangerouslyDisableSandbox:true`
+     (restated — still true). The Vite dev server + the Host both launch as a `run_in_background` task's MAIN command.
