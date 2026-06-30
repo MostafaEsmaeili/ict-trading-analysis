@@ -89,6 +89,9 @@ export function Dashboard(): React.JSX.Element {
         onToggleOverlay={toggleOverlay}
       />
 
+      {/* Right rail — ordered by what the operator acts on FIRST: market status, then the actionable
+          Top Signals + Active Paper Trades (kept high so they're visible without scrolling), then
+          Performance, then the bulky Account & Config reference card last. */}
       <div className="layout__trades">
         <MarketStatus
           status={marketStatusQ.data}
@@ -96,13 +99,6 @@ export function Dashboard(): React.JSX.Element {
           isLoading={marketStatusQ.isLoading}
           isError={marketStatusQ.isError}
           error={marketStatusQ.error}
-        />
-        <LiveConfigPanel
-          config={configQ.data}
-          account={accountQ.data}
-          isLoading={configQ.isLoading || accountQ.isLoading}
-          isError={configQ.isError || accountQ.isError}
-          error={configQ.error ?? accountQ.error}
         />
         <TopSignalsPanel onFocus={handleFocus} />
         <ActivePaperTrades
@@ -119,6 +115,13 @@ export function Dashboard(): React.JSX.Element {
           // Performance shows an error if EITHER the summary or the equity-curve query fails.
           isError={perfQ.isError || equityQ.isError}
           error={perfQ.error ?? equityQ.error}
+        />
+        <LiveConfigPanel
+          config={configQ.data}
+          account={accountQ.data}
+          isLoading={configQ.isLoading || accountQ.isLoading}
+          isError={configQ.isError || accountQ.isError}
+          error={configQ.error ?? accountQ.error}
         />
         </div>
       </div>

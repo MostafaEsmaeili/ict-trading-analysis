@@ -147,7 +147,10 @@ body {
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr) minmax(320px, 380px);
+  /* Narrow the left Alerts column and give the right rail (Signals + Trades) noticeably more room so its
+     cards are readable; the chart keeps the flexible middle. The rail is capped at 520px so it stays
+     comfortable on ultra-wide screens without starving the chart. */
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr) minmax(360px, 520px);
   grid-template-rows: minmax(0, 1fr);
   grid-template-areas: 'alerts chart trades';
   gap: var(--gap);
@@ -170,7 +173,13 @@ body {
   flex-direction: column;
   gap: var(--gap);
   min-height: 0;
-  overflow: auto;
+  overflow-y: auto;
+}
+
+/* Each rail card keeps its natural height — the RAIL scrolls when the stack is taller than the row,
+   instead of flex-shrinking the cards into overlapping slivers (which hid Top Signals / Active Trades). */
+.layout__trades > * {
+  flex-shrink: 0;
 }
 
 /* MEDIUM (860–1199px): chart + alerts share the top row, trades reflow to a full-width row beneath.
