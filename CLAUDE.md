@@ -1822,3 +1822,47 @@ exact config (feed options, the 14-asset catalog, granularity allowlist, scan/ch
 - **NOTE — chart selector expansion is committed on PR #185 but NOT yet built into a redeployed `wwwroot` by default;**
   the running demo serves the rebuilt SPA from `src/IctTrader.Host/wwwroot` (gitignored). After pulling, rebuild the SPA
   (`VITE_USE_MOCKS=false npm run build` → copy `dist/*`→`wwwroot`) to serve it single-origin.
+
+**🩹 Live-UI fixes — rail/chart/entry-marker (operator feedback; PR #186 → merged `fc3a4a8`).** Render-verified against
+the booted Host on live OANDA. 162 vitest + tsc + build green (3 pre-existing ChartPanel `react-refresh` lint warnings):
+- **Right rail was cramped / left Alerts too wide.** `index.css`: narrowed Alerts (`minmax(240,300)`), widened the rail
+  (`minmax(360,520)`); added **`.layout__trades > * { flex-shrink: 0 }`** so the rail SCROLLS instead of squishing cards
+  into overlapping slivers (that was why Top Signals/Active Trades were invisible). `Dashboard.tsx`: reordered the rail to
+  **Market Status → Top Signals → Active Paper Trades → Performance → Account&Config** (actionable first; the bulky
+  LiveConfig card last).
+- **Chart clutter.** `api/client.ts` `fetchOverlays` drew EVERY recent setup's entry/stop/T1/T2/draw lines on a TF (a
+  15-line ladder). Now draws only the **most-recent setup** per timeframe (`MAX_CHART_SETUPS = 1`, sorted by
+  `detectedAtUtc`). `client.test.ts` updated to assert most-recent-only.
+- **Entry arrow misplaced.** It used a bar-relative marker (`aboveBar`/`belowBar`) → floated at the candle wick, ~pips
+  off the entry. Now anchored to the entry PRICE via lightweight-charts v5 **`position:'atPriceMiddle', price:o.entry`**
+  (`IctChart.tsx`); `IctChart.test.tsx` asserts `atPriceMiddle` + `price === entry`. **CONVENTION: price-level chart
+  markers use `atPriceMiddle`+`price` (v5 SeriesMarkerPrice), never the bar-relative position.**
+
+**🤖 Auto-mode runtime switch + loss investigation (operator-driven; runtime only, NOT committed).** The operator asked
+to run all signals Auto, then to investigate the losses:
+- **Auto mode** = `Ict__PaperTrading__DefaultEntryMode=Auto` env override on the running Host (committed default stays
+  Manual). Every confirmed setup auto-opens a paper trade (no Take); self-limits at the ~5% open-risk cap; Daily Risk
+  Guard halts after a bad day if enabled. Notifications: in Auto the "New signal" + "Trade opened" toasts fire together
+  (the redundancy the operator flagged — offered to suppress the entry toast in Auto, not yet done).
+- **Loss investigation (7 trades, all StopHit, net −$153.80, 29% win):** NOT a bug — risk control held (every loser
+  exactly −1R). Root causes: (a) **5 of 7 were M1 Scalp** (noisiest TF); (b) **2 same-bar straddles** (limit filled THEN
+  stopped within the same candle → conservative −1R) = −$92, 60% of the loss; (c) **0/7 hit target** — the 2 wins were
+  trailed-stop partials (+0.7–0.9R) → negative expectancy; (d) costs $23 (15%); (e) **7-trade sample = variance, not
+  signal**. NONE were the validated profitable configs.
+- **Remedy (relaunched, clean DB):** Auto with **`ActiveStyles=[Intraday,Swing]` only** (Scalp/Position dropped) — scans
+  M5+M15 with the baked per-pair tunings, drops the M1 noise. All 14 instruments × 7 granularities still STREAM (chart
+  shows every TF); only SCANNING is restricted. Verified: alerts/setups are Intraday+Swing only, no Scalp.
+- **INSIGHT — the backfill is a mini-backtest on EVERY launch:** `HistoryCount=1000` re-feeds the last ~83h and setup ids
+  are deterministic, so Auto **re-confirms + re-trades the same recent-history setups each relaunch** (the −$77 NAS100 M5
+  same-bar straddle kept reappearing). Genuinely-new trades come from the live poll going forward. For a clean
+  forward-only run, lower `HistoryCount`. **Process-name note:** the Host runs as `dotnet.exe` (not `IctTrader.Host.exe`)
+  when launched via `dotnet <dll>` — `Get-Process IctTrader.Host` shows 0 even while it serves; check `curl :5080/api/config` instead.
+
+**🔑 `.env`-based OANDA credential + live-run helper (PR #187 → merged `380f53f`).** The OANDA token moved from an ad-hoc
+Windows User env var into a standard **gitignored `.env`** (token + the full live-feed config). Committed: **`.env.example`**
+(template, placeholder token), a **`!.env.example`** negation in `.gitignore` (so the template commits while `.env`/`.env.*`
+stay ignored — verified via `git check-ignore .env`), and **`run-live.sh`** (sources `.env`, fails fast on missing/placeholder
+token or unbuilt DLL, boots the Host single-origin). **CONVENTIONS:** (a) the OANDA credential lives in `.env` (never
+committed); the live run is `bash run-live.sh` (no more long export block). (b) Values with `;`/spaces (the Postgres
+connstring) MUST be QUOTED in `.env` or `source` splits them. (c) `.env` defaults to the **Intraday+Swing / Auto** config
+settled on above; edit it to change the live config (no rebuild). The committed `appsettings` default stays Manual + all-styles + Replay for CI.
