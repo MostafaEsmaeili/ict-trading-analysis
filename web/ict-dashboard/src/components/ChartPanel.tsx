@@ -16,12 +16,24 @@ import { IctChart } from '../chart/IctChart';
 import { errorMessage } from '../format-error';
 import { KillzoneBadge, StyleChip } from './Badges';
 
-export const SYMBOLS = ['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD', 'NAS100USD'] as const;
-export const TIMEFRAMES = ['M1', 'M5', 'M15', 'H1'] as const;
+// Every instrument the live OANDA feed streams + the InstrumentCatalog can size (10 FX majors + 3 index
+// CFDs + gold). The feed delivers all of these on all timeframes; the chart can render any (symbol, tf).
+export const SYMBOLS = [
+  'EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCHF', 'USDCAD', 'NZDUSD', 'EURGBP', 'EURJPY', 'GBPJPY',
+  'NAS100USD', 'SPX500USD', 'US30USD', 'XAUUSD',
+] as const;
+// All feed-streamed granularities the chart can show. M1/M5/M15/H4 are the scanned style entry-TFs;
+// M30/H1/D1 are charted-but-not-scanned (no style maps to them) — they enrich the chart only.
+export const TIMEFRAMES = ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1'] as const;
 export const STYLES: readonly TradeStyle[] = ['Scalp', 'Intraday', 'Swing', 'Position'];
 
-/** Friendly display labels for symbols whose wire ticker is not the natural name (e.g. the NAS100 CFD). */
-const SYMBOL_LABELS: Readonly<Record<string, string>> = { NAS100USD: 'NAS100' };
+/** Friendly display labels for symbols whose wire ticker is not the natural name (e.g. the index CFDs). */
+const SYMBOL_LABELS: Readonly<Record<string, string>> = {
+  NAS100USD: 'NAS100',
+  SPX500USD: 'SPX500',
+  US30USD: 'US30',
+  XAUUSD: 'Gold',
+};
 
 /** The label to show in the symbol selector — the friendly name when one exists, else the raw ticker. Kept
  *  non-exported so this component file does not add a Fast-Refresh non-component export (lint stays clean). */
