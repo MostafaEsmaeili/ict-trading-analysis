@@ -1896,8 +1896,8 @@ WHOLE app (Postgres + the .NET Host serving the SPA single-origin at **http://lo
   (b) the Docker app OWNS :5080 — stop any non-docker Host first; (c) Docker Desktop's Linux engine can drop mid-build on this
   box (the `dockerDesktopLinuxEngine` pipe vanishes) — wait for it to recover + re-run `docker compose up -d --build`.
 
-**📈 Live chart concept overlays — the "engine view" (issue #191, branch `feature/#191-live-chart-concept-overlays`,
-UNCOMMITTED). RENDER-VERIFIED on live OANDA.** The operator noticed the chart's concept toggles (Killzone/Liquidity/
+**📈 Live chart concept overlays — the "engine view" (issue #191, PR #192 → MERGED `b3f6f37`). RENDER-VERIFIED on live
+OANDA.** The operator noticed the chart's concept toggles (Killzone/Liquidity/
 Sweep/MSS/FVG/OrderBlock/OTE/…) could enable/disable but drew NOTHING. Root cause: the renderer supported all 9 kinds,
 but the live `setupToOverlays` could only emit `tradeLevels`+`drawOnLiquidity` — the concept geometry (FVG boxes, order
 blocks, liquidity pools, sweep, MSS swing, OTE band) was never on the wire (the confirmed `Setup` keeps only prices; the
@@ -1937,5 +1937,6 @@ mapper → store → GET /api/chart → chart`, no order/broker/execute member, 
   lightweight-charts "Object is disposed" console log on live re-render/teardown (chart renders fine — a future guard
   could skip the overlay effect when the chart is disposed); the Auto-mode risk-ladder can drop NAS100 sizing below its
   min-lot-1 (`DomainException` caught by the ingestor's 50-failure breaker — unrelated to this change).
-- **NEXT (when asked):** optional `pr-reviewer` over the branch; commit/push/PR per `git-workflow` (Closes #191);
-  optionally a lightweight killzone-band primitive (the one legend toggle still a no-op).
+- **NEXT (when asked):** optionally a lightweight killzone-band primitive (the one legend toggle still a no-op); the
+  geometry snapshot runs every candle per scanned cell — a future dirty-check could skip unchanged snapshots if backtest
+  throughput matters (live cadence is fine).
