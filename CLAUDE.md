@@ -1866,3 +1866,32 @@ token or unbuilt DLL, boots the Host single-origin). **CONVENTIONS:** (a) the OA
 committed); the live run is `bash run-live.sh` (no more long export block). (b) Values with `;`/spaces (the Postgres
 connstring) MUST be QUOTED in `.env` or `source` splits them. (c) `.env` defaults to the **Intraday+Swing / Auto** config
 settled on above; edit it to change the live config (no rebuild). The committed `appsettings` default stays Manual + all-styles + Replay for CI.
+
+**🐳 Dockerized — one-command stack (PR #189 → merged `ee20f76`).** `docker compose up -d --build` now builds + runs the
+WHOLE app (Postgres + the .NET Host serving the SPA single-origin at **http://localhost:5080**) with no manual steps.
+- **`Dockerfile`** (multi-stage): (1) **`node:24-bookworm-slim`** builds the React SPA in live mode (`VITE_USE_MOCKS=false
+  npm run build`); (2) **`mcr.microsoft.com/dotnet/sdk:10.0`** `dotnet publish`es the Host (+ all module projects); (3)
+  **`aspnet:10.0`** runtime = `/publish` + the SPA in `wwwroot`, `ENTRYPOINT dotnet IctTrader.Host.dll` on :5080 (ContentRoot
+  defaults to the `/app` WORKDIR, so appsettings.json + wwwroot resolve — no `--contentRoot` needed in-container).
+  **BUILD GOTCHA (solved):** the committed `package-lock.json` was generated on Windows and OMITS the Linux platform
+  optional deps (`@emnapi/*`, the linux rollup binary), so **`npm ci` fails in a Linux container ("Missing … from lock
+  file", EUSAGE) regardless of npm version** — the web stage uses **`npm install`** (resolves the right platform deps
+  cross-platform) on the glibc `slim` image (not `alpine`/musl, which needs the `-musl` native variants).
+- **`docker-compose.yml`** gained an **`app`** service: `build: .`, `depends_on: postgres (service_healthy)`,
+  **`env_file: [{path: .env, required:false}]`** (reads the OANDA token + live config when `.env` is present; boots on
+  Replay defaults otherwise), an `environment:` block that OVERRIDES the in-network connstring (**`Host=postgres;Port=5432`**,
+  NOT localhost:55432), `Ict__Database__AutoMigrate=true`, `ASPNETCORE_URLS=http://+:5080`, and `Ict__Backtest__DataDirectory=
+  /app/data` with `./data:/app/data:ro` mounted for the Backtest/Optimizer. Postgres keeps host port **55432** + the
+  `icttrader-pgdata` volume. (`environment:` wins over `env_file:`, so the .env's localhost connstring/URL are safely overridden.)
+- **NEW — guarded startup auto-migrate (`Program.cs`):** `if (Ict:Database:AutoMigrate)` migrates BOTH write-model contexts
+  (`PaperTradingDbContext` + `MarketDataDbContext`, same DB) on boot via `.Database.Migrate()`. **Default OFF** (appsettings
+  `Ict:Database:AutoMigrate=false`) so CI/tests/local-dev keep applying migrations explicitly; compose turns it ON so a fresh
+  Postgres self-schemas — no `dotnet ef database update` step in the container. Both contexts share one `__EFMigrationsHistory`
+  (the manual two-context flow already proved this coexists).
+- **`.dockerignore`** keeps the 534M `data/` CSVs + `node_modules`/`bin`/`obj`/`.git`/`.env`/screenshots out of the build context.
+- **VERIFIED live:** image builds clean; Postgres healthy; the app auto-migrated a fresh DB (`paper_accounts`/`paper_trades`/
+  `armed_entries`/`candles` + `__EFMigrationsHistory` created); `/api/config` → provider=Oanda + the `.env` Intraday+Swing/14-symbol
+  config; SPA serves 200 at :5080. Build 0 warnings · 907 unit tests green. Read-only/paper-only — no order path. **CONVENTIONS:**
+  (a) run the whole app with `docker compose up -d --build` (the Host non-docker run via `bash run-live.sh` still works);
+  (b) the Docker app OWNS :5080 — stop any non-docker Host first; (c) Docker Desktop's Linux engine can drop mid-build on this
+  box (the `dockerDesktopLinuxEngine` pipe vanishes) — wait for it to recover + re-run `docker compose up -d --build`.
