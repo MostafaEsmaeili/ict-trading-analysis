@@ -157,13 +157,16 @@ export const OVERLAY_LABELS: Record<OverlayKind, string> = {
 };
 
 export function defaultOverlayVisibility(): OverlayVisibility {
+  // The live "engine view" can surface many concepts at once (capped per type by the host). To keep the chart
+  // readable by default, the LINE-HEAVY layers — every resting liquidity pool + every order block — start OFF;
+  // the operator toggles them on. The setup story (sweep → MSS → FVG → OTE → entry/stop/targets → draw) stays ON.
   return {
     killzone: true,
-    liquidity: true,
+    liquidity: false,
     sweep: true,
     mss: true,
     fvg: true,
-    orderBlock: true,
+    orderBlock: false,
     ote: true,
     tradeLevels: true,
     drawOnLiquidity: true,

@@ -25,6 +25,7 @@ public sealed class CandleIngestedHandler(
     IMessageBus bus,
     IOptions<MarketContextOptions> scanningOptions,
     StyleTimeframeMap styleTimeframeMap,
+    GeometryOverlayStore geometryStore,
     ILogger<CandleIngestedHandler>? logger = null)
     : IEventHandler<CandleIngested>
 {
@@ -34,6 +35,8 @@ public sealed class CandleIngestedHandler(
         (scanningOptions ?? throw new ArgumentNullException(nameof(scanningOptions))).Value;
     private readonly StyleTimeframeMap _styleTimeframeMap =
         styleTimeframeMap ?? throw new ArgumentNullException(nameof(styleTimeframeMap));
+    private readonly GeometryOverlayStore _geometryStore =
+        geometryStore ?? throw new ArgumentNullException(nameof(geometryStore));
     private readonly ILogger<CandleIngestedHandler> _logger = logger ?? NullLogger<CandleIngestedHandler>.Instance;
 
     public async Task HandleAsync(CandleIngested @event, CancellationToken cancellationToken = default)
@@ -48,6 +51,13 @@ public sealed class CandleIngestedHandler(
         {
             var scanner = _registry.GetOrCreate(candle.Symbol, candle.Timeframe, style);
             var setup = scanner.OnCandle(candle);
+
+            // Refresh the live "engine view" geometry for this (symbol, timeframe) EVERY candle — not just on a
+            // confirmation — so the chart's concept toggles show what the scanner is tracking right now (open FVGs /
+            // OBs / liquidity, the latest sweep / MSS, the OTE band), even between the rare confirmed setups (plan
+            // §9.1). Captured on the scan thread (sequential per dispatch) as an immutable snapshot; a read-only sink.
+            _geometryStore.Set(candle.Symbol.Value, candle.Timeframe, scanner.SnapshotGeometry());
+
             if (setup is null)
             {
                 continue;

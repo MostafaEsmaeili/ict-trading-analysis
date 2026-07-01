@@ -41,6 +41,9 @@ public static class ScanningModuleRegistration
         services.AddSingleton<ISymbolScannerFactory, SymbolScannerFactory>();
         services.AddSingleton<ISymbolScannerRegistry, SymbolScannerRegistry>();
         services.AddSingleton<RecentSetupStore>();
+        // The live "engine view" geometry read-model (plan §9.1): the CandleIngestedHandler writes the latest snapshot
+        // per (symbol, timeframe); GetGeometryOverlaysQueryHandler (auto-discovered by AddMessaging) reads it.
+        services.AddSingleton<GeometryOverlayStore>();
         // The "best opportunities" signals feed (plan §9): the bounded cross-matrix store, the pure-domain ranker, and
         // the read-side ranking service — all SINGLETONS so the feed survives across bus dispatches. They consume the
         // validated Ict:Signals options the Host binds via AddIctOptions; a standalone module/test that did not bind

@@ -63,7 +63,7 @@ public sealed class CandleIngestedHandlerRoutingTests
     }
 
     private static CandleIngestedHandler NewHandler(RecordingRegistry registry, MarketContextOptions options) =>
-        new(registry, new NoOpBus(), Options.Create(options), Map);
+        new(registry, new NoOpBus(), Options.Create(options), Map, new GeometryOverlayStore());
 
     private static CandleDto Candle(string symbol, Timeframe timeframe) => new(
         symbol, timeframe.ToString(), new DateTimeOffset(2024, 7, 1, 6, 30, 0, TimeSpan.Zero),

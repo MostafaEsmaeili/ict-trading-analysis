@@ -34,6 +34,7 @@ import type {
 } from '../types/api';
 import type { ChartOverlay } from '../types/overlays';
 import { setupToOverlays } from '../chart/setupToOverlays';
+import { geometryToOverlays } from '../chart/geometryToOverlays';
 import {
   MOCK_ACCOUNT,
   MOCK_ACTIVE_TRADES,
@@ -344,17 +345,22 @@ export async function fetchChart(
   style: string,
 ): Promise<ChartResponse> {
   if (USE_MOCKS) {
-    return { symbol, timeframe, style, candles: MOCK_CANDLES, overlays: [] };
+    return { symbol, timeframe, style, candles: MOCK_CANDLES, overlays: [], geometryOverlays: [] };
   }
   const params = new URLSearchParams({ tf: timeframe, style });
   return getJson<ChartResponse>(`/api/chart/${symbol}?${params}`);
 }
 
 // Overlay geometry. There is NO dedicated overlay endpoint in contracts-v1 — overlays ride the
-// ChartResponse the host already returns (and SignalR pushes). So the LIVE path fetches the same
-// /api/chart response and maps its confirmed setups via setupToOverlays, filtered to the requested
-// timeframe (a setup confirmed on another TF must not pollute this chart). Mock mode serves the rich
-// §9.1 fixture so every overlay primitive is exercised in the scaffold.
+// ChartResponse the host already returns (and SignalR pushes). The LIVE path fetches that /api/chart
+// response and draws TWO layers:
+//   1. The live "engine view" — the concepts the scanner is tracking RIGHT NOW for this (symbol, timeframe)
+//      (open FVGs / OBs / liquidity, the latest sweep / MSS, the OTE band) — from `geometryOverlays`, so the
+//      chart's concept toggles have data even between the rare confirmed setups (§9.1).
+//   2. The most-recent confirmed setup's trade levels (entry/stop/T1/T2/draw) — from `overlays` via
+//      setupToOverlays, filtered to the requested timeframe. Only the newest setup is drawn (stacking every
+//      recent setup's 5-6 lines crowded the price axis into an unreadable ladder).
+// Mock mode serves the rich §9.1 fixture so every overlay primitive is exercised in the scaffold.
 export async function fetchOverlays(
   symbol: string,
   timeframe: string,
@@ -364,14 +370,18 @@ export async function fetchOverlays(
     return MOCK_OVERLAYS;
   }
   const chart = await fetchChart(symbol, timeframe, style);
-  // Draw ONLY the most-recent setup's levels for the selected timeframe. Stacking every recent setup's
-  // entry/stop/T1/T2/draw lines (5-6 per setup) crowded the price axis into an unreadable ladder — one
-  // clean structure at a time is what the operator reads. MAX_CHART_SETUPS keeps this tunable.
+
+  // Layer 1: the live engine view (already capped per concept by the host).
+  const geometry = geometryToOverlays(chart.geometryOverlays ?? []);
+
+  // Layer 2: the most-recent same-timeframe setup's trade levels + draw target.
   const MAX_CHART_SETUPS = 1;
-  return chart.overlays
+  const levels = chart.overlays
     .filter((s) => s.triggerTimeframe === timeframe)
     .slice()
     .sort((a, b) => Date.parse(b.detectedAtUtc) - Date.parse(a.detectedAtUtc))
     .slice(0, MAX_CHART_SETUPS)
     .flatMap(setupToOverlays);
+
+  return [...geometry, ...levels];
 }
