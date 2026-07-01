@@ -7,6 +7,7 @@ using IctTrader.Domain.Sessions;
 using IctTrader.Domain.Setups;
 using IctTrader.Domain.Styles;
 using IctTrader.Domain.ValueObjects;
+using IctTrader.Scanning.Contracts;
 
 namespace IctTrader.Scanning.Application.Scanning;
 
@@ -30,6 +31,13 @@ public sealed class SymbolScanner
     private readonly TradeStyle _style;
     private readonly Timeframe _timeframe;
     private readonly IEconomicCalendarStore? _calendarStore;
+
+    // The resolved OB/OTE scalars the live "engine view" geometry snapshot needs — captured once so the drawn OB mean
+    // line + OTE band use the SAME per-instrument config the detectors ran with (they can't drift from the entry logic).
+    private readonly decimal _orderBlockMeanPercent;
+    private readonly decimal _oteLowerFib;
+    private readonly decimal _oteUpperFib;
+    private readonly decimal _oteSweetSpotFib;
 
     // The store revision last loaded into this scanner's MarketContext. The store starts at revision 0 and a load
     // bumps it to >= 1, so this initial 0 forces the first real load (and only loads again on a later refresh).
@@ -63,6 +71,11 @@ public sealed class SymbolScanner
         // are applied onto the shared options below (the FX `None` bundle is a field-equal no-op).
         var profile = instruments.Resolve(symbol);
         var resolvedOptions = options.WithInstrumentOverrides(profile.Overrides);
+
+        _orderBlockMeanPercent = resolvedOptions.OrderBlock.MeanThresholdPercent;
+        _oteLowerFib = resolvedOptions.Ote.LowerFib;
+        _oteUpperFib = resolvedOptions.Ote.EffectiveUpperFib;
+        _oteSweetSpotFib = resolvedOptions.Ote.SweetSpotFib;
 
         var nyClock = new NyClock(timeProvider);
         var context = new MarketContext(
@@ -146,6 +159,16 @@ public sealed class SymbolScanner
         var confirmation = _session.OnCandle(candle);
         return confirmation is null ? null : _factory.Create(confirmation, _style);
     }
+
+    /// <summary>
+    /// An immutable snapshot of the concepts this cell's <see cref="MarketContext"/> is currently tracking — the live
+    /// "engine view" the ICT Pattern Chart draws under its concept toggles (plan §9.1): open FVGs / order blocks /
+    /// liquidity pools, the latest sweep / MSS, and the OTE band of the latest displacement leg. PURE read of working
+    /// memory; routes nowhere near an order path (§6.3). The handler captures this on the scan thread after each candle.
+    /// </summary>
+    public IReadOnlyList<GeometryOverlayDto> SnapshotGeometry()
+        => GeometryOverlayMapper.Snapshot(
+            _session.Context, _orderBlockMeanPercent, _oteLowerFib, _oteUpperFib, _oteSweetSpotFib);
 
     /// <summary>
     /// Loads the host's economic-calendar events into this scanner's <see cref="MarketContext"/> the first time

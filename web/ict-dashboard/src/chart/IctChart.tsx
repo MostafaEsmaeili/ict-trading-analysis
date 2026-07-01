@@ -297,22 +297,30 @@ export function IctChart({
     for (const o of visibleOverlays) {
       switch (o.kind) {
         case 'sweep':
-          markers.push({
-            time: toUtcTimestamp(o.atUtc) as UTCTimestamp,
-            position: o.direction === 'Bullish' ? 'belowBar' : 'aboveBar',
-            color: palette.pending,
-            shape: o.direction === 'Bullish' ? 'arrowUp' : 'arrowDown',
-            text: 'sweep',
-          });
+          // Markers must anchor to a bar in the loaded window — a stale live snapshot's sweep time can fall
+          // outside it, so guard (a price-line concept would draw regardless, but a sweep is a point marker only).
+          if (inWindow(o.atUtc)) {
+            markers.push({
+              time: toUtcTimestamp(o.atUtc) as UTCTimestamp,
+              position: o.direction === 'Bullish' ? 'belowBar' : 'aboveBar',
+              color: palette.pending,
+              shape: o.direction === 'Bullish' ? 'arrowUp' : 'arrowDown',
+              text: 'sweep',
+            });
+          }
           break;
         case 'mss':
-          markers.push({
-            time: toUtcTimestamp(o.atUtc) as UTCTimestamp,
-            position: o.direction === 'Bullish' ? 'belowBar' : 'aboveBar',
-            color: palette.accent,
-            shape: o.direction === 'Bullish' ? 'arrowUp' : 'arrowDown',
-            text: 'MSS',
-          });
+          // The MSS swing LINE always draws (a horizontal level is time-independent); the arrow MARKER only when
+          // its time is inside the loaded window (a stale live snapshot's MSS time may sit before the first bar).
+          if (inWindow(o.atUtc)) {
+            markers.push({
+              time: toUtcTimestamp(o.atUtc) as UTCTimestamp,
+              position: o.direction === 'Bullish' ? 'belowBar' : 'aboveBar',
+              color: palette.accent,
+              shape: o.direction === 'Bullish' ? 'arrowUp' : 'arrowDown',
+              text: 'MSS',
+            });
+          }
           line(o.brokenSwingPrice, palette.accent, 'MSS swing', LineStyle.Dashed);
           break;
         case 'liquidity':

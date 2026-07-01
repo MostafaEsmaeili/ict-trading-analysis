@@ -278,7 +278,12 @@ api.MapGet("/chart/{symbol}", async (
 
         var overlays = await bus.QueryAsync(
             new GetRecentSetupsQuery(symbol, ChartDefaults.MaxOverlays));
-        return TypedResults.Ok(new ChartResponse(symbol, timeframe, style ?? ChartDefaults.Style, candles, overlays));
+        // The live "engine view" geometry for this (symbol, timeframe) — the concepts the scanner is tracking right
+        // now, so the chart's concept toggles have data even between the rare confirmed setups (plan §9.1). Read-only.
+        var geometryOverlays = await bus.QueryAsync(
+            new GetGeometryOverlaysQuery(symbol, timeframe, ChartDefaults.MaxGeometryOverlays));
+        return TypedResults.Ok(new ChartResponse(
+            symbol, timeframe, style ?? ChartDefaults.Style, candles, overlays, geometryOverlays));
     })
     .WithName("GetChart");
 

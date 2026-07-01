@@ -49,6 +49,48 @@ public sealed record GetScanStatusQuery : IQuery<IReadOnlyList<ScanStatusDto>>;
 /// </summary>
 public sealed record GetRecentSetupsQuery(string Symbol, int Max) : IQuery<IReadOnlyList<SetupDto>>;
 
+// ---- Live "engine view" chart geometry (plan §9.1) — the concepts the scanner is tracking RIGHT NOW ----
+
+/// <summary>
+/// One live ICT-concept geometry overlay for the chart's "engine view" (plan §9.1): a snapshot of what the scanner's
+/// <c>MarketContext</c> is currently tracking on a (symbol, timeframe), so the operator can SEE which concepts are
+/// active/detected even between confirmed setups. Purely a read projection of live working memory — ADVISORY, it
+/// routes nowhere near an order path (plan §6.3).
+///
+/// <para>A flat, kind-discriminated record: <see cref="Kind"/> selects which fields apply (the rest stay null):
+/// <list type="bullet">
+/// <item><c>"fvg"</c> / <c>"orderBlock"</c> / <c>"ote"</c> — a price BOX: <see cref="Top"/> + <see cref="Bottom"/>
+/// (+ <see cref="Mid"/> = the OB 50% mean threshold, or the OTE 70.5% sweet spot). <see cref="State"/> carries the
+/// FVG/OB lifecycle ("Open"/"Mitigated"/…).</item>
+/// <item><c>"sweep"</c> / <c>"mss"</c> — a point-in-time MARKER at <see cref="AtUtc"/> and level <see cref="Price"/>
+/// (the swept level / the broken swing).</item>
+/// <item><c>"liquidity"</c> — a resting pool line at <see cref="Price"/> with <see cref="Side"/> ("BuySide"/"SellSide"),
+/// a <see cref="Swept"/> flag, and <see cref="Strength"/> (the equal-touch cluster size, for the label).</item>
+/// </list>
+/// <see cref="Direction"/> is the wire enum name ("Bullish"/"Bearish"), or empty where a concept has none. Prices are
+/// decimals at the instrument's own precision; <see cref="AtUtc"/> is UTC.</para>
+/// </summary>
+public sealed record GeometryOverlayDto(
+    string Kind,
+    string Direction,
+    DateTimeOffset AtUtc,
+    decimal? Price = null,
+    decimal? Top = null,
+    decimal? Bottom = null,
+    decimal? Mid = null,
+    string? State = null,
+    string? Side = null,
+    bool? Swept = null,
+    int? Strength = null);
+
+/// <summary>
+/// The live geometry the scanner is currently tracking for a (<paramref name="Symbol"/>, <paramref name="Timeframe"/>)
+/// — the "engine view" the ICT Pattern Chart draws under its concept toggles, capped at <paramref name="Max"/> per
+/// concept. Additive bus query behind the frozen REST wire (<c>GET /api/chart/{symbol}</c>); read-only/advisory.
+/// </summary>
+public sealed record GetGeometryOverlaysQuery(string Symbol, string Timeframe, int Max)
+    : IQuery<IReadOnlyList<GeometryOverlayDto>>;
+
 // ---- Signals ranking + feed (the "best opportunities" feed) — ADDITIVE, advisory, read-only (plan §6.3) ----
 
 /// <summary>

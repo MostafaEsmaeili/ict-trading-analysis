@@ -133,6 +133,8 @@ public class ScanLoopTests
         // SetupConfirmedChartProjectionHandler (it subscribes to the SetupConfirmed this loop publishes), so the
         // bus fans the confirmed setup out to it too — it needs the store the production AddScanningModule registers.
         services.AddSingleton<RecentSetupStore>();
+        // The live "engine view" geometry read-model the CandleIngestedHandler writes on every candle it scans.
+        services.AddSingleton<GeometryOverlayStore>();
 
         // The signals feed read-model: the same assembly also carries the SetupConfirmedSignalFeedHandler (another
         // SetupConfirmed subscriber the bus fans out to), so the feed services it depends on must resolve too.

@@ -1895,3 +1895,47 @@ WHOLE app (Postgres + the .NET Host serving the SPA single-origin at **http://lo
   (a) run the whole app with `docker compose up -d --build` (the Host non-docker run via `bash run-live.sh` still works);
   (b) the Docker app OWNS :5080 — stop any non-docker Host first; (c) Docker Desktop's Linux engine can drop mid-build on this
   box (the `dockerDesktopLinuxEngine` pipe vanishes) — wait for it to recover + re-run `docker compose up -d --build`.
+
+**📈 Live chart concept overlays — the "engine view" (issue #191, branch `feature/#191-live-chart-concept-overlays`,
+UNCOMMITTED). RENDER-VERIFIED on live OANDA.** The operator noticed the chart's concept toggles (Killzone/Liquidity/
+Sweep/MSS/FVG/OrderBlock/OTE/…) could enable/disable but drew NOTHING. Root cause: the renderer supported all 9 kinds,
+but the live `setupToOverlays` could only emit `tradeLevels`+`drawOnLiquidity` — the concept geometry (FVG boxes, order
+blocks, liquidity pools, sweep, MSS swing, OTE band) was never on the wire (the confirmed `Setup` keeps only prices; the
+geometry lives transiently in the scanner's `MarketContext` and was discarded). Chosen approach (operator picked): a
+**live engine view** — continuously show what the scanner is tracking NOW for the selected (symbol, timeframe), even
+between the rare confirmed setups. Gated: **defensive-guardrail-auditor 7/7 PASS** (one-way read: `MarketContext →
+mapper → store → GET /api/chart → chart`, no order/broker/execute member, no new egress, feeds still read-only), backend
+**911 unit (+4) + 23 arch, 0 warnings, `dotnet format` clean**, frontend **170 vitest (+8), build + lint clean**.
+
+- **Backend (all ADDITIVE, read-only):** new `GeometryOverlayDto` + `GetGeometryOverlaysQuery` in `Scanning.Contracts`
+  (`SetupDto` stays frozen); a PURE `GeometryOverlayMapper.Snapshot(MarketContext, obMean, oteLow/Up/Sweet)` that
+  projects open FVGs / order blocks / liquidity pools / the latest sweep+MSS / the OTE band **derived off the same
+  `Displacement.Project(fib)` axis the OTE detector uses** (can't drift); a bounded latest-wins `GeometryOverlayStore`
+  keyed by (symbol, timeframe); `SymbolScanner.SnapshotGeometry()`; `CandleIngestedHandler` writes the snapshot EVERY
+  candle it scans (on the scan thread → immutable snapshot → tear-free HTTP read); `GetGeometryOverlaysQueryHandler`;
+  Host `ChartResponse.GeometryOverlays` + the endpoint queries it. **Per-concept caps** (declutter): FVG 6 / OB 4 /
+  liquidity 10 (untapped-first), newest-first — named consts in `GeometryOverlayMapper`.
+- **Frontend:** `geometryToOverlays.ts` maps the wire kinds → the existing `ChartOverlay` union; `fetchOverlays` now
+  draws TWO layers — the live geometry (from `chart.geometryOverlays`) + the most-recent same-TF setup's trade levels
+  (unchanged). `defaultOverlayVisibility()` now defaults the LINE-HEAVY layers (**liquidity + orderBlock**) OFF so the
+  default chart stays readable (the sweep→MSS→FVG→OTE→entry→draw story stays ON); the operator toggles the rest on.
+  Sweep + MSS markers gained the `inWindow` guard (a stale live-snapshot time out of the loaded window no longer errors).
+- **Bundled dependency-security fix:** pinned **`Microsoft.OpenApi` 2.9.0** in the Host csproj to override the vulnerable
+  2.0.0 that `Microsoft.AspNetCore.OpenApi 10.0.9` pulls transitively (advisory GHSA-v5pm-xwqc-g5wc trips **NU1903** as a
+  fresh-restore warning-as-error — it silently broke every `docker compose up --build` / CI fresh build; a warm local
+  NuGet cache masked it). **CONVENTION: a newly-published NuGet advisory can break a FRESH restore (Docker/CI) while a
+  local cached `dotnet build` stays green — pin the transitive to the newest same-major stable to clear NU1903.**
+- **RENDER-VERIFIED (Playwright, docker stack on live OANDA):** rebuilt via `docker compose up -d --build`; the scanner
+  confirmed setups on real data across NAS100USD/EURUSD/etc.; `/api/chart/NAS100USD?tf=M5` returned `{fvg:6, orderBlock:4,
+  liquidity:10, sweep:1, ote:1}` (caps respected); the dashboard chart drew the Buy-/Sell-side liquidity lines, FVG
+  boxes, the OTE 62/70.5/79% band + Entry/Stop levels, all toggleable (screenshot `chart-concept-overlays-live.png`).
+- **CONVENTION (new read-model pattern):** a live "engine view" projection = a bus-fed snapshot store (like
+  `RecentSetupStore`/`ChartCandleStore`) written on the scan thread from the scanner's `MarketContext`, read via an
+  additive query on the frozen `GET /api/chart` — geometry keyed by (symbol, timeframe) since `StyleTimeframeMap` maps
+  each TF to exactly one style. **Note:** geometry populates only for LIVE-scanned (symbol, TF) cells (M1/M5/M15/H4 per
+  active style); non-scanned TFs (M30/H1/D1) show candles but no overlays. **Pre-existing non-blocking:** an intermittent
+  lightweight-charts "Object is disposed" console log on live re-render/teardown (chart renders fine — a future guard
+  could skip the overlay effect when the chart is disposed); the Auto-mode risk-ladder can drop NAS100 sizing below its
+  min-lot-1 (`DomainException` caught by the ingestor's 50-failure breaker — unrelated to this change).
+- **NEXT (when asked):** optional `pr-reviewer` over the branch; commit/push/PR per `git-workflow` (Closes #191);
+  optionally a lightweight killzone-band primitive (the one legend toggle still a no-op).

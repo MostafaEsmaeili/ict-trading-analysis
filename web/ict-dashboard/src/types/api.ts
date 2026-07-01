@@ -444,13 +444,38 @@ export interface EquityPointDto {
 
 // ---- Host.Contracts ----
 
-/** Mirrors IctTrader.Host.ChartResponse — `GET /api/chart/{symbol}?tf=&style=` (candles + overlays). */
+/**
+ * Mirrors IctTrader.Scanning.Contracts.GeometryOverlayDto — one live "engine view" concept the scanner is tracking
+ * RIGHT NOW for a (symbol, timeframe), so the chart's concept toggles have data even between the rare confirmed
+ * setups (plan §9.1). `kind` selects which fields apply (the rest are null): "fvg"/"orderBlock"/"ote" are price
+ * BOXES (`top`+`bottom`, plus `mid` = the OB 50% mean / the OTE 70.5% sweet spot); "sweep"/"mss" are point markers
+ * at `atUtc`+`price`; "liquidity" is a resting pool line at `price` with `side`/`swept`/`strength`. `direction` is the
+ * wire enum name ("Bullish"/"Bearish") or empty. Read-only/advisory — it routes nowhere near an order path (§6.3).
+ */
+export interface GeometryOverlayDto {
+  kind: string;
+  direction: string;
+  atUtc: string;
+  price?: number | null;
+  top?: number | null;
+  bottom?: number | null;
+  mid?: number | null;
+  state?: string | null;
+  side?: string | null;
+  swept?: boolean | null;
+  strength?: number | null;
+}
+
+/** Mirrors IctTrader.Host.ChartResponse — `GET /api/chart/{symbol}?tf=&style=` (candles + overlays + live geometry). */
 export interface ChartResponse {
   symbol: string;
   timeframe: string;
   style: string;
   candles: CandleDto[];
+  /** Recent confirmed setups (entry/stop/targets/draw). */
   overlays: SetupDto[];
+  /** ADDITIVE live "engine view" — the concepts the scanner is tracking now for this (symbol, timeframe). */
+  geometryOverlays: GeometryOverlayDto[];
 }
 
 /**

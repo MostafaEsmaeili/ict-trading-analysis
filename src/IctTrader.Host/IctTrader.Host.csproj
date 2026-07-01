@@ -17,6 +17,10 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
+    <!-- Direct pin to override the vulnerable Microsoft.OpenApi 2.0.0 that AspNetCore.OpenApi 10.0.9 pulls
+         transitively (advisory GHSA-v5pm-xwqc-g5wc trips NU1903 as a fresh-restore warning-as-error in CI/Docker).
+         2.9.0 is the newest stable in the same 2.x major, API-compatible with AspNetCore.OpenApi, and audit-clean. -->
+    <PackageReference Include="Microsoft.OpenApi" Version="2.9.0" />
     <!-- The scan loop (WP7 slice 2e) composes the PaperTrading DbContext on Npgsql at runtime. -->
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.9" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />

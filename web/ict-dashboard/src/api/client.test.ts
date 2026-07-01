@@ -54,6 +54,7 @@ describe('client live overlays', () => {
         { ...setup('b', 'M5'), detectedAtUtc: '2026-06-19T06:50:00Z' },
         { ...setup('c', 'H1'), detectedAtUtc: '2026-06-19T07:00:00Z' },
       ],
+      geometryOverlays: [],
     };
     vi.stubGlobal(
       'fetch',
@@ -66,6 +67,35 @@ describe('client live overlays', () => {
     // setupToOverlays emits 2 overlays per setup (tradeLevels + drawOnLiquidity); only the newest M5 → 2.
     expect(overlays).toHaveLength(2);
     expect(overlays.every((o) => 'setupId' in o && o.setupId === 'b')).toBe(true);
+  });
+
+  it('maps the live "engine view" geometry (FVG/sweep/liquidity) alongside the setup levels', async () => {
+    const response: ChartResponse = {
+      symbol: 'EURUSD',
+      timeframe: 'M5',
+      style: 'Intraday',
+      candles: [],
+      overlays: [{ ...setup('b', 'M5'), detectedAtUtc: '2026-06-19T06:50:00Z' }],
+      // The concepts the scanner is tracking now — these render even with the setup present, so the
+      // concept toggles have data (the whole point of the live engine view).
+      geometryOverlays: [
+        { kind: 'fvg', direction: 'Bullish', atUtc: '2026-06-19T06:40:00Z', top: 1.073, bottom: 1.072, state: 'Open' },
+        { kind: 'sweep', direction: 'Bullish', atUtc: '2026-06-19T06:30:00Z', price: 1.069 },
+        { kind: 'liquidity', direction: 'Bearish', atUtc: '2026-06-19T06:00:00Z', price: 1.079, side: 'BuySide', swept: false, strength: 2 },
+      ],
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: true, json: async () => response })),
+    );
+
+    const { fetchOverlays } = await liveClient();
+    const overlays = await fetchOverlays('EURUSD', 'M5', 'Intraday');
+
+    // 3 geometry overlays + 2 setup-level overlays (tradeLevels + drawOnLiquidity) = 5.
+    expect(overlays.map((o) => o.kind).sort()).toEqual(
+      ['drawOnLiquidity', 'fvg', 'liquidity', 'sweep', 'tradeLevels'].sort(),
+    );
   });
 
   it('FAILS HARD (throws) on a live fetch error — never silently serves fixtures', async () => {
