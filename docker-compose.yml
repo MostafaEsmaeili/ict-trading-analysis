@@ -53,7 +53,10 @@ services:
       # Recorded-history CSVs for the Backtest/Optimizer (mounted read-only below). The live feed doesn't need it.
       Ict__Backtest__DataDirectory: "/app/data"
     ports:
-      - "5080:5080"
+      # Host port is overridable via APP_PORT (default 5080). On some Windows/Hyper-V hosts the WinNAT
+      # dynamic reservations exclude a range that catches 5080 ("bind: socket forbidden") — set APP_PORT
+      # in .env (e.g. 8080) to publish on a free host port. The container always listens on 5080 internally.
+      - "${APP_PORT:-5080}:5080"
     volumes:
       # Optional: expose the local recorded-history CSVs so the Backtest/Optimizer have datasets (read-only).
       - ./data:/app/data:ro

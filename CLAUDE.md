@@ -1940,3 +1940,23 @@ mapper → store → GET /api/chart → chart`, no order/broker/execute member, 
 - **NEXT (when asked):** optionally a lightweight killzone-band primitive (the one legend toggle still a no-op); the
   geometry snapshot runs every candle per scanned cell — a future dirty-check could skip unchanged snapshots if backtest
   throughput matters (live cadence is fine).
+
+**🩺 Docker "green but can't open :5080" — WinNAT excluded-port-range fix (this session, after PR #193; `docker-compose.yml`
+change + `.env` local override, committed separately).** The operator reported the dashboard unreachable although Docker
+Desktop showed `icttrader-app` green/running. Diagnosis: the app was healthy INSIDE the container (actively scanning +
+persisting), but `docker ps` showed `5080/tcp` with NO host binding, and an explicit recreate failed with
+`bind: An attempt was made to access a socket in a way forbidden by its access permissions`. Root cause: **Windows/Hyper-V
+WinNAT had dynamically reserved the TCP range 5041–5140** (`netsh int ipv4 show excludedportrange protocol=tcp`), which
+catches **5080** — so Docker's port proxy can't publish it. This is machine-specific + recurs unpredictably after a
+Docker/Hyper-V restart. **Fix (durable, no admin, keeps the committed default):** made the host publish port overridable —
+`docker-compose.yml` now maps `"${APP_PORT:-5080}:5080"` (committed default still 5080 for other hosts/CI), and this box's
+gitignored `.env` sets **`APP_PORT=8080`** (8080 is outside every excluded range). `docker compose up -d --force-recreate
+app` → `0.0.0.0:8080->5080/tcp`, `/api/config` 200, the SPA loads, and `/api/chart/EURUSD?tf=M5` returned **18 live
+geometry overlays** (FVG/OTE/MSS) once backfill ran EURUSD M5 through the scanner (~70s). **The dashboard is now at
+http://localhost:8080** (render-verified — the chart draws the FVG top/bottom + MSS-swing + OTE 62/70.5/79% lines;
+liquidity + OB default off). **CONVENTIONS:** (a) if a Docker host port suddenly can't bind on Windows with "socket
+forbidden", check `netsh int ipv4 show excludedportrange protocol=tcp` — WinNAT dynamic reservations, not a process, are
+usually the cause; publish on a port outside the ranges via `APP_PORT` in `.env` rather than fighting WinNAT (a
+`net stop/start winnat` reclaim needs admin and recurs on reboot). (b) A container can run "green" yet be unreachable if
+the host-port publish silently dropped — check the `PORTS` column (`0.0.0.0:HOST->CONTAINER` vs a bare `CONTAINER/tcp`),
+not just the green status.
