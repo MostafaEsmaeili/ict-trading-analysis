@@ -1,12 +1,12 @@
 using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Confluence;
 using IctTrader.Domain.Detection;
-using IctTrader.Domain.Detection.Detectors;
 using IctTrader.Domain.Instruments;
 using IctTrader.Domain.Sessions;
 using IctTrader.Domain.Setups;
 using IctTrader.Domain.Styles;
 using IctTrader.Domain.ValueObjects;
+using IctTrader.Scanning.Application.Scanning.Models;
 using IctTrader.Scanning.Contracts;
 
 namespace IctTrader.Scanning.Application.Scanning;
@@ -51,18 +51,28 @@ public sealed class SymbolScanner
         ScannerOptions options,
         IInstrumentRegistry instruments,
         IReadOnlyList<ISetupDetector>? prependDetectors = null,
-        IEconomicCalendarStore? calendarStore = null)
+        IEconomicCalendarStore? calendarStore = null,
+        SetupModelDefinition? modelDefinition = null)
     {
         ArgumentNullException.ThrowIfNull(symbol);
         ArgumentNullException.ThrowIfNull(timeProvider);
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(instruments);
 
+        // The setup model this cell scans (plan §16). Null falls back to the canonical §2.5 model so every
+        // pre-catalog construction site (tests, seeded fixtures) keeps its exact behavior without changes.
+        var model = modelDefinition ?? Ict2022ModelDefinition.Definition;
+        Model = model.Id;
+
         Symbol = symbol;
         _timeframe = timeframe;
         _style = style;
         _calendarStore = calendarStore;
 
+        // Option overlay order (plan §16 D2): base snapshot → the MODEL's preset deltas → the per-instrument
+        // overrides. The instrument is applied LAST — its geometry/reference corrections hold regardless of which
+        // model runs. The Ict2022 preset is the identity, so the canonical path is byte-identical to pre-catalog.
+        //
         // Per-instrument resolution (the §2.5.7 FX-vs-index split): the catalog maps the symbol to its class +
         // price geometry, and the scanner builds the MarketContext from THAT SymbolSpec — so an Index symbol
         // (NAS100USD) carries InstrumentClass.Index and the KillzoneClock routes it to ClassifyIndex (AM
@@ -70,7 +80,7 @@ public sealed class SymbolScanner
         // its pipeline is byte-identical to the prior hardcoded path. The index's geometry/reference re-defaults
         // are applied onto the shared options below (the FX `None` bundle is a field-equal no-op).
         var profile = instruments.Resolve(symbol);
-        var resolvedOptions = options.WithInstrumentOverrides(profile.Overrides);
+        var resolvedOptions = model.ApplyPreset(options).WithInstrumentOverrides(profile.Overrides);
 
         _orderBlockMeanPercent = resolvedOptions.OrderBlock.MeanThresholdPercent;
         _oteLowerFib = resolvedOptions.Ote.LowerFib;
@@ -83,45 +93,16 @@ public sealed class SymbolScanner
             new KillzoneClock(nyClock, KillzoneSchedule.CreateDefault()),
             resolvedOptions.MarketContext);
 
-        // The PINNED canonical order (ScanSessionTests): SwingPointDetector before the MSS, and the
-        // displacement feeder before the MSS, so the breach-vs-MSS race is deterministic (spec §5 item 19).
-        // The four OPTIONAL §2.5.3 confluence emitters (OpenPriceReference → MacroTime → CleanPriceAction →
-        // CalendarDriver) run AFTER the structural + RequiredCondition detectors — they read the bias / reference
-        // open / displacement leg / calendar those already populated, and contribute ONLY to the score (never a
-        // RequiredCondition), so they promote a complete setup toward Grade A without changing Σ(applicable).
-        var pipeline = new ISetupDetector[]
-        {
-            new SwingPointDetector(resolvedOptions.Swing),
-            new LiquidityPoolDetector(resolvedOptions.Liquidity),
-            new DealingRangeContextDetector(resolvedOptions.PremiumDiscount),
-            new LiquiditySweepDetector(resolvedOptions.Liquidity),
-            new DisplacementDetector(resolvedOptions.Displacement),
-            new MarketStructureShiftDetector(resolvedOptions.MarketStructureShift),
-            new FairValueGapDetector(resolvedOptions.Fvg),
-            new OrderBlockDetector(resolvedOptions.OrderBlock),
-            new DailyBiasDetector(resolvedOptions.DailyBias),
-            new PremiumDiscountGateDetector(resolvedOptions.PremiumDiscount),
-            new OteFibDetector(resolvedOptions.Ote, resolvedOptions.Fvg),
-            new DrawOnLiquidityDetector(
-                resolvedOptions.DrawOnLiquidity,
-                resolvedOptions.Ote,
-                resolvedOptions.TradeStyles,
-                resolvedOptions.Fvg,
-                resolvedOptions.SdProjection),
-            new KillzoneEntryDetector(resolvedOptions.KillzoneEntry, resolvedOptions.SilverBullet),
-            new CalendarGateDetector(resolvedOptions.Calendar),
-            new OpenPriceReferenceDetector(resolvedOptions.OpenPriceReference),
-            new MacroTimeDetector(nyClock, resolvedOptions.MacroTime),
-            new CleanPriceActionDetector(resolvedOptions.CleanPriceAction),
-            new CalendarDriverDetector(resolvedOptions.CalendarDriver, resolvedOptions.Calendar),
-        };
+        // The model's detector pipeline, in ITS pinned canonical order (for Ict2022: the exact §2.5 recipe the
+        // pre-catalog scanner hardcoded, proven by ScanSessionTests + the golden pipeline-equality test).
+        var pipeline = model.BuildPipeline(resolvedOptions, nyClock);
 
         // TEST SEAM only: feeder/seeder detectors prepended ahead of the real pipeline so a test can seed the
         // structural events (sweep/MSS/FVG/range) the same way the proven ScanSessionTests fixture does, WITHOUT
         // hand-crafting the multi-candle sequence that would drive every real structural detector at once. The
         // production path always passes null/empty here, so the canonical pipeline is byte-identical — and the
         // pinned order for the REAL detectors (SwingPointDetector → … → MSS) is preserved regardless.
-        var detectors = prependDetectors is { Count: > 0 }
+        IReadOnlyList<ISetupDetector> detectors = prependDetectors is { Count: > 0 }
             ? [.. prependDetectors, .. pipeline]
             : pipeline;
 
@@ -132,6 +113,10 @@ public sealed class SymbolScanner
     }
 
     public Symbol Symbol { get; }
+
+    /// <summary>The setup model this cell scans (plan §16) — the registry keys on it, so two models scanning the
+    /// same (symbol, timeframe, style) hold independent FSM state and confirm independent setups.</summary>
+    public SetupModel Model { get; }
 
     /// <summary>The granularity this cell scans (plan §4.7) — the canonical entry timeframe of its style. Every
     /// candle fed here must carry this timeframe; it stamps the confirmed <c>Setup.Timeframe</c> per cell.</summary>

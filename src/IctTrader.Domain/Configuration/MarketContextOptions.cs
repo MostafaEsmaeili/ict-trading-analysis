@@ -1,5 +1,6 @@
 using IctTrader.Domain.Instruments;
 using IctTrader.Domain.Sessions;
+using IctTrader.Domain.Setups;
 using IctTrader.Domain.Styles;
 
 namespace IctTrader.Domain.Configuration;
@@ -62,6 +63,25 @@ public sealed class MarketContextOptions
         ActiveStyles.Count == 0 ? DefaultActiveStyles : ActiveStyles.Distinct().ToArray();
 
     /// <summary>
+    /// The operator-selected setup models the scanner runs (<c>Ict:Scanning:ActiveModels</c>, plan §16) —
+    /// EMPTY default for the same config-binder reason as <see cref="ActiveStyles"/> (a non-empty initializer
+    /// would be silently prepended to the operator's config). Consume <see cref="ResolvedActiveModels"/>.
+    /// </summary>
+    public IReadOnlyList<SetupModel> ActiveModels { get; init; } = [];
+
+    private static readonly IReadOnlyList<SetupModel> DefaultActiveModels = [SetupModel.Ict2022];
+
+    /// <summary>
+    /// The active setup models — the configured set de-duplicated, or the business default when none is
+    /// configured. Consume this, never the raw <see cref="ActiveModels"/>: a duplicate model would feed each
+    /// candle to the same per-(symbol, timeframe, style, model) scanner more than once and corrupt its FSM.
+    /// (The default flips to both models once the ICT 2024 pipeline registers — the operator's chosen live
+    /// default; until then only the canonical §2.5 model scans.)
+    /// </summary>
+    public IReadOnlyList<SetupModel> ResolvedActiveModels =>
+        ActiveModels.Count == 0 ? DefaultActiveModels : ActiveModels.Distinct().ToArray();
+
+    /// <summary>
     /// The killzones an operator may enable via <c>Ict:Scanning:ActiveKillzones</c> — the FROZEN CONTRACT
     /// subset (plan §11.1). <see cref="Killzone.Pm"/>/<see cref="Killzone.Am"/> are internal classification
     /// outcomes (FX afternoon / index morning) governed by instrument class, not operator-selectable here;
@@ -94,6 +114,7 @@ public sealed class MarketContextOptions
             UseMacroOpenReference = overrides.UseMacroOpenReference ?? UseMacroOpenReference,
             MacroReferenceOpenTime = MacroReferenceOpenTime,
             ActiveStyles = ActiveStyles,
+            ActiveModels = ActiveModels,
         };
     }
 

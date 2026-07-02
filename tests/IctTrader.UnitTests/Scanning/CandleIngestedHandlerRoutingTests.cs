@@ -1,6 +1,7 @@
 using FluentAssertions;
 using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Instruments;
+using IctTrader.Domain.Setups;
 using IctTrader.Domain.Styles;
 using IctTrader.Domain.ValueObjects;
 using IctTrader.MarketData.Contracts;
@@ -75,7 +76,8 @@ public sealed class CandleIngestedHandlerRoutingTests
     {
         public List<(string Symbol, Timeframe Timeframe, TradeStyle Style)> Requested { get; } = [];
 
-        public SymbolScanner GetOrCreate(Symbol symbol, Timeframe timeframe, TradeStyle style)
+        public SymbolScanner GetOrCreate(
+            Symbol symbol, Timeframe timeframe, TradeStyle style, SetupModel model = SetupModel.Ict2022)
         {
             Requested.Add((symbol.Value, timeframe, style));
             return new SymbolScanner(

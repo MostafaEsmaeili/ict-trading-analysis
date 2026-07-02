@@ -4,6 +4,7 @@ using IctTrader.Domain.Instruments;
 using IctTrader.Domain.Sessions;
 using IctTrader.Domain.Styles;
 using IctTrader.Scanning.Application.Scanning;
+using IctTrader.Scanning.Application.Scanning.Models;
 using IctTrader.Scanning.Application.Signals;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -38,6 +39,9 @@ public static class ScanningModuleRegistration
         // (empty fallback, never loaded → the gate stays fail-open) so a standalone module/test resolves it; the
         // Host registers the same singleton and a hosted loader populates it from the configured source.
         services.TryAddSingleton<IEconomicCalendarStore, EconomicCalendarStore>();
+        // The setup-model catalog (plan §16): every implemented model's pipeline recipe + option preset, keyed by
+        // SetupModel. Pure/immutable code presets — the scanner factory resolves the requested model from it.
+        services.TryAddSingleton(SetupModelCatalog.Default);
         services.AddSingleton<ISymbolScannerFactory, SymbolScannerFactory>();
         services.AddSingleton<ISymbolScannerRegistry, SymbolScannerRegistry>();
         services.AddSingleton<RecentSetupStore>();

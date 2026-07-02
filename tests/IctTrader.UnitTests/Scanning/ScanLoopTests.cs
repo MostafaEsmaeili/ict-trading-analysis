@@ -200,7 +200,8 @@ public class ScanLoopTests
 
         public SymbolScanner Create(
             Symbol symbol, Timeframe timeframe, TradeStyle style,
-            IctTrader.Domain.Configuration.ConfluenceOptions? confluence = null)
+            IctTrader.Domain.Configuration.ConfluenceOptions? confluence = null,
+            SetupModel model = SetupModel.Ict2022)
             => new(
                 symbol, timeframe, style, timeProvider,
                 confluence is null ? Options : Options with { Confluence = confluence },

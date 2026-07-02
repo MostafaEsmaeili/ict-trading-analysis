@@ -21,7 +21,7 @@ public sealed class ScanSession
 {
     private readonly MarketContext _context;
     private readonly IReadOnlyList<ISetupDetector> _detectors;
-    private readonly SetupCandidate _candidate;
+    private readonly ISetupCandidate _candidate;
     private readonly SetupCandidateOptions _options;
 
     private DateOnly? _lastNyDate;
@@ -30,7 +30,7 @@ public sealed class ScanSession
     public ScanSession(
         MarketContext context,
         IReadOnlyList<ISetupDetector> detectors,
-        SetupCandidate candidate,
+        ISetupCandidate candidate,
         SetupCandidateOptions options)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -45,7 +45,7 @@ public sealed class ScanSession
 
     public MarketContext Context => _context;
 
-    public SetupCandidate Candidate => _candidate;
+    public ISetupCandidate Candidate => _candidate;
 
     /// <summary>Processes one candle and returns a confirmed setup when one grades at or above the alert floor.</summary>
     public SetupConfirmation? OnCandle(Candle candle)

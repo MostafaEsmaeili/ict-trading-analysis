@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using IctTrader.Domain.Configuration;
+using IctTrader.Domain.Setups;
 using IctTrader.Domain.Styles;
 using IctTrader.Domain.ValueObjects;
 
@@ -28,7 +29,8 @@ public sealed class SymbolScannerRegistry(ISymbolScannerFactory factory, IRuntim
     private readonly ConcurrentDictionary<ScannerKey, SymbolScanner> _scanners = new();
     private int _builtRevision = -1;
 
-    public SymbolScanner GetOrCreate(Symbol symbol, Timeframe timeframe, TradeStyle style)
+    public SymbolScanner GetOrCreate(
+        Symbol symbol, Timeframe timeframe, TradeStyle style, SetupModel model = SetupModel.Ict2022)
     {
         ArgumentNullException.ThrowIfNull(symbol);
 
@@ -44,9 +46,9 @@ public sealed class SymbolScannerRegistry(ISymbolScannerFactory factory, IRuntim
             _builtRevision = revision;
         }
 
-        var key = new ScannerKey(symbol.Value, timeframe, style);
-        return _scanners.GetOrAdd(key, _ => _factory.Create(symbol, timeframe, style));
+        var key = new ScannerKey(symbol.Value, timeframe, style, model);
+        return _scanners.GetOrAdd(key, _ => _factory.Create(symbol, timeframe, style, model: model));
     }
 
-    private readonly record struct ScannerKey(string Symbol, Timeframe Timeframe, TradeStyle Style);
+    private readonly record struct ScannerKey(string Symbol, Timeframe Timeframe, TradeStyle Style, SetupModel Model);
 }

@@ -1,8 +1,10 @@
 using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Instruments;
 using IctTrader.Domain.Sessions;
+using IctTrader.Domain.Setups;
 using IctTrader.Domain.Styles;
 using IctTrader.Domain.ValueObjects;
+using IctTrader.Scanning.Application.Scanning.Models;
 using Microsoft.Extensions.Options;
 
 namespace IctTrader.Scanning.Application.Scanning;
@@ -19,11 +21,13 @@ public sealed class SymbolScannerFactory : ISymbolScannerFactory
     private readonly ScannerOptions _options;
     private readonly IInstrumentRegistry _instruments;
     private readonly IEconomicCalendarStore _calendarStore;
+    private readonly SetupModelCatalog _models;
 
     public SymbolScannerFactory(
         TimeProvider timeProvider,
         IInstrumentRegistry instruments,
         IEconomicCalendarStore calendarStore,
+        SetupModelCatalog models,
         IOptions<MarketContextOptions> marketContext,
         IOptions<ConfluenceOptions> confluence,
         IOptions<SetupCandidateOptions> setupCandidate,
@@ -51,9 +55,11 @@ public sealed class SymbolScannerFactory : ISymbolScannerFactory
         ArgumentNullException.ThrowIfNull(timeProvider);
         ArgumentNullException.ThrowIfNull(instruments);
         ArgumentNullException.ThrowIfNull(calendarStore);
+        ArgumentNullException.ThrowIfNull(models);
         _timeProvider = timeProvider;
         _instruments = instruments;
         _calendarStore = calendarStore;
+        _models = models;
         _options = new ScannerOptions
         {
             MarketContext = marketContext.Value,
@@ -82,9 +88,22 @@ public sealed class SymbolScannerFactory : ISymbolScannerFactory
         };
     }
 
-    public SymbolScanner Create(Symbol symbol, Timeframe timeframe, TradeStyle style, ConfluenceOptions? confluence = null)
+    public SymbolScanner Create(
+        Symbol symbol,
+        Timeframe timeframe,
+        TradeStyle style,
+        ConfluenceOptions? confluence = null,
+        SetupModel model = SetupModel.Ict2022)
     {
         var options = confluence is null ? _options : _options with { Confluence = confluence };
-        return new(symbol, timeframe, style, _timeProvider, options, _instruments, calendarStore: _calendarStore);
+        return new(
+            symbol,
+            timeframe,
+            style,
+            _timeProvider,
+            options,
+            _instruments,
+            calendarStore: _calendarStore,
+            modelDefinition: _models.Resolve(model));
     }
 }

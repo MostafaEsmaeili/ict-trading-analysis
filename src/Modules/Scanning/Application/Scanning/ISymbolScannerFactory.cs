@@ -1,4 +1,5 @@
 using IctTrader.Domain.Configuration;
+using IctTrader.Domain.Setups;
 using IctTrader.Domain.Styles;
 using IctTrader.Domain.ValueObjects;
 
@@ -14,7 +15,14 @@ public interface ISymbolScannerFactory
     /// to its canonical entry TF), and it stamps the confirmed <c>Setup.Timeframe</c> per cell.
     /// <paramref name="confluence"/> overrides the host's configured <see cref="ConfluenceOptions"/> for this
     /// scanner (the on-demand backtest passes a per-run confluence policy — e.g. a relaxed k-of-n required gate to
-    /// sweep); <c>null</c> uses the host default (the strict §2.5 model).
+    /// sweep); <c>null</c> uses the host default (the strict §2.5 model). <paramref name="model"/> selects the
+    /// setup model whose pipeline recipe + option preset the scanner composes (plan §16; default = the canonical
+    /// ICT 2022 model, so pre-existing call sites are byte-identical).
     /// </summary>
-    SymbolScanner Create(Symbol symbol, Timeframe timeframe, TradeStyle style, ConfluenceOptions? confluence = null);
+    SymbolScanner Create(
+        Symbol symbol,
+        Timeframe timeframe,
+        TradeStyle style,
+        ConfluenceOptions? confluence = null,
+        SetupModel model = SetupModel.Ict2022);
 }

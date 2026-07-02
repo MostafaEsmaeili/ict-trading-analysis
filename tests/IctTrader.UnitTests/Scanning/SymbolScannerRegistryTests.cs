@@ -1,6 +1,7 @@
 using FluentAssertions;
 using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Instruments;
+using IctTrader.Domain.Setups;
 using IctTrader.Domain.Styles;
 using IctTrader.Domain.ValueObjects;
 using IctTrader.Scanning.Application.Scanning;
@@ -31,6 +32,21 @@ public sealed class SymbolScannerRegistryTests
 
         new[] { a, bByTimeframe, cByStyle, dBySymbol }.Should().OnlyHaveUniqueItems();
         factory.CreateCount.Should().Be(4);
+    }
+
+    [Fact]
+    public void Distinct_models_on_the_same_cell_get_distinct_instances()
+    {
+        var factory = new CountingScannerFactory();
+        var registry = new SymbolScannerRegistry(factory, new RuntimeSettings());
+
+        var ict2022 = registry.GetOrCreate(Eurusd, Timeframe.M5, TradeStyle.Intraday);
+        var ict2022Again = registry.GetOrCreate(Eurusd, Timeframe.M5, TradeStyle.Intraday, SetupModel.Ict2022);
+        var ict2024 = registry.GetOrCreate(Eurusd, Timeframe.M5, TradeStyle.Intraday, SetupModel.Ict2024);
+
+        ict2022Again.Should().BeSameAs(ict2022, "the default model IS Ict2022 — same key, same cached FSM");
+        ict2024.Should().NotBeSameAs(ict2022, "two models on one cell must hold independent FSM state");
+        factory.CreateCount.Should().Be(2);
     }
 
     [Fact]
@@ -69,7 +85,12 @@ public sealed class SymbolScannerRegistryTests
     {
         public int CreateCount { get; private set; }
 
-        public SymbolScanner Create(Symbol symbol, Timeframe timeframe, TradeStyle style, ConfluenceOptions? confluence = null)
+        public SymbolScanner Create(
+            Symbol symbol,
+            Timeframe timeframe,
+            TradeStyle style,
+            ConfluenceOptions? confluence = null,
+            SetupModel model = SetupModel.Ict2022)
         {
             CreateCount++;
             return new SymbolScanner(

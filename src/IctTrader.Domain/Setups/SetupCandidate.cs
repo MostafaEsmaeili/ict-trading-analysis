@@ -30,7 +30,7 @@ namespace IctTrader.Domain.Setups;
 /// This models the Accumulating→Confirmed lifecycle; the post-confirmation Armed/Triggered entry states (price
 /// reaching the OTE limit, the paper-trade handoff) belong with the fill simulator (WP4/WP5).
 /// </summary>
-public sealed class SetupCandidate
+public sealed class SetupCandidate : ISetupCandidate
 {
     private readonly record struct Latched(long BarIndex, DetectorResult Result);
 

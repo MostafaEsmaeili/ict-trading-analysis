@@ -1,5 +1,6 @@
 using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Styles;
+using IctTrader.Domain.ValueObjects;
 using IctTrader.MarketData.Contracts;
 using IctTrader.Scanning.Contracts;
 using IctTrader.SharedKernel.Messaging;
@@ -49,7 +50,17 @@ public sealed class CandleIngestedHandler(
         // A TF no active style enters on yields an empty set, so the candle is simply not scanned (no-op).
         foreach (var style in _styleTimeframeMap.StylesFor(candle.Timeframe, _scanning.ResolvedActiveStyles))
         {
-            var scanner = _registry.GetOrCreate(candle.Symbol, candle.Timeframe, style);
+            await ScanCellAsync(candle, style, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    // One (symbol, timeframe, style) matrix cell, scanned once per ACTIVE setup model (plan §16) — each model
+    // holds its own registry-keyed scanner, so two models on the same cell confirm independent setups.
+    private async Task ScanCellAsync(Candle candle, TradeStyle style, CancellationToken cancellationToken)
+    {
+        foreach (var model in _scanning.ResolvedActiveModels)
+        {
+            var scanner = _registry.GetOrCreate(candle.Symbol, candle.Timeframe, style, model);
             var setup = scanner.OnCandle(candle);
 
             // Refresh the live "engine view" geometry for this (symbol, timeframe) EVERY candle — not just on a
