@@ -19,23 +19,44 @@ namespace IctTrader.Performance.Application;
 public sealed class PerformanceState
 {
     private readonly object _gate = new();
-    private readonly List<ClosedTradeR> _closed = [];
+    private readonly List<Entry> _closed = [];
 
-    /// <summary>Appends one closed trade's R outcome. Thread-safe.</summary>
-    public void Record(ClosedTradeR trade)
+    /// <summary>Appends one closed trade's R outcome, tagged with the setup model that produced the trade
+    /// (plan §16; null = unknown/pre-multi-model). Thread-safe.</summary>
+    public void Record(ClosedTradeR trade, string? model = null)
     {
         lock (_gate)
         {
-            _closed.Add(trade);
+            _closed.Add(new Entry(trade, model));
         }
     }
 
-    /// <summary>A point-in-time snapshot of the recorded closes — safe to iterate while appends continue.</summary>
-    public IReadOnlyList<ClosedTradeR> Snapshot()
+    /// <summary>A point-in-time snapshot of the recorded closes — safe to iterate while appends continue.
+    /// <paramref name="model"/> narrows to one setup model's trades (case-insensitive wire-name match); null
+    /// returns every close (the frozen all-trades behavior).</summary>
+    public IReadOnlyList<ClosedTradeR> Snapshot(string? model = null)
     {
         lock (_gate)
         {
-            return _closed.ToArray();
+            return _closed
+                .Where(e => model is null || string.Equals(e.Model, model, StringComparison.OrdinalIgnoreCase))
+                .Select(e => e.Trade)
+                .ToArray();
         }
     }
+
+    /// <summary>The distinct setup models recorded so far (insertion order), for the per-model breakdown.</summary>
+    public IReadOnlyList<string> Models()
+    {
+        lock (_gate)
+        {
+            return _closed
+                .Where(e => e.Model is not null)
+                .Select(e => e.Model!)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+    }
+
+    private readonly record struct Entry(ClosedTradeR Trade, string? Model);
 }

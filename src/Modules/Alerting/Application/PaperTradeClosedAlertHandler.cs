@@ -41,7 +41,8 @@ public sealed class PaperTradeClosedAlertHandler(AlertLog log, TimeProvider time
             Direction: trade.Direction,
             Killzone: trade.Killzone,
             Style: trade.Style,
-            AtUtc: closedAtUtc));
+            AtUtc: closedAtUtc,
+            Model: trade.Model));
 
         return Task.CompletedTask;
     }

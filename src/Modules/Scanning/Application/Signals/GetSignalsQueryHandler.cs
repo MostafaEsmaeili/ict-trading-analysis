@@ -21,7 +21,7 @@ public sealed class GetSignalsQueryHandler(SignalRankingService ranking, TimePro
         ArgumentNullException.ThrowIfNull(query);
 
         var ranked = _ranking.Rank(
-            _timeProvider.GetUtcNow(), query.Symbol, query.Style, query.MinGrade, query.Max);
+            _timeProvider.GetUtcNow(), query.Symbol, query.Style, query.MinGrade, query.Max, query.Model);
         return Task.FromResult(ranked);
     }
 }

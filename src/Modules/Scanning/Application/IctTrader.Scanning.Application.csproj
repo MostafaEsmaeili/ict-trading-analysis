@@ -13,6 +13,12 @@
     <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.9" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The unit tests pin the internal SetupDtoMapper's deterministic-id formula (the PaperTrading.Application
+         precedent) while the module's public surface stays Contracts-only. -->
+    <InternalsVisibleTo Include="IctTrader.UnitTests" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

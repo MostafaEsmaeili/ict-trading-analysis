@@ -40,7 +40,10 @@ public sealed record PaperTradeDto(
     string Timeframe,
     decimal CurrentStop,
     decimal? ExitPrice,
-    DateTimeOffset ManagedFromUtc);
+    DateTimeOffset ManagedFromUtc,
+    // ADDITIVE (frozen-wire safe): the setup model that produced the trade (a SetupModel member name, plan §16),
+    // appended LAST with the canonical default so pre-multi-model producers/consumers stay valid.
+    string Model = "Ict2022");
 
 // ---- Integration messages ----
 

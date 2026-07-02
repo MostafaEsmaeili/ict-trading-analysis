@@ -1,4 +1,5 @@
 using IctTrader.Domain.Configuration;
+using IctTrader.Domain.Setups;
 using IctTrader.Domain.Styles;
 using IctTrader.Domain.ValueObjects;
 using IctTrader.MarketData.Contracts;
@@ -27,7 +28,8 @@ public sealed class CandleIngestedHandler(
     IOptions<MarketContextOptions> scanningOptions,
     StyleTimeframeMap styleTimeframeMap,
     GeometryOverlayStore geometryStore,
-    ILogger<CandleIngestedHandler>? logger = null)
+    ILogger<CandleIngestedHandler>? logger = null,
+    IRuntimeSettings? runtimeSettings = null)
     : IEventHandler<CandleIngested>
 {
     private readonly ISymbolScannerRegistry _registry = registry ?? throw new ArgumentNullException(nameof(registry));
@@ -39,6 +41,12 @@ public sealed class CandleIngestedHandler(
     private readonly GeometryOverlayStore _geometryStore =
         geometryStore ?? throw new ArgumentNullException(nameof(geometryStore));
     private readonly ILogger<CandleIngestedHandler> _logger = logger ?? NullLogger<CandleIngestedHandler>.Instance;
+    private readonly IRuntimeSettings? _runtimeSettings = runtimeSettings;
+
+    // The live operator multi-select wins over the configured default (plan §16 D4); both are non-empty by
+    // construction (the override setter refuses empty; Resolved* falls back to the business default).
+    private IReadOnlyList<SetupModel> ActiveModels =>
+        _runtimeSettings?.ActiveModelsOverride ?? _scanning.ResolvedActiveModels;
 
     public async Task HandleAsync(CandleIngested @event, CancellationToken cancellationToken = default)
     {
@@ -58,7 +66,7 @@ public sealed class CandleIngestedHandler(
     // holds its own registry-keyed scanner, so two models on the same cell confirm independent setups.
     private async Task ScanCellAsync(Candle candle, TradeStyle style, CancellationToken cancellationToken)
     {
-        foreach (var model in _scanning.ResolvedActiveModels)
+        foreach (var model in ActiveModels)
         {
             var scanner = _registry.GetOrCreate(candle.Symbol, candle.Timeframe, style, model);
             var setup = scanner.OnCandle(candle);
@@ -67,7 +75,7 @@ public sealed class CandleIngestedHandler(
             // confirmation — so the chart's concept toggles show what the scanner is tracking right now (open FVGs /
             // OBs / liquidity, the latest sweep / MSS, the OTE band), even between the rare confirmed setups (plan
             // §9.1). Captured on the scan thread (sequential per dispatch) as an immutable snapshot; a read-only sink.
-            _geometryStore.Set(candle.Symbol.Value, candle.Timeframe, scanner.SnapshotGeometry());
+            _geometryStore.Set(candle.Symbol.Value, candle.Timeframe, scanner.SnapshotGeometry(), model);
 
             if (setup is null)
             {

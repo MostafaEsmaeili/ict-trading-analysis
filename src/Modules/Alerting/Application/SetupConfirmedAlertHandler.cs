@@ -33,7 +33,8 @@ public sealed class SetupConfirmedAlertHandler(AlertLog log) : IEventHandler<Set
             Direction: setup.Direction,
             Killzone: setup.Killzone,
             Style: setup.Style,
-            AtUtc: setup.DetectedAtUtc));
+            AtUtc: setup.DetectedAtUtc,
+            Model: setup.Model));
 
         return Task.CompletedTask;
     }

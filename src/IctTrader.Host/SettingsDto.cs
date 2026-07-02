@@ -120,4 +120,12 @@ public sealed record SettingsDto(
     IReadOnlyDictionary<string, InstrumentSettingsDto> InstrumentOverrides,
     GlobalConceptSettingsDto Global,
     IReadOnlyList<string> AvailableRequiredConditions,
-    IReadOnlyList<string> AvailableInstruments);
+    IReadOnlyList<string> AvailableInstruments,
+    // ADDITIVE (plan §16, appended last — frozen-wire safe): the LIVE multi-select of active setup models (the
+    // operator's override when set, else the configured default) and the catalog of selectable models.
+    IReadOnlyList<string>? ActiveModels = null,
+    IReadOnlyList<string>? AvailableModels = null);
+
+/// <summary>The PUT body for the live scanning selection (plan §16): which setup models to scan. Null/empty
+/// clears the live override back to the configured default — the operator can never select "nothing".</summary>
+public sealed record ScanningSettingsUpdateDto(IReadOnlyList<string>? ActiveModels);

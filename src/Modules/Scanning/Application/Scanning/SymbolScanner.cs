@@ -142,7 +142,7 @@ public sealed class SymbolScanner
 
         RefreshCalendarIfChanged();
         var confirmation = _session.OnCandle(candle);
-        return confirmation is null ? null : _factory.Create(confirmation, _style);
+        return confirmation is null ? null : _factory.Create(confirmation, _style, Model);
     }
 
     /// <summary>

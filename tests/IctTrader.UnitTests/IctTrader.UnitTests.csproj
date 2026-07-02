@@ -29,6 +29,7 @@
     <ProjectReference Include="..\..\src\Modules\Scanning\Application\IctTrader.Scanning.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\PaperTrading\Application\IctTrader.PaperTrading.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\Alerting\Application\IctTrader.Alerting.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Performance\Application\IctTrader.Performance.Application.csproj" />
   </ItemGroup>
 
 </Project>

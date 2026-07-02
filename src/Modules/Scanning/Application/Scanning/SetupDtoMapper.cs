@@ -55,7 +55,8 @@ internal static class SetupDtoMapper
             // ADDITIVE: surface the 0–100 confluence score the FSM produced (carried on the Setup aggregate via
             // SetupConfirmation.Score → SetupFactory). The Signals feed ranks on it within a grade. It is NOT a
             // DeterministicId input — the id hashes the natural identity only, so adding the score never changes the id.
-            Score: setup.Score);
+            Score: setup.Score,
+            Model: setup.Model.ToString());
     }
 
     /// <summary>
@@ -69,6 +70,16 @@ internal static class SetupDtoMapper
         var key = string.Create(
             CultureInfo.InvariantCulture,
             $"{setup.Symbol.Value}|{setup.Style}|{setup.Timeframe}|{setup.Direction}|{plan.Entry.Value}|{plan.Stop.Value}|{detectedAtUtc:O}");
+
+        // Multi-model id rule (plan §16 D1): the CANONICAL Ict2022 key is frozen byte-identical — every id ever
+        // persisted (paper trades keyed by SetupId, replay idempotency) predates the model dimension and MUST
+        // keep hashing to the same GUID. A NON-default model appends its name, so two models confirming the same
+        // bar at the same prices can never collide into one id (which would silently drop the second trade).
+        if (setup.Model != SetupModel.Ict2022)
+        {
+            key = string.Create(CultureInfo.InvariantCulture, $"{key}|{setup.Model}");
+        }
+
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(key));
         return new Guid(hash.AsSpan(0, 16));
     }

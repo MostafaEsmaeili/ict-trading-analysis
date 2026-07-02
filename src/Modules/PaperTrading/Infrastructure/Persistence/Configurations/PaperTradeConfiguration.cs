@@ -84,6 +84,16 @@ internal sealed class PaperTradeConfiguration : IEntityTypeConfiguration<PaperTr
             .HasMaxLength(20)
             .IsRequired();
 
+        // The setup model that produced this trade (plan §16). Every pre-multi-model row IS a canonical-model
+        // trade, so the column default backfills them truthfully on migration.
+        builder.Property(t => t.Model)
+            .UsePropertyAccessMode(PropertyAccessMode.Field)
+            .HasColumnName("model")
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .HasDefaultValue(SetupModel.Ict2022)
+            .IsRequired();
+
         builder.Property(t => t.Timeframe)
             .UsePropertyAccessMode(PropertyAccessMode.Field)
             .HasColumnName("timeframe")

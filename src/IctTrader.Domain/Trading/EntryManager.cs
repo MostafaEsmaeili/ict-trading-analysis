@@ -137,7 +137,7 @@ public sealed class EntryManager : IEntryManager
         var setup = armedEntry.Setup;
         var trade = new PaperTrade(
             armedEntry.Id, armedEntry.AccountId, setup.Symbol, setup.Style, setup.Timeframe, setup.Plan,
-            armedEntry.Size, armedEntry.PipSize, armedEntry.ValuePerPip, openedAtUtc);
+            armedEntry.Size, armedEntry.PipSize, armedEntry.ValuePerPip, openedAtUtc, model: setup.Model);
         trade.ClearDomainEvents(); // transient — the REAL trade is opened by the caller via OpenArmed
         return trade;
     }

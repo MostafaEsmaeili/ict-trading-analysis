@@ -1,4 +1,5 @@
 using IctTrader.Domain.Instruments;
+using IctTrader.Domain.Setups;
 
 namespace IctTrader.Domain.Configuration;
 
@@ -20,6 +21,14 @@ public interface IRuntimeSettings
 
     /// <summary>Sets (or, with <c>null</c>, clears) one symbol's overrides and bumps <see cref="Revision"/>.</summary>
     void SetInstrumentOverride(string symbol, InstrumentOptionOverrides? overrides);
+
+    /// <summary>The operator's LIVE multi-select of active setup models (plan §16), or null when no live override
+    /// is set (the scanner then uses the configured <c>Ict:Scanning:ActiveModels</c> default). Never empty.</summary>
+    IReadOnlyList<SetupModel>? ActiveModelsOverride { get; }
+
+    /// <summary>Sets (or, with null/empty, clears) the live active-model selection and bumps <see cref="Revision"/>
+    /// so the scanner caches rebuild on the next candle (the same live-apply seam as instrument overrides).</summary>
+    void SetActiveModels(IReadOnlyList<SetupModel>? models);
 }
 
 /// <summary>
@@ -31,6 +40,7 @@ public sealed class RuntimeSettings : IRuntimeSettings
 {
     private readonly Lock _writeLock = new();
     private volatile IReadOnlyDictionary<string, InstrumentOptionOverrides> _instrumentOverrides;
+    private volatile IReadOnlyList<SetupModel>? _activeModelsOverride;
     private int _revision;
 
     public RuntimeSettings(IReadOnlyDictionary<string, InstrumentOptionOverrides>? seed = null)
@@ -40,6 +50,19 @@ public sealed class RuntimeSettings : IRuntimeSettings
     public int Revision => Volatile.Read(ref _revision);
 
     public IReadOnlyDictionary<string, InstrumentOptionOverrides> InstrumentOverrides => _instrumentOverrides;
+
+    public IReadOnlyList<SetupModel>? ActiveModelsOverride => _activeModelsOverride;
+
+    public void SetActiveModels(IReadOnlyList<SetupModel>? models)
+    {
+        lock (_writeLock)
+        {
+            // Null/empty CLEARS the override (falls back to the configured default) — an operator can narrow or
+            // widen the model set live, but can never "select nothing" into a silently dead scanner.
+            _activeModelsOverride = models is { Count: > 0 } ? models.Distinct().ToArray() : null;
+            Interlocked.Increment(ref _revision);
+        }
+    }
 
     public void SetInstrumentOverride(string symbol, InstrumentOptionOverrides? overrides)
     {

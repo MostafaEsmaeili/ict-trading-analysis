@@ -21,7 +21,7 @@ public sealed class GetPerformanceSummaryQueryHandler(PerformanceState state)
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        var summary = PerformanceCalculator.Summarize(_state.Snapshot());
+        var summary = PerformanceCalculator.Summarize(_state.Snapshot(query.Model));
         return Task.FromResult(PerformanceMapper.ToDto(summary));
     }
 }

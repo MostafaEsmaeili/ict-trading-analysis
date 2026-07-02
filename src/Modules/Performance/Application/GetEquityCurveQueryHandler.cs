@@ -21,7 +21,7 @@ public sealed class GetEquityCurveQueryHandler(PerformanceState state)
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        var curve = PerformanceCalculator.EquityCurve(_state.Snapshot());
+        var curve = PerformanceCalculator.EquityCurve(_state.Snapshot(query.Model));
         IReadOnlyList<EquityPointDto> dtos = curve.Select(PerformanceMapper.ToDto).ToList();
         return Task.FromResult(dtos);
     }

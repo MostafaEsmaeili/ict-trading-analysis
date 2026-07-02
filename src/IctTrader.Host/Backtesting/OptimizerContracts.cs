@@ -21,7 +21,10 @@ public sealed record OptimizeRequest(
     // Feature-subset search over WHICH concepts to require: explicit candidate subsets…
     IReadOnlyList<IReadOnlyList<string>>? RequiredConditionSets = null,
     // …or auto-generate them by dropping up to this many of the (non-MSS) default required conditions to optional.
-    int? LeaveOutUpTo = null);
+    int? LeaveOutUpTo = null,
+    // ADDITIVE (plan §16): which setup models to sweep (SetupModel member names); null/empty = [Ict2022]. Adding a
+    // model multiplies the grid — the MaxCombinations cap still applies, so narrow the other axes for a 2-model sweep.
+    IReadOnlyList<string>? Models = null);
 
 /// <summary>One ranked combination's headline result — the parameters plus the key R-based metrics, ending balance,
 /// and the objective score it was ranked by.</summary>
@@ -39,7 +42,10 @@ public sealed record OptimizerResultDto(
     decimal Expectancy,
     decimal MaxDrawdownR,
     decimal EndingBalance,
-    decimal Score);
+    decimal Score,
+    // ADDITIVE (plan §16): the setup model this combination ran, appended LAST (frozen-wire safe) — the leaderboard's
+    // Model column, so the top row literally names the winning setup.
+    string Model = "Ict2022");
 
 /// <summary>The optimizer leaderboard: how many combinations ran, the objective they were ranked by, and the top N.</summary>
 public sealed record OptimizeResponse(

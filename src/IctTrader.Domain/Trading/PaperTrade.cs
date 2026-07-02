@@ -55,7 +55,8 @@ public sealed class PaperTrade : AggregateRoot<Guid>
         decimal pipSize,
         decimal valuePerPip,
         DateTimeOffset openedAtUtc,
-        DateTimeOffset? managedFromUtc = null)
+        DateTimeOffset? managedFromUtc = null,
+        SetupModel model = SetupModel.Ict2022)
         : base(id)
     {
         Guard.Against(id == Guid.Empty, "PaperTrade requires a non-empty id.");
@@ -84,6 +85,7 @@ public sealed class PaperTrade : AggregateRoot<Guid>
         AccountId = accountId;
         Symbol = symbol!;
         Style = style;
+        Model = model;
         Timeframe = timeframe;
         Plan = plan;
         Size = size;
@@ -112,6 +114,11 @@ public sealed class PaperTrade : AggregateRoot<Guid>
     public Symbol Symbol { get; }
 
     public TradeStyle Style { get; }
+
+    /// <summary>The setup model that produced this trade (plan §16) — the segmentation key the per-model
+    /// performance/alert views group by. Defaults to the canonical §2.5 model (also the persisted default for
+    /// every pre-multi-model row).</summary>
+    public SetupModel Model { get; }
 
     public Timeframe Timeframe { get; }
 

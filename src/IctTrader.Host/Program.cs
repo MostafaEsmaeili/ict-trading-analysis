@@ -4,6 +4,7 @@ using IctTrader.Alerting.Contracts;
 using IctTrader.Domain.Configuration;
 using IctTrader.Domain.Instruments;
 using IctTrader.Domain.Sessions;
+using IctTrader.Domain.Setups;
 using IctTrader.Host;
 using IctTrader.Host.Backtesting;
 using IctTrader.Host.Calendar;
@@ -15,6 +16,7 @@ using IctTrader.PaperTrading.Application.Trading;
 using IctTrader.PaperTrading.Contracts;
 using IctTrader.Performance.Application;
 using IctTrader.Performance.Contracts;
+using IctTrader.Scanning.Application.Scanning.Models;
 using IctTrader.Scanning.Contracts;
 using IctTrader.SharedKernel.Messaging;
 using Microsoft.EntityFrameworkCore;
@@ -162,8 +164,8 @@ api.MapGet("/alerts", async (IMessageBus bus) =>
 // whole (symbol × timeframe × style) matrix by grade → score → reward-to-risk → timeframe → recency and returns the
 // filtered top-N. Optional filters: ?symbol= / ?style= (exact wire-name match), ?grade= (a floor — A or B), ?max=.
 // Read-only/advisory — surfacing a ranked setup routes nowhere near an order path (§6.3 guardrail).
-api.MapGet("/signals", async (string? symbol, string? style, string? grade, int? max, IMessageBus bus) =>
-        TypedResults.Ok(await bus.QueryAsync(new GetSignalsQuery(symbol, style, grade, max))))
+api.MapGet("/signals", async (string? symbol, string? style, string? grade, int? max, string? model, IMessageBus bus) =>
+        TypedResults.Ok(await bus.QueryAsync(new GetSignalsQuery(symbol, style, grade, max, model))))
     .WithName("GetSignals");
 
 // The operator TAKEs a Manual-mode pending signal (plan §15 — "give me the opportunity to use that setup"): REST →
@@ -219,14 +221,20 @@ api.MapGet("/account", async (IMessageBus bus) =>
 // Real R-based performance read-side (plan §5.3): REST → bus QueryAsync → the Performance module's
 // GetPerformanceSummaryQueryHandler, which folds the accumulated closed-trade R stream through the pure
 // PerformanceCalculator. Read-only analytics — it routes nowhere near an order path (§6.3 guardrail).
-api.MapGet("/performance", async (IMessageBus bus) =>
-        TypedResults.Ok(await bus.QueryAsync(new GetPerformanceSummaryQuery())))
+api.MapGet("/performance", async (string? model, IMessageBus bus) =>
+        TypedResults.Ok(await bus.QueryAsync(new GetPerformanceSummaryQuery(model))))
     .WithName("GetPerformance");
+
+// The per-model breakdown (plan §16): one §5.3 summary row per setup model that has closed trades, so the
+// operator compares models side-by-side ("which setup performs best") next to the global headline aggregate.
+api.MapGet("/performance/models", async (IMessageBus bus) =>
+        TypedResults.Ok(await bus.QueryAsync(new GetModelPerformanceQuery())))
+    .WithName("GetModelPerformance");
 
 // The cumulative-R equity curve (plan §5.3) over the same closed-trade stream — REST → bus → the Performance
 // module's GetEquityCurveQueryHandler. Each point is the running sum of R at a trade's close, ordered by time.
-api.MapGet("/equity", async (IMessageBus bus) =>
-        TypedResults.Ok(await bus.QueryAsync(new GetEquityCurveQuery())))
+api.MapGet("/equity", async (string? model, IMessageBus bus) =>
+        TypedResults.Ok(await bus.QueryAsync(new GetEquityCurveQuery(model))))
     .WithName("GetEquityCurve");
 
 // Real ICT Pattern Chart read-side (plan §9.1 + plan §7 time-range extension):
@@ -243,6 +251,7 @@ api.MapGet("/chart/{symbol}", async (
         string? style,
         DateTimeOffset? from,
         DateTimeOffset? to,
+        string? model,
         IMessageBus bus,
         BacktestEngine history) =>
     {
@@ -281,7 +290,7 @@ api.MapGet("/chart/{symbol}", async (
         // The live "engine view" geometry for this (symbol, timeframe) — the concepts the scanner is tracking right
         // now, so the chart's concept toggles have data even between the rare confirmed setups (plan §9.1). Read-only.
         var geometryOverlays = await bus.QueryAsync(
-            new GetGeometryOverlaysQuery(symbol, timeframe, ChartDefaults.MaxGeometryOverlays));
+            new GetGeometryOverlaysQuery(symbol, timeframe, ChartDefaults.MaxGeometryOverlays, model));
         return TypedResults.Ok(new ChartResponse(
             symbol, timeframe, style ?? ChartDefaults.Style, candles, overlays, geometryOverlays));
     })
@@ -330,7 +339,8 @@ api.MapGet("/settings", (
         IOptions<RiskOptions> risk,
         IOptions<ExecutionCostOptions> execution,
         IOptions<KillzoneEntryOptions> killzones,
-        IOptions<MarketContextOptions> scanning) =>
+        IOptions<MarketContextOptions> scanning,
+        SetupModelCatalog models) =>
     {
         var c = confluence.Value;
         var r = risk.Value;
@@ -358,9 +368,50 @@ api.MapGet("/settings", (
             InstrumentOverrides: settings.InstrumentOverrides.ToDictionary(kv => kv.Key, kv => InstrumentSettingsDto.From(kv.Value)),
             Global: global,
             AvailableRequiredConditions: ConfluenceOptions.DefaultRequiredConditions.Select(x => x.ToString()).ToArray(),
-            AvailableInstruments: InstrumentCatalog.KnownSymbols));
+            AvailableInstruments: InstrumentCatalog.KnownSymbols,
+            // The LIVE selection: the operator's runtime override when set, else the configured default (plan §16).
+            ActiveModels: (settings.ActiveModelsOverride ?? scanning.Value.ResolvedActiveModels)
+                .Select(m => m.ToString()).ToArray(),
+            AvailableModels: models.All.Select(d => d.Id.ToString()).ToArray()));
     })
     .WithName("GetSettings");
+
+// The LIVE multi-select of active setup models (plan §16): which models the scanner runs, applied without a restart
+// via the revision-stamped runtime-settings seam (the scanner caches rebuild on the next candle). Null/empty clears
+// the override back to the configured default; an unknown model name is a 400. Read-only/advisory scanning scope —
+// selecting models routes nowhere near an order path (§6.3).
+api.MapPut("/settings/scanning", (ScanningSettingsUpdateDto? body, IRuntimeSettings settings, SetupModelCatalog models) =>
+    {
+        if (body?.ActiveModels is not { Count: > 0 })
+        {
+            settings.SetActiveModels(null);
+            return Results.NoContent();
+        }
+
+        var parsed = new List<SetupModel>(body.ActiveModels.Count);
+        foreach (var name in body.ActiveModels)
+        {
+            if (!Enum.TryParse<SetupModel>(name, ignoreCase: true, out var model) || !Enum.IsDefined(model))
+            {
+                return Results.BadRequest(new { error = $"Unknown setup model '{name}'." });
+            }
+
+            try
+            {
+                models.Resolve(model); // fail fast: a selectable model must have a shipped pipeline definition
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.BadRequest(new { error = ex.Message });
+            }
+
+            parsed.Add(model);
+        }
+
+        settings.SetActiveModels(parsed);
+        return Results.NoContent();
+    })
+    .WithName("PutScanningSettings");
 
 // Set (or, with an empty body, clear) one symbol's live override. A clear reverts the symbol to the built-in catalog
 // default. The override is validated (k-of-n range; a required subset must include DisplacementMss) before it applies.

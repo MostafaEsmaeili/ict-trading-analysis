@@ -12,6 +12,11 @@ namespace IctTrader.Scanning.Contracts;
 /// producers/consumers and the deterministic <see cref="Id"/> hash are unaffected (the id never hashes the score); a
 /// path that does not carry a score (e.g. a hand-built test fixture) simply leaves it 0. The score is what the
 /// Signals ranking + feed slice sorts on within a grade ("the system suggests the best setup").</para>
+/// <para><b>ADDITIVE (frozen-wire safe):</b> <see cref="Model"/> — the setup model that confirmed this setup
+/// (a <c>SetupModel</c> member name, plan §16) — is appended AFTER <see cref="Score"/> with the canonical
+/// "Ict2022" default, so every pre-multi-model producer/consumer and fixture stays valid. For the DEFAULT
+/// model the deterministic <see cref="Id"/> is UNCHANGED (replay idempotency vs existing paper trades); a
+/// non-default model appends its name to the id hash so two models confirming the same bar can never collide.</para>
 /// </summary>
 public sealed record SetupDto(
     Guid Id,
@@ -28,7 +33,8 @@ public sealed record SetupDto(
     string Reason,
     DateTimeOffset DetectedAtUtc,
     bool IsAdvisoryOnly,
-    int Score = 0);
+    int Score = 0,
+    string Model = "Ict2022");
 
 public sealed record ScanStatusDto(string Symbol, string? ActiveKillzone, int OpenSetups);
 
@@ -88,7 +94,13 @@ public sealed record GeometryOverlayDto(
 /// — the "engine view" the ICT Pattern Chart draws under its concept toggles, capped at <paramref name="Max"/> per
 /// concept. Additive bus query behind the frozen REST wire (<c>GET /api/chart/{symbol}</c>); read-only/advisory.
 /// </summary>
-public sealed record GetGeometryOverlaysQuery(string Symbol, string Timeframe, int Max)
+public sealed record GetGeometryOverlaysQuery(
+    string Symbol,
+    string Timeframe,
+    int Max,
+    // ADDITIVE (plan §16): which setup model's engine view to read (a SetupModel member name); null = the canonical
+    // Ict2022 view, so the pre-multi-model chart wire is unchanged.
+    string? Model = null)
     : IQuery<IReadOnlyList<GeometryOverlayDto>>;
 
 // ---- Signals ranking + feed (the "best opportunities" feed) — ADDITIVE, advisory, read-only (plan §6.3) ----
@@ -131,7 +143,13 @@ public sealed record RankedSignalDto(
 /// <c>Ict:Signals:MinGrade</c>), and <paramref name="Max"/> (cap the top-N; defaults to the configured
 /// <c>Ict:Signals:MaxFeedSize</c>). The Host routes <c>GET /api/signals</c> to this; read-only/advisory.
 /// </summary>
-public sealed record GetSignalsQuery(string? Symbol = null, string? Style = null, string? MinGrade = null, int? Max = null)
+public sealed record GetSignalsQuery(
+    string? Symbol = null,
+    string? Style = null,
+    string? MinGrade = null,
+    int? Max = null,
+    // ADDITIVE: narrow to one setup model (a SetupModel member name, plan §16); null = all active models.
+    string? Model = null)
     : IQuery<IReadOnlyList<RankedSignalDto>>;
 
 /// <summary>

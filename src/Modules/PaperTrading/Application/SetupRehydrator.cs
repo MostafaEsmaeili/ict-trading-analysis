@@ -52,7 +52,8 @@ internal static class SetupRehydrator
             plan,
             new SetupReason(dto.Reason),
             dto.DetectedAtUtc.ToUniversalTime(),
-            stackedFartherBound: null);
+            stackedFartherBound: null,
+            model: ParseEnum<SetupModel>(dto.Model));
     }
 
     private static int GradeFloor(SetupGrade grade, ConfluenceOptions grading) => grade switch

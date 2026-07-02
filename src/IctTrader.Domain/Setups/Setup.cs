@@ -23,7 +23,8 @@ public sealed class Setup
         TradePlan plan,
         SetupReason reason,
         DateTimeOffset confirmedAtUtc,
-        decimal? stackedFartherBound = null)
+        decimal? stackedFartherBound = null,
+        SetupModel model = SetupModel.Ict2022)
     {
         ArgumentNullException.ThrowIfNull(symbol);
         Guard.Against(
@@ -41,9 +42,15 @@ public sealed class Setup
         Reason = reason;
         ConfirmedAtUtc = confirmedAtUtc;
         StackedFartherBound = stackedFartherBound;
+        Model = model;
     }
 
     public Symbol Symbol { get; }
+
+    /// <summary>The setup model that confirmed this setup (plan §16) — the discriminator every downstream
+    /// consumer (trades, alerts, signals, performance) segments by. Defaults to the canonical §2.5 model so
+    /// pre-multi-model construction sites stay byte-identical.</summary>
+    public SetupModel Model { get; }
 
     public TradeStyle Style { get; }
 

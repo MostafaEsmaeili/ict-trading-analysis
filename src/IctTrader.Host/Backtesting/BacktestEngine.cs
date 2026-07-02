@@ -121,6 +121,7 @@ public sealed class BacktestEngine
 
         var perRunRisk = BuildRisk(_defaultRisk, request.RiskPercent);
         var perRunConfluence = BuildConfluence(request.MinRequiredConditions, request.RequiredConditions);
+        var model = ParseModel(request.Model);
 
         if (candles.Count == 0)
         {
@@ -129,11 +130,11 @@ public sealed class BacktestEngine
             return new BacktestResponse(
                 symbol.Value, timeframe.ToString(), style.ToString(), emptyFrom, emptyTo,
                 request.StartingBalance, request.RiskPercent, request.MinRequiredConditions, request.RequiredConditions,
-                request.StartingBalance, 0, 0, 0, EmptySummary(), [], []);
+                request.StartingBalance, 0, 0, 0, EmptySummary(), [], [], model.ToString());
         }
 
         var profile = _instruments.Resolve(symbol);
-        var scanner = _scannerFactory.Create(symbol, timeframe, style, perRunConfluence);
+        var scanner = _scannerFactory.Create(symbol, timeframe, style, perRunConfluence, model);
         var orchestrator = _orchestratorFactory.Create(symbol, perRunRisk);
         var account = new PaperAccount(
             Guid.NewGuid(), new Money(request.StartingBalance), perRunRisk.MaxOpenPortfolioRiskPercent);
@@ -172,7 +173,7 @@ public sealed class BacktestEngine
             HarvestCompleted(active, closed);
         }
 
-        return BuildResponse(request, symbol, timeframe, style, candles, account, closed, active, setupCount);
+        return BuildResponse(request, symbol, timeframe, style, model, candles, account, closed, active, setupCount);
     }
 
     /// <summary>Lists the recorded-history datasets available to backtest (one per <c>&lt;SYMBOL&gt;-&lt;TF&gt;.csv</c>).</summary>
@@ -310,8 +311,9 @@ public sealed class BacktestEngine
     }
 
     private BacktestResponse BuildResponse(
-        BacktestRequest request, Symbol symbol, Timeframe timeframe, TradeStyle style, List<Candle> candles,
-        PaperAccount account, List<PaperTrade> closed, List<ManagedPosition> active, int setupCount)
+        BacktestRequest request, Symbol symbol, Timeframe timeframe, TradeStyle style, SetupModel model,
+        List<Candle> candles, PaperAccount account, List<PaperTrade> closed, List<ManagedPosition> active,
+        int setupCount)
     {
         // Trades = every closed trade plus any still open at the run end, newest-opened first (the live table order).
         var openAtEnd = active.Where(p => p.Trade is { Status: TradeStatus.Open }).Select(p => p.Trade!);
@@ -341,7 +343,7 @@ public sealed class BacktestEngine
             candles[0].OpenTimeUtc, candles[^1].OpenTimeUtc,
             request.StartingBalance, request.RiskPercent, request.MinRequiredConditions, request.RequiredConditions,
             account.Equity.Amount, candles.Count, setupCount, trades.Count,
-            ToDto(summary), equity, trades);
+            ToDto(summary), equity, trades, model.ToString());
     }
 
     // ---- Loading + parsing ----
@@ -547,6 +549,13 @@ public sealed class BacktestEngine
         Enum.TryParse<Timeframe>(timeframe, ignoreCase: true, out var parsed)
             ? parsed
             : throw new ArgumentException($"Unknown timeframe '{timeframe}'.");
+
+    private static SetupModel ParseModel(string? model) =>
+        model is null
+            ? SetupModel.Ict2022
+            : Enum.TryParse<SetupModel>(model, ignoreCase: true, out var parsed) && Enum.IsDefined(parsed)
+                ? parsed
+                : throw new ArgumentException($"Unknown setup model '{model}'.");
 
     /// <summary>The entry timeframe each style backtests on by default (the §4.7 cascade's entry leg).</summary>
     private static Timeframe DefaultTimeframeFor(TradeStyle style) => style switch

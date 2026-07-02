@@ -34,7 +34,7 @@ public sealed class PaperTradeClosedHandler(
 
         var trade = @event.Trade;
         var closedAtUtc = trade.ClosedAtUtc ?? _timeProvider.GetUtcNow();
-        _state.Record(new ClosedTradeR(trade.RealizedR ?? 0m, closedAtUtc));
+        _state.Record(new ClosedTradeR(trade.RealizedR ?? 0m, closedAtUtc), trade.Model);
 
         var summary = PerformanceCalculator.Summarize(_state.Snapshot());
         await _bus.PublishAsync(new PerformanceUpdated(PerformanceMapper.ToDto(summary)), cancellationToken)

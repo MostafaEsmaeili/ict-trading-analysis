@@ -33,7 +33,8 @@ public sealed class PaperTradeOpenedAlertHandler(AlertLog log) : IEventHandler<P
             Direction: trade.Direction,
             Killzone: trade.Killzone,
             Style: trade.Style,
-            AtUtc: trade.OpenedAtUtc));
+            AtUtc: trade.OpenedAtUtc,
+            Model: trade.Model));
 
         return Task.CompletedTask;
     }

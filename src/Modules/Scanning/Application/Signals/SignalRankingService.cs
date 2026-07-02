@@ -45,7 +45,7 @@ public sealed class SignalRankingService
     /// The ranked top-N over the live feed, with NO query filters — the default feed (used by the live-push handler so
     /// the pushed feed mirrors the unfiltered REST feed). Equivalent to <see cref="Rank"/> with all filters null.
     /// </summary>
-    public IReadOnlyList<RankedSignalDto> Top(DateTimeOffset nowUtc) => Rank(nowUtc, null, null, null, null);
+    public IReadOnlyList<RankedSignalDto> Top(DateTimeOffset nowUtc) => Rank(nowUtc, null, null, null, null, null);
 
     /// <summary>
     /// The ranked, filtered top-N. <paramref name="symbol"/>/<paramref name="style"/> narrow case-insensitively on the
@@ -54,7 +54,7 @@ public sealed class SignalRankingService
     /// setup); <paramref name="max"/> caps the result (default <see cref="SignalRankingOptions.MaxFeedSize"/>).
     /// </summary>
     public IReadOnlyList<RankedSignalDto> Rank(
-        DateTimeOffset nowUtc, string? symbol, string? style, string? minGrade, int? max)
+        DateTimeOffset nowUtc, string? symbol, string? style, string? minGrade, int? max, string? model = null)
     {
         // The effective floor is the STRICTER of the configured floor and any requested floor (never weaker than the
         // §2.5.4 alertable floor the options pin).
@@ -69,6 +69,7 @@ public sealed class SignalRankingService
         var candidates = _store.Snapshot(nowUtc)
             .Where(s => symbol is null || string.Equals(s.Symbol, symbol, StringComparison.OrdinalIgnoreCase))
             .Where(s => style is null || string.Equals(s.Style, style, StringComparison.OrdinalIgnoreCase))
+            .Where(s => model is null || string.Equals(s.Model, model, StringComparison.OrdinalIgnoreCase))
             .Select(ToRankable)
             .Where(r => r.HasValue && r.Value.Grade >= floor)
             .Select(r => r!.Value)

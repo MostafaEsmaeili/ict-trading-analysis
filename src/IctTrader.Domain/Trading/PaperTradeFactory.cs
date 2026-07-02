@@ -61,7 +61,8 @@ public sealed class PaperTradeFactory
             sizing.Size,
             symbolSpec.PipSize,
             contractSpec.ValuePerPip,
-            openedAtUtc);
+            openedAtUtc,
+            model: setup.Model);
 
         // The account is the authoritative cap gate: it throws (without mutating) if the trade would breach the
         // portfolio open-risk cap, so the open is atomic — a refused trade leaves the account untouched.
@@ -157,6 +158,7 @@ public sealed class PaperTradeFactory
             armedEntry.PipSize, // the money geometry the entry was sized with — opens at the identical geometry
             armedEntry.ValuePerPip,
             openedAtUtc,
-            managedFromUtc); // the trigger bar's OPEN, so management starts on M+1 (the fill time is the trigger close)
+            managedFromUtc, // the trigger bar's OPEN, so management starts on M+1 (the fill time is the trigger close)
+            setup.Model);
     }
 }

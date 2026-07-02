@@ -60,7 +60,8 @@ public static class PaperTradeDtoMapper
             Timeframe: trade.Timeframe.ToString(),
             CurrentStop: trade.CurrentStop.Value,
             ExitPrice: trade.ExitPrice?.Value,
-            ManagedFromUtc: trade.ManagedFromUtc);
+            ManagedFromUtc: trade.ManagedFromUtc,
+            Model: trade.Model.ToString());
     }
 
     /// <summary>

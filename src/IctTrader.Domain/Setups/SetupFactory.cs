@@ -25,8 +25,9 @@ public sealed class SetupFactory
         _styles = styles;
     }
 
-    /// <summary>Prices and constructs the advisory Setup for the given style, or throws if the frame is missing/invalid.</summary>
-    public Setup Create(SetupConfirmation confirmation, TradeStyle style)
+    /// <summary>Prices and constructs the advisory Setup for the given style (stamped with the confirming
+    /// <paramref name="model"/>, plan §16), or throws if the frame is missing/invalid.</summary>
+    public Setup Create(SetupConfirmation confirmation, TradeStyle style, SetupModel model = SetupModel.Ict2022)
     {
         ArgumentNullException.ThrowIfNull(confirmation);
         if (confirmation.Frame is not { } frame)
@@ -72,6 +73,7 @@ public sealed class SetupFactory
             plan,
             reason,
             confirmation.ConfirmedAtUtc,
-            frame.StackedFartherBound); // FVG-SEM-2b: carried for the wrong-order NIX, never a TradePlan tier
+            frame.StackedFartherBound, // FVG-SEM-2b: carried for the wrong-order NIX, never a TradePlan tier
+            model);
     }
 }

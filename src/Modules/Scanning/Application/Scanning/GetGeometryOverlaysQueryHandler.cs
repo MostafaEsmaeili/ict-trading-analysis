@@ -19,6 +19,6 @@ public sealed class GetGeometryOverlaysQueryHandler(GeometryOverlayStore store)
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        return Task.FromResult(_store.Get(query.Symbol, query.Timeframe, query.Max));
+        return Task.FromResult(_store.Get(query.Symbol, query.Timeframe, query.Max, query.Model));
     }
 }

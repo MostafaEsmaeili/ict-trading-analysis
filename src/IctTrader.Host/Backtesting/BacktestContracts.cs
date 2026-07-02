@@ -19,7 +19,9 @@ public sealed record BacktestRequest(
     DateTimeOffset? FromUtc = null,
     DateTimeOffset? ToUtc = null,
     int? MinRequiredConditions = null,
-    IReadOnlyList<string>? RequiredConditions = null);
+    IReadOnlyList<string>? RequiredConditions = null,
+    // ADDITIVE (plan §16): which setup model to run (a SetupModel member name); null = the canonical Ict2022.
+    string? Model = null);
 
 /// <summary>One point on a backtest equity curve: the account balance and the cumulative R at a trade's close.</summary>
 public sealed record BacktestEquityPointDto(DateTimeOffset AtUtc, decimal Equity, decimal CumulativeR);
@@ -45,7 +47,9 @@ public sealed record BacktestResponse(
     int TradeCount,
     PerformanceSummaryDto Summary,
     IReadOnlyList<BacktestEquityPointDto> Equity,
-    IReadOnlyList<PaperTradeDto> Trades);
+    IReadOnlyList<PaperTradeDto> Trades,
+    // ADDITIVE (plan §16): the setup model this run scanned with, appended LAST (frozen-wire safe).
+    string Model = "Ict2022");
 
 /// <summary>A recorded-history dataset available to backtest: its symbol, timeframe, date range and candle count.</summary>
 public sealed record BacktestDatasetDto(
