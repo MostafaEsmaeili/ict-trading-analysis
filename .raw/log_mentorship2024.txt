@@ -1,0 +1,886 @@
+[youtube:tab] Extracting URL: https://www.youtube.com/playlist?list=PLVgHx4Z63paaM41aubnHOmqfeNjSAoBCV
+[youtube:tab] PLVgHx4Z63paaM41aubnHOmqfeNjSAoBCV: Downloading webpage
+[youtube:tab] PLVgHx4Z63paaM41aubnHOmqfeNjSAoBCV: Redownloading playlist API JSON with unavailable videos
+[download] Downloading playlist: ICT 2024 Mentorship
+[youtube:tab] Playlist ICT 2024 Mentorship: Downloading 51 items of 51
+[download] Downloading item 1 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=GKeLVR3dPuI
+[youtube] GKeLVR3dPuI: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] GKeLVR3dPuI: Downloading android vr player API JSON
+[info] GKeLVR3dPuI: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] GKeLVR3dPuI: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/01 - ICT 2024 Mentorship ⧹ Lecture #1  August 5, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/01 - ICT 2024 Mentorship ⧹ Lecture #1  August 5, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.78MiB/s (00:00:00)[download]   15.00KiB at  401.55KiB/s (00:00:00)[download]   31.00KiB at  813.59KiB/s (00:00:00)[download]   63.00KiB at    1.57MiB/s (00:00:00)[download]  127.00KiB at    1.57MiB/s (00:00:00)[download]  255.00KiB at    2.11MiB/s (00:00:00)[download]  511.00KiB at    3.18MiB/s (00:00:00)[download] 1023.00KiB at    5.16MiB/s (00:00:00)[download]    1.06MiB at    5.47MiB/s (00:00:00)[download] 100% of    1.06MiB in 00:00:00 at 1.55MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/01 - ICT 2024 Mentorship ⧹ Lecture #1  August 5, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/01 - ICT 2024 Mentorship ⧹ Lecture #1  August 5, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at    2.51MiB/s (00:00:00)[download]    7.00KiB at    4.28MiB/s (00:00:00)[download]   15.00KiB at    7.18MiB/s (00:00:00)[download]   31.00KiB at  922.05KiB/s (00:00:00)[download]   63.00KiB at    1.78MiB/s (00:00:00)[download]  127.00KiB at    1.78MiB/s (00:00:00)[download]  255.00KiB at    2.29MiB/s (00:00:00)[download]  511.00KiB at    3.31MiB/s (00:00:00)[download] 1023.00KiB at    5.36MiB/s (00:00:00)[download]    1.06MiB at    5.66MiB/s (00:00:00)[download] 100% of    1.06MiB in 00:00:00 at 2.12MiB/s
+[download] Downloading item 2 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=pkI4AgC4OPI
+[youtube] pkI4AgC4OPI: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] pkI4AgC4OPI: Downloading android vr player API JSON
+[info] pkI4AgC4OPI: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] pkI4AgC4OPI: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/02 - ICT 2024 Mentorship ⧹ Lecture #2   August 6, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/02 - ICT 2024 Mentorship ⧹ Lecture #2   August 6, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    6.07MiB/s (00:00:00)[download]   15.00KiB at   10.18MiB/s (00:00:00)[download]   31.00KiB at  808.94KiB/s (00:00:00)[download]   63.00KiB at    1.57MiB/s (00:00:00)[download]  127.00KiB at    1.59MiB/s (00:00:00)[download]  255.00KiB at    2.11MiB/s (00:00:00)[download]  511.00KiB at    3.21MiB/s (00:00:00)[download] 1023.00KiB at    5.17MiB/s (00:00:00)[download]    1.45MiB at    7.26MiB/s (00:00:00)[download] 100% of    1.45MiB in 00:00:00 at 2.09MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/02 - ICT 2024 Mentorship ⧹ Lecture #2   August 6, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/02 - ICT 2024 Mentorship ⧹ Lecture #2   August 6, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    6.30MiB/s (00:00:00)[download]   15.00KiB at   10.10MiB/s (00:00:00)[download]   31.00KiB at  821.49KiB/s (00:00:00)[download]   63.00KiB at    1.46MiB/s (00:00:00)[download]  127.00KiB at    1.61MiB/s (00:00:00)[download]  255.00KiB at    3.18MiB/s (00:00:00)[download]  511.00KiB at    4.25MiB/s (00:00:00)[download] 1023.00KiB at    6.38MiB/s (00:00:00)[download]    1.45MiB at    7.54MiB/s (00:00:00)[download] 100% of    1.45MiB in 00:00:00 at 2.33MiB/s
+[download] Downloading item 3 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=ZkLc4-adodg
+[youtube] ZkLc4-adodg: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] ZkLc4-adodg: Downloading android vr player API JSON
+[info] ZkLc4-adodg: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] ZkLc4-adodg: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/03 - ICT 2024 Mentorship ⧹ Lecture #3   August 7, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/03 - ICT 2024 Mentorship ⧹ Lecture #3   August 7, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.99MiB/s (00:00:00)[download]   15.00KiB at    9.18MiB/s (00:00:00)[download]   31.00KiB at   14.91MiB/s (00:00:00)[download]   63.00KiB at   25.20MiB/s (00:00:00)[download]  127.00KiB at    3.22MiB/s (00:00:00)[download]  255.00KiB at    3.23MiB/s (00:00:00)[download]  511.00KiB at    4.25MiB/s (00:00:00)[download] 1023.00KiB at    6.43MiB/s (00:00:00)[download]    1.18MiB at    7.52MiB/s (00:00:00)[download] 100% of    1.18MiB in 00:00:00 at 1.95MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/03 - ICT 2024 Mentorship ⧹ Lecture #3   August 7, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/03 - ICT 2024 Mentorship ⧹ Lecture #3   August 7, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at    2.81MiB/s (00:00:00)[download]    7.00KiB at    4.53MiB/s (00:00:00)[download]   15.00KiB at    7.50MiB/s (00:00:00)[download]   31.00KiB at   12.51MiB/s (00:00:00)[download]   63.00KiB at   20.84MiB/s (00:00:00)[download]  127.00KiB at    2.01MiB/s (00:00:00)[download]  255.00KiB at    3.23MiB/s (00:00:00)[download]  511.00KiB at    3.23MiB/s (00:00:00)[download] 1023.00KiB at    2.87MiB/s (00:00:00)[download]    1.18MiB at    2.79MiB/s (00:00:00)[download] 100% of    1.18MiB in 00:00:00 at 1.32MiB/s
+[download] Downloading item 4 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=hdSscxZgE58
+[youtube] hdSscxZgE58: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] hdSscxZgE58: Downloading android vr player API JSON
+[info] hdSscxZgE58: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] hdSscxZgE58: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/04 - ICT 2024 Mentorship ⧹ Lecture #4    August 8, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/04 - ICT 2024 Mentorship ⧹ Lecture #4    August 8, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    6.16MiB/s (00:00:00)[download]   15.00KiB at    9.86MiB/s (00:00:00)[download]   31.00KiB at   16.59MiB/s (00:00:00)[download]   63.00KiB at   27.43MiB/s (00:00:00)[download]  127.00KiB at    2.82MiB/s (00:00:00)[download]  255.00KiB at    3.21MiB/s (00:00:00)[download]  511.00KiB at    3.24MiB/s (00:00:00)[download] 1023.00KiB at    2.88MiB/s (00:00:00)[download]    1.08MiB at    3.11MiB/s (00:00:00)[download] 100% of    1.08MiB in 00:00:00 at 1.32MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/04 - ICT 2024 Mentorship ⧹ Lecture #4    August 8, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/04 - ICT 2024 Mentorship ⧹ Lecture #4    August 8, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    6.39MiB/s (00:00:00)[download]   15.00KiB at   10.41MiB/s (00:00:00)[download]   31.00KiB at  737.04KiB/s (00:00:00)[download]   63.00KiB at    1.43MiB/s (00:00:00)[download]  127.00KiB at    1.60MiB/s (00:00:00)[download]  255.00KiB at    2.14MiB/s (00:00:00)[download]  511.00KiB at    2.58MiB/s (00:00:00)[download] 1023.00KiB at    2.57MiB/s (00:00:00)[download]    1.08MiB at    2.78MiB/s (00:00:00)[download] 100% of    1.08MiB in 00:00:00 at 1.32MiB/s
+[download] Downloading item 5 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=ul6x6BwOg6M
+[youtube] ul6x6BwOg6M: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] ul6x6BwOg6M: Downloading android vr player API JSON
+[info] ul6x6BwOg6M: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] ul6x6BwOg6M: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/05 - ICT 2024 Mentorship ⧹ Lecture #5    August 9, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/05 - ICT 2024 Mentorship ⧹ Lecture #5    August 9, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.00MiB/s (00:00:00)[download]   15.00KiB at  370.51KiB/s (00:00:00)[download]   31.00KiB at  752.19KiB/s (00:00:00)[download]   63.00KiB at    1.47MiB/s (00:00:00)[download]  127.00KiB at    1.63MiB/s (00:00:00)[download]  255.00KiB at    2.15MiB/s (00:00:00)[download]  511.00KiB at    2.61MiB/s (00:00:00)[download]  864.33KiB at    2.76MiB/s (00:00:00)[download] 100% of  864.33KiB in 00:00:00 at 1.29MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/05 - ICT 2024 Mentorship ⧹ Lecture #5    August 9, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/05 - ICT 2024 Mentorship ⧹ Lecture #5    August 9, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.99MiB/s (00:00:00)[download]   15.00KiB at  394.45KiB/s (00:00:00)[download]   31.00KiB at  799.59KiB/s (00:00:00)[download]   63.00KiB at    1.56MiB/s (00:00:00)[download]  127.00KiB at    1.48MiB/s (00:00:00)[download]  255.00KiB at    2.09MiB/s (00:00:00)[download]  511.00KiB at    2.54MiB/s (00:00:00)[download]  864.33KiB at    2.73MiB/s (00:00:00)[download] 100% of  864.33KiB in 00:00:00 at 1.31MiB/s
+[download] Downloading item 6 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=woAQ1XJeD7Y
+[youtube] woAQ1XJeD7Y: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] woAQ1XJeD7Y: Downloading android vr player API JSON
+[info] woAQ1XJeD7Y: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] woAQ1XJeD7Y: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/06 - ICT 2024 Mentorship ⧹ Lecture #6   August 12, 2024 Begins 9_15am ET.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/06 - ICT 2024 Mentorship ⧹ Lecture #6   August 12, 2024 Begins 9_15am ET.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.66MiB/s (00:00:00)[download]   15.00KiB at    9.39MiB/s (00:00:00)[download]   31.00KiB at  734.31KiB/s (00:00:00)[download]   63.00KiB at  827.71KiB/s (00:00:00)[download]  127.00KiB at    1.60MiB/s (00:00:00)[download]  255.00KiB at    2.14MiB/s (00:00:00)[download]  511.00KiB at    2.59MiB/s (00:00:00)[download] 1023.00KiB at    3.21MiB/s (00:00:00)[download]    1.29MiB at    3.03MiB/s (00:00:00)[download] 100% of    1.29MiB in 00:00:00 at 1.56MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/06 - ICT 2024 Mentorship ⧹ Lecture #6   August 12, 2024 Begins 9_15am ET.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/06 - ICT 2024 Mentorship ⧹ Lecture #6   August 12, 2024 Begins 9_15am ET.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    6.03MiB/s (00:00:00)[download]   15.00KiB at  397.72KiB/s (00:00:00)[download]   31.00KiB at  808.66KiB/s (00:00:00)[download]   63.00KiB at    1.59MiB/s (00:00:00)[download]  127.00KiB at    1.61MiB/s (00:00:00)[download]  207.50KiB at    1.70MiB/s (00:00:00)[download] 100% of  207.50KiB in 00:00:00 at 592.91KiB/s
+[download] Downloading item 7 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=-WItxLARGpE
+[youtube] -WItxLARGpE: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] -WItxLARGpE: Downloading android vr player API JSON
+[info] -WItxLARGpE: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] -WItxLARGpE: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/07 - ICT 2024 Mentorship ⧹ Lecture #7   August 13, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/07 - ICT 2024 Mentorship ⧹ Lecture #7   August 13, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.73MiB/s (00:00:00)[download]   15.00KiB at  392.47KiB/s (00:00:00)[download]   31.00KiB at  796.46KiB/s (00:00:00)[download]   63.00KiB at    1.54MiB/s (00:00:00)[download]  127.00KiB at    1.55MiB/s (00:00:00)[download]  255.00KiB at    2.13MiB/s (00:00:00)[download]  511.00KiB at    2.58MiB/s (00:00:00)[download] 1023.00KiB at    3.21MiB/s (00:00:00)[download]    1.81MiB at    3.33MiB/s (00:00:01)[download] 100% of    1.81MiB in 00:00:01 at 1.53MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/07 - ICT 2024 Mentorship ⧹ Lecture #7   August 13, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/07 - ICT 2024 Mentorship ⧹ Lecture #7   August 13, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.24MiB/s (00:00:00)[download]   15.00KiB at    8.91MiB/s (00:00:00)[download]   31.00KiB at  811.10KiB/s (00:00:00)[download]   63.00KiB at    1.58MiB/s (00:00:00)[download]  127.00KiB at    1.60MiB/s (00:00:00)[download]  255.00KiB at    2.12MiB/s (00:00:00)[download]  511.00KiB at    3.19MiB/s (00:00:00)[download] 1023.00KiB at    3.66MiB/s (00:00:00)[download]    1.81MiB at    3.87MiB/s (00:00:00)[download] 100% of    1.81MiB in 00:00:00 at 1.85MiB/s
+[download] Downloading item 8 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=zU7iAqg4sSA
+[youtube] zU7iAqg4sSA: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] zU7iAqg4sSA: Downloading android vr player API JSON
+[info] zU7iAqg4sSA: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] zU7iAqg4sSA: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/08 - ICT 2024 Mentorship ⧹ Lecture #8   August 14, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/08 - ICT 2024 Mentorship ⧹ Lecture #8   August 14, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.97MiB/s (00:00:00)[download]   15.00KiB at    9.85MiB/s (00:00:00)[download]   31.00KiB at  814.31KiB/s (00:00:00)[download]   63.00KiB at    1.59MiB/s (00:00:00)[download]  127.00KiB at    1.61MiB/s (00:00:00)[download]  255.00KiB at    2.15MiB/s (00:00:00)[download]  511.00KiB at    2.57MiB/s (00:00:00)[download] 1023.00KiB at    3.20MiB/s (00:00:00)[download]    2.00MiB at    3.67MiB/s (00:00:01)[download]    2.17MiB at    3.75MiB/s (00:00:01)[download] 100% of    2.17MiB in 00:00:01 at 1.89MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/08 - ICT 2024 Mentorship ⧹ Lecture #8   August 14, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/08 - ICT 2024 Mentorship ⧹ Lecture #8   August 14, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at    2.72MiB/s (00:00:00)[download]    7.00KiB at    4.39MiB/s (00:00:00)[download]   15.00KiB at    7.17MiB/s (00:00:00)[download]   31.00KiB at  825.96KiB/s (00:00:00)[download]   63.00KiB at    1.60MiB/s (00:00:00)[download]  127.00KiB at    1.60MiB/s (00:00:00)[download]  255.00KiB at    2.13MiB/s (00:00:00)[download]  511.00KiB at    3.15MiB/s (00:00:00)[download] 1023.00KiB at    3.66MiB/s (00:00:00)[download]    2.00MiB at    3.92MiB/s (00:00:01)[download]    2.17MiB at    3.96MiB/s (00:00:01)[download] 100% of    2.17MiB in 00:00:01 at 1.93MiB/s
+[download] Downloading item 9 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=pg5XBNkpotM
+[youtube] pg5XBNkpotM: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] pg5XBNkpotM: Downloading android vr player API JSON
+[info] pg5XBNkpotM: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] pg5XBNkpotM: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/09 - ICT 2024 Mentorship ⧹ Lecture #9  August 15, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/09 - ICT 2024 Mentorship ⧹ Lecture #9  August 15, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    6.08MiB/s (00:00:00)[download]   15.00KiB at  191.81KiB/s (00:00:00)[download]   31.00KiB at  393.23KiB/s (00:00:00)[download]   63.00KiB at  794.89KiB/s (00:00:00)[download]  127.00KiB at    1.07MiB/s (00:00:00)[download]  255.00KiB at    1.61MiB/s (00:00:00)[download]  362.69KiB at    2.27MiB/s (00:00:00)[download] 100% of  362.69KiB in 00:00:00 at 943.28KiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/09 - ICT 2024 Mentorship ⧹ Lecture #9  August 15, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/09 - ICT 2024 Mentorship ⧹ Lecture #9  August 15, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    6.04MiB/s (00:00:00)[download]   15.00KiB at   10.05MiB/s (00:00:00)[download]   31.00KiB at  811.64KiB/s (00:00:00)[download]   63.00KiB at    1.56MiB/s (00:00:00)[download]  127.00KiB at    1.62MiB/s (00:00:00)[download]  255.00KiB at    2.10MiB/s (00:00:00)[download]  362.69KiB at    2.93MiB/s (00:00:00)[download] 100% of  362.69KiB in 00:00:00 at 1.03MiB/s
+[download] Downloading item 10 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=qoNQfVzVXZQ
+[youtube] qoNQfVzVXZQ: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] qoNQfVzVXZQ: Downloading android vr player API JSON
+[info] qoNQfVzVXZQ: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] qoNQfVzVXZQ: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/10 - ICT 2024 Mentorship ⧹ Lecture #10  August 16, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/10 - ICT 2024 Mentorship ⧹ Lecture #10  August 16, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at  162.79KiB/s (00:00:00)[download]   15.00KiB at  342.53KiB/s (00:00:00)[download]   31.00KiB at  699.92KiB/s (00:00:00)[download]   63.00KiB at    1.37MiB/s (00:00:00)[download]  127.00KiB at    1.57MiB/s (00:00:00)[download]  255.00KiB at    2.13MiB/s (00:00:00)[download]  511.00KiB at    3.19MiB/s (00:00:00)[download] 1023.00KiB at    3.71MiB/s (00:00:00)[download]    1.46MiB at    3.80MiB/s (00:00:00)[download] 100% of    1.46MiB in 00:00:00 at 1.70MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/10 - ICT 2024 Mentorship ⧹ Lecture #10  August 16, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/10 - ICT 2024 Mentorship ⧹ Lecture #10  August 16, 2024.en.vtt
+[download]    1.00KiB at   21.33KiB/s (00:00:00)[download]    3.00KiB at   63.09KiB/s (00:00:00)[download]    7.00KiB at  146.32KiB/s (00:00:00)[download]   15.00KiB at  311.57KiB/s (00:00:00)[download]   31.00KiB at  393.40KiB/s (00:00:00)[download]   63.00KiB at  781.02KiB/s (00:00:00)[download]  127.00KiB at    1.05MiB/s (00:00:00)[download]  255.00KiB at    1.59MiB/s (00:00:00)[download]  511.00KiB at    2.58MiB/s (00:00:00)[download] 1023.00KiB at    3.21MiB/s (00:00:00)[download]    1.46MiB at    3.76MiB/s (00:00:00)[download] 100% of    1.46MiB in 00:00:00 at 1.87MiB/s
+[download] Downloading item 11 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=aONkyy-HTqE
+[youtube] aONkyy-HTqE: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] aONkyy-HTqE: Downloading android vr player API JSON
+[info] aONkyy-HTqE: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] aONkyy-HTqE: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/11 - ICT 2024 Mentorship ⧹ Lecture #11  August 19, 2024 Begins 9_15am ET.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/11 - ICT 2024 Mentorship ⧹ Lecture #11  August 19, 2024 Begins 9_15am ET.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    6.12MiB/s (00:00:00)[download]   15.00KiB at   10.23MiB/s (00:00:00)[download]   31.00KiB at  811.55KiB/s (00:00:00)[download]   63.00KiB at    1.57MiB/s (00:00:00)[download]  127.00KiB at    1.60MiB/s (00:00:00)[download]  255.00KiB at    2.14MiB/s (00:00:00)[download]  511.00KiB at    3.12MiB/s (00:00:00)[download] 1023.00KiB at    3.43MiB/s (00:00:00)[download]    1.90MiB at    4.36MiB/s (00:00:00)[download] 100% of    1.90MiB in 00:00:00 at 2.02MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/11 - ICT 2024 Mentorship ⧹ Lecture #11  August 19, 2024 Begins 9_15am ET.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/11 - ICT 2024 Mentorship ⧹ Lecture #11  August 19, 2024 Begins 9_15am ET.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    6.35MiB/s (00:00:00)[download]   15.00KiB at  398.52KiB/s (00:00:00)[download]   31.00KiB at  809.23KiB/s (00:00:00)[download]   63.00KiB at    1.59MiB/s (00:00:00)[download]  127.00KiB at    1.61MiB/s (00:00:00)[download]  255.00KiB at    2.12MiB/s (00:00:00)[download]  511.00KiB at    2.97MiB/s (00:00:00)[download] 1023.00KiB at    3.63MiB/s (00:00:00)[download]    1.90MiB at    4.37MiB/s (00:00:00)[download] 100% of    1.90MiB in 00:00:00 at 1.90MiB/s
+[download] Downloading item 12 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=EQfTD6ntB4A
+[youtube] EQfTD6ntB4A: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] EQfTD6ntB4A: Downloading android vr player API JSON
+[info] EQfTD6ntB4A: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] EQfTD6ntB4A: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/12 - ICT 2024 Mentorship ⧹ Lecture #12  August 19, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/12 - ICT 2024 Mentorship ⧹ Lecture #12  August 19, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at  186.21KiB/s (00:00:00)[download]   15.00KiB at  392.55KiB/s (00:00:00)[download]   31.00KiB at  802.58KiB/s (00:00:00)[download]   63.00KiB at  542.86KiB/s (00:00:00)[download]  127.00KiB at    1.06MiB/s (00:00:00)[download]  255.00KiB at    1.61MiB/s (00:00:00)[download]  401.84KiB at    2.03MiB/s (00:00:00)[download] 100% of  401.84KiB in 00:00:00 at 902.81KiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/12 - ICT 2024 Mentorship ⧹ Lecture #12  August 19, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/12 - ICT 2024 Mentorship ⧹ Lecture #12  August 19, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    6.48MiB/s (00:00:00)[download]   15.00KiB at   10.44MiB/s (00:00:00)[download]   31.00KiB at  813.44KiB/s (00:00:00)[download]   63.00KiB at    1.58MiB/s (00:00:00)[download]  127.00KiB at    1.54MiB/s (00:00:00)[download]  255.00KiB at    2.13MiB/s (00:00:00)[download]  401.84KiB at    2.55MiB/s (00:00:00)[download] 100% of  401.84KiB in 00:00:00 at 1.01MiB/s
+[download] Downloading item 13 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=LMi_mO3AP08
+[youtube] LMi_mO3AP08: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] LMi_mO3AP08: Downloading android vr player API JSON
+[info] LMi_mO3AP08: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] LMi_mO3AP08: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/13 - ICT 2024 Mentorship ⧹ Lecture #13  August 20, 2024 Begins 9_15am ET.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/13 - ICT 2024 Mentorship ⧹ Lecture #13  August 20, 2024 Begins 9_15am ET.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.27MiB/s (00:00:00)[download]   15.00KiB at    8.76MiB/s (00:00:00)[download]   31.00KiB at  816.70KiB/s (00:00:00)[download]   63.00KiB at    1.59MiB/s (00:00:00)[download]  127.00KiB at    1.60MiB/s (00:00:00)[download]  255.00KiB at    2.11MiB/s (00:00:00)[download]  479.34KiB at    2.97MiB/s (00:00:00)[download] 100% of  479.34KiB in 00:00:00 at 1.11MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/13 - ICT 2024 Mentorship ⧹ Lecture #13  August 20, 2024 Begins 9_15am ET.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/13 - ICT 2024 Mentorship ⧹ Lecture #13  August 20, 2024 Begins 9_15am ET.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    4.70MiB/s (00:00:00)[download]   15.00KiB at    7.52MiB/s (00:00:00)[download]   31.00KiB at  823.29KiB/s (00:00:00)[download]   63.00KiB at    1.60MiB/s (00:00:00)[download]  127.00KiB at    1.61MiB/s (00:00:00)[download]  255.00KiB at    2.11MiB/s (00:00:00)[download]  479.34KiB at    3.00MiB/s (00:00:00)[download] 100% of  479.34KiB in 00:00:00 at 1.10MiB/s
+[download] Downloading item 14 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=WiMVPc4cvG8
+[youtube] WiMVPc4cvG8: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] WiMVPc4cvG8: Downloading android vr player API JSON
+[youtube] WiMVPc4cvG8: This video is age-restricted; some formats may be missing without authentication. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for tips on effectively exporting YouTube cookies
+[youtube] WiMVPc4cvG8: Downloading web embedded client config
+[youtube] WiMVPc4cvG8: Downloading player 4918c89a-main
+[youtube] WiMVPc4cvG8: Downloading web embedded player API JSON
+ERROR: [youtube] WiMVPc4cvG8: Sign in to confirm your age. This video may be inappropriate for some users. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for tips on effectively exporting YouTube cookies
+[download] Downloading item 15 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=vfqyx8BYdNo
+[youtube] vfqyx8BYdNo: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] vfqyx8BYdNo: Downloading android vr player API JSON
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] vfqyx8BYdNo: Downloading 1 format(s): 18
+[info] There are no subtitles for the requested languages
+[download] Downloading item 16 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=kuURDD1ajdQ
+[youtube] kuURDD1ajdQ: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] kuURDD1ajdQ: Downloading android vr player API JSON
+[info] kuURDD1ajdQ: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] kuURDD1ajdQ: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/16 - ICT 2024 Mentorship ⧹ Lecture #16  August 24, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/16 - ICT 2024 Mentorship ⧹ Lecture #16  August 24, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    4.94MiB/s (00:00:00)[download]   15.00KiB at    8.21MiB/s (00:00:00)[download]   31.00KiB at   14.06MiB/s (00:00:00)[download]   63.00KiB at    1.72MiB/s (00:00:00)[download]  127.00KiB at    1.66MiB/s (00:00:00)[download]  255.00KiB at    2.20MiB/s (00:00:00)[download]  384.21KiB at    3.13MiB/s (00:00:00)[download] 100% of  384.21KiB in 00:00:00 at 949.85KiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/16 - ICT 2024 Mentorship ⧹ Lecture #16  August 24, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/16 - ICT 2024 Mentorship ⧹ Lecture #16  August 24, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.04MiB/s (00:00:00)[download]   15.00KiB at    8.38MiB/s (00:00:00)[download]   31.00KiB at  771.64KiB/s (00:00:00)[download]   63.00KiB at    1.49MiB/s (00:00:00)[download]  127.00KiB at    1.61MiB/s (00:00:00)[download]  255.00KiB at    2.16MiB/s (00:00:00)[download]  384.21KiB at    3.18MiB/s (00:00:00)[download] 100% of  384.21KiB in 00:00:00 at 1.04MiB/s
+[download] Downloading item 17 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=iLe_4m84_yw
+[youtube] iLe_4m84_yw: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] iLe_4m84_yw: Downloading android vr player API JSON
+[info] iLe_4m84_yw: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] iLe_4m84_yw: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/17 - ICT 2024 Mentorship ⧹ Lecture #17  August 26, 2024  Impeding Barriers.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/17 - ICT 2024 Mentorship ⧹ Lecture #17  August 26, 2024  Impeding Barriers.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.11MiB/s (00:00:00)[download]   15.00KiB at  196.90KiB/s (00:00:00)[download]   31.00KiB at  402.78KiB/s (00:00:00)[download]   63.00KiB at  812.85KiB/s (00:00:00)[download]  127.00KiB at 1018.66KiB/s (00:00:00)[download]  255.00KiB at    1.53MiB/s (00:00:00)[download]  511.00KiB at    2.56MiB/s (00:00:00)[download] 1023.00KiB at    3.65MiB/s (00:00:00)[download]    2.00MiB at    4.64MiB/s (00:00:00)[download]    2.05MiB at    4.74MiB/s (00:00:00)[download] 100% of    2.05MiB in 00:00:00 at 2.17MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/17 - ICT 2024 Mentorship ⧹ Lecture #17  August 26, 2024  Impeding Barriers.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/17 - ICT 2024 Mentorship ⧹ Lecture #17  August 26, 2024  Impeding Barriers.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.94MiB/s (00:00:00)[download]   15.00KiB at  403.26KiB/s (00:00:00)[download]   31.00KiB at  815.59KiB/s (00:00:00)[download]   63.00KiB at    1.60MiB/s (00:00:00)[download]  127.00KiB at    1.58MiB/s (00:00:00)[download]  255.00KiB at    2.20MiB/s (00:00:00)[download]  511.00KiB at    3.25MiB/s (00:00:00)[download] 1023.00KiB at    4.30MiB/s (00:00:00)[download]    2.00MiB at    5.67MiB/s (00:00:00)[download]    2.05MiB at    5.78MiB/s (00:00:00)[download] 100% of    2.05MiB in 00:00:00 at 2.10MiB/s
+[download] Downloading item 18 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=yOZHawAE8QI
+[youtube] yOZHawAE8QI: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] yOZHawAE8QI: Downloading android vr player API JSON
+[info] yOZHawAE8QI: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] yOZHawAE8QI: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/18 - ICT 2024 Mentorship ⧹ Lecture #18  August 27, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/18 - ICT 2024 Mentorship ⧹ Lecture #18  August 27, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    6.15MiB/s (00:00:00)[download]   15.00KiB at  335.54KiB/s (00:00:00)[download]   31.00KiB at  681.97KiB/s (00:00:00)[download]   63.00KiB at    1.34MiB/s (00:00:00)[download]  127.00KiB at    1.64MiB/s (00:00:00)[download]  255.00KiB at    2.03MiB/s (00:00:00)[download]  511.00KiB at    3.04MiB/s (00:00:00)[download] 1023.00KiB at    4.97MiB/s (00:00:00)[download]    1.75MiB at    5.58MiB/s (00:00:00)[download] 100% of    1.75MiB in 00:00:00 at 2.22MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/18 - ICT 2024 Mentorship ⧹ Lecture #18  August 27, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/18 - ICT 2024 Mentorship ⧹ Lecture #18  August 27, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.17MiB/s (00:00:00)[download]   15.00KiB at    8.75MiB/s (00:00:00)[download]   31.00KiB at   15.16MiB/s (00:00:00)[download]   63.00KiB at   25.10MiB/s (00:00:00)[download]  127.00KiB at    3.19MiB/s (00:00:00)[download]  255.00KiB at    3.23MiB/s (00:00:00)[download]  511.00KiB at    4.22MiB/s (00:00:00)[download] 1023.00KiB at    6.32MiB/s (00:00:00)[download]    1.75MiB at    7.38MiB/s (00:00:00)[download] 100% of    1.75MiB in 00:00:00 at 2.31MiB/s
+[download] Downloading item 19 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=i3olkndPmEE
+[youtube] i3olkndPmEE: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] i3olkndPmEE: Downloading android vr player API JSON
+[info] i3olkndPmEE: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] i3olkndPmEE: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/19 - ICT 2024 Mentorship ⧹ Lecture #19  August 28, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/19 - ICT 2024 Mentorship ⧹ Lecture #19  August 28, 2024.en-orig.vtt
+[download]    1.00KiB at   26.31KiB/s (00:00:00)[download]    3.00KiB at   77.73KiB/s (00:00:00)[download]    7.00KiB at  178.68KiB/s (00:00:00)[download]   15.00KiB at  378.46KiB/s (00:00:00)[download]   31.00KiB at  773.70KiB/s (00:00:00)[download]   63.00KiB at    1.52MiB/s (00:00:00)[download]  127.00KiB at    1.56MiB/s (00:00:00)[download]  255.00KiB at    2.14MiB/s (00:00:00)[download]  511.00KiB at    3.21MiB/s (00:00:00)[download]  669.75KiB at    4.15MiB/s (00:00:00)[download] 100% of  669.75KiB in 00:00:00 at 1.23MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/19 - ICT 2024 Mentorship ⧹ Lecture #19  August 28, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/19 - ICT 2024 Mentorship ⧹ Lecture #19  August 28, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.89MiB/s (00:00:00)[download]   15.00KiB at    9.96MiB/s (00:00:00)[download]   31.00KiB at  763.65KiB/s (00:00:00)[download]   63.00KiB at    1.49MiB/s (00:00:00)[download]  127.00KiB at    1.61MiB/s (00:00:00)[download]  255.00KiB at    2.13MiB/s (00:00:00)[download]  511.00KiB at    3.21MiB/s (00:00:00)[download]  669.75KiB at    4.15MiB/s (00:00:00)[download] 100% of  669.75KiB in 00:00:00 at 1.49MiB/s
+[download] Downloading item 20 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=NMCy1H2_Wr8
+[youtube] NMCy1H2_Wr8: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] NMCy1H2_Wr8: Downloading android vr player API JSON
+[info] NMCy1H2_Wr8: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] NMCy1H2_Wr8: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/20 - ICT 2024 Mentorship ⧹ Lecture #20  August 29, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/20 - ICT 2024 Mentorship ⧹ Lecture #20  August 29, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at    2.40MiB/s (00:00:00)[download]    7.00KiB at    3.54MiB/s (00:00:00)[download]   15.00KiB at  402.48KiB/s (00:00:00)[download]   31.00KiB at  815.38KiB/s (00:00:00)[download]   63.00KiB at    1.59MiB/s (00:00:00)[download]  127.00KiB at    1.63MiB/s (00:00:00)[download]  255.00KiB at    2.11MiB/s (00:00:00)[download]  511.00KiB at    3.21MiB/s (00:00:00)[download]  747.73KiB at    4.59MiB/s (00:00:00)[download] 100% of  747.73KiB in 00:00:00 at 1.54MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/20 - ICT 2024 Mentorship ⧹ Lecture #20  August 29, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/20 - ICT 2024 Mentorship ⧹ Lecture #20  August 29, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at    2.73MiB/s (00:00:00)[download]    7.00KiB at    4.79MiB/s (00:00:00)[download]   15.00KiB at  397.96KiB/s (00:00:00)[download]   31.00KiB at  809.64KiB/s (00:00:00)[download]   63.00KiB at    1.58MiB/s (00:00:00)[download]  127.00KiB at    1.61MiB/s (00:00:00)[download]  255.00KiB at    2.10MiB/s (00:00:00)[download]  511.00KiB at    3.21MiB/s (00:00:00)[download]  747.73KiB at    4.58MiB/s (00:00:00)[download] 100% of  747.73KiB in 00:00:00 at 1.56MiB/s
+[download] Downloading item 21 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=eYYyonGwTRs
+[youtube] eYYyonGwTRs: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] eYYyonGwTRs: Downloading android vr player API JSON
+[info] eYYyonGwTRs: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] eYYyonGwTRs: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/21 - ICT 2024 Mentorship ⧹ Lecture #21  August 30, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/21 - ICT 2024 Mentorship ⧹ Lecture #21  August 30, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at    2.61MiB/s (00:00:00)[download]    7.00KiB at    3.93MiB/s (00:00:00)[download]   15.00KiB at  401.88KiB/s (00:00:00)[download]   31.00KiB at  813.94KiB/s (00:00:00)[download]   63.00KiB at    1.59MiB/s (00:00:00)[download]  127.00KiB at    1.62MiB/s (00:00:00)[download]  255.00KiB at    2.12MiB/s (00:00:00)[download]  511.00KiB at    3.22MiB/s (00:00:00)[download]  687.14KiB at    4.25MiB/s (00:00:00)[download] 100% of  687.14KiB in 00:00:00 at 1.32MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/21 - ICT 2024 Mentorship ⧹ Lecture #21  August 30, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/21 - ICT 2024 Mentorship ⧹ Lecture #21  August 30, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.38MiB/s (00:00:00)[download]   15.00KiB at  392.79KiB/s (00:00:00)[download]   31.00KiB at  791.05KiB/s (00:00:00)[download]   63.00KiB at    1.55MiB/s (00:00:00)[download]  127.00KiB at    1.46MiB/s (00:00:00)[download]  255.00KiB at    1.91MiB/s (00:00:00)[download]  511.00KiB at    3.23MiB/s (00:00:00)[download]  687.14KiB at    4.26MiB/s (00:00:00)[download] 100% of  687.14KiB in 00:00:00 at 1.47MiB/s
+[download] Downloading item 22 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=Ipjk9S8HTbA
+[youtube] Ipjk9S8HTbA: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] Ipjk9S8HTbA: Downloading android vr player API JSON
+[info] Ipjk9S8HTbA: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] Ipjk9S8HTbA: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/22 - ICT 2024 Mentorship ⧹ September 04, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/22 - ICT 2024 Mentorship ⧹ September 04, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at    2.74MiB/s (00:00:00)[download]    7.00KiB at    3.68MiB/s (00:00:00)[download]   15.00KiB at  424.01KiB/s (00:00:00)[download]   31.00KiB at  858.23KiB/s (00:00:00)[download]   63.00KiB at    1.68MiB/s (00:00:00)[download]  127.00KiB at    1.69MiB/s (00:00:00)[download]  255.00KiB at    2.22MiB/s (00:00:00)[download]  511.00KiB at    3.27MiB/s (00:00:00)[download]  623.33KiB at    3.94MiB/s (00:00:00)[download] 100% of  623.33KiB in 00:00:00 at 1.27MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/22 - ICT 2024 Mentorship ⧹ September 04, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/22 - ICT 2024 Mentorship ⧹ September 04, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.93MiB/s (00:00:00)[download]   15.00KiB at    9.97MiB/s (00:00:00)[download]   31.00KiB at   14.71MiB/s (00:00:00)[download]   63.00KiB at    1.63MiB/s (00:00:00)[download]  127.00KiB at    3.17MiB/s (00:00:00)[download]  255.00KiB at    3.24MiB/s (00:00:00)[download]  511.00KiB at    4.25MiB/s (00:00:00)[download]  623.33KiB at    5.10MiB/s (00:00:00)[download] 100% of  623.33KiB in 00:00:00 at 1.29MiB/s
+[download] Downloading item 23 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=N9RW9v2kOoY
+[youtube] N9RW9v2kOoY: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] N9RW9v2kOoY: Downloading android vr player API JSON
+[info] N9RW9v2kOoY: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] N9RW9v2kOoY: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/23 - ICT NQ Live Execution September 6, 2024 100k [OSOK].en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/23 - ICT NQ Live Execution September 6, 2024 100k [OSOK].en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at    2.58MiB/s (00:00:00)[download]    7.00KiB at    4.64MiB/s (00:00:00)[download]   15.00KiB at  397.00KiB/s (00:00:00)[download]   31.00KiB at  803.33KiB/s (00:00:00)[download]   55.47KiB at    1.38MiB/s (00:00:00)[download] 100% of   55.47KiB in 00:00:00 at 219.37KiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/23 - ICT NQ Live Execution September 6, 2024 100k [OSOK].en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/23 - ICT NQ Live Execution September 6, 2024 100k [OSOK].en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at   78.18KiB/s (00:00:00)[download]    7.00KiB at  178.03KiB/s (00:00:00)[download]   15.00KiB at  375.81KiB/s (00:00:00)[download]   31.00KiB at  403.92KiB/s (00:00:00)[download]   55.47KiB at  714.95KiB/s (00:00:00)[download] 100% of   55.47KiB in 00:00:00 at 233.78KiB/s
+[download] Downloading item 24 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=MxaJD1WIzos
+[youtube] MxaJD1WIzos: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] MxaJD1WIzos: Downloading android vr player API JSON
+[info] MxaJD1WIzos: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] MxaJD1WIzos: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/24 - ICT 2024 Mentorship ⧹ NonFarm Payroll September 06, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/24 - ICT 2024 Mentorship ⧹ NonFarm Payroll September 06, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.47MiB/s (00:00:00)[download]   15.00KiB at    9.42MiB/s (00:00:00)[download]   31.00KiB at  816.93KiB/s (00:00:00)[download]   63.00KiB at    1.59MiB/s (00:00:00)[download]  127.00KiB at    1.61MiB/s (00:00:00)[download]  255.00KiB at    2.12MiB/s (00:00:00)[download]  511.00KiB at    3.24MiB/s (00:00:00)[download] 1023.00KiB at    5.15MiB/s (00:00:00)[download]    1.97MiB at    8.26MiB/s (00:00:00)[download] 100% of    1.97MiB in 00:00:00 at 2.14MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/24 - ICT 2024 Mentorship ⧹ NonFarm Payroll September 06, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/24 - ICT 2024 Mentorship ⧹ NonFarm Payroll September 06, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at    2.92MiB/s (00:00:00)[download]    7.00KiB at    5.06MiB/s (00:00:00)[download]   15.00KiB at    8.35MiB/s (00:00:00)[download]   31.00KiB at   13.45MiB/s (00:00:00)[download]   63.00KiB at    2.33MiB/s (00:00:00)[download]  127.00KiB at    1.93MiB/s (00:00:00)[download]  255.00KiB at    2.43MiB/s (00:00:00)[download]  511.00KiB at    3.48MiB/s (00:00:00)[download] 1023.00KiB at    5.45MiB/s (00:00:00)[download]    1.97MiB at    8.57MiB/s (00:00:00)[download] 100% of    1.97MiB in 00:00:00 at 2.63MiB/s
+[download] Downloading item 25 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=Onca4KgfQB4
+[youtube] Onca4KgfQB4: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] Onca4KgfQB4: Downloading android vr player API JSON
+[info] Onca4KgfQB4: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] Onca4KgfQB4: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/25 - ICT 2024 Mentorship ⧹ September 09, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/25 - ICT 2024 Mentorship ⧹ September 09, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at    2.67MiB/s (00:00:00)[download]    7.00KiB at    3.77MiB/s (00:00:00)[download]   15.00KiB at    6.44MiB/s (00:00:00)[download]   31.00KiB at  848.07KiB/s (00:00:00)[download]   63.00KiB at    1.65MiB/s (00:00:00)[download]  127.00KiB at    1.53MiB/s (00:00:00)[download]  255.00KiB at    2.18MiB/s (00:00:00)[download]  511.00KiB at    3.22MiB/s (00:00:00)[download]  697.86KiB at    4.32MiB/s (00:00:00)[download] 100% of  697.86KiB in 00:00:00 at 1.24MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/25 - ICT 2024 Mentorship ⧹ September 09, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/25 - ICT 2024 Mentorship ⧹ September 09, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at    2.58MiB/s (00:00:00)[download]    7.00KiB at    4.64MiB/s (00:00:00)[download]   15.00KiB at    8.26MiB/s (00:00:00)[download]   31.00KiB at   12.60MiB/s (00:00:00)[download]   63.00KiB at  983.13KiB/s (00:00:00)[download]  127.00KiB at    1.90MiB/s (00:00:00)[download]  255.00KiB at    2.04MiB/s (00:00:00)[download]  511.00KiB at    3.99MiB/s (00:00:00)[download]  697.86KiB at    4.98MiB/s (00:00:00)[download] 100% of  697.86KiB in 00:00:00 at 1.45MiB/s
+[download] Downloading item 26 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=A1mLNIoEsq0
+[youtube] A1mLNIoEsq0: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] A1mLNIoEsq0: Downloading android vr player API JSON
+[info] A1mLNIoEsq0: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] A1mLNIoEsq0: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/26 - ICT 2024 Mentorship ⧹ September 11, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/26 - ICT 2024 Mentorship ⧹ September 11, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at    2.16MiB/s (00:00:00)[download]    7.00KiB at   49.21KiB/s (00:00:00)[download]   15.00KiB at  104.78KiB/s (00:00:00)[download]   31.00KiB at  215.61KiB/s (00:00:00)[download]   63.00KiB at  436.06KiB/s (00:00:00)[download]  127.00KiB at  870.95KiB/s (00:00:00)[download]  255.00KiB at    1.61MiB/s (00:00:00)[download]  511.00KiB at    2.53MiB/s (00:00:00)[download]  523.64KiB at    2.58MiB/s (00:00:00)[download] 100% of  523.64KiB in 00:00:00 at 1.16MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/26 - ICT 2024 Mentorship ⧹ September 11, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/26 - ICT 2024 Mentorship ⧹ September 11, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at  178.59KiB/s (00:00:00)[download]   15.00KiB at  374.77KiB/s (00:00:00)[download]   31.00KiB at  402.93KiB/s (00:00:00)[download]   63.00KiB at  809.61KiB/s (00:00:00)[download]  127.00KiB at    1.07MiB/s (00:00:00)[download]  255.00KiB at    1.62MiB/s (00:00:00)[download]  511.00KiB at    2.58MiB/s (00:00:00)[download]  523.64KiB at    2.63MiB/s (00:00:00)[download] 100% of  523.64KiB in 00:00:00 at 1.27MiB/s
+[download] Downloading item 27 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=DRuEMX4RhMw
+[youtube] DRuEMX4RhMw: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] DRuEMX4RhMw: Downloading android vr player API JSON
+[info] DRuEMX4RhMw: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] DRuEMX4RhMw: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/27 - ICT 2024 Mentorship ⧹ September 12, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/27 - ICT 2024 Mentorship ⧹ September 12, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    4.93MiB/s (00:00:00)[download]   15.00KiB at    8.71MiB/s (00:00:00)[download]   31.00KiB at   14.41MiB/s (00:00:00)[download]   63.00KiB at    1.55MiB/s (00:00:00)[download]  127.00KiB at    1.35MiB/s (00:00:00)[download]  255.00KiB at    2.15MiB/s (00:00:00)[download]  511.00KiB at    3.19MiB/s (00:00:00)[download]  695.15KiB at    4.23MiB/s (00:00:00)[download] 100% of  695.15KiB in 00:00:00 at 1.34MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/27 - ICT 2024 Mentorship ⧹ September 12, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/27 - ICT 2024 Mentorship ⧹ September 12, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at   78.95KiB/s (00:00:00)[download]    7.00KiB at  181.33KiB/s (00:00:00)[download]   15.00KiB at  384.82KiB/s (00:00:00)[download]   31.00KiB at  404.73KiB/s (00:00:00)[download]   63.00KiB at  811.71KiB/s (00:00:00)[download]  127.00KiB at    1.07MiB/s (00:00:00)[download]  255.00KiB at    2.12MiB/s (00:00:00)[download]  511.00KiB at    3.21MiB/s (00:00:00)[download]  695.15KiB at    3.49MiB/s (00:00:00)[download] 100% of  695.15KiB in 00:00:00 at 1.52MiB/s
+[download] Downloading item 28 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=HhgWGduQZQY
+[youtube] HhgWGduQZQY: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] HhgWGduQZQY: Downloading android vr player API JSON
+[info] HhgWGduQZQY: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] HhgWGduQZQY: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/28 - ICT 2024 Mentorship ⧹ How To Trade ICT FVGs Correctly ⧹ September 16, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/28 - ICT 2024 Mentorship ⧹ How To Trade ICT FVGs Correctly ⧹ September 16, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    6.31MiB/s (00:00:00)[download]   15.00KiB at  427.35KiB/s (00:00:00)[download]   31.00KiB at  863.95KiB/s (00:00:00)[download]   63.00KiB at  798.69KiB/s (00:00:00)[download]  127.00KiB at    1.07MiB/s (00:00:00)[download]  255.00KiB at    1.65MiB/s (00:00:00)[download]  511.00KiB at    2.63MiB/s (00:00:00)[download]  997.46KiB at    4.23MiB/s (00:00:00)[download] 100% of  997.46KiB in 00:00:00 at 1.75MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/28 - ICT 2024 Mentorship ⧹ How To Trade ICT FVGs Correctly ⧹ September 16, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/28 - ICT 2024 Mentorship ⧹ How To Trade ICT FVGs Correctly ⧹ September 16, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at    2.69MiB/s (00:00:00)[download]    7.00KiB at  166.47KiB/s (00:00:00)[download]   15.00KiB at  350.66KiB/s (00:00:00)[download]   31.00KiB at  717.03KiB/s (00:00:00)[download]   63.00KiB at  812.50KiB/s (00:00:00)[download]  127.00KiB at    1.58MiB/s (00:00:00)[download]  255.00KiB at    2.12MiB/s (00:00:00)[download]  511.00KiB at    3.12MiB/s (00:00:00)[download]  997.46KiB at    4.95MiB/s (00:00:00)[download] 100% of  997.46KiB in 00:00:00 at 1.88MiB/s
+[download] Downloading item 29 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=fhBnnU44A6E
+[youtube] fhBnnU44A6E: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] fhBnnU44A6E: Downloading android vr player API JSON
+[info] fhBnnU44A6E: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] fhBnnU44A6E: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/29 - ICT 2024 Mentorship ⧹ How To Manage Missed Entries ⧹ September 17, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/29 - ICT 2024 Mentorship ⧹ How To Manage Missed Entries ⧹ September 17, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at  178.18KiB/s (00:00:00)[download]   15.00KiB at  202.77KiB/s (00:00:00)[download]   31.00KiB at  414.49KiB/s (00:00:00)[download]   63.00KiB at  835.03KiB/s (00:00:00)[download]  127.00KiB at    1.04MiB/s (00:00:00)[download]  255.00KiB at    1.61MiB/s (00:00:00)[download]  511.00KiB at    2.61MiB/s (00:00:00)[download]  809.81KiB at    4.06MiB/s (00:00:00)[download] 100% of  809.81KiB in 00:00:00 at 1.36MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/29 - ICT 2024 Mentorship ⧹ How To Manage Missed Entries ⧹ September 17, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/29 - ICT 2024 Mentorship ⧹ How To Manage Missed Entries ⧹ September 17, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.42MiB/s (00:00:00)[download]   15.00KiB at    8.82MiB/s (00:00:00)[download]   31.00KiB at   13.87MiB/s (00:00:00)[download]   63.00KiB at    1.73MiB/s (00:00:00)[download]  127.00KiB at    3.41MiB/s (00:00:00)[download]  255.00KiB at    3.35MiB/s (00:00:00)[download]  511.00KiB at    4.15MiB/s (00:00:00)[download]  809.81KiB at    5.09MiB/s (00:00:00)[download] 100% of  809.81KiB in 00:00:00 at 1.54MiB/s
+[download] Downloading item 30 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=AxNoqk5Vx8o
+[youtube] AxNoqk5Vx8o: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] AxNoqk5Vx8o: Downloading android vr player API JSON
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] AxNoqk5Vx8o: Downloading 1 format(s): 18
+[info] There are no subtitles for the requested languages
+[download] Downloading item 31 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=XiZHGOeVAOk
+[youtube] XiZHGOeVAOk: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] XiZHGOeVAOk: Downloading android vr player API JSON
+[info] XiZHGOeVAOk: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] XiZHGOeVAOk: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/31 - ICT 2024 Mentorship ⧹ Micro Vs. Mini ⧹ September 19, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/31 - ICT 2024 Mentorship ⧹ Micro Vs. Mini ⧹ September 19, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.42MiB/s (00:00:00)[download]   15.00KiB at  178.78KiB/s (00:00:00)[download]   31.00KiB at  366.89KiB/s (00:00:00)[download]   63.00KiB at  741.63KiB/s (00:00:00)[download]  127.00KiB at  973.16KiB/s (00:00:00)[download]  255.00KiB at    1.53MiB/s (00:00:00)[download]  511.00KiB at    2.56MiB/s (00:00:00)[download]  607.47KiB at    3.02MiB/s (00:00:00)[download] 100% of  607.47KiB in 00:00:00 at 1.21MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/31 - ICT 2024 Mentorship ⧹ Micro Vs. Mini ⧹ September 19, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/31 - ICT 2024 Mentorship ⧹ Micro Vs. Mini ⧹ September 19, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.39MiB/s (00:00:00)[download]   15.00KiB at  425.08KiB/s (00:00:00)[download]   31.00KiB at  855.97KiB/s (00:00:00)[download]   63.00KiB at  851.97KiB/s (00:00:00)[download]  127.00KiB at    1.07MiB/s (00:00:00)[download]  255.00KiB at    1.64MiB/s (00:00:00)[download]  511.00KiB at    3.22MiB/s (00:00:00)[download]  607.47KiB at    3.13MiB/s (00:00:00)[download] 100% of  607.47KiB in 00:00:00 at 1.34MiB/s
+[download] Downloading item 32 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=Vo8WKYKtzIU
+[youtube] Vo8WKYKtzIU: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] Vo8WKYKtzIU: Downloading android vr player API JSON
+[info] Vo8WKYKtzIU: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] Vo8WKYKtzIU: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/32 - ICT 2024 Mentorship ⧹ CFDs Vs. Futures ⧹ September 20, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/32 - ICT 2024 Mentorship ⧹ CFDs Vs. Futures ⧹ September 20, 2024.en-orig.vtt
+[download]    1.00KiB at   13.06KiB/s (00:00:00)[download]    3.00KiB at   38.90KiB/s (00:00:00)[download]    7.00KiB at   89.97KiB/s (00:00:00)[download]   15.00KiB at  191.98KiB/s (00:00:00)[download]   31.00KiB at  394.18KiB/s (00:00:00)[download]   63.00KiB at  796.13KiB/s (00:00:00)[download]  127.00KiB at    1.06MiB/s (00:00:00)[download]  255.00KiB at    1.60MiB/s (00:00:00)[download]  511.00KiB at    2.57MiB/s (00:00:00)[download]  561.24KiB at    2.80MiB/s (00:00:00)[download] 100% of  561.24KiB in 00:00:00 at 1.10MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/32 - ICT 2024 Mentorship ⧹ CFDs Vs. Futures ⧹ September 20, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/32 - ICT 2024 Mentorship ⧹ CFDs Vs. Futures ⧹ September 20, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.58MiB/s (00:00:00)[download]   15.00KiB at    9.39MiB/s (00:00:00)[download]   31.00KiB at  822.29KiB/s (00:00:00)[download]   63.00KiB at    1.60MiB/s (00:00:00)[download]  127.00KiB at    1.59MiB/s (00:00:00)[download]  255.00KiB at    2.12MiB/s (00:00:00)[download]  511.00KiB at    4.13MiB/s (00:00:00)[download]  561.24KiB at    3.57MiB/s (00:00:00)[download] 100% of  561.24KiB in 00:00:00 at 1.25MiB/s
+[download] Downloading item 33 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=Qg3O1GkJDeQ
+[youtube] Qg3O1GkJDeQ: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] Qg3O1GkJDeQ: Downloading android vr player API JSON
+[info] Qg3O1GkJDeQ: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] Qg3O1GkJDeQ: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/33 - ICT 2024 Mentorship ⧹ How To Avoid Seek & Destroy ⧹ Tape Reading ⧹ September 23, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/33 - ICT 2024 Mentorship ⧹ How To Avoid Seek & Destroy ⧹ Tape Reading ⧹ September 23, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    4.47MiB/s (00:00:00)[download]   15.00KiB at    6.74MiB/s (00:00:00)[download]   31.00KiB at  816.30KiB/s (00:00:00)[download]   63.00KiB at    1.58MiB/s (00:00:00)[download]  127.00KiB at    1.59MiB/s (00:00:00)[download]  255.00KiB at    2.14MiB/s (00:00:00)[download]  310.86KiB at    2.58MiB/s (00:00:00)[download] 100% of  310.86KiB in 00:00:00 at 788.65KiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/33 - ICT 2024 Mentorship ⧹ How To Avoid Seek & Destroy ⧹ Tape Reading ⧹ September 23, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/33 - ICT 2024 Mentorship ⧹ How To Avoid Seek & Destroy ⧹ Tape Reading ⧹ September 23, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.80MiB/s (00:00:00)[download]   15.00KiB at    9.21MiB/s (00:00:00)[download]   31.00KiB at  818.67KiB/s (00:00:00)[download]   63.00KiB at    1.58MiB/s (00:00:00)[download]  127.00KiB at    1.61MiB/s (00:00:00)[download]  255.00KiB at    2.10MiB/s (00:00:00)[download]  310.86KiB at    2.54MiB/s (00:00:00)[download] 100% of  310.86KiB in 00:00:00 at 853.73KiB/s
+[download] Downloading item 34 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=-M-RAtxB-bE
+[youtube] -M-RAtxB-bE: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] -M-RAtxB-bE: Downloading android vr player API JSON
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] -M-RAtxB-bE: Downloading 1 format(s): 18
+[info] There are no subtitles for the requested languages
+[download] Downloading item 35 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=NDwNIqUkASc
+[youtube] NDwNIqUkASc: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] NDwNIqUkASc: Downloading android vr player API JSON
+[info] NDwNIqUkASc: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] NDwNIqUkASc: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/35 - ICT 2024 Mentorship ⧹ Tape Reading ⧹ September 25, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/35 - ICT 2024 Mentorship ⧹ Tape Reading ⧹ September 25, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.15MiB/s (00:00:00)[download]   15.00KiB at  193.49KiB/s (00:00:00)[download]   31.00KiB at  395.04KiB/s (00:00:00)[download]   63.00KiB at  796.17KiB/s (00:00:00)[download]  127.00KiB at    1.06MiB/s (00:00:00)[download]  255.00KiB at    1.61MiB/s (00:00:00)[download]  340.52KiB at    2.13MiB/s (00:00:00)[download] 100% of  340.52KiB in 00:00:00 at 827.70KiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/35 - ICT 2024 Mentorship ⧹ Tape Reading ⧹ September 25, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/35 - ICT 2024 Mentorship ⧹ Tape Reading ⧹ September 25, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.68MiB/s (00:00:00)[download]   15.00KiB at  196.98KiB/s (00:00:00)[download]   31.00KiB at  402.69KiB/s (00:00:00)[download]   63.00KiB at  549.06KiB/s (00:00:00)[download]  127.00KiB at    1.07MiB/s (00:00:00)[download]  255.00KiB at    1.60MiB/s (00:00:00)[download]  340.52KiB at    2.13MiB/s (00:00:00)[download] 100% of  340.52KiB in 00:00:00 at 962.17KiB/s
+[download] Downloading item 36 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=nr6CJqNWChw
+[youtube] nr6CJqNWChw: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] nr6CJqNWChw: Downloading android vr player API JSON
+[info] nr6CJqNWChw: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] nr6CJqNWChw: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/36 - ICT 2024 Mentorship ⧹ How To Identify High Resistance Liquidity Conditions ⧹ September 27, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/36 - ICT 2024 Mentorship ⧹ How To Identify High Resistance Liquidity Conditions ⧹ September 27, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.67MiB/s (00:00:00)[download]   15.00KiB at    8.42MiB/s (00:00:00)[download]   31.00KiB at  811.60KiB/s (00:00:00)[download]   63.00KiB at  804.35KiB/s (00:00:00)[download]  127.00KiB at    1.57MiB/s (00:00:00)[download]  255.00KiB at    2.13MiB/s (00:00:00)[download]  511.00KiB at    3.20MiB/s (00:00:00)[download] 1023.00KiB at    5.05MiB/s (00:00:00)[download]    1.25MiB at    6.25MiB/s (00:00:00)[download] 100% of    1.25MiB in 00:00:00 at 1.91MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/36 - ICT 2024 Mentorship ⧹ How To Identify High Resistance Liquidity Conditions ⧹ September 27, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/36 - ICT 2024 Mentorship ⧹ How To Identify High Resistance Liquidity Conditions ⧹ September 27, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    6.09MiB/s (00:00:00)[download]   15.00KiB at  712.93KiB/s (00:00:00)[download]   31.00KiB at    1.39MiB/s (00:00:00)[download]   63.00KiB at    1.10MiB/s (00:00:00)[download]  127.00KiB at    2.07MiB/s (00:00:00)[download]  255.00KiB at    2.57MiB/s (00:00:00)[download]  511.00KiB at    3.62MiB/s (00:00:00)[download] 1023.00KiB at    5.61MiB/s (00:00:00)[download]    1.25MiB at    6.94MiB/s (00:00:00)[download] 100% of    1.25MiB in 00:00:00 at 2.21MiB/s
+[download] Downloading item 37 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=l7eu9yvUUtg
+[youtube] l7eu9yvUUtg: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] l7eu9yvUUtg: Downloading android vr player API JSON
+[info] l7eu9yvUUtg: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] l7eu9yvUUtg: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/37 - ICT 2024 Mentorship ⧹ Premarket Concepts ⧹ September 30, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/37 - ICT 2024 Mentorship ⧹ Premarket Concepts ⧹ September 30, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at   70.03KiB/s (00:00:00)[download]    7.00KiB at  160.17KiB/s (00:00:00)[download]   15.00KiB at  340.43KiB/s (00:00:00)[download]   31.00KiB at  403.40KiB/s (00:00:00)[download]   63.00KiB at  542.94KiB/s (00:00:00)[download]  127.00KiB at    1.06MiB/s (00:00:00)[download]  255.00KiB at    1.60MiB/s (00:00:00)[download]  511.00KiB at    2.55MiB/s (00:00:00)[download] 1023.00KiB at    4.24MiB/s (00:00:00)[download]    1.17MiB at    4.93MiB/s (00:00:00)[download] 100% of    1.17MiB in 00:00:00 at 1.87MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/37 - ICT 2024 Mentorship ⧹ Premarket Concepts ⧹ September 30, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/37 - ICT 2024 Mentorship ⧹ Premarket Concepts ⧹ September 30, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.47MiB/s (00:00:00)[download]   15.00KiB at  415.45KiB/s (00:00:00)[download]   31.00KiB at  840.13KiB/s (00:00:00)[download]   63.00KiB at    1.64MiB/s (00:00:00)[download]  127.00KiB at    1.64MiB/s (00:00:00)[download]  255.00KiB at    2.18MiB/s (00:00:00)[download]  511.00KiB at    3.23MiB/s (00:00:00)[download] 1023.00KiB at    5.15MiB/s (00:00:00)[download]    1.17MiB at    5.98MiB/s (00:00:00)[download] 100% of    1.17MiB in 00:00:00 at 2.14MiB/s
+[download] Downloading item 38 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=DnuCB5Stk-0
+[youtube] DnuCB5Stk-0: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] DnuCB5Stk-0: Downloading android vr player API JSON
+[info] DnuCB5Stk-0: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] DnuCB5Stk-0: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/38 - ICT 2024 Mentorship ⧹ Limit Orders & Volatility Pinball Drills ⧹ October 01, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/38 - ICT 2024 Mentorship ⧹ Limit Orders & Volatility Pinball Drills ⧹ October 01, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    4.73MiB/s (00:00:00)[download]   15.00KiB at  404.95KiB/s (00:00:00)[download]   31.00KiB at  820.89KiB/s (00:00:00)[download]   63.00KiB at  795.74KiB/s (00:00:00)[download]  127.00KiB at    1.07MiB/s (00:00:00)[download]  255.00KiB at    1.64MiB/s (00:00:00)[download]  511.00KiB at    2.59MiB/s (00:00:00)[download] 1023.00KiB at    4.31MiB/s (00:00:00)[download]    1.74MiB at    6.21MiB/s (00:00:00)[download] 100% of    1.74MiB in 00:00:00 at 1.98MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/38 - ICT 2024 Mentorship ⧹ Limit Orders & Volatility Pinball Drills ⧹ October 01, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/38 - ICT 2024 Mentorship ⧹ Limit Orders & Volatility Pinball Drills ⧹ October 01, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at  175.57KiB/s (00:00:00)[download]   15.00KiB at  368.30KiB/s (00:00:00)[download]   31.00KiB at  753.51KiB/s (00:00:00)[download]   63.00KiB at  825.07KiB/s (00:00:00)[download]  127.00KiB at    1.07MiB/s (00:00:00)[download]  255.00KiB at    2.13MiB/s (00:00:00)[download]  511.00KiB at    3.23MiB/s (00:00:00)[download] 1023.00KiB at    5.07MiB/s (00:00:00)[download]    1.74MiB at    7.30MiB/s (00:00:00)[download] 100% of    1.74MiB in 00:00:00 at 2.50MiB/s
+[download] Downloading item 39 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=hfwUXg2nYhs
+[youtube] hfwUXg2nYhs: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] hfwUXg2nYhs: Downloading android vr player API JSON
+[info] hfwUXg2nYhs: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] hfwUXg2nYhs: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/39 - ICT 2024 Mentorship ⧹ September 02, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/39 - ICT 2024 Mentorship ⧹ September 02, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.71MiB/s (00:00:00)[download]   15.00KiB at    9.11MiB/s (00:00:00)[download]   26.37KiB at   12.76MiB/s (00:00:00)[download] 100% of   26.37KiB in 00:00:00 at 142.56KiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/39 - ICT 2024 Mentorship ⧹ September 02, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/39 - ICT 2024 Mentorship ⧹ September 02, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    6.01MiB/s (00:00:00)[download]   15.00KiB at    9.94MiB/s (00:00:00)[download]   26.37KiB at   14.08MiB/s (00:00:00)[download] 100% of   26.37KiB in 00:00:00 at 140.03KiB/s
+[download] Downloading item 40 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=YxpHUwZhu80
+[youtube] YxpHUwZhu80: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] YxpHUwZhu80: Downloading android vr player API JSON
+[info] YxpHUwZhu80: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] YxpHUwZhu80: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/40 - ICT 2024 Mentorship ⧹ Tape Reading NQ ⧹ October 02, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/40 - ICT 2024 Mentorship ⧹ Tape Reading NQ ⧹ October 02, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.44MiB/s (00:00:00)[download]   15.00KiB at    8.18MiB/s (00:00:00)[download]   31.00KiB at  800.51KiB/s (00:00:00)[download]   63.00KiB at    1.54MiB/s (00:00:00)[download]  127.00KiB at    1.55MiB/s (00:00:00)[download]  255.00KiB at    1.87MiB/s (00:00:00)[download]  511.00KiB at    3.22MiB/s (00:00:00)[download]  956.28KiB at    4.78MiB/s (00:00:00)[download] 100% of  956.28KiB in 00:00:00 at 1.53MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/40 - ICT 2024 Mentorship ⧹ Tape Reading NQ ⧹ October 02, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/40 - ICT 2024 Mentorship ⧹ Tape Reading NQ ⧹ October 02, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at    2.39MiB/s (00:00:00)[download]    7.00KiB at    3.65MiB/s (00:00:00)[download]   15.00KiB at    5.98MiB/s (00:00:00)[download]   31.00KiB at  900.43KiB/s (00:00:00)[download]   63.00KiB at    1.75MiB/s (00:00:00)[download]  127.00KiB at    1.71MiB/s (00:00:00)[download]  255.00KiB at    2.22MiB/s (00:00:00)[download]  511.00KiB at    3.29MiB/s (00:00:00)[download]  956.28KiB at    4.88MiB/s (00:00:00)[download] 100% of  956.28KiB in 00:00:00 at 1.62MiB/s
+[download] Downloading item 41 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=Xyiw_IFE9yc
+[youtube] Xyiw_IFE9yc: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] Xyiw_IFE9yc: Downloading android vr player API JSON
+[info] Xyiw_IFE9yc: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] Xyiw_IFE9yc: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/41 - October 03, 2024 NQ Market Review.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/41 - October 03, 2024 NQ Market Review.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at  181.31KiB/s (00:00:00)[download]   15.00KiB at  380.74KiB/s (00:00:00)[download]   31.00KiB at  403.49KiB/s (00:00:00)[download]   63.00KiB at  810.23KiB/s (00:00:00)[download]   85.92KiB at    1.07MiB/s (00:00:00)[download] 100% of   85.92KiB in 00:00:00 at 223.79KiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/41 - October 03, 2024 NQ Market Review.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/41 - October 03, 2024 NQ Market Review.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    6.46MiB/s (00:00:00)[download]   15.00KiB at   10.64MiB/s (00:00:00)[download]   31.00KiB at  874.59KiB/s (00:00:00)[download]   63.00KiB at    1.70MiB/s (00:00:00)[download]   85.92KiB at    2.27MiB/s (00:00:00)[download] 100% of   85.92KiB in 00:00:00 at 363.67KiB/s
+[download] Downloading item 42 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=qcYYm1iNCIM
+[youtube] qcYYm1iNCIM: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] qcYYm1iNCIM: Downloading android vr player API JSON
+[info] qcYYm1iNCIM: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] qcYYm1iNCIM: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/42 - ICT 2024 Mentorship ⧹ October NFP NQ ⧹ October 04, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/42 - ICT 2024 Mentorship ⧹ October NFP NQ ⧹ October 04, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    4.73MiB/s (00:00:00)[download]   15.00KiB at  397.29KiB/s (00:00:00)[download]   31.00KiB at  805.90KiB/s (00:00:00)[download]   63.00KiB at    1.57MiB/s (00:00:00)[download]  127.00KiB at    1.61MiB/s (00:00:00)[download]  255.00KiB at    2.14MiB/s (00:00:00)[download]  511.00KiB at    3.23MiB/s (00:00:00)[download]  870.36KiB at    5.35MiB/s (00:00:00)[download] 100% of  870.36KiB in 00:00:00 at 1.48MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/42 - ICT 2024 Mentorship ⧹ October NFP NQ ⧹ October 04, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/42 - ICT 2024 Mentorship ⧹ October NFP NQ ⧹ October 04, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    6.34MiB/s (00:00:00)[download]   15.00KiB at  318.64KiB/s (00:00:00)[download]   31.00KiB at  642.92KiB/s (00:00:00)[download]   63.00KiB at  816.54KiB/s (00:00:00)[download]  127.00KiB at    1.57MiB/s (00:00:00)[download]  255.00KiB at    2.13MiB/s (00:00:00)[download]  511.00KiB at    3.10MiB/s (00:00:00)[download]  870.36KiB at    4.11MiB/s (00:00:00)[download] 100% of  870.36KiB in 00:00:00 at 1.74MiB/s
+[download] Downloading item 43 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=DzJpkxI057g
+[youtube] DzJpkxI057g: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] DzJpkxI057g: Downloading android vr player API JSON
+[info] DzJpkxI057g: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] DzJpkxI057g: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/43 - ICT 2024 Mentorship ⧹ NQ High Resistance Liquidity Conditions Tape Reading ⧹ October 07, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/43 - ICT 2024 Mentorship ⧹ NQ High Resistance Liquidity Conditions Tape Reading ⧹ October 07, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.10MiB/s (00:00:00)[download]   15.00KiB at    8.16MiB/s (00:00:00)[download]   31.00KiB at  821.15KiB/s (00:00:00)[download]   63.00KiB at    1.60MiB/s (00:00:00)[download]  127.00KiB at    1.62MiB/s (00:00:00)[download]  165.08KiB at    2.08MiB/s (00:00:00)[download] 100% of  165.08KiB in 00:00:00 at 474.76KiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/43 - ICT 2024 Mentorship ⧹ NQ High Resistance Liquidity Conditions Tape Reading ⧹ October 07, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/43 - ICT 2024 Mentorship ⧹ NQ High Resistance Liquidity Conditions Tape Reading ⧹ October 07, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.90MiB/s (00:00:00)[download]   15.00KiB at  262.45KiB/s (00:00:00)[download]   31.00KiB at  422.02KiB/s (00:00:00)[download]   63.00KiB at  848.32KiB/s (00:00:00)[download]  127.00KiB at    1.08MiB/s (00:00:00)[download]  165.08KiB at    1.40MiB/s (00:00:00)[download] 100% of  165.08KiB in 00:00:00 at 597.47KiB/s
+[download] Downloading item 44 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=HMn46vLjKvY
+[youtube] HMn46vLjKvY: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] HMn46vLjKvY: Downloading android vr player API JSON
+[info] HMn46vLjKvY: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] HMn46vLjKvY: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/44 - ICT 2024 Mentorship ⧹ NQ Tape Reading ⧹ October 15, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/44 - ICT 2024 Mentorship ⧹ NQ Tape Reading ⧹ October 15, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.98MiB/s (00:00:00)[download]   15.00KiB at    9.85MiB/s (00:00:00)[download]   31.00KiB at   16.34MiB/s (00:00:00)[download]   63.00KiB at    1.65MiB/s (00:00:00)[download]  127.00KiB at    3.25MiB/s (00:00:00)[download]  255.00KiB at    3.26MiB/s (00:00:00)[download]  511.00KiB at    4.17MiB/s (00:00:00)[download]  728.85KiB at    5.79MiB/s (00:00:00)[download] 100% of  728.85KiB in 00:00:00 at 1.32MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/44 - ICT 2024 Mentorship ⧹ NQ Tape Reading ⧹ October 15, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/44 - ICT 2024 Mentorship ⧹ NQ Tape Reading ⧹ October 15, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at  182.64KiB/s (00:00:00)[download]   15.00KiB at  384.86KiB/s (00:00:00)[download]   31.00KiB at  786.01KiB/s (00:00:00)[download]   63.00KiB at  815.50KiB/s (00:00:00)[download]  127.00KiB at    1.58MiB/s (00:00:00)[download]  255.00KiB at    2.13MiB/s (00:00:00)[download]  511.00KiB at    3.19MiB/s (00:00:00)[download]  728.85KiB at    3.66MiB/s (00:00:00)[download] 100% of  728.85KiB in 00:00:00 at 1.48MiB/s
+[download] Downloading item 45 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=xUWonBnfYOk
+[youtube] xUWonBnfYOk: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] xUWonBnfYOk: Downloading android vr player API JSON
+[info] xUWonBnfYOk: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] xUWonBnfYOk: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/45 - ICT 2024 Mentorship ⧹ How To Navigate Decoupled Markets ⧹ October 16, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/45 - ICT 2024 Mentorship ⧹ How To Navigate Decoupled Markets ⧹ October 16, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    6.15MiB/s (00:00:00)[download]   15.00KiB at  195.29KiB/s (00:00:00)[download]   31.00KiB at  399.37KiB/s (00:00:00)[download]   63.00KiB at  804.68KiB/s (00:00:00)[download]  127.00KiB at    1.09MiB/s (00:00:00)[download]  255.00KiB at    1.62MiB/s (00:00:00)[download]  511.00KiB at    2.55MiB/s (00:00:00)[download]  630.33KiB at    3.12MiB/s (00:00:00)[download] 100% of  630.33KiB in 00:00:00 at 1.34MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/45 - ICT 2024 Mentorship ⧹ How To Navigate Decoupled Markets ⧹ October 16, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/45 - ICT 2024 Mentorship ⧹ How To Navigate Decoupled Markets ⧹ October 16, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.62MiB/s (00:00:00)[download]   15.00KiB at  420.54KiB/s (00:00:00)[download]   31.00KiB at  408.64KiB/s (00:00:00)[download]   63.00KiB at  820.92KiB/s (00:00:00)[download]  127.00KiB at    1.11MiB/s (00:00:00)[download]  255.00KiB at    2.20MiB/s (00:00:00)[download]  511.00KiB at    3.15MiB/s (00:00:00)[download]  630.33KiB at    3.21MiB/s (00:00:00)[download] 100% of  630.33KiB in 00:00:00 at 1.34MiB/s
+[download] Downloading item 46 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=z2t62hgjLXo
+[youtube] z2t62hgjLXo: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] z2t62hgjLXo: Downloading android vr player API JSON
+[info] z2t62hgjLXo: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] z2t62hgjLXo: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/46 - ICT 2024 Mentorship ⧹ News Release Tape Reading ⧹ October 17, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/46 - ICT 2024 Mentorship ⧹ News Release Tape Reading ⧹ October 17, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at  188.75KiB/s (00:00:00)[download]   15.00KiB at  397.02KiB/s (00:00:00)[download]   31.00KiB at  811.12KiB/s (00:00:00)[download]   63.00KiB at    1.58MiB/s (00:00:00)[download]  127.00KiB at    1.64MiB/s (00:00:00)[download]  255.00KiB at    2.13MiB/s (00:00:00)[download]  364.23KiB at    3.00MiB/s (00:00:00)[download] 100% of  364.23KiB in 00:00:00 at 876.76KiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/46 - ICT 2024 Mentorship ⧹ News Release Tape Reading ⧹ October 17, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/46 - ICT 2024 Mentorship ⧹ News Release Tape Reading ⧹ October 17, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.41MiB/s (00:00:00)[download]   15.00KiB at  394.28KiB/s (00:00:00)[download]   31.00KiB at  800.17KiB/s (00:00:00)[download]   63.00KiB at  815.88KiB/s (00:00:00)[download]  127.00KiB at    1.59MiB/s (00:00:00)[download]  255.00KiB at    2.15MiB/s (00:00:00)[download]  364.23KiB at    2.25MiB/s (00:00:00)[download] 100% of  364.23KiB in 00:00:00 at 1.04MiB/s
+[download] Downloading item 47 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=CQk-5lAirn0
+[youtube] CQk-5lAirn0: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] CQk-5lAirn0: Downloading android vr player API JSON
+[info] CQk-5lAirn0: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] CQk-5lAirn0: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/47 - ICT 2024 Mentorship ⧹ Premarket Tape Reading NQ Futures ⧹ October 21, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/47 - ICT 2024 Mentorship ⧹ Premarket Tape Reading NQ Futures ⧹ October 21, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.37MiB/s (00:00:00)[download]   15.00KiB at    9.00MiB/s (00:00:00)[download]   31.00KiB at  841.40KiB/s (00:00:00)[download]   63.00KiB at    1.64MiB/s (00:00:00)[download]  127.00KiB at    1.65MiB/s (00:00:00)[download]  255.00KiB at    2.13MiB/s (00:00:00)[download]  315.43KiB at    2.62MiB/s (00:00:00)[download] 100% of  315.43KiB in 00:00:00 at 839.59KiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/47 - ICT 2024 Mentorship ⧹ Premarket Tape Reading NQ Futures ⧹ October 21, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/47 - ICT 2024 Mentorship ⧹ Premarket Tape Reading NQ Futures ⧹ October 21, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.41MiB/s (00:00:00)[download]   15.00KiB at    9.02MiB/s (00:00:00)[download]   31.00KiB at  815.73KiB/s (00:00:00)[download]   63.00KiB at    1.58MiB/s (00:00:00)[download]  127.00KiB at    1.60MiB/s (00:00:00)[download]  255.00KiB at    2.12MiB/s (00:00:00)[download]  315.43KiB at    2.59MiB/s (00:00:00)[download] 100% of  315.43KiB in 00:00:00 at 795.23KiB/s
+[download] Downloading item 48 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=svYZKOrWPRo
+[youtube] svYZKOrWPRo: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] svYZKOrWPRo: Downloading android vr player API JSON
+[info] svYZKOrWPRo: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] svYZKOrWPRo: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/48 - ICT 2024 Mentorship ⧹ How ICT Picks Winning FVG's & Orderblocks ⧹ October 25, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/48 - ICT 2024 Mentorship ⧹ How ICT Picks Winning FVG's & Orderblocks ⧹ October 25, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at  178.88KiB/s (00:00:00)[download]   15.00KiB at  377.16KiB/s (00:00:00)[download]   31.00KiB at  768.37KiB/s (00:00:00)[download]   63.00KiB at    1.50MiB/s (00:00:00)[download]  127.00KiB at    1.69MiB/s (00:00:00)[download]  255.00KiB at    2.14MiB/s (00:00:00)[download]  511.00KiB at    3.26MiB/s (00:00:00)[download]  927.37KiB at    4.56MiB/s (00:00:00)[download] 100% of  927.37KiB in 00:00:00 at 1.58MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/48 - ICT 2024 Mentorship ⧹ How ICT Picks Winning FVG's & Orderblocks ⧹ October 25, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/48 - ICT 2024 Mentorship ⧹ How ICT Picks Winning FVG's & Orderblocks ⧹ October 25, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at  179.49KiB/s (00:00:00)[download]   15.00KiB at  375.49KiB/s (00:00:00)[download]   31.00KiB at  766.29KiB/s (00:00:00)[download]   63.00KiB at    1.50MiB/s (00:00:00)[download]  127.00KiB at    1.47MiB/s (00:00:00)[download]  255.00KiB at    2.06MiB/s (00:00:00)[download]  511.00KiB at    3.19MiB/s (00:00:00)[download]  927.37KiB at    4.62MiB/s (00:00:00)[download] 100% of  927.37KiB in 00:00:00 at 1.84MiB/s
+[download] Downloading item 49 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=3YfetuXVhOE
+[youtube] 3YfetuXVhOE: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] 3YfetuXVhOE: Downloading android vr player API JSON
+[info] 3YfetuXVhOE: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] 3YfetuXVhOE: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/49 - ICT 2024 Mentorship ⧹ High Resistance & Low Resistance Conditions ⧹ October 28, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/49 - ICT 2024 Mentorship ⧹ High Resistance & Low Resistance Conditions ⧹ October 28, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    5.31MiB/s (00:00:00)[download]   15.00KiB at  363.33KiB/s (00:00:00)[download]   31.00KiB at  737.22KiB/s (00:00:00)[download]   63.00KiB at  779.02KiB/s (00:00:00)[download]  127.00KiB at    1.52MiB/s (00:00:00)[download]  255.00KiB at    2.11MiB/s (00:00:00)[download]  511.00KiB at    3.10MiB/s (00:00:00)[download] 1023.00KiB at    4.99MiB/s (00:00:00)[download]    1.40MiB at    6.88MiB/s (00:00:00)[download] 100% of    1.40MiB in 00:00:00 at 2.11MiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/49 - ICT 2024 Mentorship ⧹ High Resistance & Low Resistance Conditions ⧹ October 28, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/49 - ICT 2024 Mentorship ⧹ High Resistance & Low Resistance Conditions ⧹ October 28, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at  182.87KiB/s (00:00:00)[download]   15.00KiB at  385.57KiB/s (00:00:00)[download]   31.00KiB at  789.26KiB/s (00:00:00)[download]   63.00KiB at    1.55MiB/s (00:00:00)[download]  127.00KiB at    1.57MiB/s (00:00:00)[download]  255.00KiB at    2.15MiB/s (00:00:00)[download]  511.00KiB at    4.05MiB/s (00:00:00)[download] 1023.00KiB at    6.05MiB/s (00:00:00)[download]    1.40MiB at    6.68MiB/s (00:00:00)[download] 100% of    1.40MiB in 00:00:00 at 2.27MiB/s
+[download] Downloading item 50 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=1m5yz6Vh_Dw
+[youtube] 1m5yz6Vh_Dw: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] 1m5yz6Vh_Dw: Downloading android vr player API JSON
+[info] 1m5yz6Vh_Dw: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] 1m5yz6Vh_Dw: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/50 - New Week Commentary For Nq Futures December 01, 2024.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/50 - New Week Commentary For Nq Futures December 01, 2024.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    4.93MiB/s (00:00:00)[download]   15.00KiB at    8.18MiB/s (00:00:00)[download]   31.00KiB at  222.62KiB/s (00:00:00)[download]   63.00KiB at  449.80KiB/s (00:00:00)[download]   63.30KiB at  450.89KiB/s (00:00:00)[download] 100% of   63.30KiB in 00:00:00 at 161.99KiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/50 - New Week Commentary For Nq Futures December 01, 2024.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/50 - New Week Commentary For Nq Futures December 01, 2024.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at  152.62KiB/s (00:00:00)[download]   15.00KiB at  321.56KiB/s (00:00:00)[download]   31.00KiB at  658.35KiB/s (00:00:00)[download]   63.00KiB at    1.29MiB/s (00:00:00)[download]   63.30KiB at    1.28MiB/s (00:00:00)[download] 100% of   63.30KiB in 00:00:00 at 281.48KiB/s
+[download] Downloading item 51 of 51
+[youtube] Extracting URL: https://www.youtube.com/watch?v=403Dzt_Vl5Y
+[youtube] 403Dzt_Vl5Y: Downloading webpage
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[youtube] 403Dzt_Vl5Y: Downloading android vr player API JSON
+[info] 403Dzt_Vl5Y: Downloading subtitles: en-orig, en
+WARNING: ffmpeg not found. The downloaded format may not be the best available. Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies
+[info] 403Dzt_Vl5Y: Downloading 1 format(s): 18
+[info] Writing video subtitles to: .raw/mentorship2024/51 - NQ December 05, 2024 Seek & Destroy Review.en-orig.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/51 - NQ December 05, 2024 Seek & Destroy Review.en-orig.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    4.68MiB/s (00:00:00)[download]   15.00KiB at    7.45MiB/s (00:00:00)[download]   31.00KiB at  805.20KiB/s (00:00:00)[download]   63.00KiB at    1.57MiB/s (00:00:00)[download]   95.47KiB at    2.34MiB/s (00:00:00)[download] 100% of   95.47KiB in 00:00:00 at 352.35KiB/s
+[info] Writing video subtitles to: .raw/mentorship2024/51 - NQ December 05, 2024 Seek & Destroy Review.en.vtt
+[download] Sleeping 1.00 seconds ...
+WARNING: The extractor specified to use impersonation for this download, but no impersonate target is available. If you encounter errors, then see  https://github.com/yt-dlp/yt-dlp#impersonation  for information on installing the required dependencies
+[download] Destination: .raw/mentorship2024/51 - NQ December 05, 2024 Seek & Destroy Review.en.vtt
+[download]    1.00KiB at  Unknown B/s (00:00:00)[download]    3.00KiB at  Unknown B/s (00:00:00)[download]    7.00KiB at    4.70MiB/s (00:00:00)[download]   15.00KiB at    7.55MiB/s (00:00:00)[download]   31.00KiB at  747.98KiB/s (00:00:00)[download]   63.00KiB at    1.45MiB/s (00:00:00)[download]   95.47KiB at    2.17MiB/s (00:00:00)[download] 100% of   95.47KiB in 00:00:00 at 362.37KiB/s
+[download] Finished downloading playlist: ICT 2024 Mentorship
