@@ -244,6 +244,7 @@ describe('IctChart entry markers', () => {
       reason: 'r',
       detectedAtUtc: MOCK_CANDLES[10].openTimeUtc,
       isAdvisoryOnly: true,
+      model: 'Ict2022',
       ...overrides,
     };
   }

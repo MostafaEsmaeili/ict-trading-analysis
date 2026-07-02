@@ -22,6 +22,7 @@ import { InstrumentOverrideForm } from '../components/settings/InstrumentOverrid
 import { GlobalConceptCard } from '../components/settings/GlobalConceptCard';
 import { EconomicCalendarCard } from '../components/settings/EconomicCalendarCard';
 import { DiscoveryPanel } from '../components/settings/DiscoveryPanel';
+import { ActiveModelsCard } from '../components/settings/ActiveModelsCard';
 
 type TabId = 'quick' | 'instruments' | 'concept' | 'discovery' | 'calendar';
 
@@ -71,6 +72,8 @@ export function SettingsPage(): React.JSX.Element {
           </label>
         </header>
       </section>
+
+      {tab === 'quick' ? <ActiveModelsCard /> : null}
 
       {tab === 'quick' || tab === 'instruments' ? (
         <InstrumentTuning showAllOverrides={tab === 'instruments'} />

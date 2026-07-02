@@ -15,7 +15,7 @@ import type { AlertDto, Direction, Killzone, TradeStyle } from '../types/api';
 import { formatNyDateTime } from '../time';
 import { errorMessage } from '../format-error';
 import { useDismissedAlerts } from '../hooks/useDismissedAlerts';
-import { DirectionChip, KillzoneBadge, StyleChip } from './Badges';
+import { DirectionChip, KillzoneBadge, ModelBadge, StyleChip } from './Badges';
 
 /**
  * Focus target — the symbol to switch to, plus an optional instant to seek the chart to. Alerts/trades
@@ -91,6 +91,7 @@ export function AlertsFeed({
                   <DirectionChip direction={a.direction as Direction | null} />
                   <KillzoneBadge killzone={a.killzone as Killzone | null} />
                   <StyleChip style={a.style as TradeStyle | null} />
+                  <ModelBadge model={a.model} />
                   <span className="alert__time num">{formatNyDateTime(a.atUtc)} NY</span>
                 </div>
                 <p className="alert__msg">{a.message}</p>

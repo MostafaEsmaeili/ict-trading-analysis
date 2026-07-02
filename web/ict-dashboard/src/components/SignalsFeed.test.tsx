@@ -24,6 +24,7 @@ function setup(id: string, symbol: string, grade: SetupDto['grade'], score: numb
     reason: 'Sweep → MSS → FVG → OTE → draw',
     detectedAtUtc: '2026-06-22T06:00:00Z',
     isAdvisoryOnly: true,
+    model: 'Ict2022',
   };
 }
 
@@ -123,5 +124,18 @@ describe('SignalsFeed', () => {
     render(<SignalsFeed signals={[SIGNALS[0]]} isLoading={false} onTake={vi.fn()} />);
     const meter = within(screen.getByLabelText(/signals feed/i)).getByRole('meter');
     expect(meter).toHaveAttribute('aria-valuenow', '84');
+  });
+
+  it('shows the setup-model chip per row (multi-model support)', () => {
+    const rows: RankedSignalDto[] = [
+      { ...SIGNALS[0], setup: { ...SIGNALS[0].setup, model: 'Ict2022' } },
+      { ...SIGNALS[1], setup: { ...SIGNALS[1].setup, model: 'Ict2024' } },
+    ];
+    render(<SignalsFeed signals={rows} isLoading={false} onTake={vi.fn()} />);
+    // The short chip label is the year; the accessible title carries the full model name.
+    const badge2022 = screen.getByText('2022');
+    expect(badge2022).toHaveAttribute('title', 'Setup model: ICT 2022');
+    const badge2024 = screen.getByText('2024');
+    expect(badge2024).toHaveAttribute('title', 'Setup model: ICT 2024');
   });
 });

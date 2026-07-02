@@ -15,6 +15,7 @@ import { useBacktestDatasets, useRunBacktest } from '../api/hooks';
 import type { BacktestRequest, BacktestResponse } from '../types/api';
 import { UNDEFINED_PROFIT_FACTOR } from '../types/api';
 import { STYLES } from '../components/ChartPanel';
+import { MODELS, DEFAULT_MODEL, modelLabel } from '../models';
 import { KpiTiles, type KpiTile } from '../components/KpiTiles';
 import { BalanceCurve } from '../components/BalanceCurve';
 import { TradesTable } from '../components/TradesTable';
@@ -78,6 +79,7 @@ export function BacktestPage(): React.JSX.Element {
   const [fromOverride, setFromOverride] = useState<string | null>(null);
   const [toOverride, setToOverride] = useState<string | null>(null);
   const [minRequired, setMinRequired] = useState('');
+  const [model, setModel] = useState<string>(searchParams.get('model') ?? DEFAULT_MODEL);
 
   const [runs, setRuns] = useState<BacktestResponse[]>([]);
 
@@ -127,6 +129,7 @@ export function BacktestPage(): React.JSX.Element {
       ...(fromDate ? { fromUtc: fromDateInput(fromDate) } : {}),
       ...(toDate ? { toUtc: fromDateInput(toDate) } : {}),
       ...(minRequired ? { minRequiredConditions: Number(minRequired) } : {}),
+      ...(model ? { model } : {}),
     };
     runBacktest.mutate(req, {
       onSuccess: (run) => setRuns((prev) => [run, ...prev].slice(0, 5)),
@@ -187,6 +190,22 @@ export function BacktestPage(): React.JSX.Element {
                 {STYLES.map((s) => (
                   <option key={s} value={s}>
                     {s}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="form__field">
+              <span>Model</span>
+              <select
+                className="input"
+                value={model}
+                aria-label="Backtest model"
+                onChange={(e) => setModel(e.target.value)}
+              >
+                {MODELS.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
                   </option>
                 ))}
               </select>
@@ -291,7 +310,7 @@ export function BacktestPage(): React.JSX.Element {
             <header className="panel__head">
               <span>
                 Results — {latest.symbol} {latest.timeframe} {latest.style} ·{' '}
-                {riskPercent}% risk
+                {modelLabel(latest.model)} · {riskPercent}% risk
               </span>
               <span className="num neutral">{latest.candlesProcessed.toLocaleString()} candles</span>
             </header>

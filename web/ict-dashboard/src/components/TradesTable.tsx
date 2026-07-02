@@ -24,6 +24,7 @@ import {
   CloseReasonPill,
   DirectionChip,
   KillzoneBadge,
+  ModelBadge,
   StatusPill,
   StyleChip,
 } from './Badges';
@@ -147,6 +148,7 @@ export function TradesTable({
           {sortableHeader('symbol', 'Symbol')}
           <th>Dir</th>
           <th>Style</th>
+          <th>Model</th>
           {sortableHeader('status', 'Status')}
           <th>Entry</th>
           <th>Stop</th>
@@ -199,6 +201,9 @@ export function TradesTable({
                 <StyleChip style={t.style as TradeStyle} />
               </td>
               <td>
+                <ModelBadge model={t.model} />
+              </td>
+              <td>
                 <div style={{ display: 'flex', gap: 4, alignItems: 'center', justifyContent: 'flex-end' }}>
                   <StatusPill status={t.status as TradeStatus} />
                   <KillzoneBadge killzone={t.killzone as Killzone | null} />
@@ -233,7 +238,7 @@ export function TradesTable({
       </tbody>
       <tfoot>
         <tr className="tbl__totals">
-          <td colSpan={9}>
+          <td colSpan={10}>
             {totals.count} trades · {totals.closedCount} closed · win{' '}
             {(totals.winRate * 100).toFixed(0)}%
           </td>

@@ -37,6 +37,7 @@ function setup(id: string, symbol: string, grade: SetupDto['grade'], score: numb
     reason: 'Sweep → MSS → FVG → OTE → draw',
     detectedAtUtc: '2026-06-22T06:00:00Z',
     isAdvisoryOnly: true,
+    model: 'Ict2022',
   };
 }
 

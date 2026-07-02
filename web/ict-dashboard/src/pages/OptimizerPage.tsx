@@ -14,6 +14,7 @@ import { useBacktestDatasets, useOptimize } from '../api/hooks';
 import type { OptimizeRequest, OptimizerResultDto } from '../types/api';
 import { UNDEFINED_PROFIT_FACTOR } from '../types/api';
 import { STYLES } from '../components/ChartPanel';
+import { MODELS, modelLabel } from '../models';
 import { formatMoney, formatPct } from '../format';
 import { errorMessage } from '../format-error';
 
@@ -108,6 +109,7 @@ export function OptimizerPage(): React.JSX.Element {
   const [styles, toggleStyle] = useToggleSet(['Intraday']);
   const [timeframes, toggleTimeframe] = useToggleSet([]);
   const [risks, toggleRisk] = useToggleSet(['1']);
+  const [models, toggleModel] = useToggleSet(['Ict2022']);
   const [minReqs, toggleMinReq] = useToggleSet([]);
   const [startingBalance, setStartingBalance] = useState(10000);
   const [objective, setObjective] = useState<(typeof OBJECTIVES)[number]>('Expectancy');
@@ -134,6 +136,7 @@ export function OptimizerPage(): React.JSX.Element {
       toUtc: toDate ? `${toDate}T23:59:59Z` : undefined,
       minRequiredConditions: minReqs.size > 0 ? [...minReqs].map(Number) : undefined,
       leaveOutUpTo: leaveOut > 0 ? leaveOut : undefined,
+      models: models.size > 0 ? [...models] : undefined,
     };
     optimize.mutate(req);
   }
@@ -142,7 +145,9 @@ export function OptimizerPage(): React.JSX.Element {
     navigate(
       `/backtest?symbol=${encodeURIComponent(row.symbol)}&timeframe=${encodeURIComponent(
         row.timeframe,
-      )}&style=${encodeURIComponent(row.style)}&risk=${row.riskPercent}`,
+      )}&style=${encodeURIComponent(row.style)}&risk=${row.riskPercent}&model=${encodeURIComponent(
+        row.model,
+      )}`,
     );
   }
 
@@ -170,6 +175,13 @@ export function OptimizerPage(): React.JSX.Element {
               options={STYLES}
               selected={styles}
               onToggle={toggleStyle}
+            />
+            <MultiSelect
+              label="Models"
+              ariaLabel="Models multi-select"
+              options={MODELS.map((m) => m.value)}
+              selected={models}
+              onToggle={toggleModel}
             />
             <MultiSelect
               label="Timeframes"
@@ -315,6 +327,7 @@ export function OptimizerPage(): React.JSX.Element {
                   <th>Symbol</th>
                   <th>TF</th>
                   <th>Style</th>
+                  <th>Model</th>
                   <th>Risk %</th>
                   <th>k/n</th>
                   <th>Dropped</th>
@@ -329,7 +342,7 @@ export function OptimizerPage(): React.JSX.Element {
               <tbody>
                 {result.results.map((row, i) => (
                   <tr
-                    key={`${row.symbol}-${row.timeframe}-${row.style}-${row.riskPercent}-${row.minRequiredConditions ?? 'all'}-${(row.requiredConditions ?? []).join('+')}`}
+                    key={`${row.symbol}-${row.timeframe}-${row.style}-${row.model}-${row.riskPercent}-${row.minRequiredConditions ?? 'all'}-${(row.requiredConditions ?? []).join('+')}`}
                     className={i === 0 ? 'row--top' : undefined}
                     role="button"
                     tabIndex={0}
@@ -349,6 +362,7 @@ export function OptimizerPage(): React.JSX.Element {
                     </td>
                     <td className="num">{row.timeframe}</td>
                     <td>{row.style}</td>
+                    <td className="num neutral" title={modelLabel(row.model)}>{row.model.replace('Ict', '')}</td>
                     <td className="num">{row.riskPercent}</td>
                     <td className="num neutral">{row.minRequiredConditions ?? 'all'}</td>
                     <td className="num neutral" title={(row.requiredConditions ?? []).join(', ')}>

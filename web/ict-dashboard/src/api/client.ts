@@ -25,6 +25,7 @@ import type {
   EquityPointDto,
   InstrumentSettingsDto,
   MarketStatusDto,
+  ModelPerformanceDto,
   OptimizeRequest,
   OptimizeResponse,
   PaperTradeDto,
@@ -48,11 +49,13 @@ import {
   MOCK_OVERLAYS,
   MOCK_CALENDAR,
   MOCK_PERFORMANCE,
+  MOCK_PERFORMANCE_BY_MODEL,
   MOCK_SETTINGS,
   MOCK_SIGNALS,
   mockBacktestResponse,
   mockOptimizeResponse,
   mockTakeSignal,
+  mockUpdateScanningSettings,
 } from '../mocks/fixtures';
 
 export const API_BASE = import.meta.env.VITE_API_BASE ?? '';
@@ -131,11 +134,12 @@ export async function fetchActiveTrades(): Promise<PaperTradeDto[]> {
   return getJson<PaperTradeDto[]>('/api/trades/active');
 }
 
-/** Server-side filters for the ranked signals read (`GET /api/signals?symbol=&style=&grade=&max=`). */
+/** Server-side filters for the ranked signals read (`GET /api/signals?symbol=&style=&grade=&model=&max=`). */
 export interface SignalFilters {
   symbol?: string;
   style?: string;
   grade?: string;
+  model?: string;
   max?: number;
 }
 
@@ -150,7 +154,8 @@ export async function fetchSignals(filters: SignalFilters = {}): Promise<RankedS
       (s) =>
         (!filters.symbol || s.setup.symbol === filters.symbol) &&
         (!filters.style || s.setup.style === filters.style) &&
-        (!filters.grade || s.setup.grade === filters.grade),
+        (!filters.grade || s.setup.grade === filters.grade) &&
+        (!filters.model || s.setup.model === filters.model),
     );
     if (filters.max != null) list = list.slice(0, filters.max);
     return list;
@@ -159,6 +164,7 @@ export async function fetchSignals(filters: SignalFilters = {}): Promise<RankedS
   if (filters.symbol) params.set('symbol', filters.symbol);
   if (filters.style) params.set('style', filters.style);
   if (filters.grade) params.set('grade', filters.grade);
+  if (filters.model) params.set('model', filters.model);
   if (filters.max != null) params.set('max', String(filters.max));
   const qs = params.toString();
   return getJson<RankedSignalDto[]>(`/api/signals${qs ? `?${qs}` : ''}`);
@@ -280,6 +286,20 @@ export async function updateInstrumentSettings(
   return putNoContent(`/api/settings/instruments/${encodeURIComponent(symbol)}`, body);
 }
 
+/**
+ * Set (or clear, with null) the LIVE active setup models the scanner runs (`PUT /api/settings/scanning`,
+ * body `{ activeModels }` → 204). null/empty clears the override back to the config default; an unknown
+ * model returns a 400 `{ error }` we surface. Applies without a restart (the runtime store bumps its
+ * revision). In mocks mode it mutates the in-memory fixture so the offline app behaves like the live one.
+ */
+export async function updateScanningSettings(activeModels: string[] | null): Promise<void> {
+  if (USE_MOCKS) {
+    mockUpdateScanningSettings(activeModels);
+    return;
+  }
+  return putNoContent('/api/settings/scanning', { activeModels });
+}
+
 export async function fetchCalendar(): Promise<CalendarStatusDto> {
   if (USE_MOCKS) {
     return MOCK_CALENDAR;
@@ -302,6 +322,7 @@ export async function runBacktest(req: BacktestRequest): Promise<BacktestRespons
       req.startingBalance,
       req.riskPercent,
       req.timeframe,
+      req.model,
     );
   }
   return postJson<BacktestResponse>('/api/backtest', req);
@@ -317,37 +338,55 @@ export async function runOptimize(req: OptimizeRequest): Promise<OptimizeRespons
       req.objective,
       req.topN,
       req.timeframes,
+      req.models,
     );
   }
   return postJson<OptimizeResponse>('/api/backtest/optimize', req);
 }
 
-export async function fetchPerformance(): Promise<PerformanceSummaryDto> {
+/** The performance summary, optionally scoped to ONE setup model (`GET /api/performance?model=`). */
+export async function fetchPerformance(model?: string): Promise<PerformanceSummaryDto> {
   if (USE_MOCKS) {
     return MOCK_PERFORMANCE;
   }
-  return getJson<PerformanceSummaryDto>('/api/performance');
+  const qs = model ? `?model=${encodeURIComponent(model)}` : '';
+  return getJson<PerformanceSummaryDto>(`/api/performance${qs}`);
 }
 
-export async function fetchEquityCurve(): Promise<EquityPointDto[]> {
+/**
+ * The per-model performance breakdown (`GET /api/performance/models` → ModelPerformanceDto[]) — one row
+ * per ICT setup model, so the Live Performance panel can compare 2022 vs 2024 side-by-side (§5.3).
+ */
+export async function fetchPerformanceByModel(): Promise<ModelPerformanceDto[]> {
+  if (USE_MOCKS) {
+    return MOCK_PERFORMANCE_BY_MODEL;
+  }
+  return getJson<ModelPerformanceDto[]>('/api/performance/models');
+}
+
+/** The equity curve (cumulative R), optionally scoped to ONE setup model (`GET /api/equity?model=`). */
+export async function fetchEquityCurve(model?: string): Promise<EquityPointDto[]> {
   if (USE_MOCKS) {
     return MOCK_EQUITY_CURVE;
   }
   // The host now serves the equity curve over REST (GET /api/equity → EquityPointDto[]); the curve is
   // CUMULATIVE R from a zero baseline, not an account balance (see EquityPointDto). Hit it the same way
   // every other live read does — getJson FAILS HARD on a non-OK response (no silent fixture fallback).
-  return getJson<EquityPointDto[]>('/api/equity');
+  const qs = model ? `?model=${encodeURIComponent(model)}` : '';
+  return getJson<EquityPointDto[]>(`/api/equity${qs}`);
 }
 
 export async function fetchChart(
   symbol: string,
   timeframe: string,
   style: string,
+  model?: string,
 ): Promise<ChartResponse> {
   if (USE_MOCKS) {
     return { symbol, timeframe, style, candles: MOCK_CANDLES, overlays: [], geometryOverlays: [] };
   }
   const params = new URLSearchParams({ tf: timeframe, style });
+  if (model) params.set('model', model);
   return getJson<ChartResponse>(`/api/chart/${symbol}?${params}`);
 }
 

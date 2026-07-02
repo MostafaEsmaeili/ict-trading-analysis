@@ -21,7 +21,7 @@ import type {
 } from '../types/api';
 import { formatPrice } from '../format';
 import { errorMessage } from '../format-error';
-import { DirectionChip, GradeChip, KillzoneBadge, StyleChip } from './Badges';
+import { DirectionChip, GradeChip, KillzoneBadge, ModelBadge, StyleChip } from './Badges';
 import { ScoreBar } from './ScoreBar';
 import { blockedReason } from './signalUtils';
 import type { FocusTarget } from './AlertsFeed';
@@ -121,6 +121,7 @@ function SignalRow({
             <StyleChip style={su.style as TradeStyle} />
             <KillzoneBadge killzone={su.killzone as Killzone | null} />
             <span className="chip chip--style num">{su.triggerTimeframe}</span>
+            <ModelBadge model={su.model} />
             <span className={`chip ${signal.entryMode === 'Auto' ? 'chip--auto' : 'chip--manual'}`}>
               {signal.entryMode === 'Auto' ? 'Auto' : 'Manual'}
             </span>

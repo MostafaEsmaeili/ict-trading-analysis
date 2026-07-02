@@ -17,6 +17,7 @@ import type {
   ConfigStatusDto,
   EquityPointDto,
   MarketStatusDto,
+  ModelPerformanceDto,
   OptimizeResponse,
   PaperTradeDto,
   PerformanceSummaryDto,
@@ -137,6 +138,7 @@ export const MOCK_SETUPS: SetupDto[] = [
       'Bullish FVG formed inside London Open killzone after Asian-low sweep; MSS confirmed with displacement; OTE 0.705. Draw on buy-side liquidity (RR 2.6).',
     detectedAtUtc: t(10),
     isAdvisoryOnly: true,
+    model: 'Ict2022',
   },
 ];
 
@@ -151,6 +153,7 @@ export const MOCK_ALERTS: AlertDto[] = [
     killzone: 'LondonOpen',
     style: 'Intraday',
     atUtc: t(10),
+    model: 'Ict2022',
   },
   {
     id: 'a2222222-2222-2222-2222-222222222222',
@@ -162,6 +165,7 @@ export const MOCK_ALERTS: AlertDto[] = [
     killzone: 'NewYorkOpen',
     style: 'Scalp',
     atUtc: new Date(BASE_TIME + 30 * STEP_MS).toISOString(),
+    model: 'Ict2024',
   },
 ];
 
@@ -194,6 +198,7 @@ export const MOCK_ACTIVE_TRADES: PaperTradeDto[] = [
     currentStop: 1.0689,
     exitPrice: null,
     managedFromUtc: t(11),
+    model: 'Ict2022',
   },
   {
     id: 'c2222222-2222-2222-2222-222222222222',
@@ -223,6 +228,7 @@ export const MOCK_ACTIVE_TRADES: PaperTradeDto[] = [
     currentStop: 1.272,
     exitPrice: null,
     managedFromUtc: new Date(BASE_TIME + 31 * STEP_MS).toISOString(),
+    model: 'Ict2024',
   },
 ];
 
@@ -241,6 +247,7 @@ function closedTrade(
   realizedR: number,
   closeReason: 'TargetHit' | 'StopHit' | 'TimeExit' | 'Manual',
   exitPrice: number,
+  model = 'Ict2022',
 ): PaperTradeDto {
   const riskBudget = 100;
   const grossPnl = realizedR * riskBudget;
@@ -274,6 +281,7 @@ function closedTrade(
     currentStop: stop,
     exitPrice,
     managedFromUtc: new Date(BASE_TIME + (openMin + 1) * STEP_MS).toISOString(),
+    model,
   };
 }
 
@@ -281,8 +289,8 @@ export const MOCK_CLOSED_TRADES: PaperTradeDto[] = [
   closedTrade('d1111111-1111-1111-1111-111111111111', MOCK_SYMBOL, 'Long', 'Intraday', 'LondonOpen', 1.0724, 1.0689, [1.0762, 1.079], 10, 16, 2.5, 'TargetHit', 1.079),
   closedTrade('d2222222-2222-2222-2222-222222222222', 'GBPUSD', 'Short', 'Scalp', 'NewYorkOpen', 1.272, 1.2745, [1.2695, 1.2655], 30, 36, -1.0, 'StopHit', 1.2745),
   closedTrade('d3333333-3333-3333-3333-333333333333', MOCK_SYMBOL, 'Long', 'Intraday', 'LondonOpen', 1.081, 1.0788, [1.0832, 1.0855], 50, 70, 0.95, 'TimeExit', 1.0831),
-  closedTrade('d4444444-4444-4444-4444-444444444444', 'USDJPY', 'Long', 'Swing', 'NewYorkOpen', 156.42, 156.05, [156.9, 157.6], 90, 140, 1.8, 'TargetHit', 157.6),
-  closedTrade('d5555555-5555-5555-5555-555555555555', 'XAUUSD', 'Short', 'Intraday', 'LondonOpen', 2342.5, 2349.0, [2330.0, 2318.0], 120, 150, -1.0, 'StopHit', 2349.0),
+  closedTrade('d4444444-4444-4444-4444-444444444444', 'USDJPY', 'Long', 'Swing', 'NewYorkOpen', 156.42, 156.05, [156.9, 157.6], 90, 140, 1.8, 'TargetHit', 157.6, 'Ict2024'),
+  closedTrade('d5555555-5555-5555-5555-555555555555', 'XAUUSD', 'Short', 'Intraday', 'LondonOpen', 2342.5, 2349.0, [2330.0, 2318.0], 120, 150, -1.0, 'StopHit', 2349.0, 'Ict2024'),
   closedTrade('d6666666-6666-6666-6666-666666666666', MOCK_SYMBOL, 'Long', 'Intraday', 'LondonOpen', 1.0701, 1.0682, [1.0728, 1.0752], 160, 180, 0.02, 'Manual', 1.0701),
 ];
 
@@ -384,6 +392,8 @@ export const MOCK_SETTINGS: SettingsDto = {
     'AUDUSD', 'EURGBP', 'EURJPY', 'EURUSD', 'GBPJPY', 'GBPUSD',
     'NAS100USD', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY', 'XAUUSD',
   ],
+  activeModels: ['Ict2022'],
+  availableModels: ['Ict2022', 'Ict2024'],
 };
 
 /**
@@ -404,6 +414,24 @@ export function __resetMockSettingsForTest(): void {
     spreadBasePips: null,
     commissionPerLotRoundTripUsd: null,
   };
+  MOCK_SETTINGS.activeModels = ['Ict2022'];
+}
+
+/**
+ * Mock PUT /api/settings/scanning — set (or clear, with null/empty) the live active setup models. Mutates
+ * MOCK_SETTINGS in place (offline parity); an unknown model throws the 400 `{ error }` surfacing path.
+ */
+export function mockUpdateScanningSettings(activeModels: string[] | null): void {
+  if (activeModels == null || activeModels.length === 0) {
+    MOCK_SETTINGS.activeModels = [...(MOCK_SETTINGS.availableModels ?? ['Ict2022'])];
+    return;
+  }
+  const known = new Set(MOCK_SETTINGS.availableModels ?? []);
+  const unknown = activeModels.find((m) => !known.has(m));
+  if (unknown) {
+    throw new Error(`Unknown setup model '${unknown}'.`);
+  }
+  MOCK_SETTINGS.activeModels = [...activeModels];
 }
 
 // The economic-calendar status: an enabled Config feed with an FOMC + an NFP in the window. The FOMC day and the day
@@ -453,8 +481,10 @@ export function mockBacktestResponse(
   startingBalance: number,
   riskPercent: number,
   timeframe = 'M5',
+  model: string | null | undefined = 'Ict2022',
 ): BacktestResponse {
-  const trades = MOCK_CLOSED_TRADES.map((tr) => ({ ...tr, symbol, style }));
+  const runModel = model || 'Ict2022';
+  const trades = MOCK_CLOSED_TRADES.map((tr) => ({ ...tr, symbol, style, model: runModel }));
   const equity = mockBacktestEquity(startingBalance);
   const endingBalance = equity.at(-1)?.equity ?? startingBalance;
   const wins = trades.filter((tr) => (tr.realizedR ?? 0) > 0).length;
@@ -480,6 +510,7 @@ export function mockBacktestResponse(
     },
     equity,
     trades,
+    model: runModel,
   };
 }
 
@@ -494,42 +525,48 @@ export function mockOptimizeResponse(
   objective = 'Expectancy',
   topN = 10,
   timeframes: string[] = ['M5'],
+  models: string[] | null | undefined = ['Ict2022'],
 ): OptimizeResponse {
   const rows = [];
+  const runModels = models && models.length ? models : ['Ict2022'];
   for (const symbol of symbols.length ? symbols : ['EURUSD']) {
     for (const tf of timeframes.length ? timeframes : ['M5']) {
       for (const style of styles.length ? styles : ['Intraday']) {
         for (const risk of riskPercents.length ? riskPercents : [1]) {
-          // Deterministic pseudo-score from the combination so the leaderboard ranks stably.
-          const seed = (symbol.charCodeAt(0) + style.charCodeAt(0) + tf.charCodeAt(1) + risk * 10) % 23;
-          const averageR = Number((0.05 + seed * 0.04).toFixed(3));
-          const winRate = Number((0.4 + (seed % 7) * 0.03).toFixed(3));
-          const profitFactor = Number((0.8 + seed * 0.07).toFixed(2));
-          const tradeCount = 8 + (seed % 12);
-          const expectancy = averageR;
-          const endingBalance = Number((startingBalance * (1 + averageR * tradeCount * (risk / 100))).toFixed(2));
-          const score =
-            objective === 'ProfitFactor'
-              ? profitFactor
-              : objective === 'AverageR'
-                ? averageR
-                : objective === 'EndingBalance'
-                  ? endingBalance
-                  : expectancy;
-          rows.push({
-            symbol,
-            timeframe: tf,
-            style,
-            riskPercent: risk,
-            tradeCount,
-            winRate,
-            averageR,
-            profitFactor,
-            expectancy,
-            maxDrawdownR: Number((1 + (seed % 5) * 0.5).toFixed(2)),
-            endingBalance,
-            score: Number(score.toFixed(4)),
-          });
+          for (const model of runModels) {
+            // Deterministic pseudo-score from the combination so the leaderboard ranks stably.
+            const seed =
+              (symbol.charCodeAt(0) + style.charCodeAt(0) + tf.charCodeAt(1) + risk * 10 + model.charCodeAt(4)) % 23;
+            const averageR = Number((0.05 + seed * 0.04).toFixed(3));
+            const winRate = Number((0.4 + (seed % 7) * 0.03).toFixed(3));
+            const profitFactor = Number((0.8 + seed * 0.07).toFixed(2));
+            const tradeCount = 8 + (seed % 12);
+            const expectancy = averageR;
+            const endingBalance = Number((startingBalance * (1 + averageR * tradeCount * (risk / 100))).toFixed(2));
+            const score =
+              objective === 'ProfitFactor'
+                ? profitFactor
+                : objective === 'AverageR'
+                  ? averageR
+                  : objective === 'EndingBalance'
+                    ? endingBalance
+                    : expectancy;
+            rows.push({
+              symbol,
+              timeframe: tf,
+              style,
+              riskPercent: risk,
+              tradeCount,
+              winRate,
+              averageR,
+              profitFactor,
+              expectancy,
+              maxDrawdownR: Number((1 + (seed % 5) * 0.5).toFixed(2)),
+              endingBalance,
+              score: Number(score.toFixed(4)),
+              model,
+            });
+          }
         }
       }
     }
@@ -560,6 +597,21 @@ export const MOCK_PERFORMANCE: PerformanceSummaryDto = {
   expectancy: 0.74,
   maxDrawdown: 3.2,
 };
+
+// The per-model performance breakdown (GET /api/performance/models) — one row per ICT setup model, so the
+// Live Performance panel renders the 2022-vs-2024 comparison when more than one model has closed trades.
+export const MOCK_PERFORMANCE_BY_MODEL: ModelPerformanceDto[] = [
+  {
+    model: 'Ict2022',
+    tradeCount: 16,
+    summary: { tradeCount: 16, winRate: 0.6875, averageR: 1.32, profitFactor: 2.61, expectancy: 0.91, maxDrawdown: 2.4 },
+  },
+  {
+    model: 'Ict2024',
+    tradeCount: 8,
+    summary: { tradeCount: 8, winRate: 0.5, averageR: 0.9, profitFactor: 1.72, expectancy: 0.44, maxDrawdown: 3.2 },
+  },
+];
 
 // Edge fixture: an all-wins / no-losses book → the backend UndefinedProfitFactor (999999) sentinel,
 // which the panel renders as "∞".
@@ -595,6 +647,7 @@ function signalSetup(
   rewardRatio: number,
   reason: string,
   minutesAgo: number,
+  model = 'Ict2022',
 ): SetupDto {
   return {
     id,
@@ -612,6 +665,7 @@ function signalSetup(
     reason,
     detectedAtUtc: new Date(Date.now() - minutesAgo * 60_000).toISOString(),
     isAdvisoryOnly: true,
+    model,
   };
 }
 
@@ -645,6 +699,7 @@ export const MOCK_SIGNALS: RankedSignalDto[] = [
       19850.0, 19805.0, [19905.0, 19980.0], 2.9,
       'Index AM killzone: 08:30 macro sweep → MSS up → order-block confluence; draw above the session high.',
       9,
+      'Ict2024',
     ),
   },
   {
@@ -675,6 +730,7 @@ export const MOCK_SIGNALS: RankedSignalDto[] = [
       156.42, 156.05, [156.9, 157.6], 2.1,
       'Liquidity sweep → MSS up → FVG retrace; draw to the prior-day high (RR 2.1).',
       26,
+      'Ict2024',
     ),
   },
   {
@@ -746,6 +802,7 @@ export function mockTakeSignal(setupId: string): PaperTradeDto | null {
     currentStop: su.stop,
     exitPrice: null,
     managedFromUtc: new Date().toISOString(),
+    model: su.model,
   };
 }
 

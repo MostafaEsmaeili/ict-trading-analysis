@@ -36,6 +36,25 @@ describe('OptimizerPage', () => {
     }
   });
 
+  it('carries the selected models into the request (a per-model leaderboard row appears)', async () => {
+    renderWithProviders(<OptimizerPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'EURUSD' })).toBeInTheDocument();
+    });
+
+    // Add ICT 2024 to the default [ICT 2022] models multi-select, then run the grid.
+    fireEvent.click(screen.getByRole('button', { name: 'Ict2024' }));
+    fireEvent.submit(screen.getByRole('form', { name: /optimizer form/i }));
+
+    const board = await screen.findByRole('table', { name: /leaderboard/i });
+    const bodyRows = Array.from(board.querySelectorAll('tbody tr'));
+    // The Model column (5th cell) reports the per-combination model — both years appear once selected.
+    const models = bodyRows.map((r) => r.querySelectorAll('td')[4]?.textContent);
+    expect(models).toContain('2024');
+    expect(models).toContain('2022');
+  });
+
   it('shows the empty prompt before a run', async () => {
     renderWithProviders(<OptimizerPage />);
     await waitFor(() => {

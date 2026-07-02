@@ -309,6 +309,14 @@ body {
   background: var(--panel-raised);
 }
 
+/* Setup-model chip ("2022" / "2024") — a subtle accent tag that reads as metadata, not a semantic signal. */
+.chip--model {
+  border: 1px solid var(--border-strong);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  letter-spacing: 0.02em;
+}
+
 /* ---- Alerts feed ---- */
 
 /* The alert row is a <button> for keyboard focus + click-to-focus-chart; reset native button chrome. */

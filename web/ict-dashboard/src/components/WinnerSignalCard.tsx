@@ -19,7 +19,7 @@ import type { Direction, Killzone, SetupGrade, TradeStyle } from '../types/api';
 import { formatPrice } from '../format';
 import { errorMessage } from '../format-error';
 import { gradeColors } from '../theme';
-import { DirectionChip, GradeChip, KillzoneBadge, StyleChip } from './Badges';
+import { DirectionChip, GradeChip, KillzoneBadge, ModelBadge, StyleChip } from './Badges';
 import { ScoreBar } from './ScoreBar';
 import { TakeControl } from './SignalsFeed';
 import type { FocusTarget } from './AlertsFeed';
@@ -121,6 +121,7 @@ export function WinnerSignalCard({ onFocus }: WinnerSignalCardProps): React.JSX.
           <StyleChip style={su.style as TradeStyle} />
           <KillzoneBadge killzone={su.killzone as Killzone | null} />
           <span className="chip chip--style num">{su.triggerTimeframe}</span>
+          <ModelBadge model={su.model} />
         </div>
 
         <ScoreBar score={winner.score} grade={grade} />

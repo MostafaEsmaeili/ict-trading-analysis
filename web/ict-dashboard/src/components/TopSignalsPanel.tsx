@@ -9,7 +9,7 @@ import { useMemo } from 'react';
 import { useSignals, useTakeSignal } from '../api/hooks';
 import type { Direction, Killzone, SetupGrade, TradeStyle } from '../types/api';
 import { errorMessage } from '../format-error';
-import { DirectionChip, GradeChip, KillzoneBadge, StyleChip } from './Badges';
+import { DirectionChip, GradeChip, KillzoneBadge, ModelBadge, StyleChip } from './Badges';
 import { ScoreBar } from './ScoreBar';
 import { TakeControl } from './SignalsFeed';
 import { isTakeable } from './signalUtils';
@@ -86,6 +86,7 @@ export function TopSignalsPanel({ onFocus }: TopSignalsPanelProps): React.JSX.El
                       <StyleChip style={su.style as TradeStyle} />
                       <KillzoneBadge killzone={su.killzone as Killzone | null} />
                       <span className="chip chip--style num">{su.triggerTimeframe}</span>
+                      <ModelBadge model={su.model} />
                     </div>
                     <ScoreBar score={s.score} grade={su.grade as SetupGrade} />
                   </button>

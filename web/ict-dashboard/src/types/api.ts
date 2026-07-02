@@ -96,6 +96,8 @@ export interface SetupDto {
   reason: string;
   detectedAtUtc: string;
   isAdvisoryOnly: boolean;
+  /** The ICT setup MODEL that produced this setup — the wire enum member name ("Ict2022" | "Ict2024"). */
+  model: string;
 }
 
 /**
@@ -169,6 +171,8 @@ export interface PaperTradeDto {
   currentStop: number;
   exitPrice: number | null;
   managedFromUtc: string;
+  /** The ICT setup model the source setup used — the wire enum member name ("Ict2022" | "Ict2024"). */
+  model: string;
 }
 
 /**
@@ -264,6 +268,10 @@ export interface SettingsDto {
   availableRequiredConditions: string[];
   /** The catalogued symbols the operator can pick to add an override (FX majors + NAS100USD); typing another is allowed. */
   availableInstruments: string[];
+  /** The ICT setup models the scanner runs LIVE (wire enum names). Empty/absent = the config default. */
+  activeModels?: string[];
+  /** All ICT setup models the scanner can run — the model multi-select's option set. */
+  availableModels?: string[];
 }
 
 /** Mirrors Host.CalendarEventDto — one scheduled economic event (NY date + type), flagged if its date is blacked out. */
@@ -311,6 +319,8 @@ export interface BacktestRequest {
   minRequiredConditions?: number;
   /** The specific concepts to require (the feature-subset); omit = the default/instrument required set. */
   requiredConditions?: string[];
+  /** The ICT setup model to run ("Ict2022" | "Ict2024"); omit/null = the server default (Ict2022). */
+  model?: string | null;
 }
 
 /**
@@ -341,6 +351,8 @@ export interface BacktestResponse {
   summary: PerformanceSummaryDto;
   equity: BacktestEquityPointDto[];
   trades: PaperTradeDto[];
+  /** The ICT setup model this run used (wire enum name). */
+  model: string;
 }
 
 /** `POST /api/backtest/optimize` body — a grid sweep over the cartesian product (plan §15 §6). */
@@ -360,6 +372,8 @@ export interface OptimizeRequest {
   requiredConditionSets?: string[][];
   /** Auto-generate subsets by dropping up to this many of the (non-MSS) default required conditions. */
   leaveOutUpTo?: number;
+  /** The ICT setup models to sweep (wire enum names); omit/null = the server default (Ict2022). */
+  models?: string[] | null;
 }
 
 /** One row of the optimizer leaderboard — a single (symbol,tf,style,risk%) combination's result. */
@@ -378,6 +392,8 @@ export interface OptimizerResultDto {
   maxDrawdownR: number;
   endingBalance: number;
   score: number;
+  /** The ICT setup model this combination used (wire enum name). */
+  model: string;
 }
 
 /** `POST /api/backtest/optimize` 200 response — the ranked leaderboard (plan §15 §6). */
@@ -404,6 +420,8 @@ export interface AlertDto {
   killzone: string | null;
   style: string | null;
   atUtc: string;
+  /** The ICT setup model that raised this alert (wire enum name); null when not model-scoped. */
+  model?: string | null;
 }
 
 // ---- Performance.Contracts ----
@@ -431,6 +449,16 @@ export interface PerformanceSummaryDto {
   profitFactor: number;
   expectancy: number;
   maxDrawdown: number;
+}
+
+/**
+ * Mirrors Host.ModelPerformanceDto — the per-model performance breakdown (`GET /api/performance/models`).
+ * One row per ICT setup model: its wire enum name, its closed-trade count and the R-based summary (§5.3).
+ */
+export interface ModelPerformanceDto {
+  model: string;
+  tradeCount: number;
+  summary: PerformanceSummaryDto;
 }
 
 /**

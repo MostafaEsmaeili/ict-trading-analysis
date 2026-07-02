@@ -23,7 +23,7 @@ import { WinnerSignalCard } from './components/WinnerSignalCard';
 import { useMarketSelection } from './hooks/useMarketSelection';
 import { useOverlayVisibility } from './hooks/useOverlayVisibility';
 import { useDashboardData } from './hooks/useDashboardData';
-import { useAccountStatus, useConfig, useMarketStatus } from './api/hooks';
+import { useAccountStatus, useConfig, useMarketStatus, usePerformanceByModel } from './api/hooks';
 
 export function Dashboard(): React.JSX.Element {
   // A `?symbol=` deep-link (off the Trades page) seeds the initial chart symbol once.
@@ -53,6 +53,7 @@ export function Dashboard(): React.JSX.Element {
   const configQ = useConfig();
   const accountQ = useAccountStatus();
   const marketStatusQ = useMarketStatus();
+  const modelPerfQ = usePerformanceByModel();
 
   return (
     <div className="live-page">
@@ -115,6 +116,7 @@ export function Dashboard(): React.JSX.Element {
           // Performance shows an error if EITHER the summary or the equity-curve query fails.
           isError={perfQ.isError || equityQ.isError}
           error={perfQ.error ?? equityQ.error}
+          modelPerformance={modelPerfQ.data}
         />
         <LiveConfigPanel
           config={configQ.data}

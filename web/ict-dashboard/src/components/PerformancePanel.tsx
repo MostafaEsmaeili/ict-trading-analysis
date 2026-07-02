@@ -13,9 +13,10 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import type { EquityPointDto, PerformanceSummaryDto } from '../types/api';
+import type { EquityPointDto, ModelPerformanceDto, PerformanceSummaryDto } from '../types/api';
 import { UNDEFINED_PROFIT_FACTOR } from '../types/api';
 import { palette } from '../theme';
+import { modelLabel } from '../models';
 import { formatNyDateTime } from '../time';
 import { errorMessage } from '../format-error';
 
@@ -25,6 +26,8 @@ export interface PerformancePanelProps {
   isLoading: boolean;
   isError?: boolean;
   error?: unknown;
+  /** Optional per-model breakdown — rendered as a compact comparison when more than one model has trades. */
+  modelPerformance?: ModelPerformanceDto[];
 }
 
 function pct(v: number): string {
@@ -58,9 +61,13 @@ export function PerformancePanel({
   isLoading,
   isError,
   error,
+  modelPerformance,
 }: PerformancePanelProps): React.JSX.Element {
   const data = equityCurve.map((p) => ({ t: formatNyDateTime(p.atUtc), equity: p.equity }));
   const yDomain = equityDomain(data.map((d) => d.equity));
+  // Only worth showing the split when MORE THAN ONE model has closed trades.
+  const perModel = (modelPerformance ?? []).filter((m) => m.tradeCount > 0);
+  const showPerModel = perModel.length > 1;
 
   return (
     <section className="panel" aria-label="Performance">
@@ -148,6 +155,38 @@ export function PerformancePanel({
                 </AreaChart>
               </ResponsiveContainer>
             </div>
+
+            {showPerModel ? (
+              <div className="perf-by-model" style={{ marginTop: 12 }}>
+                <div className="metric__label" style={{ marginBottom: 4 }}>By setup model</div>
+                <table className="tbl tbl--compact" aria-label="Performance by model">
+                  <thead>
+                    <tr>
+                      <th>Model</th>
+                      <th>Trades</th>
+                      <th>Win %</th>
+                      <th>Avg R</th>
+                      <th>PF</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {perModel.map((m) => (
+                      <tr key={m.model}>
+                        <td>{modelLabel(m.model)}</td>
+                        <td className="num">{m.tradeCount}</td>
+                        <td className="num">{pct(m.summary.winRate)}</td>
+                        <td className={`num ${m.summary.averageR >= 0 ? 'long' : 'short'}`}>
+                          {m.summary.averageR.toFixed(2)}
+                        </td>
+                        <td className="num">
+                          {fmtProfitFactor(m.summary.profitFactor, m.summary.tradeCount)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
           </>
         )}
       </div>

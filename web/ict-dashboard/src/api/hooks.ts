@@ -17,12 +17,14 @@ import {
   fetchMarketStatus,
   fetchOverlays,
   fetchPerformance,
+  fetchPerformanceByModel,
   fetchSettings,
   fetchSignals,
   runBacktest,
   runOptimize,
   takeSignal,
   updateInstrumentSettings,
+  updateScanningSettings,
   type SignalFilters,
   type TakeSignalResult,
   type TradeFilters,
@@ -129,7 +131,16 @@ export function useTakeSignal() {
 export function usePerformance() {
   return useQuery({
     queryKey: queryKeys.performance(),
-    queryFn: fetchPerformance,
+    queryFn: () => fetchPerformance(),
+    refetchInterval: RECONCILE_MS,
+  });
+}
+
+/** The per-model performance breakdown (GET /api/performance/models) — the Live Performance comparison. */
+export function usePerformanceByModel() {
+  return useQuery({
+    queryKey: queryKeys.performanceByModel(),
+    queryFn: fetchPerformanceByModel,
     refetchInterval: RECONCILE_MS,
   });
 }
@@ -137,7 +148,7 @@ export function usePerformance() {
 export function useEquityCurve() {
   return useQuery({
     queryKey: queryKeys.equityCurve(),
-    queryFn: fetchEquityCurve,
+    queryFn: () => fetchEquityCurve(),
     refetchInterval: RECONCILE_MS,
   });
 }
@@ -200,6 +211,21 @@ export function useUpdateInstrumentSettings() {
   const qc = useQueryClient();
   return useMutation<void, Error, { symbol: string; body: InstrumentSettingsDto | null }>({
     mutationFn: ({ symbol, body }) => updateInstrumentSettings(symbol, body),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.settings() });
+    },
+  });
+}
+
+/**
+ * Set or clear the LIVE active setup models the scanner runs (PUT /api/settings/scanning). On success it
+ * invalidates the settings query so the models control re-reads the applied state — the change is live
+ * (no restart), so the next scan already reflects it.
+ */
+export function useUpdateScanningSettings() {
+  const qc = useQueryClient();
+  return useMutation<void, Error, { activeModels: string[] | null }>({
+    mutationFn: ({ activeModels }) => updateScanningSettings(activeModels),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.settings() });
     },

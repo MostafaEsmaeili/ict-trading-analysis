@@ -86,6 +86,26 @@ describe('SettingsPage', () => {
     ).toBeNull();
   });
 
+  it('the Quick-setup tab lets the operator toggle the active setup models and saves them live', async () => {
+    renderWithProviders(<SettingsPage />);
+
+    // The Active setup models control renders on the default Quick-setup tab with the live selection:
+    // ICT 2022 is on (and is the only one → its chip is disabled so it can't be unchecked), ICT 2024 off.
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'ICT 2022' })).toHaveAttribute('aria-pressed', 'true');
+    });
+    expect(screen.getByRole('button', { name: 'ICT 2022' })).toBeDisabled(); // last-on model can't be unchecked
+    expect(screen.getByRole('button', { name: 'ICT 2024' })).toHaveAttribute('aria-pressed', 'false');
+
+    // Turning ICT 2024 on saves via PUT /api/settings/scanning; the settings query re-reads the applied
+    // state → both chips pressed and ICT 2022 becomes enabled again (no longer the only active model).
+    fireEvent.click(screen.getByRole('button', { name: 'ICT 2024' }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'ICT 2024' })).toHaveAttribute('aria-pressed', 'true');
+    });
+    expect(screen.getByRole('button', { name: 'ICT 2022' })).toBeEnabled();
+  });
+
   it('the Discovery tab exposes a LIVE per-instrument Auto/Manual entry-mode control', async () => {
     renderWithProviders(<SettingsPage />);
 

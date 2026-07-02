@@ -53,6 +53,7 @@ describe('api DTO contract', () => {
         'id',
         'isAdvisoryOnly',
         'killzone',
+        'model',
         'reason',
         'rewardRatio',
         'score',
@@ -79,6 +80,7 @@ describe('api DTO contract', () => {
         'killzone',
         'lifecycle',
         'managedFromUtc',
+        'model',
         'netPnl',
         'netR',
         'openedAtUtc',
@@ -95,7 +97,7 @@ describe('api DTO contract', () => {
       ].sort(),
     );
     expect(Object.keys(alert).sort()).toEqual(
-      ['atUtc', 'direction', 'id', 'killzone', 'kind', 'message', 'style', 'symbol'].sort(),
+      ['atUtc', 'direction', 'id', 'killzone', 'kind', 'message', 'model', 'style', 'symbol'].sort(),
     );
     expect(perf.tradeCount).toBeTypeOf('number');
 

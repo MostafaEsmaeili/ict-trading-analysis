@@ -13,11 +13,13 @@ import { useAllTrades } from '../api/hooks';
 import type { TradeFilters } from '../api/client';
 import type { PaperTradeDto } from '../types/api';
 import { STYLES, SYMBOLS } from '../components/ChartPanel';
+import { MODELS } from '../models';
 import { TradesTable, type TradeFocusTarget } from '../components/TradesTable';
 
 type StatusFilter = 'All' | 'Open' | 'Closed';
 type StyleFilter = 'All' | (typeof STYLES)[number];
 type WinLossFilter = 'All' | 'Win' | 'Loss';
+type ModelFilter = 'All' | (typeof MODELS)[number]['value'];
 
 export function TradesPage(): React.JSX.Element {
   const navigate = useNavigate();
@@ -25,6 +27,7 @@ export function TradesPage(): React.JSX.Element {
   const [symbol, setSymbol] = useState<string>('All');
   const [style, setStyle] = useState<StyleFilter>('All');
   const [winLoss, setWinLoss] = useState<WinLossFilter>('All');
+  const [model, setModel] = useState<ModelFilter>('All');
 
   // Status + symbol are server-side filters (the wire supports them); style + win/loss are client-side.
   const serverFilters: TradeFilters = useMemo(
@@ -41,11 +44,12 @@ export function TradesPage(): React.JSX.Element {
     const all = tradesQ.data ?? [];
     return all.filter((t: PaperTradeDto) => {
       if (style !== 'All' && t.style !== style) return false;
+      if (model !== 'All' && t.model !== model) return false;
       if (winLoss === 'Win' && (t.realizedR ?? 0) <= 0) return false;
       if (winLoss === 'Loss' && (t.realizedR ?? 0) >= 0) return false;
       return true;
     });
-  }, [tradesQ.data, style, winLoss]);
+  }, [tradesQ.data, style, winLoss, model]);
 
   const handleFocus = (target: TradeFocusTarget): void => {
     // Deep-link to the Live page; the symbol is carried in the URL so the Live chart can pick it up.
@@ -106,6 +110,23 @@ export function TradesPage(): React.JSX.Element {
               {STYLES.map((s) => (
                 <option key={s} value={s}>
                   {s}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="filterbar__field">
+            <span>Model</span>
+            <select
+              className="input"
+              value={model}
+              aria-label="Model filter"
+              onChange={(e) => setModel(e.target.value as ModelFilter)}
+            >
+              <option value="All">All</option>
+              {MODELS.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
                 </option>
               ))}
             </select>

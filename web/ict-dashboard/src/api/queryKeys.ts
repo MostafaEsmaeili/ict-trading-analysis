@@ -21,5 +21,6 @@ export const queryKeys = {
   backtestDatasets: () => ['backtest', 'datasets'] as const,
   alerts: () => ['alerts'] as const,
   performance: () => ['performance'] as const,
+  performanceByModel: () => ['performance', 'models'] as const,
   equityCurve: () => ['performance', 'equity'] as const,
 } as const;

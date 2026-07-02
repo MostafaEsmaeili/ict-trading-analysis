@@ -25,6 +25,7 @@ function setup(id: string, triggerTimeframe: string): SetupDto {
     reason: 'r',
     detectedAtUtc: '2026-06-19T06:50:00Z',
     isAdvisoryOnly: true,
+    model: 'Ict2022',
   };
 }
 

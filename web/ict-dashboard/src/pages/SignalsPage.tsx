@@ -14,6 +14,7 @@ import { useSignals, useTakeSignal } from '../api/hooks';
 import { SignalsFeed } from '../components/SignalsFeed';
 import { WinnerSignalCard } from '../components/WinnerSignalCard';
 import { SYMBOLS, TIMEFRAMES, STYLES } from '../components/ChartPanel';
+import { MODELS } from '../models';
 import { errorMessage } from '../format-error';
 import type { FocusTarget } from '../components/AlertsFeed';
 
@@ -27,6 +28,7 @@ export function SignalsPage(): React.JSX.Element {
   const [symbol, setSymbol] = useState('');
   const [style, setStyle] = useState('');
   const [grade, setGrade] = useState('');
+  const [model, setModel] = useState('');
   const [timeframe, setTimeframe] = useState('');
   const [minRr, setMinRr] = useState('');
   const [hideTaken, setHideTaken] = useState(false);
@@ -40,12 +42,13 @@ export function SignalsPage(): React.JSX.Element {
       if (symbol && s.setup.symbol !== symbol) return false;
       if (style && s.setup.style !== style) return false;
       if (grade && s.setup.grade !== grade) return false;
+      if (model && s.setup.model !== model) return false;
       if (timeframe && s.setup.triggerTimeframe !== timeframe) return false;
       if (minRrNum != null && Number.isFinite(minRrNum) && s.setup.rewardRatio < minRrNum) return false;
       if (hideTaken && (s.isTaken || s.blockReason)) return false;
       return true;
     });
-  }, [all, symbol, style, grade, timeframe, minRr, hideTaken]);
+  }, [all, symbol, style, grade, model, timeframe, minRr, hideTaken]);
 
   // A row focus deep-links to Live with the signal's symbol so the chart there switches to it (the Live
   // page reads the `?symbol=` seed). The signal's TF/style ride along too where the Live chart honours them.
@@ -101,6 +104,17 @@ export function SignalsPage(): React.JSX.Element {
               {GRADES.map((g) => (
                 <option key={g} value={g}>
                   {g}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="filterbar__field">
+            <span>Model</span>
+            <select className="input" aria-label="Model filter" value={model} onChange={(e) => setModel(e.target.value)}>
+              <option value="">All</option>
+              {MODELS.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
                 </option>
               ))}
             </select>

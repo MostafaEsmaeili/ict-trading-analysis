@@ -44,6 +44,7 @@ const trade = (id: string, status: string): PaperTradeDto => ({
   currentStop: 1.069,
   exitPrice: null,
   managedFromUtc: '2026-06-19T06:00:00Z',
+  model: 'Ict2022',
 });
 
 const candle = (time: string, close: number): CandleDto => ({
@@ -147,6 +148,7 @@ describe('mergeDeltas', () => {
       reason: 'r',
       detectedAtUtc: '2026-06-19T06:50:00Z',
       isAdvisoryOnly: true,
+      model: 'Ict2022',
     };
     const overlays = mergeSetupOverlays([], setup);
     expect(overlays.map((o) => o.kind)).toEqual(['tradeLevels', 'drawOnLiquidity']);
@@ -170,6 +172,7 @@ describe('mergeDeltas', () => {
       reason: 'r',
       detectedAtUtc: '2026-06-19T06:50:00Z',
       isAdvisoryOnly: true,
+      model: 'Ict2022',
     };
     const once = mergeSetupOverlays([], setup);
     const twice = mergeSetupOverlays(once, setup);

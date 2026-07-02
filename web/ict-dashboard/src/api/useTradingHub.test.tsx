@@ -49,6 +49,7 @@ function setup(triggerTimeframe: string): SetupDto {
     reason: 'test',
     detectedAtUtc: '2026-06-19T06:00:00Z',
     isAdvisoryOnly: true,
+    model: 'Ict2022',
   };
 }
 
@@ -119,6 +120,7 @@ describe('useTradingHub overlay merge', () => {
       currentStop: 1.069,
       exitPrice: null,
       managedFromUtc: '2026-06-19T06:00:00Z',
+      model: 'Ict2022',
     };
     emit(HubEvents.TradeUpdated, trade);
 

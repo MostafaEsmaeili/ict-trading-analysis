@@ -4,6 +4,7 @@
 // ---------------------------------------------------------------------------------------------------
 
 import { directionTone, gradeColors, killzoneColors } from '../theme';
+import { modelBadgeText, modelLabel } from '../models';
 import type {
   Direction,
   Killzone,
@@ -61,6 +62,26 @@ export function StyleChip({ style }: { style: TradeStyle | null }): React.JSX.El
   return (
     <span className="chip chip--style" title={`Style: ${style}`}>
       {style}
+    </span>
+  );
+}
+
+/**
+ * A setup-model chip ("2022" / "2024") tagging which ICT model produced a setup/trade/alert. Renders
+ * nothing when the model is absent (an old payload / a non-model-scoped alert) so callers can pass a
+ * nullable field directly.
+ */
+export function ModelBadge({
+  model,
+}: {
+  model: string | null | undefined;
+}): React.JSX.Element | null {
+  if (!model) {
+    return null;
+  }
+  return (
+    <span className="chip chip--model" title={`Setup model: ${modelLabel(model)}`}>
+      {modelBadgeText(model)}
     </span>
   );
 }
